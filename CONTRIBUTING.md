@@ -28,3 +28,12 @@ AgeReveal is built with Kotlin and Jetpack Compose.
 2. Clone this repository.
 3. Import the project into Android Studio.
 4. Let Gradle sync and build.
+
+**Optional — Custom Inter Typography:**
+The app falls back to the system sans-serif by default. To enable the Inter custom font:
+1. Download Inter TTF files from [rsms.me/inter](https://rsms.me/inter)
+2. Place `inter_regular.ttf`, `inter_medium.ttf`, `inter_semibold.ttf`, `inter_bold.ttf` in `app/src/main/res/font/`
+3. Uncomment the `InterFamily` block in `app/src/main/java/com/willowvibe/agereveal/ui/theme/Type.kt`
+4. Replace `FontFamily.Default` with `InterFamily` in that file
+
+**AdMob:** The bundled IDs are Google's test values — safe to run locally but generate no revenue. See [TASKS.md](TASKS.md) for how to swap in production IDs before release.

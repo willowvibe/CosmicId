@@ -19,6 +19,8 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -56,16 +58,23 @@ fun CompareScreen(
     onShowInterstitial: () -> Unit,
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val snackbarHostState = remember { SnackbarHostState() }
 
     // Trigger interstitial after the 2nd comparison (as per build plan)
     LaunchedEffect(uiState.comparisonCount) {
         if (uiState.comparisonCount == 2) onShowInterstitial()
     }
 
+    // Show validation errors via Snackbar
+    LaunchedEffect(uiState.error) {
+        uiState.error?.let { snackbarHostState.showSnackbar(it); viewModel.clearError() }
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(title = { Text("Compare Ages") })
         },
+        snackbarHost = { SnackbarHost(snackbarHostState) },
     ) { padding ->
         Column(
             modifier = Modifier
@@ -102,9 +111,10 @@ fun CompareScreen(
             }
 
             // Result
-            if (uiState.olderLabel.isNotEmpty()) {
+            if (uiState.isSameAge || uiState.olderLabel.isNotEmpty()) {
                 CompareResultCard(
                     olderLabel = uiState.olderLabel,
+                    isSameAge = uiState.isSameAge,
                     years = uiState.differenceYears,
                     months = uiState.differenceMonths,
                     days = uiState.differenceDays,
@@ -185,24 +195,36 @@ private fun PersonDateCard(
 @Composable
 private fun CompareResultCard(
     olderLabel: String,
+    isSameAge: Boolean,
     years: Int, months: Int, days: Int,
 ) {
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(16.dp)) {
-            Text("$olderLabel is older by",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant)
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                buildString {
-                    if (years > 0) append("$years yr${if (years > 1) "s" else ""}  ")
-                    if (months > 0) append("$months mo  ")
-                    append("$days day${if (days != 1) "s" else ""}")
-                },
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.primary,
-            )
+            if (isSameAge) {
+                Text("Same birthday!",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary)
+                Spacer(modifier = Modifier.height(4.dp))
+                Text("Both people share the exact same birth date.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant)
+            } else {
+                Text("$olderLabel is older by",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    buildString {
+                        if (years > 0) append("$years yr${if (years > 1) "s" else ""}  ")
+                        if (months > 0) append("$months mo  ")
+                        append("$days day${if (days != 1) "s" else ""}")
+                    },
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary,
+                )
+            }
         }
     }
 }
