@@ -1,6 +1,8 @@
 package com.willowvibe.agereveal.data.db
 
+import android.content.Context
 import androidx.room.Database
+import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import com.willowvibe.agereveal.data.model.SavedBirthday
@@ -21,17 +23,25 @@ abstract class AppDatabase : RoomDatabase() {
     companion object {
         const val DATABASE_NAME = "age_reveal.db"
 
+        @Volatile
+        private var INSTANCE: AppDatabase? = null
+
         /**
-         * Temporary helper used by [BirthdayWidgetProvider] which cannot use Hilt injection.
-         * TODO: replace with a proper non-Hilt singleton or EntryPoint injection.
+         * Returns the singleton database instance.
+         *
+         * Used by components that cannot participate in Hilt injection (e.g. AppWidgetProvider).
+         * Hilt's [DatabaseModule] also delegates to this method so both paths share the same instance.
          */
-        fun buildInMemory(context: android.content.Context): AppDatabase =
-            Room.databaseBuilder(
-                context.applicationContext,
-                AppDatabase::class.java,
-                DATABASE_NAME,
-            )
-                .fallbackToDestructiveMigration()
-                .build()
+        fun getInstance(context: Context): AppDatabase =
+            INSTANCE ?: synchronized(this) {
+                INSTANCE ?: Room.databaseBuilder(
+                    context.applicationContext,
+                    AppDatabase::class.java,
+                    DATABASE_NAME,
+                )
+                    .fallbackToDestructiveMigration()
+                    .build()
+                    .also { INSTANCE = it }
+            }
     }
 }

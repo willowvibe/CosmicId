@@ -4,7 +4,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.willowvibe.agereveal.data.model.AgeResult
 import com.willowvibe.agereveal.domain.AgeCalculator
+import com.willowvibe.agereveal.domain.ShareCardGenerator
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -30,6 +32,7 @@ data class CalculatorUiState(
 @HiltViewModel
 class CalculatorViewModel @Inject constructor(
     private val ageCalculator: AgeCalculator,
+    private val shareCardGenerator: ShareCardGenerator,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(CalculatorUiState())
@@ -78,6 +81,17 @@ class CalculatorViewModel @Inject constructor(
                 isUnlocked = true,
                 result = computeResult(birthDate, includeUnlocked = true),
             )
+        }
+    }
+
+    /**
+     * Generate and share the age card via the Android share sheet.
+     * No-op if no birth date has been selected yet.
+     */
+    fun shareCard(theme: ShareCardGenerator.CardTheme = ShareCardGenerator.CardTheme.DARK_COSMOS) {
+        val result = _uiState.value.result ?: return
+        viewModelScope.launch(Dispatchers.IO) {
+            shareCardGenerator.share(result, theme)
         }
     }
 

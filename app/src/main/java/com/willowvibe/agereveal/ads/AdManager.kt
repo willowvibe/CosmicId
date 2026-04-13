@@ -10,6 +10,7 @@ import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback
 import com.google.android.gms.ads.rewarded.RewardedAd
 import com.google.android.gms.ads.rewarded.RewardedAdLoadCallback
 import dagger.hilt.android.qualifiers.ApplicationContext
+import java.lang.ref.WeakReference
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -30,11 +31,27 @@ class AdManager @Inject constructor(
 ) {
     companion object {
         // Test ad unit IDs (safe to commit — will not generate real revenue)
-        const val BANNER_AD_UNIT_ID      = "ca-app-pub-3940256099942544/6300978111"
-        const val REWARDED_AD_UNIT_ID    = "ca-app-pub-3940256099942544/5224354917"
+        const val BANNER_AD_UNIT_ID       = "ca-app-pub-3940256099942544/6300978111"
+        const val REWARDED_AD_UNIT_ID     = "ca-app-pub-3940256099942544/5224354917"
         const val INTERSTITIAL_AD_UNIT_ID = "ca-app-pub-3940256099942544/1033173712"
 
         private const val INTERSTITIAL_COOLDOWN_MS = 5 * 60 * 1_000L  // 5 minutes
+    }
+
+    /**
+     * Weak reference to the host Activity — prevents memory leaks.
+     * Must be updated every time the Activity resumes via [attachActivity].
+     */
+    private var activityRef: WeakReference<Activity> = WeakReference(null)
+
+    /** Call from [MainActivity.onResume] (and onStart) to keep a valid Activity reference. */
+    fun attachActivity(activity: Activity) {
+        activityRef = WeakReference(activity)
+    }
+
+    /** Call from [MainActivity.onDestroy] to drop the reference early. */
+    fun detachActivity() {
+        activityRef = WeakReference(null)
     }
 
     // ---------------------------------------------------------------------------
@@ -54,7 +71,6 @@ class AdManager @Inject constructor(
                 }
                 override fun onAdFailedToLoad(error: LoadAdError) {
                     rewardedAd = null
-                    // Optionally retry after a delay
                 }
             },
         )
@@ -62,27 +78,29 @@ class AdManager @Inject constructor(
 
     /**
      * Show the rewarded ad. Calls [onRewarded] iff the user earns the reward.
+     * If no ad is ready, preloads a new one and calls [onNotReady] so the UI can inform the user.
      * Immediately preloads the next ad after show (prevents wait-time on subsequent taps).
      */
-    fun showRewardedAd(activity: Activity? = null, onRewarded: () -> Unit) {
+    fun showRewardedAd(onRewarded: () -> Unit, onNotReady: (() -> Unit)? = null) {
         val ad = rewardedAd
-        rewardedAd = null
+        val activity = activityRef.get()
 
-        if (ad == null) {
-            // Ad not ready — preload and inform user gracefully (caller decides the UX)
+        if (ad == null || activity == null) {
             preloadRewardedAd()
+            onNotReady?.invoke()
             return
         }
 
+        rewardedAd = null
+
         ad.fullScreenContentCallback = object : FullScreenContentCallback() {
             override fun onAdDismissedFullScreenContent() {
-                preloadRewardedAd()   // reload immediately for next time
+                preloadRewardedAd()
             }
         }
 
-        val hostActivity = activity ?: return
-        ad.show(hostActivity) { rewardedAd ->
-            if (rewardedAd.amount > 0) onRewarded()
+        ad.show(activity) { rewardItem ->
+            if (rewardItem.amount > 0) onRewarded()
         }
     }
 
@@ -113,11 +131,12 @@ class AdManager @Inject constructor(
      * Show the interstitial if the 5-minute cooldown has elapsed.
      * Call this at natural break points (e.g. after 2nd comparison on Compare screen).
      */
-    fun maybeShowInterstitial(activity: Activity? = null) {
+    fun maybeShowInterstitial() {
         val now = System.currentTimeMillis()
         if (now - lastInterstitialShownMs < INTERSTITIAL_COOLDOWN_MS) return
+
         val ad = interstitialAd ?: return
-        val hostActivity = activity ?: return
+        val activity = activityRef.get() ?: return
 
         ad.fullScreenContentCallback = object : FullScreenContentCallback() {
             override fun onAdDismissedFullScreenContent() {
@@ -126,7 +145,7 @@ class AdManager @Inject constructor(
             }
         }
 
-        ad.show(hostActivity)
+        ad.show(activity)
         lastInterstitialShownMs = now
     }
 }
