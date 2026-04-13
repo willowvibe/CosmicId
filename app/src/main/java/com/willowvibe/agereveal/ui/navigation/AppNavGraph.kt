@@ -10,11 +10,16 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.NavHost
@@ -26,6 +31,8 @@ import com.willowvibe.agereveal.ui.screen.CalculatorScreen
 import com.willowvibe.agereveal.ui.screen.CompareScreen
 import com.willowvibe.agereveal.ui.screen.DetailsUnlockScreen
 import com.willowvibe.agereveal.ui.screen.RemindersScreen
+import com.willowvibe.agereveal.ui.viewmodel.CalculatorViewModel
+import kotlinx.coroutines.launch
 
 sealed class Screen(val route: String, val label: String, val icon: ImageVector) {
     data object Calculator : Screen("calculator", "Age", Icons.Default.Calculate)
@@ -46,8 +53,11 @@ fun AppNavGraph(adManager: AdManager) {
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDest = navBackStackEntry?.destination
+    val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
 
     Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         bottomBar = {
             NavigationBar {
                 bottomNavItems.forEach { screen ->
@@ -72,21 +82,48 @@ fun AppNavGraph(adManager: AdManager) {
             startDestination = Screen.Calculator.route,
             modifier = Modifier.padding(innerPadding),
         ) {
-            composable(Screen.Calculator.route) {
+            composable(Screen.Calculator.route) { backStackEntry ->
+                // Use the same CalculatorViewModel instance for both Calculator + Details screens
+                // by scoping it to the nav graph's back-stack entry.
+                val viewModel: CalculatorViewModel = hiltViewModel(backStackEntry)
+
                 CalculatorScreen(
+                    viewModel = viewModel,
                     adManager = adManager,
-                    onShareCard = { /* TODO: launch ShareCardActivity or bottom sheet */ },
+                    onShareCard = { viewModel.shareCard() },
                     onUnlockMore = {
                         adManager.showRewardedAd(
-                            onRewarded = { navController.navigate(Screen.Details.route) },
+                            onRewarded = {
+                                viewModel.onRewardedAdEarned()
+                                navController.navigate(Screen.Details.route)
+                            },
+                            onNotReady = {
+                                scope.launch {
+                                    snackbarHostState.showSnackbar("Ad not ready yet — try again in a moment")
+                                }
+                            },
                         )
                     },
                 )
             }
             composable(Screen.Details.route) {
+                // Route the Details screen to the Calculator's back-stack entry so they share state
+                val calcEntry = remember(navController) {
+                    navController.getBackStackEntry(Screen.Calculator.route)
+                }
+                val viewModel: CalculatorViewModel = hiltViewModel(calcEntry)
+
                 DetailsUnlockScreen(
+                    viewModel = viewModel,
                     onWatchAd = {
-                        adManager.showRewardedAd(onRewarded = { /* viewmodel callback handled in screen */ })
+                        adManager.showRewardedAd(
+                            onRewarded = { viewModel.onRewardedAdEarned() },
+                            onNotReady = {
+                                scope.launch {
+                                    snackbarHostState.showSnackbar("Ad not ready yet — try again in a moment")
+                                }
+                            },
+                        )
                     },
                 )
             }
@@ -97,7 +134,7 @@ fun AppNavGraph(adManager: AdManager) {
             }
             composable(Screen.Reminders.route) {
                 RemindersScreen(
-                    onAddBirthday = { /* TODO: open AddBirthdayBottomSheet */ },
+                    onAddBirthday = { /* handled internally by the FAB inside RemindersScreen */ },
                 )
             }
         }
