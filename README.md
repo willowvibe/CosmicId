@@ -25,4 +25,4 @@ AgeReveal is a native Android app that calculates your exact age in years, month
 2. Open the project in Android Studio.
 3. Sync Gradle and run on an Android device or emulator (API 26+ recommended, though API 21+ supported via desugaring).
 
-> **Note:** The AdMob App ID and Ad Unit IDs in the codebase are currently set to test IDs.
+> **Note:** The AdMob App ID and Ad Unit IDs in the codebase are currently set to Google's safe test IDs. Replace them with real IDs from your AdMob account before publishing. See [TASKS.md](TASKS.md) for the full pre-release checklist including file locations and line numbers.
