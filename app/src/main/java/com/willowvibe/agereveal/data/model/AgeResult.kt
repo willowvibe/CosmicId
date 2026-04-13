@@ -1,0 +1,52 @@
+package com.willowvibe.agereveal.data.model
+
+import java.time.LocalDate
+
+/**
+ * Immutable result produced by [com.willowvibe.agereveal.domain.AgeCalculator].
+ * All derived values are computed once and stored here to avoid re-calculation on recomposition.
+ */
+data class AgeResult(
+    val birthDate: LocalDate,
+
+    // Exact age components
+    val years: Int,
+    val months: Int,
+    val days: Int,
+
+    // Aggregate totals
+    val totalDays: Long,
+    val totalHours: Long,
+    val totalMinutes: Long,
+    val totalSeconds: Long,          // updated every second via ticker flow
+
+    // Birthday countdown
+    val nextBirthdayDate: LocalDate,
+    val daysToNextBirthday: Long,
+
+    // Day-of-week facts
+    val dayOfWeekBorn: String,       // e.g. "THURSDAY"
+    val dayOfWeekNextBirthday: String,
+
+    // Milestone days (unlockable)
+    val milestones: List<Milestone> = emptyList(),
+
+    // Zodiac & Vedic (unlockable)
+    val westernZodiac: String = "",
+    val rashi: String = "",
+    val nakshatra: String = "",
+    val chineseZodiac: String = "",
+
+    // Fun fact (unlockable)
+    val estimatedHeartbeats: Long = 0L,
+)
+
+/**
+ * A single life-day milestone, e.g. the 10,000th day alive.
+ */
+data class Milestone(
+    val targetDays: Int,
+    val date: LocalDate,
+    val isPast: Boolean,
+    val daysAway: Long,             // negative when in the past
+)

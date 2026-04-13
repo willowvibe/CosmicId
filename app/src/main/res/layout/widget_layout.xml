@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Widget layout — dark cosmos style matching the build plan preview.
+  Uses a dark navy background (#1A1A2E) with white text and a mint-green accent counter.
+
+  Views referenced in BirthdayWidgetProvider:
+    R.id.widget_days_count   — large day counter
+    R.id.widget_person_name  — "🎂 Priya's birthday"
+    R.id.widget_next_info    — "Next: Ravi in 31 days"
+-->
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@drawable/widget_bg"
+    android:padding="14dp"
+    android:gravity="start">
+
+    <!-- Label -->
+    <TextView
+        android:id="@+id/widget_label"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="🎂 BIRTHDAY IN"
+        android:textSize="10sp"
+        android:textColor="#80FFFFFF"
+        android:letterSpacing="0.1"
+        android:layout_marginBottom="4dp" />
+
+    <!-- Days count — large accent number -->
+    <TextView
+        android:id="@+id/widget_days_count"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="—"
+        android:textSize="36sp"
+        android:textStyle="bold"
+        android:textColor="#86EFAC" />
+
+    <!-- Person name -->
+    <TextView
+        android:id="@+id/widget_person_name"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Add birthdays →"
+        android:textSize="11sp"
+        android:textColor="#99FFFFFF"
+        android:maxLines="1"
+        android:ellipsize="end" />
+
+    <!-- Next upcoming info -->
+    <TextView
+        android:id="@+id/widget_next_info"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text=""
+        android:textSize="10sp"
+        android:textColor="#66FFFFFF"
+        android:layout_marginTop="6dp"
+        android:maxLines="1"
+        android:ellipsize="end" />
+
+</LinearLayout>
