@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Age Calculator: Birthday Days</string>
+    <string name="widget_description">Birthday countdown widget — shows days until the next saved birthday.</string>
+</resources>
