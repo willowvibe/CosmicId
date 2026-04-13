@@ -1,6 +1,6 @@
 # AgeReveal — Remaining Tasks & Placeholders
 
-_Last updated: 2026-04-13_
+_Last updated: 2026-04-13 — edge cases & bugs resolved_
 
 ---
 
@@ -45,7 +45,7 @@ Steps:
 
 | File | Line | Comment | Status |
 |------|------|---------|--------|
-| `app/src/main/java/com/willowvibe/agereveal/notification/BirthdayReminderWorker.kt` | 44 | `// TODO: add ic_cake vector drawable to res/` | **Outdated** — `res/drawable/ic_cake.xml` already exists. Remove the comment. |
+| `app/src/main/java/com/willowvibe/agereveal/notification/BirthdayReminderWorker.kt` | 44 | `// TODO: add ic_cake vector drawable to res/` | ✅ **Resolved** — comment removed. |
 
 ---
 
@@ -56,9 +56,10 @@ These items are tracked in `roadmap.md` under the Day 4 milestone.
 - [ ] **Animations** — Add enter/reveal animation when age result appears on the main screen
 - [ ] **Date picker UX** — Smooth out the date picker interactions (scroll snap, haptic feedback)
 - [ ] **Edge cases:**
-  - Leap year birthdays (Feb 29) — ensure correct handling in years when Feb 29 does not exist
-  - Future date input — validate and show a clear error instead of negative age
-  - Today's date — verify zero-duration display is handled gracefully
+  - ✅ Leap year birthdays (Feb 29) — `yearSafeBirthday()` helper added to `AgeCalculator` and `BirthdayRepository`; maps to Mar 1 in non-leap years instead of crashing
+  - ✅ Future date input — validated in `CalculatorViewModel` (existing), `CompareViewModel` (added), and `RemindersScreen`/`RemindersViewModel` (added); all show clear errors
+  - ✅ Equal-age comparison — `CompareViewModel` now detects equal dates and shows "Same birthday!" instead of mislabelling Person B as older
+  - ✅ Today's date — `Period.between(today, today)` correctly returns 0; no fix needed (confirmed safe)
 - [ ] **Play Store listing assets:**
   - App icon (512×512 PNG)
   - Feature graphic (1024×500 PNG)

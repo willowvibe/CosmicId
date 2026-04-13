@@ -137,6 +137,7 @@ private fun AddBirthdaySheet(
     var selectedDate by remember { mutableStateOf<LocalDate?>(null) }
     var selectedEmoji by remember { mutableStateOf("🎂") }
     var nameError by remember { mutableStateOf(false) }
+    var dateError by remember { mutableStateOf(false) }
     var showDatePicker by remember { mutableStateOf(false) }
 
     val datePickerState = rememberDatePickerState(
@@ -152,9 +153,15 @@ private fun AddBirthdaySheet(
             confirmButton = {
                 TextButton(onClick = {
                     datePickerState.selectedDateMillis?.let { millis ->
-                        selectedDate = Instant.ofEpochMilli(millis)
+                        val picked = Instant.ofEpochMilli(millis)
                             .atZone(ZoneId.of("UTC"))
                             .toLocalDate()
+                        if (picked.isAfter(LocalDate.now())) {
+                            dateError = true
+                        } else {
+                            selectedDate = picked
+                            dateError = false
+                        }
                     }
                     showDatePicker = false
                 }) { Text("OK") }
@@ -219,6 +226,10 @@ private fun AddBirthdaySheet(
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 onClick = { showDatePicker = true },
+                colors = androidx.compose.material3.CardDefaults.cardColors(
+                    containerColor = if (dateError) MaterialTheme.colorScheme.errorContainer
+                                     else MaterialTheme.colorScheme.surfaceVariant,
+                ),
             ) {
                 Row(
                     modifier = Modifier
@@ -229,19 +240,23 @@ private fun AddBirthdaySheet(
                 ) {
                     Column {
                         Text("Date of Birth", style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            color = if (dateError) MaterialTheme.colorScheme.error
+                                    else MaterialTheme.colorScheme.onSurfaceVariant)
                         Spacer(Modifier.height(4.dp))
                         Text(
-                            text = selectedDate
-                                ?.format(DateTimeFormatter.ofLocalizedDate(FormatStyle.LONG))
-                                ?: "Tap to select",
+                            text = if (dateError) "Date cannot be in the future"
+                                   else selectedDate
+                                       ?.format(DateTimeFormatter.ofLocalizedDate(FormatStyle.LONG))
+                                       ?: "Tap to select",
                             style = MaterialTheme.typography.bodyLarge,
-                            color = if (selectedDate != null) MaterialTheme.colorScheme.onSurface
+                            color = if (dateError) MaterialTheme.colorScheme.error
+                                    else if (selectedDate != null) MaterialTheme.colorScheme.onSurface
                                     else MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
                     Icon(Icons.Default.CalendarMonth, contentDescription = null,
-                        tint = MaterialTheme.colorScheme.primary)
+                        tint = if (dateError) MaterialTheme.colorScheme.error
+                               else MaterialTheme.colorScheme.primary)
                 }
             }
 
@@ -251,6 +266,7 @@ private fun AddBirthdaySheet(
                 onClick = {
                     if (name.isBlank()) { nameError = true; return@Button }
                     val date = selectedDate ?: LocalDate.now()
+                    if (date.isAfter(LocalDate.now())) { dateError = true; return@Button }
                     onSave(name.trim(), date, selectedEmoji)
                 },
             ) {

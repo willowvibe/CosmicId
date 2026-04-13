@@ -2,6 +2,7 @@ package com.willowvibe.agereveal.domain
 
 import com.willowvibe.agereveal.data.model.AgeResult
 import com.willowvibe.agereveal.data.model.Milestone
+import java.time.DateTimeException
 import java.time.LocalDate
 import java.time.Period
 import java.time.temporal.ChronoUnit
@@ -40,9 +41,9 @@ class AgeCalculator @Inject constructor(
         val totalSeconds = if (totalSecondsOverride >= 0) totalSecondsOverride
                            else ChronoUnit.SECONDS.between(birthDate.atStartOfDay(), today.atStartOfDay())
 
-        // Next birthday
-        var nextBirthday = birthDate.withYear(today.year)
-        if (!nextBirthday.isAfter(today)) nextBirthday = nextBirthday.plusYears(1)
+        // Next birthday — use yearSafeBirthday to handle Feb 29 in non-leap years
+        var nextBirthday = yearSafeBirthday(birthDate, today.year)
+        if (!nextBirthday.isAfter(today)) nextBirthday = yearSafeBirthday(birthDate, today.year + 1)
         val daysToNextBirthday = ChronoUnit.DAYS.between(today, nextBirthday)
 
         return AgeResult(
@@ -89,4 +90,18 @@ class AgeCalculator @Inject constructor(
     // ---------------------------------------------------------------------------
 
     private fun estimateHeartbeats(totalMinutes: Long): Long = totalMinutes * 72L
+
+    // ---------------------------------------------------------------------------
+    // Helpers
+    // ---------------------------------------------------------------------------
+
+    /**
+     * Returns [birthDate] adjusted to [year], safely handling Feb 29 birthdays
+     * in non-leap years by mapping to Mar 1 instead of throwing [DateTimeException].
+     */
+    private fun yearSafeBirthday(birthDate: LocalDate, year: Int): LocalDate = try {
+        birthDate.withYear(year)
+    } catch (_: DateTimeException) {
+        LocalDate.of(year, 3, 1)
+    }
 }

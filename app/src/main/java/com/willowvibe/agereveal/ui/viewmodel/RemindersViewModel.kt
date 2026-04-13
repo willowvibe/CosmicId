@@ -23,6 +23,7 @@ class RemindersViewModel @Inject constructor(
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     fun addBirthday(name: String, birthDate: LocalDate, emoji: String = "🎂") {
+        if (birthDate.isAfter(LocalDate.now())) return
         viewModelScope.launch {
             val id = repository.save(
                 SavedBirthday(name = name, birthDate = birthDate, emoji = emoji)

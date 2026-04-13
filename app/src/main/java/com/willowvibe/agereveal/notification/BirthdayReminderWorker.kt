@@ -41,7 +41,7 @@ class BirthdayReminderWorker @AssistedInject constructor(
             applicationContext,
             BirthdayNotificationScheduler.CHANNEL_ID,
         )
-            .setSmallIcon(R.drawable.ic_cake)    // TODO: add ic_cake vector drawable to res/
+            .setSmallIcon(R.drawable.ic_cake)
             .setContentTitle("🎂 $name's birthday is tomorrow!")
             .setContentText("Tap to see their age and share a card.")
             .setPriority(NotificationCompat.PRIORITY_HIGH)
