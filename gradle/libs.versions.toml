@@ -1,5 +1,5 @@
 [versions]
-agp = "8.10.0"
+agp = "8.13.2"
 kotlin = "2.1.0"
 ksp = "2.1.0-1.0.29"
 hilt = "2.54"
@@ -17,6 +17,7 @@ desugar = "2.1.5"
 junit = "4.13.2"
 junitExt = "1.2.1"
 espressoCore = "3.6.1"
+material = "1.12.0"
 
 [libraries]
 # AndroidX core
@@ -60,6 +61,7 @@ androidx-hilt-compiler = { group = "androidx.hilt", name = "hilt-compiler", vers
 
 # AdMob
 play-services-ads = { group = "com.google.android.gms", name = "play-services-ads", version.ref = "admob" }
+material = { group = "com.google.android.material", name = "material", version.ref = "material" }
 
 # Java 8+ API desugaring (for LocalDate on API < 26)
 desugar-jdk-libs = { group = "com.android.tools", name = "desugar_jdk_libs", version.ref = "desugar" }

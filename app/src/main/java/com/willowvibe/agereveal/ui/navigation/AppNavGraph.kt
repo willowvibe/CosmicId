@@ -109,11 +109,8 @@ fun AppNavGraph(adManager: AdManager) {
             composable(Screen.Details.route) {
                 // Route the Details screen to the Calculator's back-stack entry so they share state.
                 // Guard against deep-link or test scenarios where Calculator isn't on the back stack.
-                val calcEntry = try {
-                    remember(navController) {
-                        navController.getBackStackEntry(Screen.Calculator.route)
-                    }
-                } catch (_: IllegalArgumentException) {
+                val calcEntry = runCatching { navController.getBackStackEntry(Screen.Calculator.route) }.getOrNull()
+                if (calcEntry == null) {
                     navController.navigate(Screen.Calculator.route) { launchSingleTop = true }
                     return@composable
                 }

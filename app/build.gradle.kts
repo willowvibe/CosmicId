@@ -8,11 +8,12 @@ plugins {
 
 android {
     namespace = "com.willowvibe.agereveal"
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.willowvibe.agereveal"
         minSdk = 26  // java.time is native on API 26+; use desugaring below for API 21+
+        //noinspection OldTargetApi
         targetSdk = 35
         versionCode = 1
         versionName = "1.0"
@@ -97,6 +98,7 @@ dependencies {
 
     // AdMob
     implementation(libs.play.services.ads)
+    implementation(libs.material)
 
     // Testing
     testImplementation(libs.junit)
