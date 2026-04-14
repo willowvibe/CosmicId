@@ -14,12 +14,15 @@ import androidx.core.content.FileProvider
 import com.willowvibe.agereveal.data.model.AgeResult
 import com.willowvibe.agereveal.data.model.Milestone
 import dagger.hilt.android.qualifiers.ApplicationContext
+import android.os.Handler
+import android.os.Looper
 import java.io.File
 import java.io.FileOutputStream
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlin.math.abs
 
 /**
  * Generates a shareable bitmap "age card" and launches the system share sheet.
@@ -73,7 +76,10 @@ class ShareCardGenerator @Inject constructor(
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         }
-        context.startActivity(Intent.createChooser(intent, "Share your age"))
+        // startActivity must run on the main thread; the caller may be on Dispatchers.IO
+        Handler(Looper.getMainLooper()).post {
+            context.startActivity(Intent.createChooser(intent, "Share your age"))
+        }
     }
 
     /** Generate a dedicated milestone share card (e.g. "You'll turn 10,000 days old on…"). */
@@ -110,8 +116,9 @@ class ShareCardGenerator @Inject constructor(
                 paint.shader = gradient
                 canvas.drawRect(0f, 0f, CARD_WIDTH.toFloat(), CARD_HEIGHT.toFloat(), paint)
                 paint.shader = null
+                // Use gold (#FFD700) as accent so the milestone number pops on the saffron-green gradient
                 drawMilestoneContent(canvas, paint, milestone,
-                    textColor = Color.WHITE, accentColor = Color.WHITE)
+                    textColor = Color.WHITE, accentColor = Color.parseColor("#FFD700"))
             }
         }
 
@@ -129,7 +136,9 @@ class ShareCardGenerator @Inject constructor(
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         }
-        context.startActivity(Intent.createChooser(intent, "Share milestone"))
+        Handler(Looper.getMainLooper()).post {
+            context.startActivity(Intent.createChooser(intent, "Share milestone"))
+        }
     }
 
     // ---------------------------------------------------------------------------
@@ -227,10 +236,10 @@ class ShareCardGenerator @Inject constructor(
         val formattedTarget = "%,d".format(milestone.targetDays)
         val formattedDate = milestone.date.format(MILESTONE_DATE_FMT)
         val prefix = if (milestone.isPast) "You turned" else "You'll turn"
-        val daysText = if (milestone.isPast) {
-            "${Math.abs(milestone.daysAway)} days ago"
-        } else {
-            "in ${milestone.daysAway} days"
+        val daysText = when {
+            milestone.daysAway == 0L -> "Today!"
+            milestone.isPast -> "${abs(milestone.daysAway)} days ago"
+            else -> "in ${milestone.daysAway} days"
         }
 
         // "MILESTONE" label — small, muted

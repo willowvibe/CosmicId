@@ -109,7 +109,7 @@ class AdManager @Inject constructor(
     // ---------------------------------------------------------------------------
 
     private var interstitialAd: InterstitialAd? = null
-    private var lastInterstitialShownMs: Long = 0L
+    @Volatile private var lastInterstitialShownMs: Long = 0L
 
     fun preloadInterstitialAd() {
         InterstitialAd.load(

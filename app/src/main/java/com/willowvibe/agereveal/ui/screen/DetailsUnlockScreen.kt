@@ -128,8 +128,11 @@ private fun UnlockedDetails(result: AgeResult, onShareMilestone: (Milestone) -> 
                 val label = "%,d".format(milestone.targetDays) + "th day"
                 val value = buildString {
                     append(milestone.date.toString())
-                    if (milestone.isPast) append("  ✓ passed")
-                    else append("  (in ${milestone.daysAway}d)")
+                    when {
+                        milestone.daysAway == 0L -> append("  🎉 Today!")
+                        milestone.isPast -> append("  ✓ passed")
+                        else -> append("  (in ${milestone.daysAway}d)")
+                    }
                 }
                 MilestoneRow(
                     label = label,
