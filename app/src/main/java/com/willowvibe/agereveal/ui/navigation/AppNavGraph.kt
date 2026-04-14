@@ -125,6 +125,7 @@ fun AppNavGraph(adManager: AdManager) {
                             },
                         )
                     },
+                    onShareMilestone = { milestone -> viewModel.shareMilestoneCard(milestone) },
                 )
             }
             composable(Screen.Compare.route) {

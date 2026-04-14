@@ -13,6 +13,8 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.LockOpen
+import androidx.compose.material.icons.filled.Share
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
@@ -31,6 +33,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.willowvibe.agereveal.data.model.AgeResult
+import com.willowvibe.agereveal.data.model.Milestone
 import com.willowvibe.agereveal.ui.viewmodel.CalculatorViewModel
 
 /**
@@ -44,6 +47,7 @@ import com.willowvibe.agereveal.ui.viewmodel.CalculatorViewModel
 fun DetailsUnlockScreen(
     viewModel: CalculatorViewModel = hiltViewModel(),
     onWatchAd: () -> Unit,
+    onShareMilestone: (Milestone) -> Unit = {},
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val result = uiState.result
@@ -66,7 +70,7 @@ fun DetailsUnlockScreen(
             if (!uiState.isUnlocked || result == null) {
                 UnlockGate(isLoading = uiState.isAdLoading, onWatch = onWatchAd)
             } else {
-                UnlockedDetails(result = result)
+                UnlockedDetails(result = result, onShareMilestone = onShareMilestone)
             }
         }
     }
@@ -103,7 +107,7 @@ private fun UnlockGate(isLoading: Boolean, onWatch: () -> Unit) {
 }
 
 @Composable
-private fun UnlockedDetails(result: AgeResult) {
+private fun UnlockedDetails(result: AgeResult, onShareMilestone: (Milestone) -> Unit) {
     // Zodiac group
     SectionCard(title = "Astrological Signs") {
         DetailRow("Western Zodiac", result.westernZodiac)
@@ -127,7 +131,12 @@ private fun UnlockedDetails(result: AgeResult) {
                     if (milestone.isPast) append("  ✓ passed")
                     else append("  (in ${milestone.daysAway}d)")
                 }
-                DetailRow(label, value, highlight = !milestone.isPast)
+                MilestoneRow(
+                    label = label,
+                    value = value,
+                    highlight = !milestone.isPast,
+                    onShare = { onShareMilestone(milestone) },
+                )
             }
         }
     }
@@ -159,5 +168,43 @@ private fun DetailRow(label: String, value: String, highlight: Boolean = false) 
             fontWeight = FontWeight.Medium,
             color = if (highlight) MaterialTheme.colorScheme.primary
                     else MaterialTheme.colorScheme.onSurface)
+    }
+}
+
+@Composable
+private fun MilestoneRow(
+    label: String,
+    value: String,
+    highlight: Boolean,
+    onShare: () -> Unit,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 2.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            label,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.weight(1f),
+        )
+        Text(
+            value,
+            style = MaterialTheme.typography.bodyMedium,
+            fontWeight = FontWeight.Medium,
+            color = if (highlight) MaterialTheme.colorScheme.primary
+                    else MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.weight(1.4f),
+        )
+        IconButton(onClick = onShare) {
+            Icon(
+                Icons.Default.Share,
+                contentDescription = "Share $label card",
+                tint = MaterialTheme.colorScheme.primary,
+            )
+        }
     }
 }
