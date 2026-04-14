@@ -23,7 +23,11 @@ local.properties
 .gradle/
 build/
 app/build/
-# gradlew and gradlew.bat are intentionally tracked for CI and local builds
+!gradlew
+!gradlew.bat
+
+# Android APK files
+*.apk
 
 # Keystore files
 *.jks
