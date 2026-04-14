@@ -3,6 +3,7 @@ package com.willowvibe.agereveal.ui.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.willowvibe.agereveal.data.model.AgeResult
+import com.willowvibe.agereveal.data.model.Milestone
 import com.willowvibe.agereveal.domain.AgeCalculator
 import com.willowvibe.agereveal.domain.ShareCardGenerator
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -92,6 +93,16 @@ class CalculatorViewModel @Inject constructor(
         val result = _uiState.value.result ?: return
         viewModelScope.launch(Dispatchers.IO) {
             shareCardGenerator.share(result, theme)
+        }
+    }
+
+    /** Share a dedicated milestone card (e.g. "You'll turn 10,000 days old on…"). */
+    fun shareMilestoneCard(
+        milestone: Milestone,
+        theme: ShareCardGenerator.CardTheme = ShareCardGenerator.CardTheme.FESTIVE_INDIA,
+    ) {
+        viewModelScope.launch(Dispatchers.IO) {
+            shareCardGenerator.shareMilestone(milestone, theme)
         }
     }
 

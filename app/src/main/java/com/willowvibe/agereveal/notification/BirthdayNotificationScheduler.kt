@@ -41,13 +41,22 @@ class BirthdayNotificationScheduler @Inject constructor(
 
     fun scheduleFor(id: Long, name: String, birthDate: LocalDate) {
         val nextBirthday = computeNextBirthday(birthDate)
-        val reminderDateTime = nextBirthday.minusDays(1).atTime(9, 0)
-        val delayMs = reminderDateTime
+        var reminderDateTime = nextBirthday.minusDays(1).atTime(9, 0)
+        var delayMs = reminderDateTime
             .atZone(ZoneId.systemDefault())
             .toInstant()
             .toEpochMilli() - System.currentTimeMillis()
 
-        if (delayMs <= 0) return  // birthday is today or tomorrow at 09:00 already passed
+        // Reminder window already passed (e.g. birthday is today/tomorrow and it's past 09:00).
+        // Fall back to scheduling 1 day before the *next* occurrence (one year later).
+        if (delayMs <= 0) {
+            val nextYearBirthday = nextBirthday.plusYears(1)
+            reminderDateTime = nextYearBirthday.minusDays(1).atTime(9, 0)
+            delayMs = reminderDateTime
+                .atZone(ZoneId.systemDefault())
+                .toInstant()
+                .toEpochMilli() - System.currentTimeMillis()
+        }
 
         val request = OneTimeWorkRequestBuilder<BirthdayReminderWorker>()
             .setInitialDelay(delayMs, TimeUnit.MILLISECONDS)

@@ -79,7 +79,7 @@ class AgeCalculator @Inject constructor(
             Milestone(
                 targetDays = target,
                 date = date,
-                isPast = !date.isAfter(today),
+                isPast = date.isBefore(today),   // strictly before; today's milestone is not "past"
                 daysAway = ChronoUnit.DAYS.between(today, date),
             )
         }

@@ -12,11 +12,17 @@ import android.graphics.Shader
 import android.graphics.Typeface
 import androidx.core.content.FileProvider
 import com.willowvibe.agereveal.data.model.AgeResult
+import com.willowvibe.agereveal.data.model.Milestone
 import dagger.hilt.android.qualifiers.ApplicationContext
+import android.os.Handler
+import android.os.Looper
 import java.io.File
 import java.io.FileOutputStream
+import java.time.format.DateTimeFormatter
+import java.util.Locale
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlin.math.abs
 
 /**
  * Generates a shareable bitmap "age card" and launches the system share sheet.
@@ -37,7 +43,9 @@ class ShareCardGenerator @Inject constructor(
         const val CARD_WIDTH = 900
         const val CARD_HEIGHT = 600
         const val CACHE_FILE = "share_card.png"
+        const val MILESTONE_CACHE_FILE = "milestone_card.png"
         const val FILE_AUTHORITY_SUFFIX = ".fileprovider"
+        private val MILESTONE_DATE_FMT = DateTimeFormatter.ofPattern("d MMMM yyyy", Locale.ENGLISH)
     }
 
     /** Generate bitmap share card from [result] using the given [theme]. */
@@ -61,14 +69,76 @@ class ShareCardGenerator @Inject constructor(
     /** Share the generated bitmap via Android share sheet (WhatsApp, etc.). */
     fun share(result: AgeResult, theme: CardTheme = CardTheme.DARK_COSMOS) {
         val bitmap = generateBitmap(result, theme)
-        val uri = saveBitmapToCache(bitmap)
+        val uri = saveBitmapToCache(bitmap, CACHE_FILE)
         val intent = Intent(Intent.ACTION_SEND).apply {
             type = "image/png"
             putExtra(Intent.EXTRA_STREAM, uri)
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         }
-        context.startActivity(Intent.createChooser(intent, "Share your age"))
+        // startActivity must run on the main thread; the caller may be on Dispatchers.IO
+        Handler(Looper.getMainLooper()).post {
+            context.startActivity(Intent.createChooser(intent, "Share your age"))
+        }
+    }
+
+    /** Generate a dedicated milestone share card (e.g. "You'll turn 10,000 days old on…"). */
+    fun generateMilestoneBitmap(milestone: Milestone, theme: CardTheme = CardTheme.FESTIVE_INDIA): Bitmap {
+        val bmp = Bitmap.createBitmap(CARD_WIDTH, CARD_HEIGHT, Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(bmp)
+        val paint = Paint(Paint.ANTI_ALIAS_FLAG)
+
+        when (theme) {
+            CardTheme.DARK_COSMOS -> {
+                val gradient = LinearGradient(
+                    0f, 0f, CARD_WIDTH.toFloat(), CARD_HEIGHT.toFloat(),
+                    Color.parseColor("#1a1a2e"), Color.parseColor("#16213e"),
+                    Shader.TileMode.CLAMP,
+                )
+                paint.shader = gradient
+                canvas.drawRect(0f, 0f, CARD_WIDTH.toFloat(), CARD_HEIGHT.toFloat(), paint)
+                paint.shader = null
+                drawMilestoneContent(canvas, paint, milestone,
+                    textColor = Color.WHITE, accentColor = Color.parseColor("#86efac"))
+            }
+            CardTheme.MINIMAL_LIGHT -> {
+                paint.color = Color.WHITE
+                canvas.drawRect(0f, 0f, CARD_WIDTH.toFloat(), CARD_HEIGHT.toFloat(), paint)
+                drawMilestoneContent(canvas, paint, milestone,
+                    textColor = Color.parseColor("#1c1917"), accentColor = Color.parseColor("#0f6e56"))
+            }
+            CardTheme.FESTIVE_INDIA -> {
+                val gradient = LinearGradient(
+                    0f, 0f, CARD_WIDTH.toFloat(), CARD_HEIGHT.toFloat(),
+                    Color.parseColor("#FF9933"), Color.parseColor("#138808"),
+                    Shader.TileMode.CLAMP,
+                )
+                paint.shader = gradient
+                canvas.drawRect(0f, 0f, CARD_WIDTH.toFloat(), CARD_HEIGHT.toFloat(), paint)
+                paint.shader = null
+                // Use gold (#FFD700) as accent so the milestone number pops on the saffron-green gradient
+                drawMilestoneContent(canvas, paint, milestone,
+                    textColor = Color.WHITE, accentColor = Color.parseColor("#FFD700"))
+            }
+        }
+
+        drawWatermark(canvas, paint)
+        return bmp
+    }
+
+    /** Share a milestone card via Android share sheet. */
+    fun shareMilestone(milestone: Milestone, theme: CardTheme = CardTheme.FESTIVE_INDIA) {
+        val bitmap = generateMilestoneBitmap(milestone, theme)
+        val uri = saveBitmapToCache(bitmap, MILESTONE_CACHE_FILE)
+        val intent = Intent(Intent.ACTION_SEND).apply {
+            type = "image/png"
+            putExtra(Intent.EXTRA_STREAM, uri)
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        }
+        Handler(Looper.getMainLooper()).post {
+            context.startActivity(Intent.createChooser(intent, "Share milestone"))
+        }
     }
 
     // ---------------------------------------------------------------------------
@@ -155,6 +225,51 @@ class ShareCardGenerator @Inject constructor(
         paint.alpha = 255
     }
 
+    // ---------------------------------------------------------------------------
+    // Milestone card layout
+    // ---------------------------------------------------------------------------
+
+    private fun drawMilestoneContent(
+        canvas: Canvas, paint: Paint, milestone: Milestone,
+        textColor: Int, accentColor: Int,
+    ) {
+        val formattedTarget = "%,d".format(milestone.targetDays)
+        val formattedDate = milestone.date.format(MILESTONE_DATE_FMT)
+        val prefix = if (milestone.isPast) "You turned" else "You'll turn"
+        val daysText = when {
+            milestone.daysAway == 0L -> "Today!"
+            milestone.isPast -> "${abs(milestone.daysAway)} days ago"
+            else -> "in ${milestone.daysAway} days"
+        }
+
+        // "MILESTONE" label — small, muted
+        paint.color = textColor; paint.alpha = 120; paint.textSize = 28f; paint.typeface = Typeface.DEFAULT
+        canvas.drawText("MILESTONE", 60f, 75f, paint)
+
+        // Prefix: "You'll turn" / "You turned"
+        paint.alpha = 200; paint.textSize = 40f
+        canvas.drawText(prefix, 60f, 145f, paint)
+
+        // Main number line: "10,000 days old" — large accent
+        paint.alpha = 255; paint.color = accentColor; paint.textSize = 72f
+        paint.typeface = Typeface.DEFAULT_BOLD
+        canvas.drawText("$formattedTarget days old", 60f, 235f, paint)
+
+        // Connector: "on"
+        paint.color = textColor; paint.alpha = 200; paint.textSize = 40f; paint.typeface = Typeface.DEFAULT
+        canvas.drawText("on", 60f, 295f, paint)
+
+        // Date — bold, large
+        paint.alpha = 255; paint.textSize = 54f; paint.typeface = Typeface.DEFAULT_BOLD; paint.color = textColor
+        canvas.drawText(formattedDate, 60f, 365f, paint)
+
+        // Stat cards row
+        paint.alpha = 255
+        val countdownLabel = if (milestone.isPast) "reached" else "coming up"
+        drawStatCard(canvas, paint, 60f, 415f, countdownLabel, daysText, textColor, accentColor)
+        drawStatCard(canvas, paint, 310f, 415f, "milestone", "$formattedTarget days", textColor, accentColor)
+    }
+
     private fun drawWatermark(canvas: Canvas, paint: Paint) {
         paint.color = Color.WHITE; paint.alpha = 60; paint.textSize = 22f; paint.typeface = Typeface.DEFAULT
         canvas.drawText("Made with AgeReveal", CARD_WIDTH - 280f, CARD_HEIGHT - 25f, paint)
@@ -165,9 +280,9 @@ class ShareCardGenerator @Inject constructor(
     // File cache
     // ---------------------------------------------------------------------------
 
-    private fun saveBitmapToCache(bitmap: Bitmap) = run {
+    private fun saveBitmapToCache(bitmap: Bitmap, fileName: String) = run {
         val cacheDir = File(context.cacheDir, "shared_images").also { it.mkdirs() }
-        val file = File(cacheDir, CACHE_FILE)
+        val file = File(cacheDir, fileName)
         FileOutputStream(file).use { bitmap.compress(Bitmap.CompressFormat.PNG, 100, it) }
         FileProvider.getUriForFile(context, "${context.packageName}$FILE_AUTHORITY_SUFFIX", file)
     }
