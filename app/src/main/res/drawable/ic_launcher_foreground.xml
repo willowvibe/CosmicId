@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Outer circle background -->
+    <path
+        android:fillColor="#FF7043"
+        android:pathData="M54,54m-54,0a54,54 0,1 1,108 0a54,54 0,1 1,-108 0" />
+    <!-- Cake icon centered in the safe zone (72x72 centered at 54,54) -->
+    <!-- Candle flame -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M54,22c2.22,0 4,-1.78 4,-4 0,-0.74 -0.2,-1.44 -0.54,-2.04L54,12l-3.46,3.96C50.2,16.56 50,17.26 50,18c0,2.22 1.78,4 4,4z" />
+    <!-- Cake body top layer -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M70,30H38c-2.2,0 -4,1.8 -4,4v4h40v-4c0,-2.2 -1.8,-4 -4,-4z" />
+    <!-- Cake base -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M33,42v10c0,1.1 0.9,2 2,2h34c1.1,0 2,-0.9 2,-2V42H33zM47,36H43v4h4v-4zM65,36H61v4h4v-4z" />
+</vector>
