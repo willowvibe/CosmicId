@@ -18,6 +18,7 @@ import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -91,14 +92,18 @@ fun CompareScreen(
                 PersonDateCard(
                     modifier = Modifier.weight(1f),
                     label = "Person A",
+                    name = uiState.labelA.takeIf { it != "Person A" } ?: "",
+                    onNameChanged = { viewModel.onPersonANameChanged(it) },
                     selectedDate = uiState.dateA,
-                    onDateSelected = { viewModel.onPersonADateSelected(it) },
+                    onDateSelected = { viewModel.onPersonADateSelected(it, uiState.labelA) },
                 )
                 PersonDateCard(
                     modifier = Modifier.weight(1f),
                     label = "Person B",
+                    name = uiState.labelB.takeIf { it != "Person B" } ?: "",
+                    onNameChanged = { viewModel.onPersonBNameChanged(it) },
                     selectedDate = uiState.dateB,
-                    onDateSelected = { viewModel.onPersonBDateSelected(it) },
+                    onDateSelected = { viewModel.onPersonBDateSelected(it, uiState.labelB) },
                 )
             }
 
@@ -129,6 +134,8 @@ fun CompareScreen(
 private fun PersonDateCard(
     modifier: Modifier = Modifier,
     label: String,
+    name: String,
+    onNameChanged: (String) -> Unit,
     selectedDate: LocalDate?,
     onDateSelected: (LocalDate) -> Unit,
 ) {
@@ -162,28 +169,43 @@ private fun PersonDateCard(
         }
     }
 
-    Card(
-        modifier = modifier.clickable { showDialog = true },
-    ) {
+    Card(modifier = modifier) {
         Column(
             modifier = Modifier.padding(12.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(6.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             Text(
                 label,
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
-            Icon(
-                Icons.Default.CalendarMonth,
-                contentDescription = "Select date for $label",
-                tint = MaterialTheme.colorScheme.primary,
+            OutlinedTextField(
+                value = name,
+                onValueChange = onNameChanged,
+                placeholder = { Text(label, style = MaterialTheme.typography.bodySmall) },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth(),
+                textStyle = MaterialTheme.typography.bodySmall,
             )
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { showDialog = true }
+                    .padding(vertical = 4.dp),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Icon(
+                    Icons.Default.CalendarMonth,
+                    contentDescription = "Select date for $label",
+                    tint = MaterialTheme.colorScheme.primary,
+                )
+            }
             Text(
                 text = selectedDate
                     ?.format(DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM))
-                    ?: "Tap to set",
+                    ?: "Tap to set date",
                 style = MaterialTheme.typography.bodyMedium,
                 color = if (selectedDate != null) MaterialTheme.colorScheme.onSurface
                         else MaterialTheme.colorScheme.onSurfaceVariant,

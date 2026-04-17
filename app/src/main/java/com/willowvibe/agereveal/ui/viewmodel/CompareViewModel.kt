@@ -33,6 +33,10 @@ class CompareViewModel @Inject constructor() : ViewModel() {
     private val _uiState = MutableStateFlow(CompareUiState())
     val uiState: StateFlow<CompareUiState> = _uiState.asStateFlow()
 
+    fun onPersonANameChanged(name: String) = _uiState.update { it.copy(labelA = name.ifBlank { "Person A" }) }
+
+    fun onPersonBNameChanged(name: String) = _uiState.update { it.copy(labelB = name.ifBlank { "Person B" }) }
+
     fun onPersonADateSelected(date: LocalDate, label: String = "Person A") {
         if (date.isAfter(LocalDate.now())) {
             _uiState.update { it.copy(error = "Birth date cannot be in the future") }
