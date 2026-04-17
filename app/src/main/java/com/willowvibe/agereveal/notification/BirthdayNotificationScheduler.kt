@@ -10,8 +10,8 @@ import androidx.work.WorkManager
 import androidx.work.workDataOf
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.time.LocalDate
-import java.time.LocalDateTime
 import java.time.ZoneId
+import java.time.temporal.ChronoUnit
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -40,22 +40,29 @@ class BirthdayNotificationScheduler @Inject constructor(
     }
 
     fun scheduleFor(id: Long, name: String, birthDate: LocalDate) {
+        val today = LocalDate.now()
         val nextBirthday = computeNextBirthday(birthDate)
-        var reminderDateTime = nextBirthday.minusDays(1).atTime(9, 0)
-        var delayMs = reminderDateTime
+        val nowMs = System.currentTimeMillis()
+        val reminderMs = nextBirthday.minusDays(1).atTime(9, 0)
             .atZone(ZoneId.systemDefault())
             .toInstant()
-            .toEpochMilli() - System.currentTimeMillis()
+            .toEpochMilli()
 
-        // Reminder window already passed (e.g. birthday is today/tomorrow and it's past 09:00).
-        // Fall back to scheduling 1 day before the *next* occurrence (one year later).
+        var delayMs = reminderMs - nowMs
+
+        // The standard 09:00-the-day-before window has already passed. If the birthday is
+        // imminent (today or tomorrow), fire immediately so the user isn't told "in 1 year".
+        // Otherwise schedule against the next occurrence.
         if (delayMs <= 0) {
-            val nextYearBirthday = nextBirthday.plusYears(1)
-            reminderDateTime = nextYearBirthday.minusDays(1).atTime(9, 0)
-            delayMs = reminderDateTime
-                .atZone(ZoneId.systemDefault())
-                .toInstant()
-                .toEpochMilli() - System.currentTimeMillis()
+            val daysAway = ChronoUnit.DAYS.between(today, nextBirthday)
+            delayMs = if (daysAway <= 1) {
+                0L
+            } else {
+                nextBirthday.plusYears(1).minusDays(1).atTime(9, 0)
+                    .atZone(ZoneId.systemDefault())
+                    .toInstant()
+                    .toEpochMilli() - nowMs
+            }
         }
 
         val request = OneTimeWorkRequestBuilder<BirthdayReminderWorker>()
@@ -78,7 +85,7 @@ class BirthdayNotificationScheduler @Inject constructor(
     private fun computeNextBirthday(birthDate: LocalDate): LocalDate {
         val today = LocalDate.now()
         var next = birthDate.withYear(today.year)
-        if (!next.isAfter(today)) next = next.plusYears(1)
+        if (next.isBefore(today)) next = next.plusYears(1)
         return next
     }
 

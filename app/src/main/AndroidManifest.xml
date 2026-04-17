@@ -41,9 +41,9 @@
             </intent-filter>
         </activity>
 
-        <!-- Home screen widget: BirthdayWidgetProvider -->
+        <!-- Home screen widget: Glance-based birthday countdown -->
         <receiver
-            android:name=".widget.BirthdayWidgetProvider"
+            android:name=".widget.BirthdayGlanceWidgetReceiver"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />

@@ -1,5 +1,6 @@
 package com.willowvibe.agereveal.domain
 
+import android.content.ClipData
 import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
@@ -73,12 +74,16 @@ class ShareCardGenerator @Inject constructor(
         val intent = Intent(Intent.ACTION_SEND).apply {
             type = "image/png"
             putExtra(Intent.EXTRA_STREAM, uri)
+            // ClipData is required on API 24+ so URI read permission propagates through the chooser
+            clipData = ClipData.newRawUri("", uri)
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         }
         // startActivity must run on the main thread; the caller may be on Dispatchers.IO
         Handler(Looper.getMainLooper()).post {
-            context.startActivity(Intent.createChooser(intent, "Share your age"))
+            val chooser = Intent.createChooser(intent, "Share your age")
+            chooser.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            context.startActivity(chooser)
         }
     }
 
@@ -133,11 +138,14 @@ class ShareCardGenerator @Inject constructor(
         val intent = Intent(Intent.ACTION_SEND).apply {
             type = "image/png"
             putExtra(Intent.EXTRA_STREAM, uri)
+            clipData = ClipData.newRawUri("", uri)
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         }
         Handler(Looper.getMainLooper()).post {
-            context.startActivity(Intent.createChooser(intent, "Share milestone"))
+            val chooser = Intent.createChooser(intent, "Share milestone")
+            chooser.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            context.startActivity(chooser)
         }
     }
 

@@ -1,6 +1,9 @@
 package com.willowvibe.agereveal.ui.screen
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.clickable
@@ -113,16 +116,24 @@ fun CalculatorScreen(
                 onDateSelected = viewModel::onBirthDateSelected,
             )
 
-            // Primary age display (animated in after date is set)
-            AnimatedVisibility(
-                visible = uiState.result != null,
-                enter = fadeIn() + slideInVertically { it / 2 },
-            ) {
-                uiState.result?.let { result ->
-                    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+            // Primary age display — sections fade in with a staggered delay for a
+            // "reveal" feel rather than popping in all at once.
+            uiState.result?.let { result ->
+                val visible = true
+                Column(
+                    modifier = Modifier.animateContentSize(),
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                ) {
+                    StaggerItem(visible = visible, delayMs = 0) {
                         PrimaryAgeDisplay(result = result)
+                    }
+                    StaggerItem(visible = visible, delayMs = 120) {
                         AgeStatsRow(result = result)
+                    }
+                    StaggerItem(visible = visible, delayMs = 240) {
                         BornOnCard(result = result)
+                    }
+                    StaggerItem(visible = visible, delayMs = 360) {
                         CtaRow(
                             onShare = onShareCard,
                             onUnlock = onUnlockMore,
@@ -138,6 +149,26 @@ fun CalculatorScreen(
 // ---------------------------------------------------------------------------
 // Sub-composables
 // ---------------------------------------------------------------------------
+
+/** Fades + slides content in with a per-item delay so sections reveal sequentially. */
+@Composable
+private fun StaggerItem(
+    visible: Boolean,
+    delayMs: Int,
+    content: @Composable () -> Unit,
+) {
+    AnimatedVisibility(
+        visible = visible,
+        enter = fadeIn(
+            animationSpec = tween(durationMillis = 400, delayMillis = delayMs, easing = FastOutSlowInEasing),
+        ) + slideInVertically(
+            animationSpec = tween(durationMillis = 400, delayMillis = delayMs, easing = FastOutSlowInEasing),
+            initialOffsetY = { it / 4 },
+        ),
+    ) {
+        content()
+    }
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
