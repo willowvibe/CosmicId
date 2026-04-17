@@ -332,17 +332,50 @@ private fun CompareResultCard(
                 color = WarmInkDim,
             )
             Spacer(Modifier.height(6.dp))
-            Row(verticalAlignment = Alignment.Baseline) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
                 if (years > 0) {
-                    Text(years.toString(), fontFamily = SerifFamily, fontSize = 38.sp, letterSpacing = (-1).sp, color = WarmInk)
-                    Text("y", style = MaterialTheme.typography.bodyMedium, color = WarmInkMute, modifier = Modifier.padding(start = 4.dp, end = 10.dp))
+                    Text(
+                        years.toString(),
+                        fontFamily = SerifFamily,
+                        fontSize = 38.sp,
+                        letterSpacing = (-1).sp,
+                        color = WarmInk
+                    )
+                    Text(
+                        "y",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = WarmInkMute,
+                        modifier = Modifier.padding(start = 4.dp, end = 10.dp)
+                    )
                 }
                 if (months > 0) {
-                    Text(months.toString(), fontFamily = SerifFamily, fontSize = 38.sp, letterSpacing = (-1).sp, color = WarmInk)
-                    Text("m", style = MaterialTheme.typography.bodyMedium, color = WarmInkMute, modifier = Modifier.padding(start = 4.dp, end = 10.dp))
+                    Text(
+                        months.toString(),
+                        fontFamily = SerifFamily,
+                        fontSize = 38.sp,
+                        letterSpacing = (-1).sp,
+                        color = WarmInk
+                    )
+                    Text(
+                        "m",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = WarmInkMute,
+                        modifier = Modifier.padding(start = 4.dp, end = 10.dp)
+                    )
                 }
-                Text(days.toString(), fontFamily = SerifFamily, fontSize = 38.sp, letterSpacing = (-1).sp, color = WarmInk)
-                Text("d", style = MaterialTheme.typography.bodyMedium, color = WarmInkMute, modifier = Modifier.padding(start = 4.dp))
+                Text(
+                    days.toString(),
+                    fontFamily = SerifFamily,
+                    fontSize = 38.sp,
+                    letterSpacing = (-1).sp,
+                    color = WarmInk
+                )
+                Text(
+                    "d",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = WarmInkMute,
+                    modifier = Modifier.padding(start = 4.dp)
+                )
             }
 
             // Bias bar — proportion of combined age lived
