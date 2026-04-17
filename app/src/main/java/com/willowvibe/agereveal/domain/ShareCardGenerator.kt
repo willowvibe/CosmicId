@@ -21,6 +21,7 @@ import java.io.File
 import java.io.FileOutputStream
 import java.time.format.DateTimeFormatter
 import java.util.Locale
+import java.util.concurrent.atomic.AtomicBoolean
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.math.abs
@@ -39,6 +40,9 @@ class ShareCardGenerator @Inject constructor(
 ) {
 
     enum class CardTheme { DARK_COSMOS, MINIMAL_LIGHT, FESTIVE_INDIA }
+
+    private val sharingCard = AtomicBoolean(false)
+    private val sharingMilestone = AtomicBoolean(false)
 
     companion object {
         const val CARD_WIDTH = 900
@@ -69,21 +73,35 @@ class ShareCardGenerator @Inject constructor(
 
     /** Share the generated bitmap via Android share sheet (WhatsApp, etc.). */
     fun share(result: AgeResult, theme: CardTheme = CardTheme.DARK_COSMOS) {
-        val bitmap = generateBitmap(result, theme)
-        val uri = saveBitmapToCache(bitmap, CACHE_FILE)
-        val intent = Intent(Intent.ACTION_SEND).apply {
-            type = "image/png"
-            putExtra(Intent.EXTRA_STREAM, uri)
-            // ClipData is required on API 24+ so URI read permission propagates through the chooser
-            clipData = ClipData.newRawUri("", uri)
-            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-        }
-        // startActivity must run on the main thread; the caller may be on Dispatchers.IO
-        Handler(Looper.getMainLooper()).post {
-            val chooser = Intent.createChooser(intent, "Share your age")
-            chooser.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-            context.startActivity(chooser)
+        if (!sharingCard.compareAndSet(false, true)) return
+        var bitmap: Bitmap? = null
+        try {
+            bitmap = generateBitmap(result, theme)
+            val uri = saveBitmapToCache(bitmap, CACHE_FILE)
+            bitmap.recycle()
+            bitmap = null
+            val intent = Intent(Intent.ACTION_SEND).apply {
+                type = "image/png"
+                putExtra(Intent.EXTRA_STREAM, uri)
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            }
+            // startActivity must run on the main thread; the caller may be on Dispatchers.IO.
+            // clipData must be on the chooser (not the inner intent) so WhatsApp receives the
+            // URI read permission grant.
+            Handler(Looper.getMainLooper()).post {
+                try {
+                    val chooser = Intent.createChooser(intent, "Share your age")
+                    chooser.clipData = ClipData.newRawUri("", uri)
+                    chooser.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                    context.startActivity(chooser)
+                } finally {
+                    sharingCard.set(false)
+                }
+            }
+        } catch (e: Exception) {
+            bitmap?.recycle()
+            sharingCard.set(false)
         }
     }
 
@@ -133,19 +151,32 @@ class ShareCardGenerator @Inject constructor(
 
     /** Share a milestone card via Android share sheet. */
     fun shareMilestone(milestone: Milestone, theme: CardTheme = CardTheme.FESTIVE_INDIA) {
-        val bitmap = generateMilestoneBitmap(milestone, theme)
-        val uri = saveBitmapToCache(bitmap, MILESTONE_CACHE_FILE)
-        val intent = Intent(Intent.ACTION_SEND).apply {
-            type = "image/png"
-            putExtra(Intent.EXTRA_STREAM, uri)
-            clipData = ClipData.newRawUri("", uri)
-            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-        }
-        Handler(Looper.getMainLooper()).post {
-            val chooser = Intent.createChooser(intent, "Share milestone")
-            chooser.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-            context.startActivity(chooser)
+        if (!sharingMilestone.compareAndSet(false, true)) return
+        var bitmap: Bitmap? = null
+        try {
+            bitmap = generateMilestoneBitmap(milestone, theme)
+            val uri = saveBitmapToCache(bitmap, MILESTONE_CACHE_FILE)
+            bitmap.recycle()
+            bitmap = null
+            val intent = Intent(Intent.ACTION_SEND).apply {
+                type = "image/png"
+                putExtra(Intent.EXTRA_STREAM, uri)
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            }
+            Handler(Looper.getMainLooper()).post {
+                try {
+                    val chooser = Intent.createChooser(intent, "Share milestone")
+                    chooser.clipData = ClipData.newRawUri("", uri)
+                    chooser.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                    context.startActivity(chooser)
+                } finally {
+                    sharingMilestone.set(false)
+                }
+            }
+        } catch (e: Exception) {
+            bitmap?.recycle()
+            sharingMilestone.set(false)
         }
     }
 
@@ -194,9 +225,13 @@ class ShareCardGenerator @Inject constructor(
         paint.color = textColor; paint.alpha = 120; paint.textSize = 28f; paint.typeface = Typeface.DEFAULT
         canvas.drawText("MY AGE TODAY", 60f, 80f, paint)
 
-        // Primary age line
+        // Primary age line — scale down if the text is wider than the canvas
+        val ageText = "${result.years} yrs  ${result.months} mo  ${result.days} days"
         paint.alpha = 255; paint.textSize = 90f; paint.typeface = Typeface.DEFAULT_BOLD; paint.color = textColor
-        canvas.drawText("${result.years} yrs  ${result.months} mo  ${result.days} days", 60f, 175f, paint)
+        val maxWidth = CARD_WIDTH - 120f
+        val measured = paint.measureText(ageText)
+        if (measured > maxWidth) paint.textSize = 90f * maxWidth / measured
+        canvas.drawText(ageText, 60f, 175f, paint)
 
         // Born on
         paint.textSize = 32f; paint.typeface = Typeface.DEFAULT; paint.alpha = 160
