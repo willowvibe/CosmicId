@@ -16,7 +16,13 @@ android {
         //noinspection OldTargetApi
         targetSdk = 35
         versionCode = 1
-        versionName = "1.0"
+        // Read version from VERSION file
+        val versionFile = File(projectDir.absolutePath + "/../VERSION")
+        versionName = if (versionFile.exists()) {
+            versionFile.readText().trim()
+        } else {
+            "1.0"
+        }
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
