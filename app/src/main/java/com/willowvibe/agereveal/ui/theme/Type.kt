@@ -2,49 +2,76 @@ package com.willowvibe.agereveal.ui.theme
 
 import androidx.compose.material3.Typography
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
-import com.willowvibe.agereveal.R
 
 /**
- * Inter font family.
- * Place Inter-Regular.ttf, Inter-Medium.ttf, Inter-SemiBold.ttf, Inter-Bold.ttf
- * in res/font/ before enabling the custom family below.
+ * Inter (sans-serif) for body / UI text.
+ * Serif (Georgia fallback) for display numerals and headings — mirrors the Fraunces
+ * intent in the design prototype.
  *
- * For the skeleton, the system default sans-serif is used as a fallback —
- * swap [FontFamily.Default] → [InterFamily] once font files are added.
+ * To enable Inter: drop Inter-Regular.ttf / Inter-Medium.ttf / Inter-SemiBold.ttf /
+ * Inter-Bold.ttf into res/font/ and uncomment InterFamily below.
  */
 
 // val InterFamily = FontFamily(
-//     Font(R.font.inter_regular, FontWeight.Normal),
-//     Font(R.font.inter_medium,  FontWeight.Medium),
-//     Font(R.font.inter_semibold, FontWeight.SemiBold),
-//     Font(R.font.inter_bold,    FontWeight.Bold),
+//     Font(R.font.inter_regular,   FontWeight.Normal),
+//     Font(R.font.inter_medium,    FontWeight.Medium),
+//     Font(R.font.inter_semibold,  FontWeight.SemiBold),
+//     Font(R.font.inter_bold,      FontWeight.Bold),
 // )
 
+val SerifFamily = FontFamily.Serif   // Georgia on Android; swap for Fraunces once bundled
+
 val AppTypography = Typography(
-    // Large primary display: e.g. "27 yrs" headline
+    // Hero display — age numerals (e.g. "27")
+    displayLarge = TextStyle(
+        fontFamily = SerifFamily,
+        fontWeight = FontWeight.Normal,
+        fontSize = 78.sp,
+        lineHeight = 74.sp,
+        letterSpacing = (-2).sp,
+    ),
+    // Secondary numeral (months / days)
     displayMedium = TextStyle(
-        fontFamily = FontFamily.Default,
-        fontWeight = FontWeight.Bold,
-        fontSize = 48.sp,
-        lineHeight = 56.sp,
+        fontFamily = SerifFamily,
+        fontWeight = FontWeight.Normal,
+        fontSize = 46.sp,
+        lineHeight = 44.sp,
+        letterSpacing = (-1.5).sp,
     ),
-    // Section label (stats)
+    // Small display (compare result)
+    displaySmall = TextStyle(
+        fontFamily = SerifFamily,
+        fontWeight = FontWeight.Normal,
+        fontSize = 38.sp,
+        lineHeight = 38.sp,
+        letterSpacing = (-1).sp,
+    ),
+    // Screen / section heading
     titleLarge = TextStyle(
-        fontFamily = FontFamily.Default,
-        fontWeight = FontWeight.SemiBold,
-        fontSize = 24.sp,
-        lineHeight = 30.sp,
+        fontFamily = SerifFamily,
+        fontWeight = FontWeight.Normal,
+        fontSize = 22.sp,
+        lineHeight = 28.sp,
+        letterSpacing = (-0.3).sp,
     ),
-    // Card stat value
+    // App name header
     titleMedium = TextStyle(
-        fontFamily = FontFamily.Default,
-        fontWeight = FontWeight.Medium,
-        fontSize = 18.sp,
-        lineHeight = 24.sp,
+        fontFamily = SerifFamily,
+        fontWeight = FontWeight.Normal,
+        fontSize = 20.sp,
+        lineHeight = 26.sp,
+        letterSpacing = (-0.2).sp,
+    ),
+    // Card stat value / person age
+    titleSmall = TextStyle(
+        fontFamily = SerifFamily,
+        fontWeight = FontWeight.Normal,
+        fontSize = 15.sp,
+        lineHeight = 20.sp,
+        letterSpacing = (-0.3).sp,
     ),
     // Row label (e.g. "Total days lived")
     bodyLarge = TextStyle(
@@ -60,12 +87,35 @@ val AppTypography = Typography(
         fontSize = 14.sp,
         lineHeight = 20.sp,
     ),
-    // Small labels / chips
+    // Tertiary text
+    bodySmall = TextStyle(
+        fontFamily = FontFamily.Default,
+        fontWeight = FontWeight.Normal,
+        fontSize = 12.sp,
+        lineHeight = 16.sp,
+    ),
+    // ALL-CAPS micro labels (e.g. "BORN", "SECONDS ALIVE")
+    labelLarge = TextStyle(
+        fontFamily = FontFamily.Default,
+        fontWeight = FontWeight.SemiBold,
+        fontSize = 14.sp,
+        lineHeight = 20.sp,
+        letterSpacing = 1.5.sp,
+    ),
+    // Standard label
+    labelMedium = TextStyle(
+        fontFamily = FontFamily.Default,
+        fontWeight = FontWeight.Medium,
+        fontSize = 12.sp,
+        lineHeight = 16.sp,
+        letterSpacing = 1.sp,
+    ),
+    // Small chips / badges
     labelSmall = TextStyle(
         fontFamily = FontFamily.Default,
         fontWeight = FontWeight.Medium,
-        fontSize = 11.sp,
-        lineHeight = 16.sp,
-        letterSpacing = 0.5.sp,
+        fontSize = 10.sp,
+        lineHeight = 14.sp,
+        letterSpacing = 1.5.sp,
     ),
 )

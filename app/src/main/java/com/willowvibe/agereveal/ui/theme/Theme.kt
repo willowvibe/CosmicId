@@ -1,28 +1,30 @@
 package com.willowvibe.agereveal.ui.theme
 
-import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.dynamicDarkColorScheme
-import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.platform.LocalContext
 
 private val DarkColorScheme = darkColorScheme(
-    primary          = BrandGreen,
-    onPrimary        = DarkOnSurface,
-    primaryContainer = CosmosNavyShell,
-    secondary        = AccentMint,
-    onSecondary      = CosmosNavyDeep,
-    tertiary         = BrandGold,
-    background       = DarkBackground,
-    surface          = DarkSurface,
-    surfaceVariant   = DarkSurfaceVar,
-    onBackground     = DarkOnSurface,
-    onSurface        = DarkOnSurface,
-    onSurfaceVariant = DarkOnSurfaceVar,
+    primary          = WarmTeal,
+    onPrimary        = WarmInk,
+    primaryContainer = WarmTealDeep,
+    onPrimaryContainer = WarmInk,
+    secondary        = WarmAmber,
+    onSecondary      = WarmBlack,
+    secondaryContainer = WarmAmberDeep,
+    onSecondaryContainer = WarmInk,
+    tertiary         = WarmAmber,
+    onTertiary       = WarmBlack,
+    background       = WarmBlack,
+    surface          = WarmSurface,
+    surfaceVariant   = WarmSurfaceSoft,
+    onBackground     = WarmInk,
+    onSurface        = WarmInk,
+    onSurfaceVariant = WarmInkMute,
+    error            = WarmError,
+    outline          = WarmInkDim,
 )
 
 private val LightColorScheme = lightColorScheme(
@@ -40,18 +42,10 @@ private val LightColorScheme = lightColorScheme(
 @Composable
 fun AgeRevealTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
-    // Enable Material You dynamic colors on Android 12+ — falls back to our palette on older devices
-    dynamicColor: Boolean = true,
     content: @Composable () -> Unit,
 ) {
-    val colorScheme = when {
-        dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
-            val context = LocalContext.current
-            if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
-        }
-        darkTheme -> DarkColorScheme
-        else      -> LightColorScheme
-    }
+    // Dynamic color disabled — warm dark palette is the brand identity.
+    val colorScheme = if (darkTheme) DarkColorScheme else LightColorScheme
 
     MaterialTheme(
         colorScheme = colorScheme,

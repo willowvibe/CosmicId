@@ -1,14 +1,19 @@
 package com.willowvibe.agereveal.ui.navigation
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Calculate
 import androidx.compose.material.icons.filled.Cake
+import androidx.compose.material.icons.filled.Calculate
 import androidx.compose.material.icons.filled.CompareArrows
-import androidx.compose.material.icons.filled.LockOpen
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -18,7 +23,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
@@ -31,13 +38,17 @@ import com.willowvibe.agereveal.ui.screen.CalculatorScreen
 import com.willowvibe.agereveal.ui.screen.CompareScreen
 import com.willowvibe.agereveal.ui.screen.DetailsUnlockScreen
 import com.willowvibe.agereveal.ui.screen.RemindersScreen
+import com.willowvibe.agereveal.ui.theme.WarmBlack
+import com.willowvibe.agereveal.ui.theme.WarmInk
+import com.willowvibe.agereveal.ui.theme.WarmInkDim
+import com.willowvibe.agereveal.ui.theme.WarmSurface
 import com.willowvibe.agereveal.ui.viewmodel.CalculatorViewModel
 import kotlinx.coroutines.launch
 
 sealed class Screen(val route: String, val label: String, val icon: ImageVector) {
-    data object Calculator : Screen("calculator", "Age", Icons.Default.Calculate)
-    data object Details    : Screen("details",    "Unlock", Icons.Default.LockOpen)
-    data object Compare    : Screen("compare",    "Compare", Icons.Default.CompareArrows)
+    data object Calculator : Screen("calculator", "Age",       Icons.Default.Calculate)
+    data object Details    : Screen("details",    "Profile",   Icons.Default.Star)
+    data object Compare    : Screen("compare",    "Compare",   Icons.Default.CompareArrows)
     data object Reminders  : Screen("reminders",  "Birthdays", Icons.Default.Cake)
 }
 
@@ -58,11 +69,16 @@ fun AppNavGraph(adManager: AdManager) {
 
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
+        containerColor = WarmBlack,
         bottomBar = {
-            NavigationBar {
+            NavigationBar(
+                containerColor = WarmBlack,
+                tonalElevation = 0.dp,
+            ) {
                 bottomNavItems.forEach { screen ->
+                    val selected = currentDest?.hierarchy?.any { it.route == screen.route } == true
                     NavigationBarItem(
-                        selected = currentDest?.hierarchy?.any { it.route == screen.route } == true,
+                        selected = selected,
                         onClick = {
                             navController.navigate(screen.route) {
                                 popUpTo(navController.graph.findStartDestination().id) { saveState = true }
@@ -70,8 +86,21 @@ fun AppNavGraph(adManager: AdManager) {
                                 restoreState = true
                             }
                         },
-                        icon = { Icon(screen.icon, contentDescription = screen.label) },
+                        icon = {
+                            Icon(
+                                screen.icon,
+                                contentDescription = screen.label,
+                                modifier = Modifier.size(22.dp),
+                            )
+                        },
                         label = { Text(screen.label) },
+                        colors = NavigationBarItemDefaults.colors(
+                            selectedIconColor = WarmInk,
+                            selectedTextColor = WarmInk,
+                            unselectedIconColor = WarmInkDim,
+                            unselectedTextColor = WarmInkDim,
+                            indicatorColor = WarmSurface,
+                        ),
                     )
                 }
             }
@@ -83,10 +112,7 @@ fun AppNavGraph(adManager: AdManager) {
             modifier = Modifier.padding(innerPadding),
         ) {
             composable(Screen.Calculator.route) { backStackEntry ->
-                // Use the same CalculatorViewModel instance for both Calculator + Details screens
-                // by scoping it to the nav graph's back-stack entry.
                 val viewModel: CalculatorViewModel = hiltViewModel(backStackEntry)
-
                 CalculatorScreen(
                     viewModel = viewModel,
                     adManager = adManager,
@@ -107,15 +133,12 @@ fun AppNavGraph(adManager: AdManager) {
                 )
             }
             composable(Screen.Details.route) {
-                // Route the Details screen to the Calculator's back-stack entry so they share state.
-                // Guard against deep-link or test scenarios where Calculator isn't on the back stack.
                 val calcEntry = runCatching { navController.getBackStackEntry(Screen.Calculator.route) }.getOrNull()
                 if (calcEntry == null) {
                     navController.navigate(Screen.Calculator.route) { launchSingleTop = true }
                     return@composable
                 }
                 val viewModel: CalculatorViewModel = hiltViewModel(calcEntry)
-
                 DetailsUnlockScreen(
                     viewModel = viewModel,
                     onWatchAd = {
@@ -132,14 +155,10 @@ fun AppNavGraph(adManager: AdManager) {
                 )
             }
             composable(Screen.Compare.route) {
-                CompareScreen(
-                    onShowInterstitial = { adManager.maybeShowInterstitial() },
-                )
+                CompareScreen(onShowInterstitial = { adManager.maybeShowInterstitial() })
             }
             composable(Screen.Reminders.route) {
-                RemindersScreen(
-                    onAddBirthday = { /* handled internally by the FAB inside RemindersScreen */ },
-                )
+                RemindersScreen(onAddBirthday = {})
             }
         }
     }
