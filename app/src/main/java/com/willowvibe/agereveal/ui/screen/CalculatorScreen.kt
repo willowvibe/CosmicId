@@ -1,11 +1,11 @@
 package com.willowvibe.agereveal.ui.screen
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.slideInVertically
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -16,25 +16,25 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CalendarMonth
-import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -45,8 +45,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.blur
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.google.android.gms.ads.AdRequest
@@ -54,6 +59,15 @@ import com.google.android.gms.ads.AdSize
 import com.google.android.gms.ads.AdView
 import com.willowvibe.agereveal.ads.AdManager
 import com.willowvibe.agereveal.data.model.AgeResult
+import com.willowvibe.agereveal.ui.theme.SerifFamily
+import com.willowvibe.agereveal.ui.theme.WarmAmber
+import com.willowvibe.agereveal.ui.theme.WarmBlack
+import com.willowvibe.agereveal.ui.theme.WarmInk
+import com.willowvibe.agereveal.ui.theme.WarmInkDim
+import com.willowvibe.agereveal.ui.theme.WarmInkMute
+import com.willowvibe.agereveal.ui.theme.WarmSurface
+import com.willowvibe.agereveal.ui.theme.WarmSurfaceSoft
+import com.willowvibe.agereveal.ui.theme.WarmTeal
 import com.willowvibe.agereveal.ui.viewmodel.CalculatorViewModel
 import java.time.Instant
 import java.time.LocalDate
@@ -61,18 +75,6 @@ import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 
-/**
- * Screen 1 — Main Calculator (always visible, no ad gate).
- *
- * Layout (top → bottom):
- *   TopAppBar "AgeReveal"
- *   [DatePicker card]          ← thumb-friendly, opens Material3 DatePickerDialog
- *   [Primary age display]      ← large, animated reveal
- *   [Stats row]                ← total days, hours, next birthday
- *   [Born on / next birthday day-of-week]
- *   [CTA row: Share Card | Unlock More ▶]
- *   [BannerAd]                 ← anchored to bottom of Scaffold
- */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CalculatorScreen(
@@ -85,104 +87,129 @@ fun CalculatorScreen(
     val ticker by viewModel.tickerSeconds.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
 
-    // Recalculate total seconds every tick
     LaunchedEffect(ticker) { viewModel.onTick() }
-
-    // Show errors via Snackbar
     LaunchedEffect(uiState.error) {
         uiState.error?.let { snackbarHostState.showSnackbar(it); viewModel.clearError() }
     }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(title = { Text("AgeReveal", style = MaterialTheme.typography.titleLarge) })
-        },
-        snackbarHost = { SnackbarHost(snackbarHostState) },
-        bottomBar = {
-            BannerAdView(adUnitId = AdManager.BANNER_AD_UNIT_ID)
-        },
-    ) { padding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 16.dp, vertical = 12.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-        ) {
-            // Date picker
-            DatePickerCard(
-                selectedDate = uiState.birthDate,
-                onDateSelected = viewModel::onBirthDateSelected,
-            )
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(WarmBlack),
+    ) {
+        Column(modifier = Modifier.fillMaxSize()) {
+            // ── Header ──────────────────────────────────────────────────────
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 20.dp, vertical = 18.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Box(
+                        modifier = Modifier
+                            .size(10.dp)
+                            .clip(CircleShape)
+                            .background(WarmAmber),
+                    )
+                    Spacer(Modifier.width(10.dp))
+                    Text(
+                        "AgeReveal",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = WarmInk,
+                    )
+                }
+                Text(
+                    "LIVE",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = WarmInkDim,
+                )
+            }
 
-            // Primary age display — sections fade in with a staggered delay for a
-            // "reveal" feel rather than popping in all at once.
-            uiState.result?.let { result ->
-                val visible = true
-                Column(
-                    modifier = Modifier.animateContentSize(),
-                    verticalArrangement = Arrangement.spacedBy(16.dp),
-                ) {
-                    StaggerItem(visible = visible, delayMs = 0) {
-                        PrimaryAgeDisplay(result = result)
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = 20.dp),
+                verticalArrangement = Arrangement.spacedBy(18.dp),
+            ) {
+                // ── Birth anchor ─────────────────────────────────────────────
+                BirthAnchorRow(
+                    selectedDate = uiState.birthDate,
+                    onDateSelected = viewModel::onBirthDateSelected,
+                )
+
+                uiState.result?.let { result ->
+                    AnimatedVisibility(
+                        visible = true,
+                        enter = fadeIn(tween(400, easing = FastOutSlowInEasing)) +
+                                slideInVertically(tween(400), { it / 4 }),
+                    ) {
+                        Column(verticalArrangement = Arrangement.spacedBy(18.dp)) {
+                            // ── Clock-face trio ───────────────────────────────
+                            ClockFaceHero(result)
+
+                            // ── Seconds alive strip ───────────────────────────
+                            SecondsStrip(result)
+
+                            // ── Mini stat chips ───────────────────────────────
+                            MiniStatRow(result)
+
+                            // ── Teased cosmic profile ─────────────────────────
+                            TeasedDetails(
+                                result = result,
+                                isUnlocked = uiState.isUnlocked,
+                                onReveal = onUnlockMore,
+                                onShare = onShareCard,
+                            )
+                        }
                     }
-                    StaggerItem(visible = visible, delayMs = 120) {
-                        AgeStatsRow(result = result)
-                    }
-                    StaggerItem(visible = visible, delayMs = 240) {
-                        BornOnCard(result = result)
-                    }
-                    StaggerItem(visible = visible, delayMs = 360) {
-                        CtaRow(
-                            onShare = onShareCard,
-                            onUnlock = onUnlockMore,
-                            isUnlocked = uiState.isUnlocked,
+                } ?: run {
+                    // Placeholder before a date is chosen
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(200.dp),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Text(
+                            "Tap the date above to begin",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = WarmInkDim,
+                            textAlign = TextAlign.Center,
                         )
                     }
                 }
+
+                Spacer(Modifier.height(8.dp))
             }
+
+            // ── Banner ad ────────────────────────────────────────────────────
+            BannerAdView(adUnitId = AdManager.BANNER_AD_UNIT_ID)
         }
+
+        // Snackbar overlay
+        SnackbarHost(
+            hostState = snackbarHostState,
+            modifier = Modifier.align(Alignment.BottomCenter),
+        )
     }
 }
 
-// ---------------------------------------------------------------------------
-// Sub-composables
-// ---------------------------------------------------------------------------
-
-/** Fades + slides content in with a per-item delay so sections reveal sequentially. */
-@Composable
-private fun StaggerItem(
-    visible: Boolean,
-    delayMs: Int,
-    content: @Composable () -> Unit,
-) {
-    AnimatedVisibility(
-        visible = visible,
-        enter = fadeIn(
-            animationSpec = tween(durationMillis = 400, delayMillis = delayMs, easing = FastOutSlowInEasing),
-        ) + slideInVertically(
-            animationSpec = tween(durationMillis = 400, delayMillis = delayMs, easing = FastOutSlowInEasing),
-            initialOffsetY = { it / 4 },
-        ),
-    ) {
-        content()
-    }
-}
+// ─────────────────────────────────────────────────────────────────────────────
+// Birth anchor row
+// ─────────────────────────────────────────────────────────────────────────────
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun DatePickerCard(
+private fun BirthAnchorRow(
     selectedDate: LocalDate?,
     onDateSelected: (LocalDate) -> Unit,
 ) {
     var showDialog by remember { mutableStateOf(false) }
-
-    // Initialise picker at selected date, or today
     val initialMillis = (selectedDate ?: LocalDate.now())
-        .atStartOfDay(ZoneId.of("UTC"))
-        .toInstant()
-        .toEpochMilli()
+        .atStartOfDay(ZoneId.of("UTC")).toInstant().toEpochMilli()
     val datePickerState = rememberDatePickerState(initialSelectedDateMillis = initialMillis)
 
     if (showDialog) {
@@ -191,128 +218,290 @@ private fun DatePickerCard(
             confirmButton = {
                 TextButton(onClick = {
                     datePickerState.selectedDateMillis?.let { millis ->
-                        val date = Instant.ofEpochMilli(millis)
-                            .atZone(ZoneId.of("UTC"))
-                            .toLocalDate()
-                        onDateSelected(date)
+                        onDateSelected(
+                            Instant.ofEpochMilli(millis).atZone(ZoneId.of("UTC")).toLocalDate(),
+                        )
                     }
                     showDialog = false
                 }) { Text("OK") }
             },
-            dismissButton = {
-                TextButton(onClick = { showDialog = false }) { Text("Cancel") }
-            },
-        ) {
-            DatePicker(state = datePickerState)
-        }
+            dismissButton = { TextButton(onClick = { showDialog = false }) { Text("Cancel") } },
+        ) { DatePicker(state = datePickerState) }
     }
 
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable { showDialog = true },
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-    ) {
+    Column {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
+                .padding(bottom = 12.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Column {
                 Text(
-                    "Date of Birth",
+                    "BORN",
                     style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = WarmInkDim,
                 )
-                Spacer(modifier = Modifier.height(4.dp))
+                Spacer(Modifier.height(4.dp))
                 Text(
                     text = selectedDate
                         ?.format(DateTimeFormatter.ofLocalizedDate(FormatStyle.LONG))
-                        ?: "Tap to select birthday",
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = if (selectedDate != null) MaterialTheme.colorScheme.onSurface
-                            else MaterialTheme.colorScheme.onSurfaceVariant,
+                        ?: "Tap to set your birthday",
+                    style = MaterialTheme.typography.titleMedium.copy(
+                        fontFamily = SerifFamily,
+                        fontSize = 17.sp,
+                        letterSpacing = (-0.2).sp,
+                    ),
+                    color = if (selectedDate != null) WarmInk else WarmInkMute,
                 )
             }
-            Icon(
-                Icons.Default.CalendarMonth,
-                contentDescription = "Open date picker",
-                tint = MaterialTheme.colorScheme.primary,
+            IconButton(
+                onClick = { showDialog = true },
+                modifier = Modifier
+                    .size(34.dp)
+                    .clip(CircleShape)
+                    .background(WarmSurface),
+            ) {
+                Icon(
+                    Icons.Default.Edit,
+                    contentDescription = "Change birth date",
+                    tint = WarmInkMute,
+                    modifier = Modifier.size(16.dp),
+                )
+            }
+        }
+        HorizontalDivider(color = WarmSurfaceSoft, thickness = 1.dp)
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Clock-face hero
+// ─────────────────────────────────────────────────────────────────────────────
+
+@Composable
+private fun ClockFaceHero(result: AgeResult) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 6.dp),
+        verticalAlignment = Alignment.Bottom,
+        horizontalArrangement = Arrangement.Start,
+    ) {
+        AgeNumeral(value = result.years.toString(), unit = "years", large = true, modifier = Modifier.weight(1.3f))
+        AgeNumeral(value = result.months.toString().padStart(2, '0'), unit = "months", large = false, modifier = Modifier.weight(1f))
+        AgeNumeral(value = result.days.toString().padStart(2, '0'), unit = "days", large = false, modifier = Modifier.weight(1f))
+    }
+}
+
+@Composable
+private fun AgeNumeral(
+    value: String,
+    unit: String,
+    large: Boolean,
+    modifier: Modifier = Modifier,
+) {
+    Column(modifier = modifier) {
+        Text(
+            text = value,
+            fontFamily = SerifFamily,
+            fontWeight = FontWeight.Normal,
+            fontSize = if (large) 78.sp else 46.sp,
+            lineHeight = if (large) 74.sp else 44.sp,
+            letterSpacing = (-2).sp,
+            color = WarmInk,
+        )
+        Text(
+            text = unit.uppercase(),
+            style = MaterialTheme.typography.labelSmall,
+            color = WarmInkDim,
+            modifier = Modifier.padding(top = 6.dp),
+        )
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Seconds alive strip
+// ─────────────────────────────────────────────────────────────────────────────
+
+@Composable
+private fun SecondsStrip(result: AgeResult) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(14.dp))
+            .background(WarmSurface)
+            .padding(horizontal = 14.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Box(
+            modifier = Modifier
+                .size(6.dp)
+                .clip(CircleShape)
+                .background(WarmAmber),
+        )
+        Spacer(Modifier.width(12.dp))
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                "SECONDS ALIVE",
+                style = MaterialTheme.typography.labelSmall,
+                color = WarmInkDim,
+            )
+            Text(
+                text = "%,d".format(result.totalSeconds),
+                fontFamily = FontFamily.Monospace,
+                fontWeight = FontWeight.Medium,
+                fontSize = 20.sp,
+                letterSpacing = (-0.5).sp,
+                color = WarmAmber,
             )
         }
-    }
-}
-
-@Composable
-private fun PrimaryAgeDisplay(result: AgeResult) {
-    Column(modifier = Modifier.fillMaxWidth()) {
         Text(
-            text = "${result.years} yrs  ${result.months} mo  ${result.days} days",
-            style = MaterialTheme.typography.displayMedium,
-            color = MaterialTheme.colorScheme.primary,
-            fontWeight = FontWeight.Bold,
-        )
-        Text(
-            text = "${"%,d".format(result.totalSeconds)} seconds lived",
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            "+1 every\nheartbeat",
+            style = MaterialTheme.typography.labelSmall,
+            color = WarmInkDim,
+            textAlign = TextAlign.End,
         )
     }
 }
 
-@Composable
-private fun AgeStatsRow(result: AgeResult) {
-    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        AgeStatItem("Total days lived", "%,d days".format(result.totalDays))
-        AgeStatItem("Total hours",      "%,d hrs".format(result.totalHours))
-        AgeStatItem("Next birthday in", "${result.daysToNextBirthday} days",
-            valueHighlight = true)
-    }
-}
+// ─────────────────────────────────────────────────────────────────────────────
+// Mini stat chips
+// ─────────────────────────────────────────────────────────────────────────────
 
 @Composable
-private fun AgeStatItem(label: String, value: String, valueHighlight: Boolean = false) {
+private fun MiniStatRow(result: AgeResult) {
     Row(
         modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
     ) {
-        Text(label, style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant)
-        Text(value, style = MaterialTheme.typography.bodyLarge,
+        MiniStatChip(label = "DAYS", value = "%,d".format(result.totalDays), modifier = Modifier.weight(1f))
+        MiniStatChip(label = "HOURS", value = formatCompactNumber(result.totalHours), modifier = Modifier.weight(1f))
+        MiniStatChip(label = "NEXT BDAY", value = "${result.daysToNextBirthday}d", accent = true, modifier = Modifier.weight(1f))
+    }
+}
+
+@Composable
+private fun MiniStatChip(
+    label: String,
+    value: String,
+    accent: Boolean = false,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier
+            .clip(RoundedCornerShape(10.dp))
+            .background(WarmSurface)
+            .padding(horizontal = 12.dp, vertical = 10.dp),
+    ) {
+        Text(label, style = MaterialTheme.typography.labelSmall, color = WarmInkDim)
+        Spacer(Modifier.height(2.dp))
+        Text(
+            value,
             fontWeight = FontWeight.SemiBold,
-            color = if (valueHighlight) MaterialTheme.colorScheme.tertiary
-                    else MaterialTheme.colorScheme.onSurface)
+            fontSize = 15.sp,
+            color = if (accent) WarmAmber else WarmInk,
+        )
     }
 }
 
-@Composable
-private fun BornOnCard(result: AgeResult) {
-    Card(modifier = Modifier.fillMaxWidth()) {
-        Column(modifier = Modifier.padding(12.dp)) {
-            Text("Born on a ${result.dayOfWeekBorn.lowercase().replaceFirstChar { it.uppercase() }}",
-                style = MaterialTheme.typography.bodyMedium)
-            Text("Next birthday falls on a ${result.dayOfWeekNextBirthday.lowercase().replaceFirstChar { it.uppercase() }}",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant)
-        }
-    }
+private fun formatCompactNumber(n: Long): String = when {
+    n >= 1_000_000 -> "%.1fM".format(n / 1_000_000.0)
+    n >= 1_000     -> "%.1fK".format(n / 1_000.0)
+    else           -> n.toString()
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Teased details
+// ─────────────────────────────────────────────────────────────────────────────
+
 @Composable
-private fun CtaRow(onShare: () -> Unit, onUnlock: () -> Unit, isUnlocked: Boolean, hasResult: Boolean = true) {
-    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-        Button(modifier = Modifier.weight(1f), onClick = onShare) {
-            Text("Share Card")
+private fun TeasedDetails(
+    result: AgeResult,
+    isUnlocked: Boolean,
+    onReveal: () -> Unit,
+    onShare: () -> Unit,
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(14.dp))
+            .background(WarmSurface)
+            .padding(14.dp),
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                "YOUR VEDIC & COSMIC PROFILE",
+                style = MaterialTheme.typography.labelSmall,
+                color = WarmInkDim,
+            )
+            if (!isUnlocked) {
+                Text(
+                    "Reveal →",
+                    style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 0.sp),
+                    color = WarmTeal,
+                    fontWeight = FontWeight.SemiBold,
+                    modifier = Modifier.clickable { onReveal() },
+                )
+            } else {
+                Text(
+                    "Share ↗",
+                    style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 0.sp),
+                    color = WarmTeal,
+                    fontWeight = FontWeight.SemiBold,
+                    modifier = Modifier.clickable { onShare() },
+                )
+            }
         }
-        if (!isUnlocked) {
-            OutlinedButton(modifier = Modifier.weight(1f), onClick = onUnlock) {
-                Text("Unlock More ▶")
+
+        Spacer(Modifier.height(10.dp))
+
+        val blurMod = if (!isUnlocked) Modifier.blur(4.dp) else Modifier
+
+        Column(modifier = blurMod) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                TeaseChip("Rashi", result.rashi.ifEmpty { "Meena" }, modifier = Modifier.weight(1f))
+                TeaseChip("Nakshatra", result.nakshatra.ifEmpty { "Uttara Bhadrapada" }, modifier = Modifier.weight(1f))
+            }
+            Spacer(Modifier.height(8.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                TeaseChip("Chinese", result.chineseZodiac.ifEmpty { "Tiger" }, modifier = Modifier.weight(1f))
+                TeaseChip("Heartbeats", if (result.estimatedHeartbeats > 0) formatHeartbeats(result.estimatedHeartbeats) else "~1.0 B", modifier = Modifier.weight(1f))
             }
         }
     }
 }
+
+@Composable
+private fun TeaseChip(key: String, value: String, modifier: Modifier = Modifier) {
+    Row(
+        modifier = modifier.padding(vertical = 6.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+    ) {
+        Text(key, style = MaterialTheme.typography.bodySmall, color = WarmInkMute)
+        Text(value, style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.SemiBold, color = WarmInk)
+    }
+}
+
+private fun formatHeartbeats(n: Long): String = when {
+    n >= 1_000_000_000 -> "%.2f B".format(n / 1_000_000_000.0)
+    n >= 1_000_000     -> "%.1f M".format(n / 1_000_000.0)
+    else               -> "%,d".format(n)
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Banner ad view
+// ─────────────────────────────────────────────────────────────────────────────
 
 @Composable
 private fun BannerAdView(adUnitId: String) {

@@ -1,7 +1,10 @@
 package com.willowvibe.agereveal.ui.screen
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -9,8 +12,13 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CalendarMonth
@@ -18,20 +26,20 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.NotificationsOff
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Scaffold
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
@@ -43,10 +51,23 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.willowvibe.agereveal.data.model.SavedBirthday
+import com.willowvibe.agereveal.ui.theme.SerifFamily
+import com.willowvibe.agereveal.ui.theme.WarmAmber
+import com.willowvibe.agereveal.ui.theme.WarmAmberDeep
+import com.willowvibe.agereveal.ui.theme.WarmBlack
+import com.willowvibe.agereveal.ui.theme.WarmInk
+import com.willowvibe.agereveal.ui.theme.WarmInkDim
+import com.willowvibe.agereveal.ui.theme.WarmInkMute
+import com.willowvibe.agereveal.ui.theme.WarmSurface
+import com.willowvibe.agereveal.ui.theme.WarmSurfaceSoft
+import com.willowvibe.agereveal.ui.theme.WarmTeal
 import com.willowvibe.agereveal.ui.viewmodel.RemindersViewModel
 import kotlinx.coroutines.launch
 import java.time.Instant
@@ -56,13 +77,6 @@ import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 import java.time.temporal.ChronoUnit
 
-/**
- * Screen 4 — Saved Birthdays & Reminders.
- *
- * List ordered by next upcoming birthday (soonest first).
- * FAB opens an "Add birthday" bottom sheet.
- * Delete icon removes and cancels the notification.
- */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RemindersScreen(
@@ -85,46 +99,249 @@ fun RemindersScreen(
         )
     }
 
-    Scaffold(
-        topBar = { TopAppBar(title = { Text("Birthdays & Reminders") }) },
-        floatingActionButton = {
-            FloatingActionButton(onClick = { showAddSheet = true }) {
-                Icon(Icons.Default.Add, contentDescription = "Add birthday")
-            }
-        },
-    ) { padding ->
-        if (birthdays.isEmpty()) {
-            EmptyRemindersState(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(padding),
-            )
-        } else {
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(padding),
-                contentPadding = androidx.compose.foundation.layout.PaddingValues(16.dp),
-                verticalArrangement = Arrangement.spacedBy(10.dp),
-            ) {
-                items(birthdays, key = { it.id }) { birthday ->
-                    BirthdayReminderCard(
-                        birthday = birthday,
-                        onDelete = { viewModel.deleteBirthday(birthday) },
-                        onToggleNotification = { viewModel.toggleNotification(birthday) },
+    val today = LocalDate.now()
+    val sorted = birthdays.sortedBy {
+        ChronoUnit.DAYS.between(today, LocalDate.ofEpochDay(it.nextBirthdayEpochDay))
+    }
+    val nextUp = sorted.firstOrNull()
+    val later = if (sorted.size > 1) sorted.drop(1) else emptyList()
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(WarmBlack),
+    ) {
+        // ── Header ───────────────────────────────────────────────────────────
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 20.dp, vertical = 18.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Column {
+                Text("Birthdays", style = MaterialTheme.typography.titleLarge, color = WarmInk)
+                if (birthdays.isNotEmpty()) {
+                    val daysUntilNext = nextUp?.let {
+                        ChronoUnit.DAYS.between(today, LocalDate.ofEpochDay(it.nextBirthdayEpochDay))
+                    }
+                    Text(
+                        text = when {
+                            daysUntilNext == null -> ""
+                            daysUntilNext == 0L  -> "${birthdays.size} saved · birthday today!"
+                            else                  -> "${birthdays.size} saved · next in ${daysUntilNext}d"
+                        },
+                        style = MaterialTheme.typography.bodySmall,
+                        color = WarmInkMute,
                     )
                 }
+            }
+            Box(
+                modifier = Modifier
+                    .size(36.dp)
+                    .clip(CircleShape)
+                    .background(WarmTeal),
+                contentAlignment = Alignment.Center,
+            ) {
+                IconButton(onClick = { showAddSheet = true }, modifier = Modifier.size(36.dp)) {
+                    Icon(Icons.Default.Add, contentDescription = "Add birthday", tint = WarmBlack, modifier = Modifier.size(20.dp))
+                }
+            }
+        }
+
+        if (birthdays.isEmpty()) {
+            EmptyBirthdaysState(modifier = Modifier.weight(1f))
+        } else {
+            LazyColumn(
+                modifier = Modifier.weight(1f),
+                contentPadding = PaddingValues(horizontal = 20.dp, vertical = 4.dp),
+                verticalArrangement = Arrangement.spacedBy(0.dp),
+            ) {
+                // ── Next-up hero ─────────────────────────────────────────────
+                if (nextUp != null) {
+                    item {
+                        val daysUntil = ChronoUnit.DAYS.between(today, LocalDate.ofEpochDay(nextUp.nextBirthdayEpochDay))
+                        NextUpHeroCard(birthday = nextUp, daysUntil = daysUntil)
+                        Spacer(Modifier.height(14.dp))
+                    }
+                }
+
+                // ── Later this year ──────────────────────────────────────────
+                if (later.isNotEmpty()) {
+                    item {
+                        Text(
+                            "LATER THIS YEAR",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = WarmInkDim,
+                            modifier = Modifier.padding(bottom = 6.dp),
+                        )
+                    }
+                    items(later, key = { it.id }) { birthday ->
+                        val daysUntil = ChronoUnit.DAYS.between(today, LocalDate.ofEpochDay(birthday.nextBirthdayEpochDay))
+                        BirthdayTimelineRow(
+                            birthday = birthday,
+                            daysUntil = daysUntil,
+                            onDelete = { viewModel.deleteBirthday(birthday) },
+                            onToggleNotification = { viewModel.toggleNotification(birthday) },
+                        )
+                    }
+                } else if (nextUp != null) {
+                    item {
+                        // Only one birthday saved
+                        val daysUntil = ChronoUnit.DAYS.between(today, LocalDate.ofEpochDay(nextUp.nextBirthdayEpochDay))
+                        BirthdayTimelineRow(
+                            birthday = nextUp,
+                            daysUntil = daysUntil,
+                            onDelete = { viewModel.deleteBirthday(nextUp) },
+                            onToggleNotification = { viewModel.toggleNotification(nextUp) },
+                        )
+                    }
+                }
+
+                item { Spacer(Modifier.height(16.dp)) }
             }
         }
     }
 }
 
-// ---------------------------------------------------------------------------
-// Add Birthday Bottom Sheet
-// ---------------------------------------------------------------------------
+// ─────────────────────────────────────────────────────────────────────────────
+// Next-up hero card
+// ─────────────────────────────────────────────────────────────────────────────
 
-/** Quick-pick emoji options displayed as chips in the sheet. */
-private val EMOJI_OPTIONS = listOf("🎂", "🎉", "🎈", "❤️", "⭐", "🌟", "👶", "👴", "👵", "🐾")
+@Composable
+private fun NextUpHeroCard(birthday: SavedBirthday, daysUntil: Long) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(16.dp))
+            .background(
+                Brush.linearGradient(
+                    colors = listOf(WarmAmberDeep, WarmAmber.copy(alpha = 0.6f)),
+                ),
+            )
+            .padding(16.dp),
+    ) {
+        Column {
+            Text(
+                text = if (daysUntil == 0L) "TODAY" else "UP NEXT · IN ${daysUntil}D",
+                style = MaterialTheme.typography.labelSmall,
+                color = WarmInk.copy(alpha = 0.85f),
+            )
+            Spacer(Modifier.height(6.dp))
+            Row(verticalAlignment = Alignment.Bottom) {
+                Text(birthday.emoji, fontSize = 32.sp)
+                Spacer(Modifier.width(8.dp))
+                Text(
+                    birthday.name,
+                    fontFamily = SerifFamily,
+                    fontSize = 28.sp,
+                    letterSpacing = (-0.5).sp,
+                    color = WarmInk,
+                )
+            }
+            Spacer(Modifier.height(4.dp))
+            val nextDate = LocalDate.ofEpochDay(birthday.nextBirthdayEpochDay)
+            val today = LocalDate.now()
+            val turningAge = today.year - birthday.birthDate.year +
+                    if (nextDate.year > today.year) 1 else 0
+            Text(
+                "${nextDate.format(DateTimeFormatter.ofPattern("EEE, d MMMM"))} · turning $turningAge",
+                style = MaterialTheme.typography.bodySmall,
+                color = WarmInk.copy(alpha = 0.9f),
+            )
+        }
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Birthday timeline row
+// ─────────────────────────────────────────────────────────────────────────────
+
+@Composable
+private fun BirthdayTimelineRow(
+    birthday: SavedBirthday,
+    daysUntil: Long,
+    onDelete: () -> Unit,
+    onToggleNotification: () -> Unit,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        Text(birthday.emoji, fontSize = 22.sp)
+        Column(modifier = Modifier.weight(1f)) {
+            Text(birthday.name, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.SemiBold, color = WarmInk)
+            Text(
+                text = when {
+                    daysUntil == 0L -> "Birthday today!"
+                    else -> "in ${daysUntil}d"
+                },
+                style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 0.sp),
+                color = if (daysUntil <= 7) WarmAmber else WarmInkDim,
+            )
+        }
+        Column(horizontalAlignment = Alignment.End) {
+            val nextDate = LocalDate.ofEpochDay(birthday.nextBirthdayEpochDay)
+            Text(
+                nextDate.format(DateTimeFormatter.ofPattern("MMM d")),
+                fontFamily = SerifFamily,
+                fontSize = 15.sp,
+                letterSpacing = (-0.3).sp,
+                color = WarmInkMute,
+            )
+            Text("in ${daysUntil}d", style = MaterialTheme.typography.labelSmall, color = WarmInkDim)
+        }
+        IconButton(onClick = onToggleNotification, modifier = Modifier.size(32.dp)) {
+            Icon(
+                if (birthday.notifyEnabled) Icons.Default.Notifications else Icons.Default.NotificationsOff,
+                contentDescription = "Toggle notification",
+                tint = if (birthday.notifyEnabled) WarmTeal else WarmInkDim,
+                modifier = Modifier.size(18.dp),
+            )
+        }
+        IconButton(onClick = onDelete, modifier = Modifier.size(32.dp)) {
+            Icon(Icons.Default.Delete, contentDescription = "Delete", tint = WarmInkDim, modifier = Modifier.size(18.dp))
+        }
+    }
+    Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(WarmSurfaceSoft))
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Empty state
+// ─────────────────────────────────────────────────────────────────────────────
+
+@Composable
+private fun EmptyBirthdaysState(modifier: Modifier = Modifier) {
+    Column(
+        modifier = modifier.fillMaxWidth().padding(32.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center,
+    ) {
+        Text("🎂", fontSize = 48.sp)
+        Spacer(Modifier.height(12.dp))
+        Text(
+            "No birthdays yet",
+            fontFamily = SerifFamily,
+            fontSize = 20.sp,
+            color = WarmInkMute,
+        )
+        Spacer(Modifier.height(6.dp))
+        Text(
+            "Tap + to add a friend or family member.",
+            style = MaterialTheme.typography.bodySmall,
+            color = WarmInkDim,
+        )
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Add Birthday Bottom Sheet
+// ─────────────────────────────────────────────────────────────────────────────
+
+private val EMOJI_OPTIONS = listOf("🎂", "🎉", "🎈", "❤️", "⭐", "🌟", "🌷", "✨", "🚀", "🎸", "👶", "🐾")
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -142,9 +359,7 @@ private fun AddBirthdaySheet(
 
     val datePickerState = rememberDatePickerState(
         initialSelectedDateMillis = LocalDate.now()
-            .atStartOfDay(ZoneId.of("UTC"))
-            .toInstant()
-            .toEpochMilli(),
+            .atStartOfDay(ZoneId.of("UTC")).toInstant().toEpochMilli(),
     )
 
     if (showDatePicker) {
@@ -153,30 +368,21 @@ private fun AddBirthdaySheet(
             confirmButton = {
                 TextButton(onClick = {
                     datePickerState.selectedDateMillis?.let { millis ->
-                        val picked = Instant.ofEpochMilli(millis)
-                            .atZone(ZoneId.of("UTC"))
-                            .toLocalDate()
-                        if (picked.isAfter(LocalDate.now())) {
-                            dateError = true
-                        } else {
-                            selectedDate = picked
-                            dateError = false
-                        }
+                        val picked = Instant.ofEpochMilli(millis).atZone(ZoneId.of("UTC")).toLocalDate()
+                        if (picked.isAfter(LocalDate.now())) dateError = true
+                        else { selectedDate = picked; dateError = false }
                     }
                     showDatePicker = false
                 }) { Text("OK") }
             },
-            dismissButton = {
-                TextButton(onClick = { showDatePicker = false }) { Text("Cancel") }
-            },
-        ) {
-            DatePicker(state = datePickerState)
-        }
+            dismissButton = { TextButton(onClick = { showDatePicker = false }) { Text("Cancel") } },
+        ) { DatePicker(state = datePickerState) }
     }
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
+        containerColor = WarmSurface,
     ) {
         Column(
             modifier = Modifier
@@ -185,39 +391,54 @@ private fun AddBirthdaySheet(
                 .imePadding(),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            Text("Add Birthday", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+            Text(
+                "Add Birthday",
+                fontFamily = SerifFamily,
+                fontSize = 22.sp,
+                color = WarmInk,
+                fontWeight = FontWeight.Normal,
+            )
 
-            // Name field
             OutlinedTextField(
                 value = name,
                 onValueChange = { name = it; nameError = false },
-                label = { Text("Name") },
+                label = { Text("Name", color = WarmInkMute) },
                 isError = nameError,
                 supportingText = if (nameError) ({ Text("Name is required") }) else null,
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth(),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = WarmTeal,
+                    unfocusedBorderColor = WarmSurfaceSoft,
+                    focusedTextColor = WarmInk,
+                    unfocusedTextColor = WarmInk,
+                    cursorColor = WarmTeal,
+                ),
             )
 
-            // Emoji row
-            Text("Pick an emoji", style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant)
-            androidx.compose.foundation.lazy.LazyRow(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                items(EMOJI_OPTIONS.size) { idx ->
-                    val emoji = EMOJI_OPTIONS[idx]
-                    val isSelected = emoji == selectedEmoji
-                    Card(
-                        modifier = Modifier
-                            .padding(vertical = 2.dp),
-                        colors = androidx.compose.material3.CardDefaults.cardColors(
-                            containerColor = if (isSelected) MaterialTheme.colorScheme.primaryContainer
-                                            else MaterialTheme.colorScheme.surfaceVariant,
-                        ),
-                        onClick = { selectedEmoji = emoji },
-                    ) {
-                        Text(emoji, style = MaterialTheme.typography.titleMedium,
-                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp))
+            Column {
+                Text(
+                    "PICK AN EMOJI",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = WarmInkDim,
+                    modifier = Modifier.padding(bottom = 8.dp),
+                )
+                LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    items(EMOJI_OPTIONS.size) { idx ->
+                        val emoji = EMOJI_OPTIONS[idx]
+                        val isSelected = emoji == selectedEmoji
+                        Box(
+                            modifier = Modifier
+                                .size(44.dp)
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(if (isSelected) WarmTeal.copy(alpha = 0.25f) else WarmSurfaceSoft)
+                                .then(if (isSelected) Modifier else Modifier),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            TextButton(onClick = { selectedEmoji = emoji }, contentPadding = PaddingValues(0.dp)) {
+                                Text(emoji, fontSize = 22.sp)
+                            }
+                        }
                     }
                 }
             }
@@ -226,10 +447,10 @@ private fun AddBirthdaySheet(
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 onClick = { showDatePicker = true },
-                colors = androidx.compose.material3.CardDefaults.cardColors(
-                    containerColor = if (dateError) MaterialTheme.colorScheme.errorContainer
-                                     else MaterialTheme.colorScheme.surfaceVariant,
+                colors = CardDefaults.cardColors(
+                    containerColor = if (dateError) WarmSurfaceSoft else WarmSurfaceSoft,
                 ),
+                shape = RoundedCornerShape(12.dp),
             ) {
                 Row(
                     modifier = Modifier
@@ -239,28 +460,30 @@ private fun AddBirthdaySheet(
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Column {
-                        Text("Date of Birth", style = MaterialTheme.typography.labelSmall,
-                            color = if (dateError) MaterialTheme.colorScheme.error
-                                    else MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(
+                            "DATE OF BIRTH",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = if (dateError) MaterialTheme.colorScheme.error else WarmInkDim,
+                        )
                         Spacer(Modifier.height(4.dp))
                         Text(
                             text = if (dateError) "Date cannot be in the future"
-                                   else selectedDate
-                                       ?.format(DateTimeFormatter.ofLocalizedDate(FormatStyle.LONG))
-                                       ?: "Tap to select",
+                                   else selectedDate?.format(DateTimeFormatter.ofLocalizedDate(FormatStyle.LONG))
+                                   ?: "Tap to select",
                             style = MaterialTheme.typography.bodyLarge,
                             color = if (dateError) MaterialTheme.colorScheme.error
-                                    else if (selectedDate != null) MaterialTheme.colorScheme.onSurface
-                                    else MaterialTheme.colorScheme.onSurfaceVariant,
+                                    else if (selectedDate != null) WarmInk
+                                    else WarmInkMute,
                         )
                     }
-                    Icon(Icons.Default.CalendarMonth, contentDescription = null,
-                        tint = if (dateError) MaterialTheme.colorScheme.error
-                               else MaterialTheme.colorScheme.primary)
+                    Icon(
+                        Icons.Default.CalendarMonth,
+                        contentDescription = null,
+                        tint = if (dateError) MaterialTheme.colorScheme.error else WarmTeal,
+                    )
                 }
             }
 
-            // Save button
             Button(
                 modifier = Modifier.fillMaxWidth(),
                 onClick = {
@@ -269,78 +492,13 @@ private fun AddBirthdaySheet(
                     if (date.isAfter(LocalDate.now())) { dateError = true; return@Button }
                     onSave(name.trim(), date, selectedEmoji)
                 },
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = WarmTeal,
+                    contentColor = WarmBlack,
+                ),
             ) {
-                Text("Save Birthday")
+                Text("Save Birthday", fontWeight = FontWeight.SemiBold)
             }
         }
-    }
-}
-
-// ---------------------------------------------------------------------------
-// List item
-// ---------------------------------------------------------------------------
-
-@Composable
-private fun BirthdayReminderCard(
-    birthday: SavedBirthday,
-    onDelete: () -> Unit,
-    onToggleNotification: () -> Unit,
-) {
-    val today = LocalDate.now()
-    val daysUntil = ChronoUnit.DAYS.between(today, LocalDate.ofEpochDay(birthday.nextBirthdayEpochDay))
-
-    Card(modifier = Modifier.fillMaxWidth()) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(12.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text("${birthday.emoji}  ${birthday.name}",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold)
-                Text(birthday.birthDate.format(DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM)),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant)
-                Text(
-                    if (daysUntil == 0L) "🎂 Birthday today!" else "in $daysUntil days",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = if (daysUntil <= 7) MaterialTheme.colorScheme.tertiary
-                            else MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-            IconButton(onClick = onToggleNotification) {
-                Icon(
-                    if (birthday.notifyEnabled) Icons.Default.Notifications
-                    else Icons.Default.NotificationsOff,
-                    contentDescription = "Toggle notification",
-                    tint = if (birthday.notifyEnabled) MaterialTheme.colorScheme.primary
-                           else MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-            IconButton(onClick = onDelete) {
-                Icon(Icons.Default.Delete, contentDescription = "Delete",
-                    tint = MaterialTheme.colorScheme.error)
-            }
-        }
-    }
-}
-
-@Composable
-private fun EmptyRemindersState(modifier: Modifier = Modifier) {
-    Column(
-        modifier = modifier,
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center,
-    ) {
-        Text("🎂", style = MaterialTheme.typography.displayMedium)
-        Text("No birthdays saved yet",
-            style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant)
-        Text("Tap + to add a friend or family member.",
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
