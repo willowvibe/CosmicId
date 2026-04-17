@@ -265,7 +265,7 @@ private fun AddBirthdaySheet(
                 modifier = Modifier.fillMaxWidth(),
                 onClick = {
                     if (name.isBlank()) { nameError = true; return@Button }
-                    val date = selectedDate ?: LocalDate.now()
+                    val date = selectedDate ?: run { dateError = true; return@Button }
                     if (date.isAfter(LocalDate.now())) { dateError = true; return@Button }
                     onSave(name.trim(), date, selectedEmoji)
                 },
