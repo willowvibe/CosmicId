@@ -9,6 +9,7 @@ import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.workDataOf
 import dagger.hilt.android.qualifiers.ApplicationContext
+import java.time.DateTimeException
 import java.time.LocalDate
 import java.time.ZoneId
 import java.time.temporal.ChronoUnit
@@ -58,7 +59,7 @@ class BirthdayNotificationScheduler @Inject constructor(
             delayMs = if (daysAway <= 1) {
                 0L
             } else {
-                nextBirthday.plusYears(1).minusDays(1).atTime(9, 0)
+                yearSafeBirthday(birthDate, nextBirthday.year + 1).minusDays(1).atTime(9, 0)
                     .atZone(ZoneId.systemDefault())
                     .toInstant()
                     .toEpochMilli() - nowMs
@@ -84,9 +85,15 @@ class BirthdayNotificationScheduler @Inject constructor(
 
     private fun computeNextBirthday(birthDate: LocalDate): LocalDate {
         val today = LocalDate.now()
-        var next = birthDate.withYear(today.year)
-        if (next.isBefore(today)) next = next.plusYears(1)
+        var next = yearSafeBirthday(birthDate, today.year)
+        if (!next.isAfter(today)) next = yearSafeBirthday(birthDate, today.year + 1)
         return next
+    }
+
+    private fun yearSafeBirthday(birthDate: LocalDate, year: Int): LocalDate = try {
+        birthDate.withYear(year)
+    } catch (_: DateTimeException) {
+        LocalDate.of(year, 3, 1)
     }
 
     private fun createNotificationChannel() {

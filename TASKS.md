@@ -1,6 +1,6 @@
 # AgeReveal — Remaining Tasks & Placeholders
 
-_Last updated: 2026-04-13 — edge cases & bugs resolved_
+_Last updated: 2026-04-17 — additional bugs found & fixed_
 
 ---
 
@@ -57,7 +57,9 @@ These items are tracked in `roadmap.md` under the Day 4 milestone.
 - [ ] **Date picker UX** — Smooth out the date picker interactions (scroll snap, haptic feedback)
 - [ ] **Edge cases:**
   - ✅ Leap year birthdays (Feb 29) — `yearSafeBirthday()` helper added to `AgeCalculator` and `BirthdayRepository`; maps to Mar 1 in non-leap years instead of crashing
+  - ✅ **Leap year in notification scheduler** — `BirthdayNotificationScheduler.computeNextBirthday()` was using raw `.withYear()` and `.plusYears(1)`, which throws `DateTimeException` for Feb 29 birthdays in non-leap years. Fixed by extracting the same `yearSafeBirthday()` pattern used elsewhere; also fixed the fallback reschedule path (`scheduleFor` line 61) to use `yearSafeBirthday(birthDate, nextBirthday.year + 1)`.
   - ✅ Future date input — validated in `CalculatorViewModel` (existing), `CompareViewModel` (added), and `RemindersScreen`/`RemindersViewModel` (added); all show clear errors
+  - ✅ **Silent date default in Add Birthday sheet** — `RemindersScreen` save button was silently using `LocalDate.now()` when the user had not selected a date (`selectedDate ?: LocalDate.now()`). Fixed to treat a missing date as a validation error (`dateError = true`) instead.
   - ✅ Equal-age comparison — `CompareViewModel` now detects equal dates and shows "Same birthday!" instead of mislabelling Person B as older
   - ✅ Today's date — `Period.between(today, today)` correctly returns 0; no fix needed (confirmed safe)
 - [ ] **Play Store listing assets:**
@@ -85,5 +87,6 @@ Not yet started. Tracked in `roadmap.md`.
 
 ## 5. Future Technical Improvements (Nice-to-Have)
 
-- [ ] **Migrate widget to Jetpack Glance** — `BirthdayWidgetProvider.kt` line 21 notes that the current `RemoteViews`-based widget should eventually be rewritten using Glance (Compose-based widgets API)
+- ✅ **Widget already uses Jetpack Glance** — `BirthdayGlanceWidget.kt` and `BirthdayGlanceWidgetReceiver.kt` are fully Glance-based; the stale `RemoteViews` task has been removed.
 - [ ] **Enable Inter font** — See Section 1 font placeholder above
+- [ ] **Add `Migration` objects before next schema change** — `AppDatabase` currently uses `fallbackToDestructiveMigration()` which silently drops all user data on version bumps. Must add explicit `Migration` objects before shipping any schema change in Phase 2.
