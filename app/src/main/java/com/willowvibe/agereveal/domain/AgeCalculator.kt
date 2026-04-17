@@ -61,7 +61,7 @@ class AgeCalculator @Inject constructor(
             dayOfWeekNextBirthday = nextBirthday.dayOfWeek.name,
             milestones = if (includeUnlocked) getMilestones(birthDate, today) else emptyList(),
             westernZodiac = if (includeUnlocked) zodiacCalculator.getWesternZodiac(birthDate.monthValue, birthDate.dayOfMonth) else "",
-            rashi = if (includeUnlocked) zodiacCalculator.getRashi(birthDate.monthValue, birthDate.dayOfMonth) else "",
+            rashi = if (includeUnlocked) zodiacCalculator.getRashi(birthDate) else "",
             nakshatra = if (includeUnlocked) nakshatraCalculator.getNakshatra(birthDate) else "",
             chineseZodiac = if (includeUnlocked) zodiacCalculator.getChineseZodiac(birthDate.year) else "",
             estimatedHeartbeats = if (includeUnlocked) estimateHeartbeats(totalMinutes) else 0L,
