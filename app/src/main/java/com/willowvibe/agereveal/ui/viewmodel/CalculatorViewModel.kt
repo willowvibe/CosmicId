@@ -1,5 +1,6 @@
 package com.willowvibe.agereveal.ui.viewmodel
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.willowvibe.agereveal.data.model.AgeResult
@@ -7,6 +8,7 @@ import com.willowvibe.agereveal.data.model.Milestone
 import com.willowvibe.agereveal.domain.AgeCalculator
 import com.willowvibe.agereveal.domain.ShareCardGenerator
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -34,10 +36,20 @@ data class CalculatorUiState(
 class CalculatorViewModel @Inject constructor(
     private val ageCalculator: AgeCalculator,
     private val shareCardGenerator: ShareCardGenerator,
+    @ApplicationContext context: Context,
 ) : ViewModel() {
+
+    private val prefs = context.getSharedPreferences("calculator_prefs", Context.MODE_PRIVATE)
 
     private val _uiState = MutableStateFlow(CalculatorUiState())
     val uiState: StateFlow<CalculatorUiState> = _uiState.asStateFlow()
+
+    init {
+        // Restore previously entered birth date so user doesn't have to re-enter it
+        prefs.getString("birth_date", null)
+            ?.let { runCatching { LocalDate.parse(it) }.getOrNull() }
+            ?.let { onBirthDateSelected(it) }
+    }
 
     /**
      * 1-second ticker — emits current epoch second to drive live totalSeconds display.
@@ -55,6 +67,7 @@ class CalculatorViewModel @Inject constructor(
             _uiState.update { it.copy(error = "Birth date cannot be in the future") }
             return
         }
+        prefs.edit().putString("birth_date", date.toString()).apply()
         _uiState.update { state ->
             state.copy(
                 birthDate = date,
