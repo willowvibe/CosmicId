@@ -24,6 +24,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -59,6 +60,7 @@ import com.google.android.gms.ads.AdSize
 import com.google.android.gms.ads.AdView
 import com.willowvibe.agereveal.ads.AdManager
 import com.willowvibe.agereveal.data.model.AgeResult
+import com.willowvibe.agereveal.domain.ShareCardGenerator
 import com.willowvibe.agereveal.ui.theme.SerifFamily
 import com.willowvibe.agereveal.ui.theme.WarmAmber
 import com.willowvibe.agereveal.ui.theme.WarmBlack
@@ -80,16 +82,28 @@ import java.time.format.FormatStyle
 fun CalculatorScreen(
     viewModel: CalculatorViewModel = hiltViewModel(),
     adManager: AdManager,
-    onShareCard: () -> Unit,
+    onShareCard: (ShareCardGenerator.CardTheme) -> Unit,
     onUnlockMore: () -> Unit,
+    onOpenSettings: () -> Unit = {},
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val ticker by viewModel.tickerSeconds.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
+    var showThemePicker by remember { mutableStateOf(false) }
 
     LaunchedEffect(ticker) { viewModel.onTick() }
     LaunchedEffect(uiState.error) {
         uiState.error?.let { snackbarHostState.showSnackbar(it); viewModel.clearError() }
+    }
+
+    if (showThemePicker) {
+        ShareThemeSheet(
+            onDismiss = { showThemePicker = false },
+            onThemeSelected = { theme ->
+                onShareCard(theme)
+                showThemePicker = false
+            },
+        )
     }
 
     Box(
@@ -102,7 +116,7 @@ fun CalculatorScreen(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 20.dp, vertical = 18.dp),
+                    .padding(horizontal = 20.dp, vertical = 14.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
@@ -120,11 +134,30 @@ fun CalculatorScreen(
                         color = WarmInk,
                     )
                 }
-                Text(
-                    "LIVE",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = WarmInkDim,
-                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    Text(
+                        "LIVE",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = WarmInkDim,
+                    )
+                    IconButton(
+                        onClick = onOpenSettings,
+                        modifier = Modifier
+                            .size(32.dp)
+                            .clip(CircleShape)
+                            .background(WarmSurface),
+                    ) {
+                        Icon(
+                            Icons.Default.Settings,
+                            contentDescription = "Settings",
+                            tint = WarmInkDim,
+                            modifier = Modifier.size(16.dp),
+                        )
+                    }
+                }
             }
 
             Column(
@@ -161,7 +194,7 @@ fun CalculatorScreen(
                                 result = result,
                                 isUnlocked = uiState.isUnlocked,
                                 onReveal = onUnlockMore,
-                                onShare = onShareCard,
+                                onShare = { showThemePicker = true },
                             )
                         }
                     }

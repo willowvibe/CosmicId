@@ -36,6 +36,8 @@ class BirthdayRepository @Inject constructor(
 
     suspend fun delete(birthday: SavedBirthday) = dao.delete(birthday)
 
+    suspend fun deleteAll() = dao.deleteAll()
+
     // ---------------------------------------------------------------------------
     // Helpers
     // ---------------------------------------------------------------------------

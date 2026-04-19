@@ -10,6 +10,7 @@ import androidx.compose.material.icons.filled.Cake
 import androidx.compose.material.icons.filled.Calculate
 import androidx.compose.material.icons.filled.CompareArrows
 import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
@@ -35,11 +36,13 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.willowvibe.agereveal.ads.AdManager
+import com.willowvibe.agereveal.domain.ShareCardGenerator
 import com.willowvibe.agereveal.ui.screen.CalculatorScreen
 import com.willowvibe.agereveal.ui.screen.CompatibilityScreen
 import com.willowvibe.agereveal.ui.screen.CompareScreen
 import com.willowvibe.agereveal.ui.screen.DetailsUnlockScreen
 import com.willowvibe.agereveal.ui.screen.RemindersScreen
+import com.willowvibe.agereveal.ui.screen.SettingsScreen
 import com.willowvibe.agereveal.ui.theme.WarmBlack
 import com.willowvibe.agereveal.ui.theme.WarmInk
 import com.willowvibe.agereveal.ui.theme.WarmInkDim
@@ -53,6 +56,7 @@ sealed class Screen(val route: String, val label: String, val icon: ImageVector)
     data object Compare : Screen("compare", "Compare", Icons.Default.CompareArrows)
     data object Compatibility : Screen("compatibility", "Match", Icons.Default.Favorite)
     data object Reminders : Screen("reminders", "Bdays", Icons.Default.Cake)
+    data object Settings : Screen("settings", "Settings", Icons.Default.Settings)
 }
 
 private val bottomNavItems = listOf(
@@ -71,41 +75,46 @@ fun AppNavGraph(adManager: AdManager) {
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
 
+    // Settings screen is a full-screen overlay — hide bottom bar when on it
+    val showBottomBar = currentDest?.route != Screen.Settings.route
+
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         containerColor = WarmBlack,
         bottomBar = {
-            NavigationBar(
-                containerColor = WarmBlack,
-                tonalElevation = 0.dp,
-            ) {
-                bottomNavItems.forEach { screen ->
-                    val selected = currentDest?.hierarchy?.any { it.route == screen.route } == true
-                    NavigationBarItem(
-                        selected = selected,
-                        onClick = {
-                            navController.navigate(screen.route) {
-                                popUpTo(navController.graph.findStartDestination().id) { saveState = true }
-                                launchSingleTop = true
-                                restoreState = true
-                            }
-                        },
-                        icon = {
-                            Icon(
-                                screen.icon,
-                                contentDescription = screen.label,
-                                modifier = Modifier.size(22.dp),
-                            )
-                        },
-                        label = { Text(screen.label) },
-                        colors = NavigationBarItemDefaults.colors(
-                            selectedIconColor = WarmInk,
-                            selectedTextColor = WarmInk,
-                            unselectedIconColor = WarmInkDim,
-                            unselectedTextColor = WarmInkDim,
-                            indicatorColor = WarmSurface,
-                        ),
-                    )
+            if (showBottomBar) {
+                NavigationBar(
+                    containerColor = WarmBlack,
+                    tonalElevation = 0.dp,
+                ) {
+                    bottomNavItems.forEach { screen ->
+                        val selected = currentDest?.hierarchy?.any { it.route == screen.route } == true
+                        NavigationBarItem(
+                            selected = selected,
+                            onClick = {
+                                navController.navigate(screen.route) {
+                                    popUpTo(navController.graph.findStartDestination().id) { saveState = true }
+                                    launchSingleTop = true
+                                    restoreState = true
+                                }
+                            },
+                            icon = {
+                                Icon(
+                                    screen.icon,
+                                    contentDescription = screen.label,
+                                    modifier = Modifier.size(22.dp),
+                                )
+                            },
+                            label = { Text(screen.label) },
+                            colors = NavigationBarItemDefaults.colors(
+                                selectedIconColor = WarmInk,
+                                selectedTextColor = WarmInk,
+                                unselectedIconColor = WarmInkDim,
+                                unselectedTextColor = WarmInkDim,
+                                indicatorColor = WarmSurface,
+                            ),
+                        )
+                    }
                 }
             }
         },
@@ -120,7 +129,7 @@ fun AppNavGraph(adManager: AdManager) {
                 CalculatorScreen(
                     viewModel = viewModel,
                     adManager = adManager,
-                    onShareCard = { viewModel.shareCard() },
+                    onShareCard = { theme -> viewModel.shareCard(theme) },
                     onUnlockMore = {
                         adManager.showRewardedAd(
                             onRewarded = {
@@ -134,6 +143,7 @@ fun AppNavGraph(adManager: AdManager) {
                             },
                         )
                     },
+                    onOpenSettings = { navController.navigate(Screen.Settings.route) },
                 )
             }
             composable(Screen.Details.route) {
@@ -165,7 +175,10 @@ fun AppNavGraph(adManager: AdManager) {
                 CompatibilityScreen()
             }
             composable(Screen.Reminders.route) {
-                RemindersScreen(onAddBirthday = {})
+                RemindersScreen()
+            }
+            composable(Screen.Settings.route) {
+                SettingsScreen(onBack = { navController.popBackStack() })
             }
         }
     }

@@ -44,6 +44,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import com.willowvibe.agereveal.domain.ShareCardGenerator
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -76,9 +77,20 @@ fun CompatibilityScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
+    var showThemePicker by remember { mutableStateOf(false) }
 
     LaunchedEffect(uiState.error) {
         uiState.error?.let { snackbarHostState.showSnackbar(it); viewModel.clearError() }
+    }
+
+    if (showThemePicker) {
+        ShareThemeSheet(
+            onDismiss = { showThemePicker = false },
+            onThemeSelected = { theme ->
+                viewModel.shareCard(theme)
+                showThemePicker = false
+            },
+        )
     }
 
     Box(
@@ -200,7 +212,7 @@ fun CompatibilityScreen(
                             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                                 CompatibilityResultCard(result)
                                 FilledTonalButton(
-                                    onClick = { viewModel.shareCard() },
+                                    onClick = { showThemePicker = true },
                                     modifier = Modifier.fillMaxWidth(),
                                 ) {
                                     Icon(

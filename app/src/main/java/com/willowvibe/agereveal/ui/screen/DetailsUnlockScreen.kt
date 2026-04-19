@@ -114,6 +114,7 @@ fun DetailsUnlockScreen(
                 if (result.milestones.isNotEmpty()) {
                     MilestoneTimeline(
                         milestones = result.milestones,
+                        totalDays = result.totalDays,
                         isUnlocked = uiState.isUnlocked,
                         onShare = onShareMilestone,
                     )
@@ -250,6 +251,7 @@ private fun WatchAdBanner(isLoading: Boolean, onWatch: () -> Unit) {
 @Composable
 private fun MilestoneTimeline(
     milestones: List<Milestone>,
+    totalDays: Long,
     isUnlocked: Boolean,
     onShare: (Milestone) -> Unit,
 ) {
@@ -261,17 +263,79 @@ private fun MilestoneTimeline(
             .padding(14.dp),
     ) {
         Text(
-            "MILESTONE DAYS",
+            "LIFE TIMELINE",
             style = MaterialTheme.typography.labelSmall,
             color = WarmInkDim,
         )
         Spacer(Modifier.height(10.dp))
 
-        milestones.forEach { milestone ->
+        // Life progress bar
+        LifeProgressBar(totalDays = totalDays)
+
+        Spacer(Modifier.height(14.dp))
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(1.dp)
+                .background(WarmSurfaceSoft),
+        )
+        Spacer(Modifier.height(10.dp))
+
+        milestones.forEachIndexed { index, milestone ->
             MilestoneRow(
                 milestone = milestone,
                 isUnlocked = isUnlocked,
                 onShare = { onShare(milestone) },
+            )
+            if (index < milestones.size - 1) {
+                // Connecting vertical line between dots (aligned with the dot at start = 12.dp padding + 4dp offset)
+                Box(
+                    modifier = Modifier
+                        .padding(start = 15.dp)
+                        .size(width = 1.dp, height = 10.dp)
+                        .background(WarmSurfaceSoft),
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun LifeProgressBar(totalDays: Long) {
+    val lifeExpectancyDays = 29_200L // ~80 years
+    val progress = (totalDays.toFloat() / lifeExpectancyDays).coerceIn(0f, 1f)
+    val years = totalDays / 365
+
+    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                "LIFE LIVED",
+                style = MaterialTheme.typography.labelSmall,
+                color = WarmInkDim,
+            )
+            Text(
+                "${(progress * 100).toInt()}% · ~$years yrs of 80",
+                style = MaterialTheme.typography.labelSmall,
+                color = WarmInkMute,
+            )
+        }
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(7.dp)
+                .clip(RoundedCornerShape(4.dp))
+                .background(WarmSurfaceSoft),
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth(progress)
+                    .height(7.dp)
+                    .clip(RoundedCornerShape(4.dp))
+                    .background(WarmTeal),
             )
         }
     }
@@ -283,21 +347,27 @@ private fun MilestoneRow(
     isUnlocked: Boolean,
     onShare: () -> Unit,
 ) {
+    val isToday = milestone.daysAway == 0L
     val dotColor = when {
-        milestone.daysAway == 0L -> WarmAmber
-        milestone.isPast         -> WarmInkDim
-        else                     -> WarmTeal
+        isToday          -> WarmAmber
+        milestone.isPast -> WarmTeal
+        else             -> WarmSurfaceSoft
     }
     val statusLabel = when {
-        milestone.daysAway == 0L -> "TODAY"
-        milestone.isPast         -> "PASSED"
-        else                     -> "IN ${milestone.daysAway}D"
+        isToday          -> "TODAY ✦"
+        milestone.isPast -> "✓"
+        else             -> "IN ${milestone.daysAway}D"
+    }
+    val statusColor = when {
+        isToday          -> WarmAmber
+        milestone.isPast -> WarmTeal
+        else             -> WarmInkDim
     }
 
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 8.dp),
+            .padding(vertical = 6.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Box(
@@ -310,12 +380,12 @@ private fun MilestoneRow(
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 "%,dth day".format(milestone.targetDays),
-                style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.Medium,
-                color = WarmInk,
+                style = MaterialTheme.typography.bodySmall,
+                fontWeight = if (milestone.isPast || isToday) FontWeight.SemiBold else FontWeight.Normal,
+                color = if (milestone.isPast || isToday) WarmInk else WarmInkMute,
             )
             Text(
-                milestone.date.format(DateTimeFormatter.ofPattern("dd MMM yyyy")),
+                milestone.date.format(DateTimeFormatter.ofPattern("d MMM yyyy")),
                 style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 0.sp),
                 color = WarmInkDim,
             )
@@ -323,11 +393,17 @@ private fun MilestoneRow(
         Text(
             statusLabel,
             style = MaterialTheme.typography.labelSmall,
-            color = dotColor,
+            color = statusColor,
+            fontWeight = if (milestone.isPast || isToday) FontWeight.SemiBold else FontWeight.Normal,
         )
-        if (isUnlocked) {
+        if (isUnlocked && milestone.isPast) {
             IconButton(onClick = onShare, modifier = Modifier.size(32.dp)) {
-                Icon(Icons.Default.Share, contentDescription = "Share milestone", tint = WarmTeal, modifier = Modifier.size(16.dp))
+                Icon(
+                    Icons.Default.Share,
+                    contentDescription = "Share milestone",
+                    tint = WarmTeal,
+                    modifier = Modifier.size(15.dp),
+                )
             }
         }
     }

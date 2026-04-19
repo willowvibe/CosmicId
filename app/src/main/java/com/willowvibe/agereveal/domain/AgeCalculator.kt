@@ -73,7 +73,7 @@ class AgeCalculator @Inject constructor(
     // ---------------------------------------------------------------------------
 
     fun getMilestones(birthDate: LocalDate, today: LocalDate = LocalDate.now()): List<Milestone> {
-        val milestoneTargets = listOf(1_000, 5_000, 10_000, 15_000, 20_000, 25_000)
+        val milestoneTargets = listOf(500, 1_000, 2_000, 3_000, 5_000, 7_000, 10_000, 12_500, 15_000, 20_000, 25_000, 30_000)
         return milestoneTargets.map { target ->
             val date = birthDate.plusDays(target.toLong())
             Milestone(
