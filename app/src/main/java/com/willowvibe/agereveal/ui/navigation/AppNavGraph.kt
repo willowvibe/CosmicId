@@ -9,6 +9,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Cake
 import androidx.compose.material.icons.filled.Calculate
 import androidx.compose.material.icons.filled.CompareArrows
+import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
@@ -35,6 +36,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.willowvibe.agereveal.ads.AdManager
 import com.willowvibe.agereveal.ui.screen.CalculatorScreen
+import com.willowvibe.agereveal.ui.screen.CompatibilityScreen
 import com.willowvibe.agereveal.ui.screen.CompareScreen
 import com.willowvibe.agereveal.ui.screen.DetailsUnlockScreen
 import com.willowvibe.agereveal.ui.screen.RemindersScreen
@@ -46,16 +48,18 @@ import com.willowvibe.agereveal.ui.viewmodel.CalculatorViewModel
 import kotlinx.coroutines.launch
 
 sealed class Screen(val route: String, val label: String, val icon: ImageVector) {
-    data object Calculator : Screen("calculator", "Age",       Icons.Default.Calculate)
-    data object Details    : Screen("details",    "Profile",   Icons.Default.Star)
-    data object Compare    : Screen("compare",    "Compare",   Icons.Default.CompareArrows)
-    data object Reminders  : Screen("reminders",  "Birthdays", Icons.Default.Cake)
+    data object Calculator    : Screen("calculator",    "Age",     Icons.Default.Calculate)
+    data object Details       : Screen("details",       "Profile", Icons.Default.Star)
+    data object Compare       : Screen("compare",       "Compare", Icons.Default.CompareArrows)
+    data object Compatibility : Screen("compatibility", "Match",   Icons.Default.Favorite)
+    data object Reminders     : Screen("reminders",     "Bdays",   Icons.Default.Cake)
 }
 
 private val bottomNavItems = listOf(
     Screen.Calculator,
     Screen.Details,
     Screen.Compare,
+    Screen.Compatibility,
     Screen.Reminders,
 )
 
@@ -156,6 +160,9 @@ fun AppNavGraph(adManager: AdManager) {
             }
             composable(Screen.Compare.route) {
                 CompareScreen(onShowInterstitial = { adManager.maybeShowInterstitial() })
+            }
+            composable(Screen.Compatibility.route) {
+                CompatibilityScreen()
             }
             composable(Screen.Reminders.route) {
                 RemindersScreen(onAddBirthday = {})

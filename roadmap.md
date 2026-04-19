@@ -33,8 +33,28 @@
 > See [TASKS.md](TASKS.md) for exact file locations and replacement instructions.
 
 ## Phase 2: Post-Launch Additions 🚀
+- [x] **Zodiac Compatibility Screen** — 5th tab; enter two birthdays and get Western + Chinese compatibility score with element analysis and shareable headline
+- [x] **Notification Time Customization** — Settings gear on Birthdays tab; choose reminder hour (7 AM – 9 PM presets); stored in SharedPreferences, reschedules all active WorkManager jobs
 - [ ] Light and festive card themes (second + third rewarded ad unlock)
 - [ ] Hindi language UI toggle
 - [ ] 4×2 wide widget with 3 upcoming birthdays
 - [ ] In-app review prompt after user shares their card
 - [ ] Remove ads IAP at ₹99 one-time (optional paywall)
+
+## Phase 3: Depth & Retention 🔭
+- [ ] **Birth Time Support** — Optional time picker alongside date; pass exact time to AstronomicalCalculator for precise Nakshatra + Rashi (Moon moves ~13°/day so time matters); show "Approximate" vs "Exact" label
+- [ ] **Milestone Push Notifications** — Schedule WorkManager jobs for upcoming day-milestones (1,000th, 5,000th, 10,000th…); "You turn 10,000 days old tomorrow 🎉" — toggle per-milestone in Details screen
+- [ ] **Zodiac Compatibility Share Card** — Generate a shareable bitmap for the compatibility result (reuse ShareCardGenerator with a new COMPATIBILITY theme)
+- [ ] **Life Timeline Visual** — Horizontal/vertical scrollable timeline of past + future milestones with achievement badges; gamification to drive return visits
+- [ ] **Google Calendar Export** — One-tap Intent(ACTION_INSERT) to add any saved birthday to Google Calendar; also export as .ics file
+- [ ] **Astrology Explanations** — Inline info dialog (AlertDialog or ModalBottomSheet) for each astrological term (Rashi, Nakshatra, Chinese animal) with 3-4 sentence educational summary
+- [ ] **Zodiac Compatibility for Saved Birthdays** — On the Birthdays tab, tap any saved birthday to see compatibility with the user's own birth date (requires storing user's own date persistently)
+- [ ] **Settings Screen** — Dedicated settings tab or overflow menu: theme (light/dark/auto), language, notification defaults, clear data
+
+## Ideas Backlog 💡
+- Sync saved birthdays across devices via Firebase Firestore (cloud backup)
+- WhatsApp-optimised share card with sticker-ready transparent background
+- Age quiz / trivia: "Guess who was born closest to you?"
+- Yearly re-engagement notification: "You've now lived X days!" on the user's own birthday
+- "Days until retirement" calculator with configurable target age
+- Widgetkit-style lock screen widget (API 33+)
