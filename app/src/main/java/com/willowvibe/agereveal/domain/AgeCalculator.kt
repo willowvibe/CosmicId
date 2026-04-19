@@ -4,6 +4,7 @@ import com.willowvibe.agereveal.data.model.AgeResult
 import com.willowvibe.agereveal.data.model.Milestone
 import java.time.DateTimeException
 import java.time.LocalDate
+import java.time.LocalTime
 import java.time.Period
 import java.time.temporal.ChronoUnit
 import javax.inject.Inject
@@ -21,25 +22,31 @@ class AgeCalculator @Inject constructor(
 ) {
 
     /**
-     * Compute an [AgeResult] for a given [birthDate] as of [today].
+     * Compute an [AgeResult] for a given [birthDate] and [birthTime] as of [today].
      *
+     * @param birthTime Optional time of birth for precise Nakshatra/Rashi calculations
      * @param includeUnlocked When true, populates zodiac / Vedic / heartbeats fields.
      *                        Pass false initially; pass true after rewarded ad is watched.
      */
     fun calculate(
         birthDate: LocalDate,
+        birthTime: LocalTime? = null,
         today: LocalDate = LocalDate.now(),
         totalSecondsOverride: Long = -1L,
         includeUnlocked: Boolean = false,
     ): AgeResult {
         require(!birthDate.isAfter(today)) { "Birth date cannot be in the future" }
 
+        // Use birth time if provided for precise calculations, otherwise assume midnight
+        val birthDateTime = birthTime?.let { bt -> birthDate.atTime(bt) } ?: birthDate.atStartOfDay()
+        val todayDateTime = today.atStartOfDay()
+
         val period = Period.between(birthDate, today)
         val totalDays = ChronoUnit.DAYS.between(birthDate, today)
         val totalHours = totalDays * 24
         val totalMinutes = totalHours * 60
         val totalSeconds = if (totalSecondsOverride >= 0) totalSecondsOverride
-                           else ChronoUnit.SECONDS.between(birthDate.atStartOfDay(), today.atStartOfDay())
+        else ChronoUnit.SECONDS.between(birthDateTime, todayDateTime)
 
         // Next birthday — use yearSafeBirthday to handle Feb 29 in non-leap years
         var nextBirthday = yearSafeBirthday(birthDate, today.year)
@@ -48,6 +55,7 @@ class AgeCalculator @Inject constructor(
 
         return AgeResult(
             birthDate = birthDate,
+            birthTime = birthTime,
             years = period.years,
             months = period.months,
             days = period.days,
@@ -60,11 +68,15 @@ class AgeCalculator @Inject constructor(
             dayOfWeekBorn = birthDate.dayOfWeek.name,
             dayOfWeekNextBirthday = nextBirthday.dayOfWeek.name,
             milestones = if (includeUnlocked) getMilestones(birthDate, today) else emptyList(),
-            westernZodiac = if (includeUnlocked) zodiacCalculator.getWesternZodiac(birthDate.monthValue, birthDate.dayOfMonth) else "",
-            rashi = if (includeUnlocked) zodiacCalculator.getRashi(birthDate) else "",
-            nakshatra = if (includeUnlocked) nakshatraCalculator.getNakshatra(birthDate) else "",
+            westernZodiac = if (includeUnlocked) zodiacCalculator.getWesternZodiac(
+                birthDate.monthValue,
+                birthDate.dayOfMonth
+            ) else "",
+            rashi = if (includeUnlocked) zodiacCalculator.getRashi(birthDate, birthTime) else "",
+            nakshatra = if (includeUnlocked) nakshatraCalculator.getNakshatra(birthDate, birthTime) else "",
             chineseZodiac = if (includeUnlocked) zodiacCalculator.getChineseZodiac(birthDate.year) else "",
             estimatedHeartbeats = if (includeUnlocked) estimateHeartbeats(totalMinutes) else 0L,
+            isExact = birthTime != null,
         )
     }
 
@@ -73,7 +85,8 @@ class AgeCalculator @Inject constructor(
     // ---------------------------------------------------------------------------
 
     fun getMilestones(birthDate: LocalDate, today: LocalDate = LocalDate.now()): List<Milestone> {
-        val milestoneTargets = listOf(500, 1_000, 2_000, 3_000, 5_000, 7_000, 10_000, 12_500, 15_000, 20_000, 25_000, 30_000)
+        val milestoneTargets =
+            listOf(500, 1_000, 2_000, 3_000, 5_000, 7_000, 10_000, 12_500, 15_000, 20_000, 25_000, 30_000)
         return milestoneTargets.map { target ->
             val date = birthDate.plusDays(target.toLong())
             Milestone(
