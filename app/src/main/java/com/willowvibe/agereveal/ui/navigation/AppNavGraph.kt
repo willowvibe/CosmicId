@@ -9,6 +9,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Cake
 import androidx.compose.material.icons.filled.Calculate
 import androidx.compose.material.icons.filled.CompareArrows
+import androidx.compose.material.icons.automirrored.filled.CompareArrows
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Star
@@ -56,7 +57,7 @@ import kotlinx.coroutines.launch
 sealed class Screen(val route: String, val label: String, val icon: ImageVector) {
     data object Calculator : Screen("calculator", "Age", Icons.Default.Calculate)
     data object Details : Screen("details", "Profile", Icons.Default.Star)
-    data object Compare : Screen("compare", "Compare", Icons.Default.CompareArrows)
+    data object Compare : Screen("compare", "Compare", Icons.AutoMirrored.Filled.CompareArrows)
     data object Compatibility : Screen("compatibility", "Match", Icons.Default.Favorite)
     data object Reminders : Screen("reminders", "Bdays", Icons.Default.Cake)
     data object Settings : Screen("settings", "Settings", Icons.Default.Settings)

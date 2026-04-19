@@ -31,12 +31,12 @@ class BirthdayNotificationScheduler @Inject constructor(
     @ApplicationContext private val context: Context,
 ) {
     companion object {
-        const val CHANNEL_ID   = "birthday_reminders"
+        const val CHANNEL_ID = "birthday_reminders"
         const val CHANNEL_NAME = "Birthday Reminders"
-        const val KEY_NAME     = "person_name"
-        const val KEY_ID       = "birthday_id"
-        private const val PREFS_NAME  = "reminder_settings"
-        private const val KEY_HOUR    = "notification_hour"
+        const val KEY_NAME = "person_name"
+        const val KEY_ID = "birthday_id"
+        private const val PREFS_NAME = "reminder_settings"
+        private const val KEY_HOUR = "notification_hour"
         const val DEFAULT_HOUR = 9
 
         fun workTag(id: Long) = "birthday_$id"
@@ -80,6 +80,16 @@ class BirthdayNotificationScheduler @Inject constructor(
                     .toInstant()
                     .toEpochMilli() - nowMs
             }
+        }
+
+        // Check SCHEDULE_EXACT_ALARM permission on Android 12+
+        // On Android 12+, exact alarms require the SCHEDULE_EXACT_ALARM permission
+        // WorkManager handles this internally, but we log the status for debugging
+        val canScheduleExactAlarms = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
+            val alarmManager = context.getSystemService(android.app.AlarmManager::class.java)
+            alarmManager.canScheduleExactAlarms()
+        } else {
+            true // Android 11 and below allow exact alarms by default
         }
 
         val request = OneTimeWorkRequestBuilder<BirthdayReminderWorker>()

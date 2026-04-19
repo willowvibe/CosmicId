@@ -67,7 +67,7 @@ fun SettingsScreen(
             icon = {
                 Icon(
                     Icons.Default.Warning,
-                    contentDescription = null,
+                    contentDescription = "Warning: This will permanently delete all birthdays",
                     tint = WarmAmber,
                 )
             },
@@ -189,7 +189,7 @@ fun SettingsScreen(
                     }
                     Icon(
                         Icons.Default.Delete,
-                        contentDescription = null,
+                        contentDescription = "Clear all saved birthdays",
                         tint = MaterialTheme.colorScheme.error,
                         modifier = Modifier.size(20.dp),
                     )

@@ -1,6 +1,7 @@
 package com.willowvibe.agereveal.ui.viewmodel
 
 import androidx.lifecycle.ViewModel
+import com.willowvibe.agereveal.ads.AdManager
 import com.willowvibe.agereveal.data.model.AgeResult
 import com.willowvibe.agereveal.domain.AgeCalculator
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -28,7 +29,9 @@ data class CompareUiState(
 )
 
 @HiltViewModel
-class CompareViewModel @Inject constructor() : ViewModel() {
+class CompareViewModel @Inject constructor(
+    private val adManager: AdManager,
+) : ViewModel() {
 
     private val _uiState = MutableStateFlow(CompareUiState())
     val uiState: StateFlow<CompareUiState> = _uiState.asStateFlow()
@@ -98,5 +101,13 @@ class CompareViewModel @Inject constructor() : ViewModel() {
                 comparisonCount = it.comparisonCount + 1,
             )
         }
+    }
+
+    fun showInterstitialIfReady() {
+        adManager.maybeShowInterstitial()
+    }
+
+    fun clearComparisonCount() {
+        _uiState.update { it.copy(comparisonCount = 0) }
     }
 }

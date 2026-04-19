@@ -748,7 +748,7 @@ private fun AddBirthdaySheet(
                     }
                     Icon(
                         Icons.Default.CalendarMonth,
-                        contentDescription = null,
+                        contentDescription = "Select date",
                         tint = if (dateError) MaterialTheme.colorScheme.error else WarmTeal,
                     )
                 }

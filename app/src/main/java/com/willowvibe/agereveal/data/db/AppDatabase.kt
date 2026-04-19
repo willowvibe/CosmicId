@@ -39,7 +39,12 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     DATABASE_NAME,
                 )
-                    .fallbackToDestructiveMigration()
+                    // Explicit migration objects must be added before any schema change
+                    // See: BUG-001 in BUGS_AND_ISSUES.md
+                    .addMigrations(
+                        // Migration 1 -> 2 example (commented until needed):
+                        // Migration1to2()
+                    )
                     .build()
                     .also { INSTANCE = it }
             }
