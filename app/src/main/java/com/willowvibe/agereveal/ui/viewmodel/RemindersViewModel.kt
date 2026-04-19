@@ -53,6 +53,13 @@ class RemindersViewModel @Inject constructor(
         }
     }
 
+    fun clearAllBirthdays() {
+        viewModelScope.launch {
+            birthdays.value.forEach { notificationScheduler.cancel(it.id) }
+            repository.deleteAll()
+        }
+    }
+
     fun setNotificationHour(hour: Int) {
         notificationScheduler.setNotificationHour(hour)
         // Reschedule all active notification jobs to fire at the new time

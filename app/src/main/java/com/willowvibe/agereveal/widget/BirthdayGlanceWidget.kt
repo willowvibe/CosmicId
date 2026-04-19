@@ -49,21 +49,31 @@ class BirthdayGlanceWidget : GlanceAppWidget() {
         val today = LocalDate.now()
         val first = list.first()
         val daysLeft = ChronoUnit.DAYS.between(today, LocalDate.ofEpochDay(first.nextBirthdayEpochDay))
-        val nextLine = list.getOrNull(1)?.let { second ->
-            val daysToSecond = ChronoUnit.DAYS.between(today, LocalDate.ofEpochDay(second.nextBirthdayEpochDay))
-            "Next: ${second.name} in ${daysToSecond}d"
+        val secondLine = list.getOrNull(1)?.let { second ->
+            val days = ChronoUnit.DAYS.between(today, LocalDate.ofEpochDay(second.nextBirthdayEpochDay))
+            "${second.emoji} ${second.name} in ${days}d"
+        }.orEmpty()
+        val thirdLine = list.getOrNull(2)?.let { third ->
+            val days = ChronoUnit.DAYS.between(today, LocalDate.ofEpochDay(third.nextBirthdayEpochDay))
+            "${third.emoji} ${third.name} in ${days}d"
         }.orEmpty()
         return WidgetState.Loaded(
             personHeadline = "${first.emoji} ${first.name}'s birthday",
             daysLeft = daysLeft,
-            nextLine = nextLine,
+            secondLine = secondLine,
+            thirdLine = thirdLine,
         )
     }
 }
 
 private sealed interface WidgetState {
     data object Empty : WidgetState
-    data class Loaded(val personHeadline: String, val daysLeft: Long, val nextLine: String) : WidgetState
+    data class Loaded(
+        val personHeadline: String,
+        val daysLeft: Long,
+        val secondLine: String = "",
+        val thirdLine: String = "",
+    ) : WidgetState
 }
 
 private val BgNavy = Color(0xFF1A1A2E)
@@ -116,10 +126,21 @@ private fun WidgetBody(state: WidgetState) {
             maxLines = 1,
         )
 
-        if (state is WidgetState.Loaded && state.nextLine.isNotEmpty()) {
-            Spacer(modifier = GlanceModifier.height(6.dp))
+        if (state is WidgetState.Loaded && state.secondLine.isNotEmpty()) {
+            Spacer(modifier = GlanceModifier.height(4.dp))
             Text(
-                text = state.nextLine,
+                text = state.secondLine,
+                style = TextStyle(
+                    color = ColorProvider(WhiteGhost),
+                    fontSize = 10.sp,
+                ),
+                maxLines = 1,
+            )
+        }
+        if (state is WidgetState.Loaded && state.thirdLine.isNotEmpty()) {
+            Spacer(modifier = GlanceModifier.height(2.dp))
+            Text(
+                text = state.thirdLine,
                 style = TextStyle(
                     color = ColorProvider(WhiteGhost),
                     fontSize = 10.sp,

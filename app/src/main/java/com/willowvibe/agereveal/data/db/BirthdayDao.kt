@@ -35,4 +35,7 @@ interface BirthdayDao {
 
     @Query("UPDATE saved_birthdays SET nextBirthdayEpochDay = :epochDay WHERE id = :id")
     suspend fun updateNextBirthdayEpochDay(id: Long, epochDay: Long)
+
+    @Query("DELETE FROM saved_birthdays")
+    suspend fun deleteAll()
 }

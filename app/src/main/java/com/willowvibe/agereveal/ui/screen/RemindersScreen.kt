@@ -86,7 +86,6 @@ import java.time.temporal.ChronoUnit
 @Composable
 fun RemindersScreen(
     viewModel: RemindersViewModel = hiltViewModel(),
-    onAddBirthday: () -> Unit,
 ) {
     val birthdays by viewModel.birthdays.collectAsState()
     val notificationHour by viewModel.notificationHour.collectAsState()
