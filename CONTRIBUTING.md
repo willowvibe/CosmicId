@@ -1,39 +1,115 @@
 # Contributing to AgeReveal
 
-First off, thank you for considering contributing to AgeReveal! It's people like you that make the open source community such a great place to learn, inspire, and create.
+Thank you for considering contributing to AgeReveal! Whether you're reporting a bug, suggesting an enhancement, or submitting code, your involvement helps make the project better.
 
-## How Can I Contribute?
+---
 
-### Reporting Bugs
-This section guides you through submitting a bug report for AgeReveal. Following these guidelines helps maintainers and the community understand your report, reproduce the behavior, and find related reports.
-* Make sure you test against the latest version.
-* Provide a clear and descriptive title for the issue.
-* Describe the exact steps which reproduce the problem in as many details as possible.
+## Table of Contents
 
-### Suggesting Enhancements
-This section guides you through submitting an enhancement suggestion for AgeReveal, including completely new features and minor improvements to existing functionality.
-* Use a clear and descriptive title for the issue to identify the suggestion.
-* Provide a step-by-step description of the suggested enhancement in as many details as possible.
+- [Reporting Bugs](#reporting-bugs)
+- [Suggesting Enhancements](#suggesting-enhancements)
+- [Pull Requests](#pull-requests)
+- [Development Setup](#development-setup)
+- [Project Structure](#project-structure)
+- [Code Style](#code-style)
 
-### Pull Requests
-* Fill in the required template
-* Do not include issue numbers in the PR title
-* Include screenshots and animated GIFs in your pull request whenever possible.
-* Follow the Kotlin styleguide.
-* End files with a newline.
+---
 
-## Setup for Development
-AgeReveal is built with Kotlin and Jetpack Compose.
-1. Download and install Android Studio.
-2. Clone this repository.
-3. Import the project into Android Studio.
-4. Let Gradle sync and build.
+## Reporting Bugs
 
-**Optional — Custom Inter Typography:**
-The app falls back to the system sans-serif by default. To enable the Inter custom font:
-1. Download Inter TTF files from [rsms.me/inter](https://rsms.me/inter)
-2. Place `inter_regular.ttf`, `inter_medium.ttf`, `inter_semibold.ttf`, `inter_bold.ttf` in `app/src/main/res/font/`
-3. Uncomment the `InterFamily` block in `app/src/main/java/com/willowvibe/agereveal/ui/theme/Type.kt`
-4. Replace `FontFamily.Default` with `InterFamily` in that file
+Before opening an issue:
+1. Test against the **latest version** of the app.
+2. Search existing issues to avoid duplicates.
+3. Check [BUGS_AND_ISSUES.md](BUGS_AND_ISSUES.md) — the bug may already be tracked.
 
-**AdMob:** The bundled IDs are Google's test values — safe to run locally but generate no revenue. See [TASKS.md](TASKS.md) for how to swap in production IDs before release.
+When filing a bug report, include:
+- **Title:** Clear, specific, and reproducible (e.g., "Notification not firing for Feb 29 birthday in 2025")
+- **Steps to reproduce** — numbered, step by step
+- **Expected behaviour** — what should happen
+- **Actual behaviour** — what actually happens
+- **Device info** — Android version, manufacturer/model
+- **App version** — found in Settings or the About section
+
+---
+
+## Suggesting Enhancements
+
+- Check [TASKS.md](TASKS.md) and [roadmap.md](roadmap.md) — the idea may already be planned.
+- Use a descriptive title for the issue.
+- Explain **why** the enhancement would be useful, not just what it should do.
+- Include mockups or examples where possible.
+
+---
+
+## Pull Requests
+
+1. Fork the repository and create a branch from `main` (or the active feature branch, e.g., `feature/phase-3-depth-retention`).
+2. Keep the PR focused — one feature or bug fix per PR.
+3. Fill in the PR template (title, description, screenshots for UI changes).
+4. Do **not** include issue numbers in the PR title.
+5. Include screenshots or screen recordings for any UI changes.
+6. Follow the code style guidelines below.
+7. Ensure the project builds and runs before submitting.
+
+---
+
+## Development Setup
+
+### Requirements
+- **Android Studio** Hedgehog (2023.1.1) or newer
+- **JDK 17** (bundled with Android Studio)
+- An Android device or emulator running **API 26+** (API 21–25 supported via desugaring)
+
+### Steps
+1. Clone the repository.
+2. Open the project root in Android Studio.
+3. Wait for Gradle sync to complete.
+4. Run the `app` configuration on your device or emulator.
+
+### AdMob
+All bundled Ad Unit IDs are Google's safe test values. The app runs and shows test ads out of the box — no AdMob account needed for local development. See [TASKS.md §1](TASKS.md) for how to swap in production IDs before a release build.
+
+### Optional — Custom Inter Typography
+The app defaults to the system sans-serif font. To enable the Inter custom font locally:
+1. Download Inter TTF files from rsms.me/inter
+2. Place the following files in `app/src/main/res/font/`:
+   - `inter_regular.ttf`
+   - `inter_medium.ttf`
+   - `inter_semibold.ttf`
+   - `inter_bold.ttf`
+3. Uncomment the `InterFamily` font-family block in `app/src/main/java/com/willowvibe/agereveal/ui/theme/Type.kt` (lines 20–25)
+4. Replace `FontFamily.Default` with `InterFamily` in every `TextStyle` in that file
+
+> These font files are not committed to the repo to avoid binary bloat; the fallback looks fine in practice.
+
+---
+
+## Project Structure
+
+```
+app/src/main/java/com/willowvibe/agereveal/
+├── ads/          # AdMob lifecycle management
+├── data/         # Room DB, DAOs, models, repository
+├── di/           # Hilt DI modules
+├── domain/       # Pure Kotlin business logic (no Android deps)
+├── notification/ # WorkManager workers and schedulers
+├── ui/           # Compose screens, ViewModels, navigation, theme
+└── widget/       # Jetpack Glance home screen widget
+```
+
+Key architectural conventions:
+- **Domain layer** (`domain/`) must stay free of Android framework imports; it holds pure Kotlin logic only.
+- **ViewModels** expose `StateFlow<UiState>` and never hold a reference to a `Context` (use Hilt's `ApplicationContext` via constructor injection if needed).
+- **Repository** is the single source of truth for persisted data; screens never talk to the DAO directly.
+- `yearSafeBirthday()` is the canonical Feb 29 helper — reuse it wherever a birthday date is advanced by a year.
+
+---
+
+## Code Style
+
+- Follow the official [Kotlin coding conventions](https://kotlinlang.org/docs/coding-conventions.html).
+- Use 4-space indentation (no tabs).
+- Compose UI: prefer stateless composables that receive state and callbacks; keep stateful logic in the ViewModel.
+- Write comments only when the **why** is non-obvious — avoid restating what the code already says.
+- End all files with a newline.
+- Run `./gradlew lint` before opening a PR; fix all errors and review warnings.
