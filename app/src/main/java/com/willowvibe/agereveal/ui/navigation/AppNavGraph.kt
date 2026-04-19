@@ -43,6 +43,7 @@ import com.willowvibe.agereveal.ui.screen.CalculatorScreen
 import com.willowvibe.agereveal.ui.screen.CompatibilityScreen
 import com.willowvibe.agereveal.ui.screen.CompareScreen
 import com.willowvibe.agereveal.ui.screen.DetailsUnlockScreen
+import com.willowvibe.agereveal.ui.screen.LifeTimelineScreen
 import com.willowvibe.agereveal.ui.screen.RemindersScreen
 import com.willowvibe.agereveal.ui.screen.SettingsScreen
 import com.willowvibe.agereveal.ui.theme.WarmBlack
@@ -61,6 +62,7 @@ sealed class Screen(val route: String, val label: String, val icon: ImageVector)
     data object Compatibility : Screen("compatibility", "Match", Icons.Default.Favorite)
     data object Reminders : Screen("reminders", "Bdays", Icons.Default.Cake)
     data object Settings : Screen("settings", "Settings", Icons.Default.Settings)
+    data object Timeline : Screen("timeline", "Timeline", Icons.Default.Cake)
 }
 
 private val bottomNavItems = listOf(
@@ -70,6 +72,7 @@ private val bottomNavItems = listOf(
     Screen.Compatibility,
     Screen.Reminders,
     Screen.Settings,
+    Screen.Timeline,
 )
 
 @Composable
@@ -191,6 +194,19 @@ fun AppNavGraph(adManager: AdManager) {
                 SettingsScreen(
                     onBack = { navController.popBackStack() },
                     viewModel = viewModel
+                )
+            }
+            composable(Screen.Timeline.route) {
+                val calcEntry = runCatching { navController.getBackStackEntry(Screen.Calculator.route) }.getOrNull()
+                val viewModel: CalculatorViewModel = if (calcEntry != null) {
+                    hiltViewModel(calcEntry)
+                } else {
+                    hiltViewModel()
+                }
+                val milestones = viewModel.uiState.value.result?.milestones ?: emptyList()
+                LifeTimelineScreen(
+                    milestones = milestones,
+                    onDismiss = { navController.popBackStack() }
                 )
             }
         }
