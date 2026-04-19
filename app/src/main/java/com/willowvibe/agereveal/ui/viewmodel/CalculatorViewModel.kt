@@ -57,6 +57,9 @@ class CalculatorViewModel @Inject constructor(
             }
     }
 
+    /** Get the user's birth date (if set). */
+    fun getUserBirthDate(): LocalDate? = _uiState.value.birthDate
+
     /**
      * 1-second ticker — emits current epoch second to drive live totalSeconds display.
      * WhileSubscribed(5000) keeps the flow alive for 5s during config changes / tab switches.
