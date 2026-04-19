@@ -95,7 +95,7 @@
 
 | Item | Value |
 |---|---|
-| Version | 0.4 |
+| Version | 0.9 |
 | minSdk | 26 (desugaring enables API 21+) |
 | targetSdk | 35 |
 | compileSdk | 36 |

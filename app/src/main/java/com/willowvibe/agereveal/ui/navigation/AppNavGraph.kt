@@ -69,6 +69,7 @@ private val bottomNavItems = listOf(
     Screen.Compare,
     Screen.Compatibility,
     Screen.Reminders,
+    Screen.Settings,
 )
 
 @Composable
@@ -79,8 +80,8 @@ fun AppNavGraph(adManager: AdManager) {
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
 
-    // Settings screen is a full-screen overlay — hide bottom bar when on it
-    val showBottomBar = currentDest?.route != Screen.Settings.route
+    // Show bottom bar on all screens
+    val showBottomBar = true
 
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
@@ -186,7 +187,11 @@ fun AppNavGraph(adManager: AdManager) {
                 RemindersScreen(viewModel = viewModel)
             }
             composable(Screen.Settings.route) {
-                SettingsScreen(onBack = { navController.popBackStack() })
+                val viewModel: RemindersViewModel = hiltViewModel()
+                SettingsScreen(
+                    onBack = { navController.popBackStack() },
+                    viewModel = viewModel
+                )
             }
         }
     }

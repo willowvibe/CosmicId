@@ -1,6 +1,6 @@
 # AgeReveal — Tasks & Implementation Checklist
 
-_Last updated: 2026-04-19 — v0.4, Phase 3 in progress_
+_Last updated: 2026-04-19 — v0.9, Phase 3 complete, Settings screen added_
 
 ---
 

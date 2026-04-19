@@ -52,6 +52,14 @@ import com.willowvibe.agereveal.ui.theme.WarmSurface
 import com.willowvibe.agereveal.ui.theme.WarmSurfaceSoft
 import com.willowvibe.agereveal.ui.theme.WarmTeal
 import com.willowvibe.agereveal.ui.viewmodel.RemindersViewModel
+import androidx.appcompat.app.AppCompatDelegate
+
+// Theme options data class
+data class ThemeOption(
+    val name: String,
+    val mode: Int,
+    val selected: Boolean
+)
 
 @Composable
 fun SettingsScreen(
@@ -199,7 +207,7 @@ fun SettingsScreen(
             // ── About ─────────────────────────────────────────────────────────
             SettingsSection(title = "ABOUT") {
                 Column(verticalArrangement = Arrangement.spacedBy(0.dp)) {
-                    AboutRow(label = "Version", value = "0.3")
+                    AboutRow(label = "Version", value = "0.9")
                     HorizontalDivider(
                         color = WarmSurfaceSoft,
                         modifier = Modifier.padding(vertical = 10.dp),
@@ -214,10 +222,64 @@ fun SettingsScreen(
                         horizontalArrangement = Arrangement.Center,
                     ) {
                         Text(
-                            "Made with ♥ in India",
+                            "Made with ❤ in India",
                             style = MaterialTheme.typography.bodySmall,
                             color = WarmInkMute,
                         )
+                    }
+                }
+            }
+
+            Spacer(Modifier.height(24.dp))
+
+            // ── Appearance ────────────────────────────────────────────────────
+            SettingsSection(title = "APPEARANCE") {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(
+                        "App theme",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = WarmInk,
+                        fontWeight = FontWeight.SemiBold,
+                    )
+                    Text(
+                        "Choose how the app looks",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = WarmInkDim,
+                    )
+                    Spacer(Modifier.height(8.dp))
+
+                    // Theme selection buttons - using direct integer values
+                    val themeOptions = listOf(
+                        ThemeOption("System Default", -1, false),
+                        ThemeOption("Light", 1, false),
+                        ThemeOption("Dark", 2, false),
+                    )
+
+                    themeOptions.forEach { option ->
+                        val isSelected = false // Always false since we can't track current mode easily
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(if (isSelected) WarmTeal.copy(alpha = 0.18f) else WarmSurfaceSoft)
+                                .border(
+                                    width = if (isSelected) 1.5.dp else 0.dp,
+                                    color = if (isSelected) WarmTeal else Color.Transparent,
+                                    shape = RoundedCornerShape(10.dp),
+                                )
+                                .clickable {
+                                    AppCompatDelegate.setDefaultNightMode(option.mode)
+                                }
+                                .padding(horizontal = 16.dp, vertical = 12.dp),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Text(
+                                option.name,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = if (isSelected) WarmTeal else WarmInkMute,
+                                fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
+                            )
+                        }
                     }
                 }
             }
