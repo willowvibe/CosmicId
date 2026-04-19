@@ -270,6 +270,7 @@ private fun BirthAnchorRow(
     var showDialog by remember { mutableStateOf(false) }
     val initialMillis = (selectedDate ?: LocalDate.now())
         .atStartOfDay(ZoneId.of("UTC")).toInstant().toEpochMilli()
+    // Minimum year guard - validate year selection in the confirm button
     val datePickerState = rememberDatePickerState(initialSelectedDateMillis = initialMillis)
 
     if (showDialog) {
@@ -278,11 +279,13 @@ private fun BirthAnchorRow(
             confirmButton = {
                 TextButton(onClick = {
                     datePickerState.selectedDateMillis?.let { millis ->
-                        onDateSelected(
-                            Instant.ofEpochMilli(millis).atZone(ZoneId.of("UTC")).toLocalDate(),
-                        )
+                        val selectedDate = Instant.ofEpochMilli(millis).atZone(ZoneId.of("UTC")).toLocalDate()
+                        // Validate minimum year (1900) to avoid unreliable astronomical calculations
+                        if (selectedDate.year >= 1900) {
+                            onDateSelected(selectedDate)
+                            showDialog = false
+                        }
                     }
-                    showDialog = false
                 }) { Text("OK") }
             },
             dismissButton = { TextButton(onClick = { showDialog = false }) { Text("Cancel") } },

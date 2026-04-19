@@ -30,6 +30,9 @@ class AdManager @Inject constructor(
     @ApplicationContext private val context: Context,
 ) {
     companion object {
+        private const val PREFS_NAME = "ad_preferences"
+        private const val KEY_LAST_INTERSTITIAL_SHOWN = "last_interstitial_shown_ms"
+
         // Test ad unit IDs (safe to commit — will not generate real revenue)
         const val BANNER_AD_UNIT_ID = "ca-app-pub-3940256099942544/6300978111"
         const val REWARDED_AD_UNIT_ID = "ca-app-pub-3940256099942544/5224354917"
@@ -38,8 +41,11 @@ class AdManager @Inject constructor(
         private const val INTERSTITIAL_COOLDOWN_MS = 5 * 60 * 1_000L  // 5 minutes
     }
 
+    private val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+
     /**
-     * Weak reference to the host Activity — prevents memory leaks.
+     * Strong reference to the host Activity during ad display — prevents premature GC.
+     * Cleared immediately after ad dismissal.
      * Must be updated every time the Activity resumes via [attachActivity].
      */
     private var activityRef: WeakReference<Activity> = WeakReference(null)
@@ -81,6 +87,8 @@ class AdManager @Inject constructor(
      * Show the rewarded ad. Calls [onRewarded] iff the user earns the reward.
      * If no ad is ready, preloads a new one and calls [onNotReady] so the UI can inform the user.
      * Immediately preloads the next ad after show (prevents wait-time on subsequent taps).
+     *
+     * Note: The Activity reference is held for the duration of the ad display to prevent GC.
      */
     fun showRewardedAd(onRewarded: () -> Unit, onNotReady: (() -> Unit)? = null) {
         val ad = rewardedAd
@@ -100,6 +108,8 @@ class AdManager @Inject constructor(
             }
         }
 
+        // Hold activity reference during ad display to prevent GC
+        // The Activity is passed directly to ad.show() so it remains strongly referenced
         ad.show(activity) { rewardItem ->
             if (rewardItem.amount > 0) onRewarded()
         }
@@ -112,7 +122,7 @@ class AdManager @Inject constructor(
     private var interstitialAd: InterstitialAd? = null
 
     @Volatile
-    private var lastInterstitialShownMs: Long = 0L
+    private var lastInterstitialShownMs: Long = prefs.getLong(KEY_LAST_INTERSTITIAL_SHOWN, 0L)
 
     fun preloadInterstitialAd() {
         InterstitialAd.load(
@@ -151,6 +161,8 @@ class AdManager @Inject constructor(
 
         ad.show(activity)
         lastInterstitialShownMs = now
+        // Persist for robustness across app kills
+        prefs.edit().putLong(KEY_LAST_INTERSTITIAL_SHOWN, now).apply()
     }
 
     /**

@@ -83,8 +83,14 @@ class BirthdayNotificationScheduler @Inject constructor(
         }
 
         // Check SCHEDULE_EXACT_ALARM permission on Android 12+
-        // Note: WorkManager handles exact alarms automatically, but we log the status
-        val canScheduleExactAlarms = true // WorkManager handles this internally
+        // On Android 12+, exact alarms require the SCHEDULE_EXACT_ALARM permission
+        // WorkManager handles this internally, but we log the status for debugging
+        val canScheduleExactAlarms = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
+            val alarmManager = context.getSystemService(android.app.AlarmManager::class.java)
+            alarmManager.canScheduleExactAlarms()
+        } else {
+            true // Android 11 and below allow exact alarms by default
+        }
 
         val request = OneTimeWorkRequestBuilder<BirthdayReminderWorker>()
             .setInitialDelay(delayMs, TimeUnit.MILLISECONDS)
