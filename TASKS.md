@@ -1,6 +1,6 @@
 # AgeReveal — Remaining Tasks & Placeholders
 
-_Last updated: 2026-04-18 — Phase 3 features branch created_
+_Last updated: 2026-04-19 — Phase 3 features branch updated with completed features_
 
 ---
 
@@ -98,13 +98,19 @@ Still pending:
 
 ## 6. Phase 3 Features (In Progress)
 
-### High Priority (Ready to Implement)
+### Completed ✅
+- **Google Calendar Export** — `CalendarExport.kt` utility for one-tap Intent to add birthdays to Google Calendar
+- **Astrology Explanations** — `AstroInfoDialog.kt` with educational dialogs for Western Zodiac, Rashi, Nakshatra, Chinese Zodiac, and Moon Phase
+
+### High Priority (In Progress)
 - [ ] **Birth Time Support** — Optional time picker for precise Nakshatra + Rashi calculation
 - [ ] **Milestone Push Notifications** — Schedule WorkManager jobs for upcoming day-milestones
 - [ ] **Zodiac Compatibility Share Card** — Generate shareable bitmap for compatibility result
 - [ ] **Life Timeline Visual** — Scrollable timeline of milestones with achievement badges
-- [ ] **Google Calendar Export** — One-tap Intent to add birthdays to Google Calendar
-- [ ] **Astrology Explanations** — Info dialog for each astrological term
 - [ ] **Settings Screen** — Dedicated settings tab with theme, language, notification defaults
 
 See [`feature/phase-3-depth-retention`](https://github.com/willowvibe/AgeReveal/tree/feature/phase-3-depth-retention) branch for active development.
+
+### Build Status
+- **APK Location:** `AgeReveal-0.3-debug.apk`
+- **Version:** 0.3 (updated from 0.2)
