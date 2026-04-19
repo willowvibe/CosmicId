@@ -26,6 +26,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.DatePicker
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
@@ -129,7 +131,9 @@ fun CompatibilityScreen(
                 // ── Person A ──────────────────────────────────────────────────
                 PersonDateCard(
                     label = "PERSON A",
+                    name = uiState.nameA,
                     date = uiState.dateA,
+                    onNameChanged = viewModel::setNameA,
                     onDateSelected = viewModel::onDateASelected,
                 )
 
@@ -152,7 +156,9 @@ fun CompatibilityScreen(
                 // ── Person B ──────────────────────────────────────────────────
                 PersonDateCard(
                     label = "PERSON B",
+                    name = uiState.nameB,
                     date = uiState.dateB,
+                    onNameChanged = viewModel::setNameB,
                     onDateSelected = viewModel::onDateBSelected,
                 )
 
@@ -247,7 +253,9 @@ fun CompatibilityScreen(
 @Composable
 private fun PersonDateCard(
     label: String,
+    name: String,
     date: LocalDate?,
+    onNameChanged: (String) -> Unit,
     onDateSelected: (LocalDate) -> Unit,
 ) {
     var showDialog by remember { mutableStateOf(false) }
@@ -272,23 +280,35 @@ private fun PersonDateCard(
         ) { DatePicker(state = datePickerState) }
     }
 
-    Row(
+    Column(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(14.dp))
             .background(WarmSurface)
-            .clickable { showDialog = true }
             .padding(horizontal = 16.dp, vertical = 14.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween,
     ) {
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                label,
-                style = MaterialTheme.typography.labelSmall,
-                color = WarmInkDim,
-            )
-            Spacer(Modifier.height(4.dp))
+        OutlinedTextField(
+            value = name,
+            onValueChange = onNameChanged,
+            label = { Text(label, style = MaterialTheme.typography.labelSmall, color = WarmInkDim) },
+            singleLine = true,
+            modifier = Modifier.fillMaxWidth(),
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = WarmTeal,
+                unfocusedBorderColor = WarmInkDim,
+                focusedTextColor = WarmInk,
+                unfocusedTextColor = WarmInk,
+                focusedLabelColor = WarmInkDim,
+            ),
+        )
+        Spacer(Modifier.height(8.dp))
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable { showDialog = true },
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween,
+        ) {
             Text(
                 text = date?.format(DateTimeFormatter.ofLocalizedDate(FormatStyle.LONG))
                     ?: "Tap to set birthday",
@@ -297,22 +317,22 @@ private fun PersonDateCard(
                     fontSize = 16.sp,
                 ),
                 color = if (date != null) WarmInk else WarmInkMute,
+                modifier = Modifier.weight(1f),
             )
-        }
-        Spacer(Modifier.width(12.dp))
-        Box(
-            modifier = Modifier
-                .size(34.dp)
-                .clip(CircleShape)
-                .background(WarmSurfaceSoft),
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(
-                Icons.Default.CalendarMonth,
-                contentDescription = "Pick date",
-                tint = WarmTeal,
-                modifier = Modifier.size(18.dp),
-            )
+            Box(
+                modifier = Modifier
+                    .size(34.dp)
+                    .clip(CircleShape)
+                    .background(WarmSurfaceSoft),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    Icons.Default.CalendarMonth,
+                    contentDescription = "Pick date",
+                    tint = WarmTeal,
+                    modifier = Modifier.size(18.dp),
+                )
+            }
         }
     }
 }
@@ -494,5 +514,5 @@ private fun ScoreBar(score: Int, modifier: Modifier = Modifier) {
 private fun scoreColor(score: Int) = when {
     score >= 80 -> WarmTeal
     score >= 60 -> WarmAmber
-    else        -> WarmInkDim
+    else -> WarmInkDim
 }
