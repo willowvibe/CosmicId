@@ -10,6 +10,13 @@ AgeReveal is a native Android app that calculates your exact age in years, month
 - **Compare:** Compare ages with friends to see who is older.
 - **Reminders & Widget:** Save birthdays, get notifications, and see a countdown on your home screen.
 
+## Phase 3 Features (In Progress)
+- **Google Calendar Export:** One-tap intent to add birthdays to Google Calendar.
+- **Astrology Explanations:** Info dialogs providing educational content on astrology terms.
+- **Life Timeline Visual:** Scrollable timeline of milestones with achievement badges (coming soon).
+- **Birth Time Support:** Optional time picker for precise Nakshatra + Rashi calculations (coming soon).
+- **Milestone Push Notifications:** Schedule WorkManager jobs for upcoming day-milestones (coming soon).
+
 ## Tech Stack
 - **Kotlin & Jetpack Compose**
 - **Architecture:** MVVM, Clean Architecture
@@ -26,3 +33,5 @@ AgeReveal is a native Android app that calculates your exact age in years, month
 3. Sync Gradle and run on an Android device or emulator (API 26+ recommended, though API 21+ supported via desugaring).
 
 > **Note:** The AdMob App ID and Ad Unit IDs in the codebase are currently set to Google's safe test IDs. Replace them with real IDs from your AdMob account before publishing. See [TASKS.md](TASKS.md) for the full pre-release checklist including file locations and line numbers.
+>
+> **Development Status:** Phase 3 features are actively being developed in the `feature/phase-3-depth-retention` branch. For the latest additions including Calendar Export and Astrology Explanations, check out that branch.
