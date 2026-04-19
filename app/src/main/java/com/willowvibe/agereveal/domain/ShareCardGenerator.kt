@@ -34,6 +34,11 @@ import kotlin.math.abs
  *  - [CardTheme.DARK_COSMOS]  — Navy gradient, white text (default)
  *  - [CardTheme.MINIMAL_LIGHT] — White + black text (unlockable)
  *  - [CardTheme.FESTIVE_INDIA] — Saffron + green (unlockable)
+ *
+ * Output format is always a square ([SQUARE_SIZE] × [SQUARE_SIZE]) bitmap so that the
+ * image is never cropped by WhatsApp (16:9 preview), Instagram Stories (9:16), or any
+ * other platform. The 900×600 content area is centred vertically within the square and
+ * the theme background fills the remaining top/bottom margins (BUG-011).
  */
 @Singleton
 class ShareCardGenerator @Inject constructor(
@@ -46,8 +51,13 @@ class ShareCardGenerator @Inject constructor(
     private val sharingMilestone = AtomicBoolean(false)
 
     companion object {
+        /** Logical content width/height — all coordinate maths inside draw* functions uses these. */
         const val CARD_WIDTH = 900
         const val CARD_HEIGHT = 600
+        /** Output bitmap is square; content is centred with (SQUARE_SIZE-CARD_HEIGHT)/2 top margin. */
+        const val SQUARE_SIZE = CARD_WIDTH          // 900 × 900
+        private val VERTICAL_PAD = (SQUARE_SIZE - CARD_HEIGHT) / 2  // 150 px top & bottom
+
         const val CACHE_FILE = "share_card.png"
         const val MILESTONE_CACHE_FILE = "milestone_card.png"
         const val COMPATIBILITY_CACHE_FILE = "compatibility_card.png"
@@ -57,23 +67,74 @@ class ShareCardGenerator @Inject constructor(
 
     private val sharingCompatibility = AtomicBoolean(false)
 
-    /** Generate bitmap share card from [result] using the given [theme]. */
+    // ---------------------------------------------------------------------------
+    // Public API — generate
+    // ---------------------------------------------------------------------------
+
+    /** Generate a square share card from [result] using the given [theme]. */
     fun generateBitmap(result: AgeResult, theme: CardTheme = CardTheme.DARK_COSMOS): Bitmap {
-        val bmp = Bitmap.createBitmap(CARD_WIDTH, CARD_HEIGHT, Bitmap.Config.ARGB_8888)
-        val canvas = Canvas(bmp)
+        // 1. Draw content at native 900×600
+        val contentBmp = Bitmap.createBitmap(CARD_WIDTH, CARD_HEIGHT, Bitmap.Config.ARGB_8888)
         val paint = Paint(Paint.ANTI_ALIAS_FLAG)
-
         when (theme) {
-            CardTheme.DARK_COSMOS -> drawDarkCosmos(canvas, paint, result)
-            CardTheme.MINIMAL_LIGHT -> drawMinimalLight(canvas, paint, result)
-            CardTheme.FESTIVE_INDIA -> drawFestiveIndia(canvas, paint, result)
+            CardTheme.DARK_COSMOS -> drawDarkCosmos(Canvas(contentBmp), paint, result)
+            CardTheme.MINIMAL_LIGHT -> drawMinimalLight(Canvas(contentBmp), paint, result)
+            CardTheme.FESTIVE_INDIA -> drawFestiveIndia(Canvas(contentBmp), paint, result)
         }
-
-        // Watermark — small, tasteful, bottom-right (passive install driver)
-        drawWatermark(canvas, paint)
-
-        return bmp
+        // 2. Embed in square with matching background
+        return embedInSquare(contentBmp, theme, paint)
     }
+
+    /** Generate a dedicated milestone share card (e.g. "You'll turn 10,000 days old on…"). */
+    fun generateMilestoneBitmap(milestone: Milestone, theme: CardTheme = CardTheme.FESTIVE_INDIA): Bitmap {
+        val contentBmp = Bitmap.createBitmap(CARD_WIDTH, CARD_HEIGHT, Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(contentBmp)
+        val paint = Paint(Paint.ANTI_ALIAS_FLAG)
+        when (theme) {
+            CardTheme.DARK_COSMOS -> {
+                drawThemeBackground(canvas, paint, CARD_WIDTH.toFloat(), CARD_HEIGHT.toFloat(), theme)
+                drawMilestoneContent(canvas, paint, milestone, Color.WHITE, Color.parseColor("#86efac"))
+            }
+            CardTheme.MINIMAL_LIGHT -> {
+                paint.color = Color.WHITE
+                canvas.drawRect(0f, 0f, CARD_WIDTH.toFloat(), CARD_HEIGHT.toFloat(), paint)
+                drawMilestoneContent(canvas, paint, milestone,
+                    Color.parseColor("#1c1917"), Color.parseColor("#0f6e56"))
+            }
+            CardTheme.FESTIVE_INDIA -> {
+                drawThemeBackground(canvas, paint, CARD_WIDTH.toFloat(), CARD_HEIGHT.toFloat(), theme)
+                drawMilestoneContent(canvas, paint, milestone, Color.WHITE, Color.parseColor("#FFD700"))
+            }
+        }
+        return embedInSquare(contentBmp, theme, paint)
+    }
+
+    fun generateCompatibilityBitmap(result: CompatibilityResult, theme: CardTheme = CardTheme.DARK_COSMOS): Bitmap {
+        val contentBmp = Bitmap.createBitmap(CARD_WIDTH, CARD_HEIGHT, Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(contentBmp)
+        val paint = Paint(Paint.ANTI_ALIAS_FLAG)
+        when (theme) {
+            CardTheme.DARK_COSMOS -> {
+                drawThemeBackground(canvas, paint, CARD_WIDTH.toFloat(), CARD_HEIGHT.toFloat(), theme)
+                drawCompatibilityContent(canvas, paint, result, Color.WHITE, Color.parseColor("#86efac"))
+            }
+            CardTheme.MINIMAL_LIGHT -> {
+                paint.color = Color.WHITE
+                canvas.drawRect(0f, 0f, CARD_WIDTH.toFloat(), CARD_HEIGHT.toFloat(), paint)
+                drawCompatibilityContent(canvas, paint, result,
+                    Color.parseColor("#1c1917"), Color.parseColor("#0f6e56"))
+            }
+            CardTheme.FESTIVE_INDIA -> {
+                drawThemeBackground(canvas, paint, CARD_WIDTH.toFloat(), CARD_HEIGHT.toFloat(), theme)
+                drawCompatibilityContent(canvas, paint, result, Color.WHITE, Color.parseColor("#FFD700"))
+            }
+        }
+        return embedInSquare(contentBmp, theme, paint)
+    }
+
+    // ---------------------------------------------------------------------------
+    // Public API — share
+    // ---------------------------------------------------------------------------
 
     /** Share the generated bitmap via Android share sheet (WhatsApp, etc.). */
     fun share(result: AgeResult, theme: CardTheme = CardTheme.DARK_COSMOS) {
@@ -97,7 +158,6 @@ class ShareCardGenerator @Inject constructor(
                     val chooser = Intent.createChooser(intent, "Share your age")
                     chooser.clipData = ClipData.newRawUri("", uri)
                     chooser.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                    // Use context from the UI (Activity) for proper task handling
                     if (context is android.app.Activity) {
                         context.startActivity(chooser)
                     } else {
@@ -111,58 +171,6 @@ class ShareCardGenerator @Inject constructor(
             bitmap?.recycle()
             sharingCard.set(false)
         }
-    }
-
-    /** Generate a dedicated milestone share card (e.g. "You'll turn 10,000 days old on…"). */
-    fun generateMilestoneBitmap(milestone: Milestone, theme: CardTheme = CardTheme.FESTIVE_INDIA): Bitmap {
-        val bmp = Bitmap.createBitmap(CARD_WIDTH, CARD_HEIGHT, Bitmap.Config.ARGB_8888)
-        val canvas = Canvas(bmp)
-        val paint = Paint(Paint.ANTI_ALIAS_FLAG)
-
-        when (theme) {
-            CardTheme.DARK_COSMOS -> {
-                val gradient = LinearGradient(
-                    0f, 0f, CARD_WIDTH.toFloat(), CARD_HEIGHT.toFloat(),
-                    Color.parseColor("#1a1a2e"), Color.parseColor("#16213e"),
-                    Shader.TileMode.CLAMP,
-                )
-                paint.shader = gradient
-                canvas.drawRect(0f, 0f, CARD_WIDTH.toFloat(), CARD_HEIGHT.toFloat(), paint)
-                paint.shader = null
-                drawMilestoneContent(
-                    canvas, paint, milestone,
-                    textColor = Color.WHITE, accentColor = Color.parseColor("#86efac")
-                )
-            }
-
-            CardTheme.MINIMAL_LIGHT -> {
-                paint.color = Color.WHITE
-                canvas.drawRect(0f, 0f, CARD_WIDTH.toFloat(), CARD_HEIGHT.toFloat(), paint)
-                drawMilestoneContent(
-                    canvas, paint, milestone,
-                    textColor = Color.parseColor("#1c1917"), accentColor = Color.parseColor("#0f6e56")
-                )
-            }
-
-            CardTheme.FESTIVE_INDIA -> {
-                val gradient = LinearGradient(
-                    0f, 0f, CARD_WIDTH.toFloat(), CARD_HEIGHT.toFloat(),
-                    Color.parseColor("#FF9933"), Color.parseColor("#138808"),
-                    Shader.TileMode.CLAMP,
-                )
-                paint.shader = gradient
-                canvas.drawRect(0f, 0f, CARD_WIDTH.toFloat(), CARD_HEIGHT.toFloat(), paint)
-                paint.shader = null
-                // Use gold (#FFD700) as accent so the milestone number pops on the saffron-green gradient
-                drawMilestoneContent(
-                    canvas, paint, milestone,
-                    textColor = Color.WHITE, accentColor = Color.parseColor("#FFD700")
-                )
-            }
-        }
-
-        drawWatermark(canvas, paint)
-        return bmp
     }
 
     /** Share a milestone card via Android share sheet. */
@@ -196,45 +204,100 @@ class ShareCardGenerator @Inject constructor(
         }
     }
 
+    fun shareCompatibility(result: CompatibilityResult, theme: CardTheme = CardTheme.DARK_COSMOS) {
+        if (!sharingCompatibility.compareAndSet(false, true)) return
+        var bitmap: Bitmap? = null
+        try {
+            bitmap = generateCompatibilityBitmap(result, theme)
+            val uri = saveBitmapToCache(bitmap, COMPATIBILITY_CACHE_FILE)
+            bitmap.recycle()
+            bitmap = null
+            val intent = Intent(Intent.ACTION_SEND).apply {
+                type = "image/png"
+                putExtra(Intent.EXTRA_STREAM, uri)
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            }
+            Handler(Looper.getMainLooper()).post {
+                try {
+                    val chooser = Intent.createChooser(intent, "Share compatibility")
+                    chooser.clipData = ClipData.newRawUri("", uri)
+                    chooser.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                    context.startActivity(chooser)
+                } finally {
+                    sharingCompatibility.set(false)
+                }
+            }
+        } catch (e: Exception) {
+            bitmap?.recycle()
+            sharingCompatibility.set(false)
+        }
+    }
+
     // ---------------------------------------------------------------------------
-    // Theme renderers
+    // Square-output helper (BUG-011)
+    // ---------------------------------------------------------------------------
+
+    /**
+     * Embeds [contentBmp] (900×600) into a [SQUARE_SIZE]×[SQUARE_SIZE] output bitmap.
+     * The theme background fills the full square so the top/bottom margins blend
+     * seamlessly, then the content is drawn centred at y=[VERTICAL_PAD].
+     * [contentBmp] is recycled after compositing.
+     */
+    private fun embedInSquare(contentBmp: Bitmap, theme: CardTheme, paint: Paint): Bitmap {
+        val size = SQUARE_SIZE.toFloat()
+        val outBmp = Bitmap.createBitmap(SQUARE_SIZE, SQUARE_SIZE, Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(outBmp)
+        // Full-square background
+        drawThemeBackground(canvas, paint, size, size, theme)
+        // Content centred vertically
+        canvas.drawBitmap(contentBmp, 0f, VERTICAL_PAD.toFloat(), null)
+        contentBmp.recycle()
+        // Watermark at bottom of the square
+        drawWatermark(canvas, paint)
+        return outBmp
+    }
+
+    /** Draws the theme background over a [w]×[h] rect on [canvas]. */
+    private fun drawThemeBackground(canvas: Canvas, paint: Paint, w: Float, h: Float, theme: CardTheme) {
+        when (theme) {
+            CardTheme.DARK_COSMOS -> {
+                paint.shader = LinearGradient(0f, 0f, w, h,
+                    Color.parseColor("#1a1a2e"), Color.parseColor("#16213e"), Shader.TileMode.CLAMP)
+                canvas.drawRect(0f, 0f, w, h, paint)
+                paint.shader = null
+            }
+            CardTheme.MINIMAL_LIGHT -> {
+                paint.color = Color.WHITE
+                canvas.drawRect(0f, 0f, w, h, paint)
+            }
+            CardTheme.FESTIVE_INDIA -> {
+                paint.shader = LinearGradient(0f, 0f, w, h,
+                    Color.parseColor("#FF9933"), Color.parseColor("#138808"), Shader.TileMode.CLAMP)
+                canvas.drawRect(0f, 0f, w, h, paint)
+                paint.shader = null
+            }
+        }
+    }
+
+    // ---------------------------------------------------------------------------
+    // Theme renderers (draw onto 900×600 content canvas)
     // ---------------------------------------------------------------------------
 
     private fun drawDarkCosmos(canvas: Canvas, paint: Paint, result: AgeResult) {
-        // Background gradient: #1a1a2e → #16213e
-        val gradient = LinearGradient(
-            0f, 0f, CARD_WIDTH.toFloat(), CARD_HEIGHT.toFloat(),
-            Color.parseColor("#1a1a2e"), Color.parseColor("#16213e"),
-            Shader.TileMode.CLAMP,
-        )
-        paint.shader = gradient
-        canvas.drawRect(0f, 0f, CARD_WIDTH.toFloat(), CARD_HEIGHT.toFloat(), paint)
-        paint.shader = null
-
+        drawThemeBackground(canvas, paint, CARD_WIDTH.toFloat(), CARD_HEIGHT.toFloat(), CardTheme.DARK_COSMOS)
         drawContent(canvas, paint, result, textColor = Color.WHITE, accentColor = Color.parseColor("#86efac"))
     }
 
     private fun drawMinimalLight(canvas: Canvas, paint: Paint, result: AgeResult) {
-        paint.color = Color.WHITE
-        canvas.drawRect(0f, 0f, CARD_WIDTH.toFloat(), CARD_HEIGHT.toFloat(), paint)
-        drawContent(
-            canvas,
-            paint,
-            result,
+        drawThemeBackground(canvas, paint, CARD_WIDTH.toFloat(), CARD_HEIGHT.toFloat(), CardTheme.MINIMAL_LIGHT)
+        drawContent(canvas, paint, result,
             textColor = Color.parseColor("#1c1917"),
-            accentColor = Color.parseColor("#0f6e56")
-        )
+            accentColor = Color.parseColor("#0f6e56"))
     }
 
     private fun drawFestiveIndia(canvas: Canvas, paint: Paint, result: AgeResult) {
-        val gradient = LinearGradient(
-            0f, 0f, CARD_WIDTH.toFloat(), CARD_HEIGHT.toFloat(),
-            Color.parseColor("#FF9933"), Color.parseColor("#138808"),
-            Shader.TileMode.CLAMP,
-        )
-        paint.shader = gradient
-        canvas.drawRect(0f, 0f, CARD_WIDTH.toFloat(), CARD_HEIGHT.toFloat(), paint)
-        paint.shader = null
+        drawThemeBackground(canvas, paint, CARD_WIDTH.toFloat(), CARD_HEIGHT.toFloat(), CardTheme.FESTIVE_INDIA)
         drawContent(canvas, paint, result, textColor = Color.WHITE, accentColor = Color.parseColor("#FFFFFF"))
     }
 
@@ -264,16 +327,7 @@ class ShareCardGenerator @Inject constructor(
 
         // Stat cards row 1
         paint.alpha = 255
-        drawStatCard(
-            canvas,
-            paint,
-            60f,
-            260f,
-            "Total days",
-            "${"%,d".format(result.totalDays)}",
-            textColor,
-            accentColor
-        )
+        drawStatCard(canvas, paint, 60f, 260f, "Total days", "${"%,d".format(result.totalDays)}", textColor, accentColor)
         drawStatCard(canvas, paint, 310f, 260f, "To birthday", "${result.daysToNextBirthday}d", textColor, accentColor)
         drawStatCard(canvas, paint, 560f, 260f, "Zodiac", result.westernZodiac.ifEmpty { "—" }, textColor, accentColor)
         drawStatCard(canvas, paint, 60f, 440f, "Rashi", result.rashi.ifEmpty { "—" }, textColor, accentColor)
@@ -316,166 +370,58 @@ class ShareCardGenerator @Inject constructor(
             else -> "in ${milestone.daysAway} days"
         }
 
-        // "MILESTONE" label — small, muted
         paint.color = textColor; paint.alpha = 120; paint.textSize = 28f; paint.typeface = Typeface.DEFAULT
         canvas.drawText("MILESTONE", 60f, 75f, paint)
 
-        // Prefix: "You'll turn" / "You turned"
         paint.alpha = 200; paint.textSize = 40f
         canvas.drawText(prefix, 60f, 145f, paint)
 
-        // Main number line: "10,000 days old" — large accent
         paint.alpha = 255; paint.color = accentColor; paint.textSize = 72f
         paint.typeface = Typeface.DEFAULT_BOLD
         canvas.drawText("$formattedTarget days old", 60f, 235f, paint)
 
-        // Connector: "on"
         paint.color = textColor; paint.alpha = 200; paint.textSize = 40f; paint.typeface = Typeface.DEFAULT
         canvas.drawText("on", 60f, 295f, paint)
 
-        // Date — bold, large
         paint.alpha = 255; paint.textSize = 54f; paint.typeface = Typeface.DEFAULT_BOLD; paint.color = textColor
         canvas.drawText(formattedDate, 60f, 365f, paint)
 
-        // Stat cards row
         paint.alpha = 255
         val countdownLabel = if (milestone.isPast) "reached" else "coming up"
         drawStatCard(canvas, paint, 60f, 415f, countdownLabel, daysText, textColor, accentColor)
         drawStatCard(canvas, paint, 310f, 415f, "milestone", "$formattedTarget days", textColor, accentColor)
     }
 
-    private fun drawWatermark(canvas: Canvas, paint: Paint) {
-        paint.color = Color.WHITE; paint.alpha = 60; paint.textSize = 22f; paint.typeface = Typeface.DEFAULT
-        canvas.drawText("Made with AgeReveal", CARD_WIDTH - 280f, CARD_HEIGHT - 25f, paint)
-        paint.alpha = 255
-    }
-
     // ---------------------------------------------------------------------------
-    // File cache
+    // Compatibility card layout
     // ---------------------------------------------------------------------------
-
-    // ---------------------------------------------------------------------------
-    // Compatibility card
-    // ---------------------------------------------------------------------------
-
-    fun generateCompatibilityBitmap(result: CompatibilityResult, theme: CardTheme = CardTheme.DARK_COSMOS): Bitmap {
-        val bmp = Bitmap.createBitmap(CARD_WIDTH, CARD_HEIGHT, Bitmap.Config.ARGB_8888)
-        val canvas = Canvas(bmp)
-        val paint = Paint(Paint.ANTI_ALIAS_FLAG)
-
-        when (theme) {
-            CardTheme.DARK_COSMOS -> {
-                val gradient = LinearGradient(
-                    0f, 0f, CARD_WIDTH.toFloat(), CARD_HEIGHT.toFloat(),
-                    Color.parseColor("#1a1a2e"), Color.parseColor("#16213e"),
-                    Shader.TileMode.CLAMP,
-                )
-                paint.shader = gradient
-                canvas.drawRect(0f, 0f, CARD_WIDTH.toFloat(), CARD_HEIGHT.toFloat(), paint)
-                paint.shader = null
-                drawCompatibilityContent(
-                    canvas, paint, result,
-                    textColor = Color.WHITE, accentColor = Color.parseColor("#86efac")
-                )
-            }
-
-            CardTheme.MINIMAL_LIGHT -> {
-                paint.color = Color.WHITE
-                canvas.drawRect(0f, 0f, CARD_WIDTH.toFloat(), CARD_HEIGHT.toFloat(), paint)
-                drawCompatibilityContent(
-                    canvas, paint, result,
-                    textColor = Color.parseColor("#1c1917"), accentColor = Color.parseColor("#0f6e56")
-                )
-            }
-
-            CardTheme.FESTIVE_INDIA -> {
-                val gradient = LinearGradient(
-                    0f, 0f, CARD_WIDTH.toFloat(), CARD_HEIGHT.toFloat(),
-                    Color.parseColor("#FF9933"), Color.parseColor("#138808"),
-                    Shader.TileMode.CLAMP,
-                )
-                paint.shader = gradient
-                canvas.drawRect(0f, 0f, CARD_WIDTH.toFloat(), CARD_HEIGHT.toFloat(), paint)
-                paint.shader = null
-                drawCompatibilityContent(
-                    canvas, paint, result,
-                    textColor = Color.WHITE, accentColor = Color.parseColor("#FFD700")
-                )
-            }
-        }
-
-        drawWatermark(canvas, paint)
-        return bmp
-    }
-
-    fun shareCompatibility(result: CompatibilityResult, theme: CardTheme = CardTheme.DARK_COSMOS) {
-        if (!sharingCompatibility.compareAndSet(false, true)) return
-        var bitmap: Bitmap? = null
-        try {
-            bitmap = generateCompatibilityBitmap(result, theme)
-            val uri = saveBitmapToCache(bitmap, COMPATIBILITY_CACHE_FILE)
-            bitmap.recycle()
-            bitmap = null
-            val intent = Intent(Intent.ACTION_SEND).apply {
-                type = "image/png"
-                putExtra(Intent.EXTRA_STREAM, uri)
-                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            }
-            Handler(Looper.getMainLooper()).post {
-                try {
-                    val chooser = Intent.createChooser(intent, "Share compatibility")
-                    chooser.clipData = ClipData.newRawUri("", uri)
-                    chooser.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                    context.startActivity(chooser)
-                } finally {
-                    sharingCompatibility.set(false)
-                }
-            }
-        } catch (e: Exception) {
-            bitmap?.recycle()
-            sharingCompatibility.set(false)
-        }
-    }
 
     private fun drawCompatibilityContent(
         canvas: Canvas, paint: Paint, result: CompatibilityResult,
         textColor: Int, accentColor: Int,
     ) {
-        // "COSMIC MATCH" label
         paint.color = textColor; paint.alpha = 120; paint.textSize = 28f; paint.typeface = Typeface.DEFAULT
         canvas.drawText("COSMIC MATCH", 60f, 80f, paint)
 
-        // Score — large, centred
         val scoreText = "${result.overallScore}%"
         paint.alpha = 255; paint.color = accentColor; paint.textSize = 110f
         paint.typeface = Typeface.DEFAULT_BOLD
         canvas.drawText(scoreText, 60f, 195f, paint)
 
-        // Headline
         paint.color = textColor; paint.alpha = 220; paint.textSize = 34f; paint.typeface = Typeface.DEFAULT
         canvas.drawText(result.headline, 60f, 245f, paint)
 
-        // Divider line
         paint.color = textColor; paint.alpha = 40; paint.strokeWidth = 1.5f
         canvas.drawLine(60f, 265f, CARD_WIDTH - 60f, 265f, paint)
 
-        // Zodiac pairing rows
         paint.alpha = 255
-        drawCompatibilityRow(
-            canvas, paint, 60f, 305f, "Western",
-            result.personAWestern, result.personBWestern, textColor, accentColor
-        )
-        drawCompatibilityRow(
-            canvas, paint, 60f, 355f, "Element",
-            result.personAElement, result.personBElement, textColor, accentColor
-        )
-        drawCompatibilityRow(
-            canvas, paint, 60f, 405f, "Chinese",
-            result.personAChinese, result.personBChinese, textColor, accentColor
-        )
+        drawCompatibilityRow(canvas, paint, 60f, 305f, "Western",
+            result.personAWestern, result.personBWestern, textColor, accentColor)
+        drawCompatibilityRow(canvas, paint, 60f, 355f, "Element",
+            result.personAElement, result.personBElement, textColor, accentColor)
+        drawCompatibilityRow(canvas, paint, 60f, 405f, "Chinese",
+            result.personAChinese, result.personBChinese, textColor, accentColor)
 
-        // Score chips row
         paint.alpha = 255
         drawStatCard(canvas, paint, 60f, 440f, "Western", "${result.westernScore}%", textColor, accentColor)
         drawStatCard(canvas, paint, 310f, 440f, "Chinese", "${result.chineseScore}%", textColor, accentColor)
@@ -492,6 +438,21 @@ class ShareCardGenerator @Inject constructor(
         paint.alpha = 255; paint.color = accentColor; paint.textSize = 24f; paint.typeface = Typeface.DEFAULT_BOLD
         canvas.drawText("$valueA  ·  $valueB", x + 140f, y, paint)
     }
+
+    // ---------------------------------------------------------------------------
+    // Watermark
+    // ---------------------------------------------------------------------------
+
+    private fun drawWatermark(canvas: Canvas, paint: Paint) {
+        // Position relative to the square output bottom edge
+        paint.color = Color.WHITE; paint.alpha = 60; paint.textSize = 22f; paint.typeface = Typeface.DEFAULT
+        canvas.drawText("Made with AgeReveal", SQUARE_SIZE - 280f, SQUARE_SIZE - 25f, paint)
+        paint.alpha = 255
+    }
+
+    // ---------------------------------------------------------------------------
+    // File cache
+    // ---------------------------------------------------------------------------
 
     private fun saveBitmapToCache(bitmap: Bitmap, fileName: String) = run {
         val cacheDir = File(context.cacheDir, "shared_images").also { it.mkdirs() }

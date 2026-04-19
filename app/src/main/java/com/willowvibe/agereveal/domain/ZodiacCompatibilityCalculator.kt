@@ -28,12 +28,12 @@ class ZodiacCompatibilityCalculator @Inject constructor(
     fun calculate(dateA: LocalDate, dateB: LocalDate, nameA: String = "", nameB: String = ""): CompatibilityResult {
         val westernA = zodiacCalculator.getWesternZodiac(dateA.monthValue, dateA.dayOfMonth)
         val westernB = zodiacCalculator.getWesternZodiac(dateB.monthValue, dateB.dayOfMonth)
-        val chineseA = zodiacCalculator.getChineseZodiac(dateA.year)
-        val chineseB = zodiacCalculator.getChineseZodiac(dateB.year)
+        val chineseA = zodiacCalculator.getChineseZodiac(dateA)
+        val chineseB = zodiacCalculator.getChineseZodiac(dateB)
         val elementA = getWesternElement(dateA.monthValue, dateA.dayOfMonth)
         val elementB = getWesternElement(dateB.monthValue, dateB.dayOfMonth)
         val westernScore = westernCompatibilityScore(dateA, dateB)
-        val chineseScore = chineseCompatibilityScore(dateA.year, dateB.year)
+        val chineseScore = chineseCompatibilityScore(dateA, dateB)
         val overallScore = (westernScore * 0.5 + chineseScore * 0.5).toInt()
         return CompatibilityResult(
             personAWestern = westernA,
@@ -89,7 +89,9 @@ class ZodiacCompatibilityCalculator @Inject constructor(
         }
     }
 
-    private fun chineseCompatibilityScore(yearA: Int, yearB: Int): Int {
+    private fun chineseCompatibilityScore(dateA: LocalDate, dateB: LocalDate): Int {
+        val yearA = zodiacCalculator.getChineseYear(dateA)
+        val yearB = zodiacCalculator.getChineseYear(dateB)
         val indexA = ((yearA - 1900) % 12 + 12) % 12
         val indexB = ((yearB - 1900) % 12 + 12) % 12
         if (indexA == indexB) return 85

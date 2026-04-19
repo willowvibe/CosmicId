@@ -1,7 +1,10 @@
 package com.willowvibe.agereveal.data.repository
 
+import android.content.Context
 import com.willowvibe.agereveal.data.db.BirthdayDao
 import com.willowvibe.agereveal.data.model.SavedBirthday
+import com.willowvibe.agereveal.widget.BirthdayGlanceWidget
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
 import java.time.DateTimeException
 import java.time.LocalDate
@@ -14,10 +17,13 @@ import javax.inject.Singleton
  * Responsible for:
  *  - CRUD via [BirthdayDao]
  *  - Keeping [SavedBirthday.nextBirthdayEpochDay] up-to-date on every insert/update
+ *  - Pushing a widget refresh after every mutation so the home-screen widget never
+ *    shows stale data (BUG-008).
  */
 @Singleton
 class BirthdayRepository @Inject constructor(
     private val dao: BirthdayDao,
+    @ApplicationContext private val context: Context,
 ) {
 
     val allBirthdays: Flow<List<SavedBirthday>> = dao.getAllOrderedByUpcoming()
@@ -26,21 +32,35 @@ class BirthdayRepository @Inject constructor(
 
     suspend fun save(birthday: SavedBirthday): Long {
         val withEpochDay = birthday.copy(nextBirthdayEpochDay = computeNextBirthdayEpochDay(birthday.birthDate))
-        return dao.insert(withEpochDay)
+        val id = dao.insert(withEpochDay)
+        notifyWidget()
+        return id
     }
 
     suspend fun update(birthday: SavedBirthday) {
         val withEpochDay = birthday.copy(nextBirthdayEpochDay = computeNextBirthdayEpochDay(birthday.birthDate))
         dao.update(withEpochDay)
+        notifyWidget()
     }
 
-    suspend fun delete(birthday: SavedBirthday) = dao.delete(birthday)
+    suspend fun delete(birthday: SavedBirthday) {
+        dao.delete(birthday)
+        notifyWidget()
+    }
 
-    suspend fun deleteAll() = dao.deleteAll()
+    suspend fun deleteAll() {
+        dao.deleteAll()
+        notifyWidget()
+    }
 
     // ---------------------------------------------------------------------------
     // Helpers
     // ---------------------------------------------------------------------------
+
+    /** Triggers a re-render of all active BirthdayGlanceWidget instances. */
+    private suspend fun notifyWidget() {
+        runCatching { BirthdayGlanceWidget().updateAll(context) }
+    }
 
     private fun computeNextBirthdayEpochDay(birthDate: LocalDate): Long {
         val today = LocalDate.now()
