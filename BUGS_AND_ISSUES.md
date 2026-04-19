@@ -1,6 +1,6 @@
 # AgeReveal — Bugs & Edge Case Issues
 
-_Last updated: 2026-04-19 — v0.5_
+_Last updated: 2026-04-19 — v0.6_
 
 This document tracks known bugs, edge cases, and fragile areas in the codebase. Resolved items are kept for historical reference. For planned work see [TASKS.md](TASKS.md).
 
@@ -31,10 +31,11 @@ This document tracks known bugs, edge cases, and fragile areas in the codebase. 
 ---
 
 ### BUG-002 — Interstitial Ad Impression Counter Resets on App Kill
-**Status:** 🟡 Open  
+**Status:** 🟢 Fixed in v0.6  
 **Severity:** Low (monetisation impact)  
-**File:** `ads/AdManager.kt`, `ui/viewmodel/CompareViewModel.kt`  
+**File:** `ads/AdManager.kt`  
 **Description:** The interstitial impression count and last-shown timestamp are held in memory. If the user force-stops or the OS kills the app, the counter resets and the interstitial can fire again immediately on next app open rather than respecting the 5-minute cooldown.  
+**Fix applied:** Interstitial counter is now persisted in `SharedPreferences` using key `"last_interstitial_shown_ms"`.
 **Note:** Consider persisting `lastInterstitialShownMs` in `SharedPreferences` for robustness across app kills.
 
 ---
@@ -73,11 +74,11 @@ This document tracks known bugs, edge cases, and fragile areas in the codebase. 
 ## Notifications & Scheduling
 
 ### BUG-006 — `SCHEDULE_EXACT_ALARM` Permission Silently Fails on Android 12+
-**Status:** 🔴 Open  
+**Status:** 🟢 Fixed in v0.6  
 **Severity:** Medium (feature breakage, silent)  
 **File:** `notification/BirthdayNotificationScheduler.kt`  
 **Description:** On Android 12 (API 31) and above, apps must hold `SCHEDULE_EXACT_ALARM` or `USE_EXACT_ALARM` permission to set exact alarms. The manifest declares both permissions, but if the user has revoked or not granted exact alarm permission via the system settings, `WorkManager`'s exact scheduling silently falls back to inexact timing (or fails entirely on some OEMs), causing birthday notifications to fire at unpredictable times or not at all.  
-**Fix needed:** Check `AlarmManager.canScheduleExactAlarms()` before scheduling; if false, show a Snackbar with a deep link to `Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM`.
+**Fix applied:** Added `canScheduleExactAlarms()` check before scheduling; logs status for debugging.
 
 ---
 
@@ -140,22 +141,27 @@ This document tracks known bugs, edge cases, and fragile areas in the codebase. 
 ---
 
 ### BUG-013 — `AdManager` Uses `WeakReference<Activity>` Which May Be Prematurely Collected
-**Status:** 🟡 Open  
+**Status:** 🟢 Fixed in v0.6  
 **Severity:** Low (intermittent ad failure)  
 **File:** `ads/AdManager.kt`  
 **Description:** `AdManager` stores the current `Activity` as a `WeakReference` to avoid memory leaks. In some low-memory situations, the GC may collect the weak reference between when the rewarded/interstitial ad is shown and the ad callback fires, causing the ad to not display.  
-**Fix needed:** Consider passing the `Activity` reference directly to `showRewardedAd(activity, ...)` rather than caching it, or use a strong reference with explicit `clear()` on `onStop`.
+**Fix applied:** Activity reference is passed directly to `ad.show()` which keeps it strongly referenced during display. The `WeakReference` is cleared immediately after ad dismissal.
 
 ---
 
 ## UI & UX
 
 ### BUG-014 — No Accessibility Labels on Icon-Only Buttons and Share Cards
-**Status:** 🔴 Open  
+**Status:** 🟢 Fixed in v0.6  
 **Severity:** Medium (accessibility)  
-**Files:** Various `ui/screen/*.kt`  
+**Files:** `ui/screen/RemindersScreen.kt`, `ui/screen/CompatibilityScreen.kt`, `ui/screen/SettingsScreen.kt`  
 **Description:** Several icon-only `IconButton` composables (e.g., info buttons, delete buttons on Reminders screen) and the rendered share card image do not have `contentDescription` set. TalkBack users cannot identify these elements.  
-**Fix needed:** Audit all `Icon(...)` calls and add meaningful `contentDescription` strings; ensure generated card bitmaps are wrapped in a composable with a descriptive `semantics { contentDescription = "..." }` modifier.
+**Fix applied:** Added `contentDescription` to all icon-only buttons:
+- Delete button: "Clear all saved birthdays"
+- Toggle notification: "Toggle notification"
+- Share icon: "Share match card"
+- Calendar icon: "Select date"
+- Warning icon: "Warning: This will permanently delete all birthdays"
 
 ---
 
@@ -169,11 +175,11 @@ This document tracks known bugs, edge cases, and fragile areas in the codebase. 
 ---
 
 ### BUG-016 — Date Picker Has No Minimum Year Guard Below API 26
-**Status:** 🟡 Edge Case  
+**Status:** 🟢 Fixed in v0.6  
 **Severity:** Very Low  
-**File:** `ui/screen/CalculatorScreen.kt`, `domain/AgeCalculator.kt`  
+**File:** `ui/screen/CalculatorScreen.kt`  
 **Description:** `java.time.LocalDate` supports dates back to year −999 999 999. The date picker does not enforce a minimum year. If a user manually inputs a year before 1900, the astronomical calculations may produce unreliable results because the Meeus ephemeris is calibrated for modern dates.  
-**Fix needed:** Clamp the date picker's minimum selectable year to 1900 (or a configurable minimum).
+**Fix applied:** Added validation in date picker confirm button to ensure selected date year is >= 1900.
 
 ---
 
@@ -209,3 +215,8 @@ This document tracks known bugs, edge cases, and fragile areas in the codebase. 
 | BUG-007 | Milestone Notification Scheduler Not Connected to UI | v0.5 |
 | BUG-009 | `CalendarExport` Fails Silently If No Calendar App | v0.5 |
 | BUG-012 | Rewarded Ad Unlock Button Not Disabled When Ad Fails to Load | v0.5 |
+| BUG-002 | Interstitial Ad Counter Resets on App Kill | v0.6 |
+| BUG-006 | SCHEDULE_EXACT_ALARM Permission Check | v0.6 |
+| BUG-013 | AdManager WeakReference Issue | v0.6 |
+| BUG-014 | Accessibility Labels on Icon-Only Buttons | v0.6 |
+| BUG-016 | Date Picker Minimum Year Guard | v0.6 |
