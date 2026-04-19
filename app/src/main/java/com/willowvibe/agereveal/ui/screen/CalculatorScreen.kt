@@ -357,7 +357,7 @@ private fun SecondsStrip(result: AgeResult) {
             )
         }
         Text(
-            "+1 every\nheartbeat",
+            "+1 per\nsecond",
             style = MaterialTheme.typography.labelSmall,
             color = WarmInkDim,
             textAlign = TextAlign.End,

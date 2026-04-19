@@ -72,7 +72,7 @@ fun CompareScreen(
     val snackbarHostState = remember { SnackbarHostState() }
 
     LaunchedEffect(uiState.comparisonCount) {
-        if (uiState.comparisonCount == 2) onShowInterstitial()
+        if (uiState.comparisonCount > 0 && uiState.comparisonCount % 3 == 0) onShowInterstitial()
     }
     LaunchedEffect(uiState.error) {
         uiState.error?.let { snackbarHostState.showSnackbar(it); viewModel.clearError() }

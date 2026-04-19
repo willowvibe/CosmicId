@@ -7,6 +7,7 @@ import com.willowvibe.agereveal.data.model.AgeResult
 import com.willowvibe.agereveal.data.model.Milestone
 import com.willowvibe.agereveal.domain.AgeCalculator
 import com.willowvibe.agereveal.domain.ShareCardGenerator
+import com.willowvibe.agereveal.notification.MilestoneNotificationScheduler
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
@@ -36,6 +37,7 @@ data class CalculatorUiState(
 class CalculatorViewModel @Inject constructor(
     private val ageCalculator: AgeCalculator,
     private val shareCardGenerator: ShareCardGenerator,
+    private val milestoneNotificationScheduler: MilestoneNotificationScheduler,
     @ApplicationContext context: Context,
 ) : ViewModel() {
 
@@ -45,10 +47,13 @@ class CalculatorViewModel @Inject constructor(
     val uiState: StateFlow<CalculatorUiState> = _uiState.asStateFlow()
 
     init {
-        // Restore previously entered birth date so user doesn't have to re-enter it
+        // Restore previously entered birth date without resetting milestones or unlock state
         prefs.getString("birth_date", null)
             ?.let { runCatching { LocalDate.parse(it) }.getOrNull() }
-            ?.let { onBirthDateSelected(it) }
+            ?.takeIf { !it.isAfter(LocalDate.now()) }
+            ?.let { date ->
+                _uiState.update { it.copy(birthDate = date, result = computeResult(date, includeUnlocked = false)) }
+            }
     }
 
     /**
@@ -67,12 +72,15 @@ class CalculatorViewModel @Inject constructor(
             _uiState.update { it.copy(error = "Birth date cannot be in the future") }
             return
         }
+        // Cancel stale milestone notifications from any previously saved birth date
+        milestoneNotificationScheduler.cancelAll()
         prefs.edit().putString("birth_date", date.toString()).apply()
         _uiState.update { state ->
             state.copy(
                 birthDate = date,
                 error = null,
-                result = computeResult(date, state.isUnlocked),
+                isUnlocked = false,
+                result = computeResult(date, includeUnlocked = false),
             )
         }
     }
@@ -96,6 +104,7 @@ class CalculatorViewModel @Inject constructor(
                 result = computeResult(birthDate, includeUnlocked = true),
             )
         }
+        milestoneNotificationScheduler.scheduleUpcomingMilestones(birthDate)
     }
 
     /**

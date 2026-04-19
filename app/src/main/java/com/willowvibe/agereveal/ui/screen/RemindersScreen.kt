@@ -199,11 +199,11 @@ fun RemindersScreen(
                     }
                 }
 
-                // ── Later this year ──────────────────────────────────────────
+                // ── Coming up ────────────────────────────────────────────────
                 if (later.isNotEmpty()) {
                     item {
                         Text(
-                            "LATER THIS YEAR",
+                            "COMING UP",
                             style = MaterialTheme.typography.labelSmall,
                             color = WarmInkDim,
                             modifier = Modifier.padding(bottom = 6.dp),
@@ -319,13 +319,12 @@ private fun BirthdayTimelineRow(
         Column(horizontalAlignment = Alignment.End) {
             val nextDate = LocalDate.ofEpochDay(birthday.nextBirthdayEpochDay)
             Text(
-                nextDate.format(DateTimeFormatter.ofPattern("MMM d")),
+                if (daysUntil == 0L) "Today! 🎂" else nextDate.format(DateTimeFormatter.ofPattern("MMM d")),
                 fontFamily = SerifFamily,
                 fontSize = 15.sp,
                 letterSpacing = (-0.3).sp,
-                color = WarmInkMute,
+                color = if (daysUntil == 0L) WarmAmber else WarmInkMute,
             )
-            Text("in ${daysUntil}d", style = MaterialTheme.typography.labelSmall, color = WarmInkDim)
         }
         IconButton(onClick = onToggleNotification, modifier = Modifier.size(32.dp)) {
             Icon(
