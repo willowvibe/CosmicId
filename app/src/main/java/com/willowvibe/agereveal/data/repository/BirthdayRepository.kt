@@ -1,11 +1,14 @@
 package com.willowvibe.agereveal.data.repository
 
 import android.content.Context
+import androidx.glance.appwidget.GlanceAppWidgetManager
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.withContext
 import com.willowvibe.agereveal.data.db.BirthdayDao
 import com.willowvibe.agereveal.data.model.SavedBirthday
 import com.willowvibe.agereveal.widget.BirthdayGlanceWidget
 import dagger.hilt.android.qualifiers.ApplicationContext
-import kotlinx.coroutines.flow.Flow
 import java.time.DateTimeException
 import java.time.LocalDate
 import java.time.temporal.ChronoUnit
@@ -59,7 +62,15 @@ class BirthdayRepository @Inject constructor(
 
     /** Triggers a re-render of all active BirthdayGlanceWidget instances. */
     private suspend fun notifyWidget() {
-        runCatching { BirthdayGlanceWidget().updateAll(context) }
+        withContext(Dispatchers.Default) {
+            runCatching {
+                val manager = GlanceAppWidgetManager(context)
+                val glanceIds = manager.getGlanceIds(BirthdayGlanceWidget::class.java)
+                for (glanceId in glanceIds) {
+                    BirthdayGlanceWidget().update(context, glanceId)
+                }
+            }
+        }
     }
 
     private fun computeNextBirthdayEpochDay(birthDate: LocalDate): Long {
