@@ -266,11 +266,14 @@ private fun BirthAnchorRow(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(bottom = 12.dp),
+                .padding(bottom = 12.dp)
+                .clickable { showDialog = true },
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Column {
+            Column(
+                modifier = Modifier.weight(1f),
+            ) {
                 Text(
                     "BORN",
                     style = MaterialTheme.typography.labelSmall,
@@ -289,12 +292,12 @@ private fun BirthAnchorRow(
                     color = if (selectedDate != null) WarmInk else WarmInkMute,
                 )
             }
-            IconButton(
-                onClick = { showDialog = true },
+            Box(
                 modifier = Modifier
                     .size(34.dp)
                     .clip(CircleShape)
                     .background(WarmSurface),
+                contentAlignment = Alignment.Center,
             ) {
                 Icon(
                     Icons.Default.Edit,
@@ -322,8 +325,18 @@ private fun ClockFaceHero(result: AgeResult) {
         horizontalArrangement = Arrangement.Start,
     ) {
         AgeNumeral(value = result.years.toString(), unit = "years", large = true, modifier = Modifier.weight(1.3f))
-        AgeNumeral(value = result.months.toString().padStart(2, '0'), unit = "months", large = false, modifier = Modifier.weight(1f))
-        AgeNumeral(value = result.days.toString().padStart(2, '0'), unit = "days", large = false, modifier = Modifier.weight(1f))
+        AgeNumeral(
+            value = result.months.toString().padStart(2, '0'),
+            unit = "months",
+            large = false,
+            modifier = Modifier.weight(1f)
+        )
+        AgeNumeral(
+            value = result.days.toString().padStart(2, '0'),
+            unit = "days",
+            large = false,
+            modifier = Modifier.weight(1f)
+        )
     }
 }
 
@@ -410,7 +423,12 @@ private fun MiniStatRow(result: AgeResult) {
     ) {
         MiniStatChip(label = "DAYS", value = "%,d".format(result.totalDays), modifier = Modifier.weight(1f))
         MiniStatChip(label = "HOURS", value = formatCompactNumber(result.totalHours), modifier = Modifier.weight(1f))
-        MiniStatChip(label = "NEXT BDAY", value = "${result.daysToNextBirthday}d", accent = true, modifier = Modifier.weight(1f))
+        MiniStatChip(
+            label = "NEXT BDAY",
+            value = "${result.daysToNextBirthday}d",
+            accent = true,
+            modifier = Modifier.weight(1f)
+        )
     }
 }
 
@@ -440,8 +458,8 @@ private fun MiniStatChip(
 
 private fun formatCompactNumber(n: Long): String = when {
     n >= 1_000_000 -> "%.1fM".format(n / 1_000_000.0)
-    n >= 1_000     -> "%.1fK".format(n / 1_000.0)
-    else           -> n.toString()
+    n >= 1_000 -> "%.1fK".format(n / 1_000.0)
+    else -> n.toString()
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -473,21 +491,39 @@ private fun TeasedDetails(
                 color = WarmInkDim,
             )
             if (!isUnlocked) {
-                Text(
-                    "Reveal →",
-                    style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 0.sp),
-                    color = WarmTeal,
-                    fontWeight = FontWeight.SemiBold,
-                    modifier = Modifier.clickable { onReveal() },
-                )
+                Box(
+                    modifier = Modifier
+                        .clickable { onReveal() }
+                        .padding(12.dp),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text(
+                        "Unlock Profile",
+                        style = MaterialTheme.typography.labelLarge.copy(
+                            letterSpacing = 0.sp,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 16.sp,
+                        ),
+                        color = WarmTeal,
+                    )
+                }
             } else {
-                Text(
-                    "Share ↗",
-                    style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 0.sp),
-                    color = WarmTeal,
-                    fontWeight = FontWeight.SemiBold,
-                    modifier = Modifier.clickable { onShare() },
-                )
+                Box(
+                    modifier = Modifier
+                        .clickable { onShare() }
+                        .padding(12.dp),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text(
+                        "Share Card",
+                        style = MaterialTheme.typography.labelLarge.copy(
+                            letterSpacing = 0.sp,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 16.sp,
+                        ),
+                        color = WarmTeal,
+                    )
+                }
             }
         }
 
@@ -509,7 +545,11 @@ private fun TeasedDetails(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 TeaseChip("Chinese", result.chineseZodiac.ifEmpty { "Tiger" }, modifier = Modifier.weight(1f))
-                TeaseChip("Heartbeats", if (result.estimatedHeartbeats > 0) formatHeartbeats(result.estimatedHeartbeats) else "~1.0 B", modifier = Modifier.weight(1f))
+                TeaseChip(
+                    "Heartbeats",
+                    if (result.estimatedHeartbeats > 0) formatHeartbeats(result.estimatedHeartbeats) else "~1.0 B",
+                    modifier = Modifier.weight(1f)
+                )
             }
         }
     }
@@ -528,8 +568,8 @@ private fun TeaseChip(key: String, value: String, modifier: Modifier = Modifier)
 
 private fun formatHeartbeats(n: Long): String = when {
     n >= 1_000_000_000 -> "%.2f B".format(n / 1_000_000_000.0)
-    n >= 1_000_000     -> "%.1f M".format(n / 1_000_000.0)
-    else               -> "%,d".format(n)
+    n >= 1_000_000 -> "%.1f M".format(n / 1_000_000.0)
+    else -> "%,d".format(n)
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
