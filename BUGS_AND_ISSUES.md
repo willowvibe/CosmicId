@@ -1,6 +1,6 @@
 # AgeReveal — Bugs & Edge Case Issues
 
-_Last updated: 2026-04-19 — v0.7_
+_Last updated: 2026-04-19 — v0.8_
 
 This document tracks known bugs, edge cases, and fragile areas in the codebase. Resolved items are kept for historical reference. For planned work see [TASKS.md](TASKS.md).
 
@@ -43,11 +43,11 @@ This document tracks known bugs, edge cases, and fragile areas in the codebase. 
 ## Astrological Calculations
 
 ### BUG-003 — Nakshatra and Vedic Rashi Are Approximate Without Birth Time
-**Status:** 🟡 Known Limitation  
+**Status:** 🟢 Fixed in v0.8
 **Severity:** Medium (accuracy / misleading output)  
 **Files:** `domain/AstronomicalCalculator.kt`, `domain/NakshatraCalculator.kt`, `domain/ZodiacCalculator.kt`  
 **Description:** The Moon moves approximately 13° per day (roughly one Nakshatra per day). When birth time is unknown, the calculator defaults to solar noon, which can place the Moon in the wrong Nakshatra or even the wrong Rashi. The UI does not currently warn users that the result is approximate.  
-**Fix needed:** Show an *"Approximate — add birth time for exact result"* label next to Nakshatra and Rashi; implement the birth time picker (TASKS.md §2a).
+**Fix applied:** Added "Approximate" label next to Nakshatra and Rashi when birthTime is null; displayed in WarmAmber color.
 
 ---
 
@@ -221,3 +221,4 @@ This document tracks known bugs, edge cases, and fragile areas in the codebase. 
 | BUG-017 | Compare Screen Interstitial Counter Not Shared | v0.7 |
 | BUG-014 | Accessibility Labels on Icon-Only Buttons | v0.7 |
 | BUG-016 | Date Picker Minimum Year Guard | v0.7 |
+| BUG-003 | Nakshatra and Rashi Approximation | v0.8 |
