@@ -52,7 +52,7 @@ import java.time.format.DateTimeFormatter
 
 @Composable
 fun DetailsUnlockScreen(
-    viewModel: CalculatorViewModel = hiltViewModel(),
+    viewModel: CalculatorViewModel,
     onWatchAd: () -> Unit,
     onShareMilestone: (Milestone) -> Unit = {},
 ) {
@@ -231,7 +231,12 @@ private fun WatchAdBanner(isLoading: Boolean, onWatch: () -> Unit) {
         horizontalArrangement = Arrangement.SpaceBetween,
     ) {
         Column {
-            Text("Unlock full profile", style = MaterialTheme.typography.bodyMedium, color = WarmInk, fontWeight = FontWeight.SemiBold)
+            Text(
+                "Unlock full profile",
+                style = MaterialTheme.typography.bodyMedium,
+                color = WarmInk,
+                fontWeight = FontWeight.SemiBold
+            )
             Text("Watch a 15s ad", style = MaterialTheme.typography.bodySmall, color = WarmInkMute)
         }
         if (isLoading) {
@@ -349,19 +354,19 @@ private fun MilestoneRow(
 ) {
     val isToday = milestone.daysAway == 0L
     val dotColor = when {
-        isToday          -> WarmAmber
+        isToday -> WarmAmber
         milestone.isPast -> WarmTeal
-        else             -> WarmSurfaceSoft
+        else -> WarmSurfaceSoft
     }
     val statusLabel = when {
-        isToday          -> "TODAY ✦"
+        isToday -> "TODAY ✦"
         milestone.isPast -> "✓"
-        else             -> "IN ${milestone.daysAway}D"
+        else -> "IN ${milestone.daysAway}D"
     }
     val statusColor = when {
-        isToday          -> WarmAmber
+        isToday -> WarmAmber
         milestone.isPast -> WarmTeal
-        else             -> WarmInkDim
+        else -> WarmInkDim
     }
 
     Row(
@@ -440,15 +445,15 @@ private fun HeartbeatRow(heartbeats: Long) {
 
 private fun formatHeartbeatsLong(n: Long): String = when {
     n >= 1_000_000_000 -> "%,.2f B".format(n / 1_000_000_000.0)
-    n >= 1_000_000     -> "%,.1f M".format(n / 1_000_000.0)
-    else               -> "%,d".format(n)
+    n >= 1_000_000 -> "%,.1f M".format(n / 1_000_000.0)
+    else -> "%,d".format(n)
 }
 
 private fun moonPhaseHint(month: Int): String = when (month) {
-    1, 2  -> "waxing crescent moon"
-    3, 4  -> "full moon season"
-    5, 6  -> "waning gibbous moon"
-    7, 8  -> "new moon season"
+    1, 2 -> "waxing crescent moon"
+    3, 4 -> "full moon season"
+    5, 6 -> "waning gibbous moon"
+    7, 8 -> "new moon season"
     9, 10 -> "waxing gibbous moon"
-    else  -> "waning crescent moon"
+    else -> "waning crescent moon"
 }
