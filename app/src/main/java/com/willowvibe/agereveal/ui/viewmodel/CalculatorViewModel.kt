@@ -78,6 +78,8 @@ class CalculatorViewModel @Inject constructor(
         }
         // Cancel stale milestone notifications from any previously saved birth date
         milestoneNotificationScheduler.cancelAll()
+        // Schedule milestone notifications for the new birth date
+        milestoneNotificationScheduler.scheduleUpcomingMilestones(date)
         prefs.edit().putString("birth_date", date.toString()).apply()
         _uiState.update { state ->
             state.copy(

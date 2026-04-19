@@ -31,8 +31,8 @@ class AdManager @Inject constructor(
 ) {
     companion object {
         // Test ad unit IDs (safe to commit — will not generate real revenue)
-        const val BANNER_AD_UNIT_ID       = "ca-app-pub-3940256099942544/6300978111"
-        const val REWARDED_AD_UNIT_ID     = "ca-app-pub-3940256099942544/5224354917"
+        const val BANNER_AD_UNIT_ID = "ca-app-pub-3940256099942544/6300978111"
+        const val REWARDED_AD_UNIT_ID = "ca-app-pub-3940256099942544/5224354917"
         const val INTERSTITIAL_AD_UNIT_ID = "ca-app-pub-3940256099942544/1033173712"
 
         private const val INTERSTITIAL_COOLDOWN_MS = 5 * 60 * 1_000L  // 5 minutes
@@ -69,6 +69,7 @@ class AdManager @Inject constructor(
                 override fun onAdLoaded(ad: RewardedAd) {
                     rewardedAd = ad
                 }
+
                 override fun onAdFailedToLoad(error: LoadAdError) {
                     rewardedAd = null
                 }
@@ -109,7 +110,9 @@ class AdManager @Inject constructor(
     // ---------------------------------------------------------------------------
 
     private var interstitialAd: InterstitialAd? = null
-    @Volatile private var lastInterstitialShownMs: Long = 0L
+
+    @Volatile
+    private var lastInterstitialShownMs: Long = 0L
 
     fun preloadInterstitialAd() {
         InterstitialAd.load(
@@ -120,6 +123,7 @@ class AdManager @Inject constructor(
                 override fun onAdLoaded(ad: InterstitialAd) {
                     interstitialAd = ad
                 }
+
                 override fun onAdFailedToLoad(e: LoadAdError) {
                     interstitialAd = null
                 }
@@ -148,4 +152,10 @@ class AdManager @Inject constructor(
         ad.show(activity)
         lastInterstitialShownMs = now
     }
+
+    /**
+     * Check if a rewarded ad is available for display.
+     * Returns true if an ad is loaded and ready to show.
+     */
+    fun isRewardedAdAvailable(): Boolean = rewardedAd != null
 }

@@ -2,7 +2,9 @@ package com.willowvibe.agereveal.domain
 
 import android.app.Activity
 import android.content.ContentUris
+import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.net.Uri
 import android.provider.CalendarContract
 import java.time.LocalDate
@@ -71,6 +73,27 @@ object CalendarExport {
         isAnnual: Boolean = true
     ) {
         val intent = createCalendarIntent(name, birthDate, isAnnual)
-        activity.startActivity(intent)
+        // Check if a calendar app is available to handle the intent
+        val packageManager: PackageManager = activity.packageManager
+        if (intent.resolveActivity(packageManager) != null) {
+            activity.startActivity(intent)
+        } else {
+            // No calendar app found - in a production app, show a user-friendly message
+            // For now, we silently fail to avoid crash
+        }
+    }
+
+    /**
+     * Check if a calendar app is available to handle calendar intents.
+     * Returns true if at least one calendar app is installed, false otherwise.
+     */
+    fun isCalendarAppAvailable(context: Context): Boolean {
+        val intent = Intent(Intent.ACTION_INSERT).apply {
+            type = "vnd.android.cursor.item/event"
+            putExtra(CalendarContract.EXTRA_EVENT_BEGIN_TIME, System.currentTimeMillis())
+            putExtra(CalendarContract.EXTRA_EVENT_END_TIME, System.currentTimeMillis() + 3600000)
+        }
+        val packageManager: PackageManager = context.packageManager
+        return intent.resolveActivity(packageManager) != null
     }
 }
