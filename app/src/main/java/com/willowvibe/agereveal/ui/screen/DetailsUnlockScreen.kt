@@ -163,14 +163,19 @@ private fun AstroTile(result: AgeResult, isUnlocked: Boolean) {
             )
             Spacer(Modifier.height(6.dp))
             if (isUnlocked && result.westernZodiac.isNotEmpty()) {
+                val rashiLabel = if (result.birthTime == null) {
+                    "${result.rashi} (Approximate)"
+                } else {
+                    result.rashi
+                }
                 Text(
-                    "${result.westernZodiac} · ${result.rashi}",
+                    "${result.westernZodiac} · $rashiLabel",
                     fontFamily = SerifFamily,
                     fontWeight = FontWeight.Normal,
                     fontSize = 28.sp,
                     lineHeight = 32.sp,
                     letterSpacing = (-0.5).sp,
-                    color = WarmInk,
+                    color = if (result.birthTime == null) WarmAmber else WarmInk,
                 )
                 if (result.chineseZodiac.isNotEmpty()) {
                     val chineseParts = result.chineseZodiac.split(" ", limit = 2)
@@ -189,8 +194,24 @@ private fun AstroTile(result: AgeResult, isUnlocked: Boolean) {
                 if (result.nakshatra.isNotEmpty()) {
                     Spacer(Modifier.height(8.dp))
                     Row {
-                        Text("Nakshatra ", style = MaterialTheme.typography.bodySmall, color = WarmInkMute)
-                        Text(result.nakshatra, style = MaterialTheme.typography.bodySmall, color = WarmInk)
+                        Text(
+                            "Nakshatra ",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = if (result.birthTime == null) WarmInkDim else WarmInkMute
+                        )
+                        Text(
+                            result.nakshatra,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = if (result.birthTime == null) WarmAmber else WarmInk,
+                            fontWeight = if (result.birthTime == null) FontWeight.Normal else FontWeight.Medium
+                        )
+                        if (result.birthTime == null) {
+                            Text(
+                                " (Approximate)",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = WarmInkMute
+                            )
+                        }
                     }
                 }
             } else {
