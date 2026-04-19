@@ -22,6 +22,8 @@ class RemindersViewModel @Inject constructor(
     val birthdays: StateFlow<List<SavedBirthday>> = repository.allBirthdays
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
+    val notificationHour: StateFlow<Int> = notificationScheduler.notificationHour
+
     fun addBirthday(name: String, birthDate: LocalDate, emoji: String = "🎂") {
         if (birthDate.isAfter(LocalDate.now())) return
         viewModelScope.launch {
@@ -48,6 +50,16 @@ class RemindersViewModel @Inject constructor(
             } else {
                 notificationScheduler.cancel(updated.id)
             }
+        }
+    }
+
+    fun setNotificationHour(hour: Int) {
+        notificationScheduler.setNotificationHour(hour)
+        // Reschedule all active notification jobs to fire at the new time
+        viewModelScope.launch {
+            birthdays.value
+                .filter { it.notifyEnabled }
+                .forEach { notificationScheduler.scheduleFor(it.id, it.name, it.birthDate) }
         }
     }
 }

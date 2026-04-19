@@ -16,6 +16,9 @@ import java.time.temporal.ChronoUnit
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 
 /**
  * Schedules and cancels [BirthdayReminderWorker] jobs via WorkManager.
@@ -32,8 +35,20 @@ class BirthdayNotificationScheduler @Inject constructor(
         const val CHANNEL_NAME = "Birthday Reminders"
         const val KEY_NAME     = "person_name"
         const val KEY_ID       = "birthday_id"
+        private const val PREFS_NAME  = "reminder_settings"
+        private const val KEY_HOUR    = "notification_hour"
+        const val DEFAULT_HOUR = 9
 
         fun workTag(id: Long) = "birthday_$id"
+    }
+
+    private val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+    private val _notificationHour = MutableStateFlow(prefs.getInt(KEY_HOUR, DEFAULT_HOUR))
+    val notificationHour: StateFlow<Int> = _notificationHour.asStateFlow()
+
+    fun setNotificationHour(hour: Int) {
+        prefs.edit().putInt(KEY_HOUR, hour).apply()
+        _notificationHour.value = hour
     }
 
     init {
@@ -44,7 +59,8 @@ class BirthdayNotificationScheduler @Inject constructor(
         val today = LocalDate.now()
         val nextBirthday = computeNextBirthday(birthDate)
         val nowMs = System.currentTimeMillis()
-        val reminderMs = nextBirthday.minusDays(1).atTime(9, 0)
+        val hour = prefs.getInt(KEY_HOUR, DEFAULT_HOUR)
+        val reminderMs = nextBirthday.minusDays(1).atTime(hour, 0)
             .atZone(ZoneId.systemDefault())
             .toInstant()
             .toEpochMilli()
@@ -59,7 +75,7 @@ class BirthdayNotificationScheduler @Inject constructor(
             delayMs = if (daysAway <= 1) {
                 0L
             } else {
-                yearSafeBirthday(birthDate, nextBirthday.year + 1).minusDays(1).atTime(9, 0)
+                yearSafeBirthday(birthDate, nextBirthday.year + 1).minusDays(1).atTime(hour, 0)
                     .atZone(ZoneId.systemDefault())
                     .toInstant()
                     .toEpochMilli() - nowMs
