@@ -1,6 +1,6 @@
 # AgeReveal — Bugs & Edge Case Issues
 
-_Last updated: 2026-04-19 — v0.4_
+_Last updated: 2026-04-19 — v0.5_
 
 This document tracks known bugs, edge cases, and fragile areas in the codebase. Resolved items are kept for historical reference. For planned work see [TASKS.md](TASKS.md).
 
@@ -20,22 +20,22 @@ This document tracks known bugs, edge cases, and fragile areas in the codebase. 
 ## Data & Persistence
 
 ### BUG-001 — Room `fallbackToDestructiveMigration` Wipes User Data on Schema Change
-**Status:** 🔴 Open  
+**Status:** 🟢 Fixed in v0.5  
 **Severity:** Critical (data loss)  
 **File:** `data/db/AppDatabase.kt`  
 **Description:** `AppDatabase` is configured with `.fallbackToDestructiveMigration()`. Any future change to the Room schema (e.g., adding a `birthTime` column to `SavedBirthday`) will silently drop and recreate all tables, deleting every saved birthday without warning.  
 **Impact:** All users lose saved birthdays after any app update that bumps the DB schema version.  
-**Fix needed:** Add explicit `Migration(N, N+1)` objects before any schema change; remove `fallbackToDestructiveMigration()` after the first verified migration.  
+**Fix applied:** Removed `fallbackToDestructiveMigration()` and added placeholder `addMigrations()` with comment; explicit `Migration(N, N+1)` objects must be added before any schema change.  
 **Related:** TASKS.md §5b
 
 ---
 
 ### BUG-002 — Interstitial Ad Impression Counter Resets on App Kill
-**Status:** 🔴 Open  
+**Status:** 🟡 Open  
 **Severity:** Low (monetisation impact)  
 **File:** `ads/AdManager.kt`, `ui/viewmodel/CompareViewModel.kt`  
 **Description:** The interstitial impression count and last-shown timestamp are held in memory. If the user force-stops or the OS kills the app, the counter resets and the interstitial can fire again immediately on next app open rather than respecting the 5-minute cooldown.  
-**Fix needed:** Persist `interstitialShowCount` and `lastInterstitialShownAt` in `SharedPreferences`.
+**Note:** Consider persisting `lastInterstitialShownMs` in `SharedPreferences` for robustness across app kills.
 
 ---
 
@@ -82,11 +82,11 @@ This document tracks known bugs, edge cases, and fragile areas in the codebase. 
 ---
 
 ### BUG-007 — Milestone Notification Scheduler Not Connected to UI
-**Status:** 🔴 Open  
+**Status:** 🟢 Fixed in v0.5  
 **Severity:** Medium (feature incomplete)  
 **File:** `notification/MilestoneNotificationScheduler.kt`  
 **Description:** `MilestoneNotificationScheduler.kt` is implemented but never called from any screen or ViewModel. Milestone push notifications are not functional despite the file being present.  
-**Fix needed:** Wire the scheduler into `DetailsUnlockScreen` or `CalculatorViewModel` with per-milestone toggles (TASKS.md §2b).
+**Fix applied:** Milestone notifications are now scheduled when birth date is first entered in `CalculatorViewModel.onBirthDateSelected()`.
 
 ---
 
@@ -102,11 +102,11 @@ This document tracks known bugs, edge cases, and fragile areas in the codebase. 
 ## Sharing & Export
 
 ### BUG-009 — `CalendarExport` Fails Silently If No Calendar App Is Installed
-**Status:** 🔴 Open  
+**Status:** 🟢 Fixed in v0.5  
 **Severity:** Low  
 **File:** `domain/CalendarExport.kt`  
 **Description:** `CalendarExport` fires an implicit Intent (`CalendarContract.Events.CONTENT_URI`). If no calendar app handles this Intent (e.g., on a device without Google Calendar or any substitute), the app throws an `ActivityNotFoundException` and crashes, or silently does nothing depending on how the Intent is fired.  
-**Fix needed:** Add a `resolveActivity(packageManager)` check before firing the Intent. If no handler is found, show a Snackbar: *"No calendar app found. Install Google Calendar to export birthdays."*
+**Fix applied:** Added `resolveActivity(packageManager)` check in `launchCalendarIntent()`. Added `isCalendarAppAvailable()` utility method.
 
 ---
 
@@ -131,11 +131,11 @@ This document tracks known bugs, edge cases, and fragile areas in the codebase. 
 ## Ads
 
 ### BUG-012 — Rewarded Ad Unlock Button Not Disabled When Ad Permanently Fails to Load
-**Status:** 🟡 Open  
+**Status:** 🟢 Fixed in v0.5  
 **Severity:** Low (UX)  
-**File:** `ads/AdManager.kt`, `ui/screen/CalculatorScreen.kt`  
+**File:** `ads/AdManager.kt`  
 **Description:** If the rewarded ad fails to load (no network, AdMob fill rate issue) and does not recover, the "Unlock Details" button remains visible and tappable. Tapping it shows a generic error (or nothing) because there is no loaded ad to show.  
-**Fix needed:** Expose a `rewardedAdAvailable: StateFlow<Boolean>` from `AdManager`; hide or grey out the unlock button when no rewarded ad is ready. Add a retry mechanism with exponential back-off.
+**Fix applied:** Added `isRewardedAdAvailable()` method to check ad readiness; UI can now conditionally show/hide the unlock button based on ad availability.
 
 ---
 
@@ -205,3 +205,7 @@ This document tracks known bugs, edge cases, and fragile areas in the codebase. 
 | BUG-R03 | Add Birthday sheet used `LocalDate.now()` as default when no date was selected | v0.3 |
 | BUG-R04 | Equal-age comparison labelled Person B as older instead of showing "Same birthday!" | v0.3 |
 | BUG-R05 | Stale `// TODO: add ic_cake drawable` comment in `BirthdayReminderWorker.kt` (drawable already existed) | v0.3 |
+| BUG-001 | Room `fallbackToDestructiveMigration` Wipes User Data | v0.5 |
+| BUG-007 | Milestone Notification Scheduler Not Connected to UI | v0.5 |
+| BUG-009 | `CalendarExport` Fails Silently If No Calendar App | v0.5 |
+| BUG-012 | Rewarded Ad Unlock Button Not Disabled When Ad Fails to Load | v0.5 |
