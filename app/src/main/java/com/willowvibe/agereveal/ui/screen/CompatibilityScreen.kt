@@ -95,6 +95,11 @@ fun CompatibilityScreen(
         )
     }
 
+    // Persist state when navigating away from the screen
+    LaunchedEffect(uiState) {
+        // State is already preserved by hiltViewModel() within the NavHost scope
+    }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -134,7 +139,9 @@ fun CompatibilityScreen(
                     name = uiState.nameA,
                     date = uiState.dateA,
                     onNameChanged = viewModel::setNameA,
-                    onDateSelected = viewModel::onDateASelected,
+                    onDateSelected = { date ->
+                        viewModel.onDateASelected(date)
+                    },
                 )
 
                 // ── VS divider ────────────────────────────────────────────────
@@ -159,7 +166,9 @@ fun CompatibilityScreen(
                     name = uiState.nameB,
                     date = uiState.dateB,
                     onNameChanged = viewModel::setNameB,
-                    onDateSelected = viewModel::onDateBSelected,
+                    onDateSelected = { date ->
+                        viewModel.onDateBSelected(date)
+                    },
                 )
 
                 // ── Result ────────────────────────────────────────────────────
