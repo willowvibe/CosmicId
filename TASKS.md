@@ -1,6 +1,6 @@
 # AgeReveal — Remaining Tasks & Placeholders
 
-_Last updated: 2026-04-17 — additional bugs found & fixed_
+_Last updated: 2026-04-19 — Phase 3 features branch updated with completed features_
 
 ---
 
@@ -75,8 +75,11 @@ These items are tracked in `roadmap.md` under the Day 4 milestone.
 
 ## 4. Planned Phase 2 Features (Post-Launch)
 
-Not yet started. Tracked in `roadmap.md`.
+Completed:
+- ✅ **Zodiac Compatibility Screen** — 5th tab with Western + Chinese compatibility score
+- ✅ **Notification Time Customization** — Settings gear on Birthdays tab for reminder hour selection
 
+Still pending:
 - [ ] **Themed share cards** — Light / festive themes as additional rewarded ad unlocks
 - [ ] **Hindi UI toggle** — In-app language switch between English and Hindi
 - [ ] **4×2 home screen widget** — Wider widget showing 3 upcoming birthdays
@@ -87,6 +90,27 @@ Not yet started. Tracked in `roadmap.md`.
 
 ## 5. Future Technical Improvements (Nice-to-Have)
 
-- ✅ **Widget already uses Jetpack Glance** — `BirthdayGlanceWidget.kt` and `BirthdayGlanceWidgetReceiver.kt` are fully Glance-based; the stale `RemoteViews` task has been removed.
+- ✅ **Widget already uses Jetpack Glance** — `BirthdayGlanceWidget.kt` and `BirthdayGlanceWidgetReceiver.kt` are fully Glance-based
 - [ ] **Enable Inter font** — See Section 1 font placeholder above
 - [ ] **Add `Migration` objects before next schema change** — `AppDatabase` currently uses `fallbackToDestructiveMigration()` which silently drops all user data on version bumps. Must add explicit `Migration` objects before shipping any schema change in Phase 2.
+
+---
+
+## 6. Phase 3 Features (In Progress)
+
+### Completed ✅
+- **Google Calendar Export** — `CalendarExport.kt` utility for one-tap Intent to add birthdays to Google Calendar
+- **Astrology Explanations** — `AstroInfoDialog.kt` with educational dialogs for Western Zodiac, Rashi, Nakshatra, Chinese Zodiac, and Moon Phase
+
+### High Priority (In Progress)
+- [ ] **Birth Time Support** — Optional time picker for precise Nakshatra + Rashi calculation
+- [ ] **Milestone Push Notifications** — Schedule WorkManager jobs for upcoming day-milestones
+- [ ] **Zodiac Compatibility Share Card** — Generate shareable bitmap for compatibility result
+- [ ] **Life Timeline Visual** — Scrollable timeline of milestones with achievement badges
+- [ ] **Settings Screen** — Dedicated settings tab with theme, language, notification defaults
+
+See [`feature/phase-3-depth-retention`](https://github.com/willowvibe/AgeReveal/tree/feature/phase-3-depth-retention) branch for active development.
+
+### Build Status
+- **APK Location:** `AgeReveal-0.3-debug.apk`
+- **Version:** 0.3 (updated from 0.2)
