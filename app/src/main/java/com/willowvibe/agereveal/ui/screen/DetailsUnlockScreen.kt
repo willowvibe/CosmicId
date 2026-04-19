@@ -172,8 +172,12 @@ private fun AstroTile(result: AgeResult, isUnlocked: Boolean) {
                     color = WarmInk,
                 )
                 if (result.chineseZodiac.isNotEmpty()) {
+                    val chineseParts = result.chineseZodiac.split(" ", limit = 2)
+                    val chineseLabel = if (chineseParts.size >= 2)
+                        "Year of the ${chineseParts[1]} ${chineseParts[0]}"
+                    else result.chineseZodiac
                     Text(
-                        "Year of the ${result.chineseZodiac}",
+                        chineseLabel,
                         fontFamily = SerifFamily,
                         fontWeight = FontWeight.Normal,
                         fontSize = 20.sp,

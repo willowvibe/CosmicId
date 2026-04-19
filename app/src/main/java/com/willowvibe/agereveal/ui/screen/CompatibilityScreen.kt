@@ -24,9 +24,11 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CalendarMonth
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -159,13 +161,58 @@ fun CompatibilityScreen(
                     }
                 }
 
-                uiState.result?.let { result ->
-                    AnimatedVisibility(
-                        visible = true,
-                        enter = fadeIn(tween(500, easing = FastOutSlowInEasing)) +
-                                slideInVertically(tween(500), { it / 3 }),
+                if (uiState.isSameDate) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(14.dp))
+                            .background(WarmSurface)
+                            .padding(20.dp),
+                        contentAlignment = Alignment.Center,
                     ) {
-                        CompatibilityResultCard(result)
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text("✨", style = MaterialTheme.typography.titleLarge)
+                            Spacer(Modifier.height(6.dp))
+                            Text(
+                                "Birthday Twins!",
+                                fontFamily = SerifFamily,
+                                fontSize = 22.sp,
+                                color = WarmAmber,
+                            )
+                            Spacer(Modifier.height(4.dp))
+                            Text(
+                                "Both share the same birth date — cosmic alignment at 100%.",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = WarmInkDim,
+                                textAlign = TextAlign.Center,
+                            )
+                        }
+                    }
+                }
+
+                if (!uiState.isSameDate) {
+                    uiState.result?.let { result ->
+                        AnimatedVisibility(
+                            visible = true,
+                            enter = fadeIn(tween(500, easing = FastOutSlowInEasing)) +
+                                    slideInVertically(tween(500), { it / 3 }),
+                        ) {
+                            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                                CompatibilityResultCard(result)
+                                FilledTonalButton(
+                                    onClick = { viewModel.shareCard() },
+                                    modifier = Modifier.fillMaxWidth(),
+                                ) {
+                                    Icon(
+                                        Icons.Default.Share,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(16.dp),
+                                    )
+                                    Spacer(Modifier.width(8.dp))
+                                    Text("Share Match Card")
+                                }
+                            }
+                        }
                     }
                 }
 

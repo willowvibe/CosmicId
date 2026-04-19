@@ -14,6 +14,7 @@ import android.graphics.Typeface
 import androidx.core.content.FileProvider
 import com.willowvibe.agereveal.data.model.AgeResult
 import com.willowvibe.agereveal.data.model.Milestone
+import com.willowvibe.agereveal.domain.CompatibilityResult
 import dagger.hilt.android.qualifiers.ApplicationContext
 import android.os.Handler
 import android.os.Looper
@@ -49,9 +50,12 @@ class ShareCardGenerator @Inject constructor(
         const val CARD_HEIGHT = 600
         const val CACHE_FILE = "share_card.png"
         const val MILESTONE_CACHE_FILE = "milestone_card.png"
+        const val COMPATIBILITY_CACHE_FILE = "compatibility_card.png"
         const val FILE_AUTHORITY_SUFFIX = ".fileprovider"
         private val MILESTONE_DATE_FMT = DateTimeFormatter.ofPattern("d MMMM yyyy", Locale.ENGLISH)
     }
+
+    private val sharingCompatibility = AtomicBoolean(false)
 
     /** Generate bitmap share card from [result] using the given [theme]. */
     fun generateBitmap(result: AgeResult, theme: CardTheme = CardTheme.DARK_COSMOS): Bitmap {
@@ -322,6 +326,131 @@ class ShareCardGenerator @Inject constructor(
     // ---------------------------------------------------------------------------
     // File cache
     // ---------------------------------------------------------------------------
+
+    // ---------------------------------------------------------------------------
+    // Compatibility card
+    // ---------------------------------------------------------------------------
+
+    fun generateCompatibilityBitmap(result: CompatibilityResult, theme: CardTheme = CardTheme.DARK_COSMOS): Bitmap {
+        val bmp = Bitmap.createBitmap(CARD_WIDTH, CARD_HEIGHT, Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(bmp)
+        val paint = Paint(Paint.ANTI_ALIAS_FLAG)
+
+        when (theme) {
+            CardTheme.DARK_COSMOS -> {
+                val gradient = LinearGradient(
+                    0f, 0f, CARD_WIDTH.toFloat(), CARD_HEIGHT.toFloat(),
+                    Color.parseColor("#1a1a2e"), Color.parseColor("#16213e"),
+                    Shader.TileMode.CLAMP,
+                )
+                paint.shader = gradient
+                canvas.drawRect(0f, 0f, CARD_WIDTH.toFloat(), CARD_HEIGHT.toFloat(), paint)
+                paint.shader = null
+                drawCompatibilityContent(canvas, paint, result,
+                    textColor = Color.WHITE, accentColor = Color.parseColor("#86efac"))
+            }
+            CardTheme.MINIMAL_LIGHT -> {
+                paint.color = Color.WHITE
+                canvas.drawRect(0f, 0f, CARD_WIDTH.toFloat(), CARD_HEIGHT.toFloat(), paint)
+                drawCompatibilityContent(canvas, paint, result,
+                    textColor = Color.parseColor("#1c1917"), accentColor = Color.parseColor("#0f6e56"))
+            }
+            CardTheme.FESTIVE_INDIA -> {
+                val gradient = LinearGradient(
+                    0f, 0f, CARD_WIDTH.toFloat(), CARD_HEIGHT.toFloat(),
+                    Color.parseColor("#FF9933"), Color.parseColor("#138808"),
+                    Shader.TileMode.CLAMP,
+                )
+                paint.shader = gradient
+                canvas.drawRect(0f, 0f, CARD_WIDTH.toFloat(), CARD_HEIGHT.toFloat(), paint)
+                paint.shader = null
+                drawCompatibilityContent(canvas, paint, result,
+                    textColor = Color.WHITE, accentColor = Color.parseColor("#FFD700"))
+            }
+        }
+
+        drawWatermark(canvas, paint)
+        return bmp
+    }
+
+    fun shareCompatibility(result: CompatibilityResult, theme: CardTheme = CardTheme.DARK_COSMOS) {
+        if (!sharingCompatibility.compareAndSet(false, true)) return
+        var bitmap: Bitmap? = null
+        try {
+            bitmap = generateCompatibilityBitmap(result, theme)
+            val uri = saveBitmapToCache(bitmap, COMPATIBILITY_CACHE_FILE)
+            bitmap.recycle()
+            bitmap = null
+            val intent = Intent(Intent.ACTION_SEND).apply {
+                type = "image/png"
+                putExtra(Intent.EXTRA_STREAM, uri)
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            }
+            Handler(Looper.getMainLooper()).post {
+                try {
+                    val chooser = Intent.createChooser(intent, "Share compatibility")
+                    chooser.clipData = ClipData.newRawUri("", uri)
+                    chooser.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                    context.startActivity(chooser)
+                } finally {
+                    sharingCompatibility.set(false)
+                }
+            }
+        } catch (e: Exception) {
+            bitmap?.recycle()
+            sharingCompatibility.set(false)
+        }
+    }
+
+    private fun drawCompatibilityContent(
+        canvas: Canvas, paint: Paint, result: CompatibilityResult,
+        textColor: Int, accentColor: Int,
+    ) {
+        // "COSMIC MATCH" label
+        paint.color = textColor; paint.alpha = 120; paint.textSize = 28f; paint.typeface = Typeface.DEFAULT
+        canvas.drawText("COSMIC MATCH", 60f, 80f, paint)
+
+        // Score — large, centred
+        val scoreText = "${result.overallScore}%"
+        paint.alpha = 255; paint.color = accentColor; paint.textSize = 110f
+        paint.typeface = Typeface.DEFAULT_BOLD
+        canvas.drawText(scoreText, 60f, 195f, paint)
+
+        // Headline
+        paint.color = textColor; paint.alpha = 220; paint.textSize = 34f; paint.typeface = Typeface.DEFAULT
+        canvas.drawText(result.headline, 60f, 245f, paint)
+
+        // Divider line
+        paint.color = textColor; paint.alpha = 40; paint.strokeWidth = 1.5f
+        canvas.drawLine(60f, 265f, CARD_WIDTH - 60f, 265f, paint)
+
+        // Zodiac pairing rows
+        paint.alpha = 255
+        drawCompatibilityRow(canvas, paint, 60f, 305f, "Western",
+            result.personAWestern, result.personBWestern, textColor, accentColor)
+        drawCompatibilityRow(canvas, paint, 60f, 355f, "Element",
+            result.personAElement, result.personBElement, textColor, accentColor)
+        drawCompatibilityRow(canvas, paint, 60f, 405f, "Chinese",
+            result.personAChinese, result.personBChinese, textColor, accentColor)
+
+        // Score chips row
+        paint.alpha = 255
+        drawStatCard(canvas, paint, 60f, 440f, "Western", "${result.westernScore}%", textColor, accentColor)
+        drawStatCard(canvas, paint, 310f, 440f, "Chinese", "${result.chineseScore}%", textColor, accentColor)
+    }
+
+    private fun drawCompatibilityRow(
+        canvas: Canvas, paint: Paint,
+        x: Float, y: Float,
+        label: String, valueA: String, valueB: String,
+        textColor: Int, accentColor: Int,
+    ) {
+        paint.color = textColor; paint.alpha = 120; paint.textSize = 22f; paint.typeface = Typeface.DEFAULT
+        canvas.drawText(label, x, y, paint)
+        paint.alpha = 255; paint.color = accentColor; paint.textSize = 24f; paint.typeface = Typeface.DEFAULT_BOLD
+        canvas.drawText("$valueA  ·  $valueB", x + 140f, y, paint)
+    }
 
     private fun saveBitmapToCache(bitmap: Bitmap, fileName: String) = run {
         val cacheDir = File(context.cacheDir, "shared_images").also { it.mkdirs() }
