@@ -24,7 +24,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -498,84 +500,84 @@ private fun TeasedDetails(
     onReveal: () -> Unit,
     onShare: () -> Unit,
 ) {
-    Column(
+    // Hoverable unlock card
+    Box(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(14.dp))
             .background(WarmSurface)
-            .padding(14.dp),
+            .clickable { onReveal() }
+            .padding(16.dp),
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text(
-                "YOUR VEDIC & COSMIC PROFILE",
-                style = MaterialTheme.typography.labelSmall,
-                color = WarmInkDim,
-            )
+            Column(
+                modifier = Modifier.weight(1f),
+            ) {
+                Text(
+                    "YOUR VEDIC & COSMIC PROFILE",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = WarmInkDim,
+                )
+                Spacer(Modifier.height(4.dp))
+                Text(
+                    if (!isUnlocked) "Tap to reveal your profile" else "Share your profile card",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = WarmInkMute,
+                )
+            }
             if (!isUnlocked) {
                 Box(
                     modifier = Modifier
-                        .clickable { onReveal() }
-                        .padding(12.dp),
+                        .clip(CircleShape)
+                        .background(WarmTeal)
+                        .padding(10.dp),
                     contentAlignment = Alignment.Center,
                 ) {
-                    Text(
-                        "Unlock Profile",
-                        style = MaterialTheme.typography.labelLarge.copy(
-                            letterSpacing = 0.sp,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 16.sp,
-                        ),
-                        color = WarmTeal,
+                    Icon(
+                        imageVector = Icons.Default.Star,
+                        contentDescription = "Unlock",
+                        tint = WarmBlack,
+                        modifier = Modifier.size(20.dp),
                     )
                 }
             } else {
-                Box(
-                    modifier = Modifier
-                        .clickable { onShare() }
-                        .padding(12.dp),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Text(
-                        "Share Card",
-                        style = MaterialTheme.typography.labelLarge.copy(
-                            letterSpacing = 0.sp,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 16.sp,
-                        ),
-                        color = WarmTeal,
-                    )
-                }
-            }
-        }
-
-        Spacer(Modifier.height(10.dp))
-
-        val blurMod = if (!isUnlocked) Modifier.blur(4.dp) else Modifier
-
-        Column(modifier = blurMod) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                TeaseChip("Rashi", result.rashi.ifEmpty { "Meena" }, modifier = Modifier.weight(1f))
-                TeaseChip("Nakshatra", result.nakshatra.ifEmpty { "Uttara Bhadrapada" }, modifier = Modifier.weight(1f))
-            }
-            Spacer(Modifier.height(8.dp))
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                TeaseChip("Chinese", result.chineseZodiac.ifEmpty { "Tiger" }, modifier = Modifier.weight(1f))
-                TeaseChip(
-                    "Heartbeats",
-                    if (result.estimatedHeartbeats > 0) formatHeartbeats(result.estimatedHeartbeats) else "~1.0 B",
-                    modifier = Modifier.weight(1f)
+                Icon(
+                    imageVector = Icons.Default.Share,
+                    contentDescription = "Share",
+                    tint = WarmTeal,
+                    modifier = Modifier.size(20.dp),
                 )
             }
+        }
+    }
+
+    Spacer(Modifier.height(12.dp))
+
+    val blurMod = if (!isUnlocked) Modifier.blur(4.dp) else Modifier
+
+    Column(modifier = blurMod) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            TeaseChip("Rashi", result.rashi.ifEmpty { "Meena" }, modifier = Modifier.weight(1f))
+            TeaseChip("Nakshatra", result.nakshatra.ifEmpty { "Uttara Bhadrapada" }, modifier = Modifier.weight(1f))
+        }
+        Spacer(Modifier.height(8.dp))
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            TeaseChip("Chinese", result.chineseZodiac.ifEmpty { "Tiger" }, modifier = Modifier.weight(1f))
+            TeaseChip(
+                "Heartbeats",
+                if (result.estimatedHeartbeats > 0) formatHeartbeats(result.estimatedHeartbeats) else "~1.0 B",
+                modifier = Modifier.weight(1f)
+            )
         }
     }
 }
