@@ -27,6 +27,7 @@ import javax.inject.Inject
 
 data class CalculatorUiState(
     val birthDate: LocalDate? = null,
+    val name: String = "",                // Optional name for display purposes
     val result: AgeResult? = null,
     val isUnlocked: Boolean = false,       // True after rewarded ad watched
     val isAdLoading: Boolean = false,
@@ -131,6 +132,7 @@ class CalculatorViewModel @Inject constructor(
     fun setAdLoading(loading: Boolean) = _uiState.update { it.copy(isAdLoading = loading) }
 
     fun clearError() = _uiState.update { it.copy(error = null) }
+    fun onNameChanged(name: String) = _uiState.update { it.copy(name = name) }
 
     // ---------------------------------------------------------------------------
 
@@ -139,10 +141,11 @@ class CalculatorViewModel @Inject constructor(
         val totalSeconds = ChronoUnit.SECONDS.between(
             birthDate.atStartOfDay(), now,
         )
+        val name = _uiState.value.name.ifEmpty { "You" }
         return ageCalculator.calculate(
             birthDate = birthDate,
             totalSecondsOverride = totalSeconds,
             includeUnlocked = includeUnlocked,
-        )
+        ).copy(name = name)
     }
 }

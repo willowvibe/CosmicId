@@ -32,6 +32,8 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
@@ -167,6 +169,29 @@ fun CalculatorScreen(
                     .padding(horizontal = 20.dp),
                 verticalArrangement = Arrangement.spacedBy(18.dp),
             ) {
+                // ── Person name input ─────────────────────────────────────────
+                OutlinedTextField(
+                    value = uiState.name,
+                    onValueChange = { viewModel.onNameChanged(it) },
+                    label = { Text("Name", style = MaterialTheme.typography.labelSmall, color = WarmInkDim) },
+                    placeholder = {
+                        Text(
+                            "Enter your name",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = WarmInkMute
+                        )
+                    },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = WarmTeal,
+                        unfocusedBorderColor = WarmInkDim,
+                        focusedTextColor = WarmInk,
+                        unfocusedTextColor = WarmInk,
+                        focusedLabelColor = WarmInkDim,
+                    ),
+                )
+
                 // ── Birth anchor ─────────────────────────────────────────────
                 BirthAnchorRow(
                     selectedDate = uiState.birthDate,

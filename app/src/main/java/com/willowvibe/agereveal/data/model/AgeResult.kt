@@ -8,6 +8,7 @@ import java.time.LocalTime
  * All derived values are computed once and stored here to avoid re-calculation on recomposition.
  */
 data class AgeResult(
+    val name: String = "",             // Optional name for display purposes
     val birthDate: LocalDate,
     val birthTime: LocalTime? = null,  // Optional time of birth for precise astrology
 
