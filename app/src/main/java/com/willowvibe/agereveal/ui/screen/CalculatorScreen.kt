@@ -24,7 +24,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -32,6 +34,8 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
@@ -167,6 +171,29 @@ fun CalculatorScreen(
                     .padding(horizontal = 20.dp),
                 verticalArrangement = Arrangement.spacedBy(18.dp),
             ) {
+                // ── Person name input ─────────────────────────────────────────
+                OutlinedTextField(
+                    value = uiState.name,
+                    onValueChange = { viewModel.onNameChanged(it) },
+                    label = { Text("Name", style = MaterialTheme.typography.labelSmall, color = WarmInkDim) },
+                    placeholder = {
+                        Text(
+                            "Enter your name",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = WarmInkMute
+                        )
+                    },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = WarmTeal,
+                        unfocusedBorderColor = WarmInkDim,
+                        focusedTextColor = WarmInk,
+                        unfocusedTextColor = WarmInk,
+                        focusedLabelColor = WarmInkDim,
+                    ),
+                )
+
                 // ── Birth anchor ─────────────────────────────────────────────
                 BirthAnchorRow(
                     selectedDate = uiState.birthDate,
@@ -266,11 +293,14 @@ private fun BirthAnchorRow(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(bottom = 12.dp),
+                .padding(bottom = 12.dp)
+                .clickable { showDialog = true },
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Column {
+            Column(
+                modifier = Modifier.weight(1f),
+            ) {
                 Text(
                     "BORN",
                     style = MaterialTheme.typography.labelSmall,
@@ -289,12 +319,12 @@ private fun BirthAnchorRow(
                     color = if (selectedDate != null) WarmInk else WarmInkMute,
                 )
             }
-            IconButton(
-                onClick = { showDialog = true },
+            Box(
                 modifier = Modifier
                     .size(34.dp)
                     .clip(CircleShape)
                     .background(WarmSurface),
+                contentAlignment = Alignment.Center,
             ) {
                 Icon(
                     Icons.Default.Edit,
@@ -322,8 +352,18 @@ private fun ClockFaceHero(result: AgeResult) {
         horizontalArrangement = Arrangement.Start,
     ) {
         AgeNumeral(value = result.years.toString(), unit = "years", large = true, modifier = Modifier.weight(1.3f))
-        AgeNumeral(value = result.months.toString().padStart(2, '0'), unit = "months", large = false, modifier = Modifier.weight(1f))
-        AgeNumeral(value = result.days.toString().padStart(2, '0'), unit = "days", large = false, modifier = Modifier.weight(1f))
+        AgeNumeral(
+            value = result.months.toString().padStart(2, '0'),
+            unit = "months",
+            large = false,
+            modifier = Modifier.weight(1f)
+        )
+        AgeNumeral(
+            value = result.days.toString().padStart(2, '0'),
+            unit = "days",
+            large = false,
+            modifier = Modifier.weight(1f)
+        )
     }
 }
 
@@ -410,7 +450,12 @@ private fun MiniStatRow(result: AgeResult) {
     ) {
         MiniStatChip(label = "DAYS", value = "%,d".format(result.totalDays), modifier = Modifier.weight(1f))
         MiniStatChip(label = "HOURS", value = formatCompactNumber(result.totalHours), modifier = Modifier.weight(1f))
-        MiniStatChip(label = "NEXT BDAY", value = "${result.daysToNextBirthday}d", accent = true, modifier = Modifier.weight(1f))
+        MiniStatChip(
+            label = "NEXT BDAY",
+            value = "${result.daysToNextBirthday}d",
+            accent = true,
+            modifier = Modifier.weight(1f)
+        )
     }
 }
 
@@ -440,8 +485,8 @@ private fun MiniStatChip(
 
 private fun formatCompactNumber(n: Long): String = when {
     n >= 1_000_000 -> "%.1fM".format(n / 1_000_000.0)
-    n >= 1_000     -> "%.1fK".format(n / 1_000.0)
-    else           -> n.toString()
+    n >= 1_000 -> "%.1fK".format(n / 1_000.0)
+    else -> n.toString()
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -455,62 +500,84 @@ private fun TeasedDetails(
     onReveal: () -> Unit,
     onShare: () -> Unit,
 ) {
-    Column(
+    // Hoverable unlock card
+    Box(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(14.dp))
             .background(WarmSurface)
-            .padding(14.dp),
+            .clickable { onReveal() }
+            .padding(16.dp),
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text(
-                "YOUR VEDIC & COSMIC PROFILE",
-                style = MaterialTheme.typography.labelSmall,
-                color = WarmInkDim,
-            )
-            if (!isUnlocked) {
+            Column(
+                modifier = Modifier.weight(1f),
+            ) {
                 Text(
-                    "Reveal →",
-                    style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 0.sp),
-                    color = WarmTeal,
-                    fontWeight = FontWeight.SemiBold,
-                    modifier = Modifier.clickable { onReveal() },
+                    "YOUR VEDIC & COSMIC PROFILE",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = WarmInkDim,
                 )
-            } else {
+                Spacer(Modifier.height(4.dp))
                 Text(
-                    "Share ↗",
-                    style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 0.sp),
-                    color = WarmTeal,
-                    fontWeight = FontWeight.SemiBold,
-                    modifier = Modifier.clickable { onShare() },
+                    if (!isUnlocked) "Tap to reveal your profile" else "Share your profile card",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = WarmInkMute,
+                )
+            }
+            if (!isUnlocked) {
+                Box(
+                    modifier = Modifier
+                        .clip(CircleShape)
+                        .background(WarmTeal)
+                        .padding(10.dp),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Star,
+                        contentDescription = "Unlock",
+                        tint = WarmBlack,
+                        modifier = Modifier.size(20.dp),
+                    )
+                }
+            } else {
+                Icon(
+                    imageVector = Icons.Default.Share,
+                    contentDescription = "Share",
+                    tint = WarmTeal,
+                    modifier = Modifier.size(20.dp),
                 )
             }
         }
+    }
 
-        Spacer(Modifier.height(10.dp))
+    Spacer(Modifier.height(12.dp))
 
-        val blurMod = if (!isUnlocked) Modifier.blur(4.dp) else Modifier
+    val blurMod = if (!isUnlocked) Modifier.blur(4.dp) else Modifier
 
-        Column(modifier = blurMod) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                TeaseChip("Rashi", result.rashi.ifEmpty { "Meena" }, modifier = Modifier.weight(1f))
-                TeaseChip("Nakshatra", result.nakshatra.ifEmpty { "Uttara Bhadrapada" }, modifier = Modifier.weight(1f))
-            }
-            Spacer(Modifier.height(8.dp))
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                TeaseChip("Chinese", result.chineseZodiac.ifEmpty { "Tiger" }, modifier = Modifier.weight(1f))
-                TeaseChip("Heartbeats", if (result.estimatedHeartbeats > 0) formatHeartbeats(result.estimatedHeartbeats) else "~1.0 B", modifier = Modifier.weight(1f))
-            }
+    Column(modifier = blurMod) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            TeaseChip("Rashi", result.rashi.ifEmpty { "Meena" }, modifier = Modifier.weight(1f))
+            TeaseChip("Nakshatra", result.nakshatra.ifEmpty { "Uttara Bhadrapada" }, modifier = Modifier.weight(1f))
+        }
+        Spacer(Modifier.height(8.dp))
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            TeaseChip("Chinese", result.chineseZodiac.ifEmpty { "Tiger" }, modifier = Modifier.weight(1f))
+            TeaseChip(
+                "Heartbeats",
+                if (result.estimatedHeartbeats > 0) formatHeartbeats(result.estimatedHeartbeats) else "~1.0 B",
+                modifier = Modifier.weight(1f)
+            )
         }
     }
 }
@@ -528,8 +595,8 @@ private fun TeaseChip(key: String, value: String, modifier: Modifier = Modifier)
 
 private fun formatHeartbeats(n: Long): String = when {
     n >= 1_000_000_000 -> "%.2f B".format(n / 1_000_000_000.0)
-    n >= 1_000_000     -> "%.1f M".format(n / 1_000_000.0)
-    else               -> "%,d".format(n)
+    n >= 1_000_000 -> "%.1f M".format(n / 1_000_000.0)
+    else -> "%,d".format(n)
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

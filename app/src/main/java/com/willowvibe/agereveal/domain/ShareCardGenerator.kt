@@ -64,7 +64,7 @@ class ShareCardGenerator @Inject constructor(
         val paint = Paint(Paint.ANTI_ALIAS_FLAG)
 
         when (theme) {
-            CardTheme.DARK_COSMOS  -> drawDarkCosmos(canvas, paint, result)
+            CardTheme.DARK_COSMOS -> drawDarkCosmos(canvas, paint, result)
             CardTheme.MINIMAL_LIGHT -> drawMinimalLight(canvas, paint, result)
             CardTheme.FESTIVE_INDIA -> drawFestiveIndia(canvas, paint, result)
         }
@@ -88,7 +88,6 @@ class ShareCardGenerator @Inject constructor(
                 type = "image/png"
                 putExtra(Intent.EXTRA_STREAM, uri)
                 addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             }
             // startActivity must run on the main thread; the caller may be on Dispatchers.IO.
             // clipData must be on the chooser (not the inner intent) so WhatsApp receives the
@@ -98,7 +97,12 @@ class ShareCardGenerator @Inject constructor(
                     val chooser = Intent.createChooser(intent, "Share your age")
                     chooser.clipData = ClipData.newRawUri("", uri)
                     chooser.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                    context.startActivity(chooser)
+                    // Use context from the UI (Activity) for proper task handling
+                    if (context is android.app.Activity) {
+                        context.startActivity(chooser)
+                    } else {
+                        context.startActivity(chooser.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+                    }
                 } finally {
                     sharingCard.set(false)
                 }
@@ -125,15 +129,21 @@ class ShareCardGenerator @Inject constructor(
                 paint.shader = gradient
                 canvas.drawRect(0f, 0f, CARD_WIDTH.toFloat(), CARD_HEIGHT.toFloat(), paint)
                 paint.shader = null
-                drawMilestoneContent(canvas, paint, milestone,
-                    textColor = Color.WHITE, accentColor = Color.parseColor("#86efac"))
+                drawMilestoneContent(
+                    canvas, paint, milestone,
+                    textColor = Color.WHITE, accentColor = Color.parseColor("#86efac")
+                )
             }
+
             CardTheme.MINIMAL_LIGHT -> {
                 paint.color = Color.WHITE
                 canvas.drawRect(0f, 0f, CARD_WIDTH.toFloat(), CARD_HEIGHT.toFloat(), paint)
-                drawMilestoneContent(canvas, paint, milestone,
-                    textColor = Color.parseColor("#1c1917"), accentColor = Color.parseColor("#0f6e56"))
+                drawMilestoneContent(
+                    canvas, paint, milestone,
+                    textColor = Color.parseColor("#1c1917"), accentColor = Color.parseColor("#0f6e56")
+                )
             }
+
             CardTheme.FESTIVE_INDIA -> {
                 val gradient = LinearGradient(
                     0f, 0f, CARD_WIDTH.toFloat(), CARD_HEIGHT.toFloat(),
@@ -144,8 +154,10 @@ class ShareCardGenerator @Inject constructor(
                 canvas.drawRect(0f, 0f, CARD_WIDTH.toFloat(), CARD_HEIGHT.toFloat(), paint)
                 paint.shader = null
                 // Use gold (#FFD700) as accent so the milestone number pops on the saffron-green gradient
-                drawMilestoneContent(canvas, paint, milestone,
-                    textColor = Color.WHITE, accentColor = Color.parseColor("#FFD700"))
+                drawMilestoneContent(
+                    canvas, paint, milestone,
+                    textColor = Color.WHITE, accentColor = Color.parseColor("#FFD700")
+                )
             }
         }
 
@@ -205,7 +217,13 @@ class ShareCardGenerator @Inject constructor(
     private fun drawMinimalLight(canvas: Canvas, paint: Paint, result: AgeResult) {
         paint.color = Color.WHITE
         canvas.drawRect(0f, 0f, CARD_WIDTH.toFloat(), CARD_HEIGHT.toFloat(), paint)
-        drawContent(canvas, paint, result, textColor = Color.parseColor("#1c1917"), accentColor = Color.parseColor("#0f6e56"))
+        drawContent(
+            canvas,
+            paint,
+            result,
+            textColor = Color.parseColor("#1c1917"),
+            accentColor = Color.parseColor("#0f6e56")
+        )
     }
 
     private fun drawFestiveIndia(canvas: Canvas, paint: Paint, result: AgeResult) {
@@ -246,7 +264,16 @@ class ShareCardGenerator @Inject constructor(
 
         // Stat cards row 1
         paint.alpha = 255
-        drawStatCard(canvas, paint, 60f, 260f, "Total days", "${"%,d".format(result.totalDays)}", textColor, accentColor)
+        drawStatCard(
+            canvas,
+            paint,
+            60f,
+            260f,
+            "Total days",
+            "${"%,d".format(result.totalDays)}",
+            textColor,
+            accentColor
+        )
         drawStatCard(canvas, paint, 310f, 260f, "To birthday", "${result.daysToNextBirthday}d", textColor, accentColor)
         drawStatCard(canvas, paint, 560f, 260f, "Zodiac", result.westernZodiac.ifEmpty { "—" }, textColor, accentColor)
         drawStatCard(canvas, paint, 60f, 440f, "Rashi", result.rashi.ifEmpty { "—" }, textColor, accentColor)
@@ -346,15 +373,21 @@ class ShareCardGenerator @Inject constructor(
                 paint.shader = gradient
                 canvas.drawRect(0f, 0f, CARD_WIDTH.toFloat(), CARD_HEIGHT.toFloat(), paint)
                 paint.shader = null
-                drawCompatibilityContent(canvas, paint, result,
-                    textColor = Color.WHITE, accentColor = Color.parseColor("#86efac"))
+                drawCompatibilityContent(
+                    canvas, paint, result,
+                    textColor = Color.WHITE, accentColor = Color.parseColor("#86efac")
+                )
             }
+
             CardTheme.MINIMAL_LIGHT -> {
                 paint.color = Color.WHITE
                 canvas.drawRect(0f, 0f, CARD_WIDTH.toFloat(), CARD_HEIGHT.toFloat(), paint)
-                drawCompatibilityContent(canvas, paint, result,
-                    textColor = Color.parseColor("#1c1917"), accentColor = Color.parseColor("#0f6e56"))
+                drawCompatibilityContent(
+                    canvas, paint, result,
+                    textColor = Color.parseColor("#1c1917"), accentColor = Color.parseColor("#0f6e56")
+                )
             }
+
             CardTheme.FESTIVE_INDIA -> {
                 val gradient = LinearGradient(
                     0f, 0f, CARD_WIDTH.toFloat(), CARD_HEIGHT.toFloat(),
@@ -364,8 +397,10 @@ class ShareCardGenerator @Inject constructor(
                 paint.shader = gradient
                 canvas.drawRect(0f, 0f, CARD_WIDTH.toFloat(), CARD_HEIGHT.toFloat(), paint)
                 paint.shader = null
-                drawCompatibilityContent(canvas, paint, result,
-                    textColor = Color.WHITE, accentColor = Color.parseColor("#FFD700"))
+                drawCompatibilityContent(
+                    canvas, paint, result,
+                    textColor = Color.WHITE, accentColor = Color.parseColor("#FFD700")
+                )
             }
         }
 
@@ -427,12 +462,18 @@ class ShareCardGenerator @Inject constructor(
 
         // Zodiac pairing rows
         paint.alpha = 255
-        drawCompatibilityRow(canvas, paint, 60f, 305f, "Western",
-            result.personAWestern, result.personBWestern, textColor, accentColor)
-        drawCompatibilityRow(canvas, paint, 60f, 355f, "Element",
-            result.personAElement, result.personBElement, textColor, accentColor)
-        drawCompatibilityRow(canvas, paint, 60f, 405f, "Chinese",
-            result.personAChinese, result.personBChinese, textColor, accentColor)
+        drawCompatibilityRow(
+            canvas, paint, 60f, 305f, "Western",
+            result.personAWestern, result.personBWestern, textColor, accentColor
+        )
+        drawCompatibilityRow(
+            canvas, paint, 60f, 355f, "Element",
+            result.personAElement, result.personBElement, textColor, accentColor
+        )
+        drawCompatibilityRow(
+            canvas, paint, 60f, 405f, "Chinese",
+            result.personAChinese, result.personBChinese, textColor, accentColor
+        )
 
         // Score chips row
         paint.alpha = 255

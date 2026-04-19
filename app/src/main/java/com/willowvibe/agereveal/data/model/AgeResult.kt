@@ -1,13 +1,16 @@
 package com.willowvibe.agereveal.data.model
 
 import java.time.LocalDate
+import java.time.LocalTime
 
 /**
  * Immutable result produced by [com.willowvibe.agereveal.domain.AgeCalculator].
  * All derived values are computed once and stored here to avoid re-calculation on recomposition.
  */
 data class AgeResult(
+    val name: String = "",             // Optional name for display purposes
     val birthDate: LocalDate,
+    val birthTime: LocalTime? = null,  // Optional time of birth for precise astrology
 
     // Exact age components
     val years: Int,
@@ -39,6 +42,9 @@ data class AgeResult(
 
     // Fun fact (unlockable)
     val estimatedHeartbeats: Long = 0L,
+
+    // Precision indicator
+    val isExact: Boolean = birthTime != null,  // True if time of birth is provided
 )
 
 /**

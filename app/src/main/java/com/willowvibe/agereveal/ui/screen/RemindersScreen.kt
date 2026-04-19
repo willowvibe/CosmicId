@@ -1,5 +1,8 @@
 package com.willowvibe.agereveal.ui.screen
 
+import android.content.Context
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -45,7 +48,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.material3.rememberModalBottomSheetState
-import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -63,6 +65,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.willowvibe.agereveal.data.model.SavedBirthday
+import com.willowvibe.agereveal.domain.CompatibilityResult
 import com.willowvibe.agereveal.ui.theme.SerifFamily
 import com.willowvibe.agereveal.ui.theme.WarmAmber
 import com.willowvibe.agereveal.ui.theme.WarmAmberDeep
@@ -94,6 +97,7 @@ fun RemindersScreen(
     var showAddSheet by remember { mutableStateOf(false) }
     var showSettingsSheet by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
+    val context = LocalContext.current
 
     if (showAddSheet) {
         AddBirthdaySheet(
@@ -147,8 +151,8 @@ fun RemindersScreen(
                     Text(
                         text = when {
                             daysUntilNext == null -> ""
-                            daysUntilNext == 0L  -> "${birthdays.size} saved · birthday today!"
-                            else                  -> "${birthdays.size} saved · next in ${daysUntilNext}d"
+                            daysUntilNext == 0L -> "${birthdays.size} saved · birthday today!"
+                            else -> "${birthdays.size} saved · next in ${daysUntilNext}d"
                         },
                         style = MaterialTheme.typography.bodySmall,
                         color = WarmInkMute,
@@ -164,7 +168,12 @@ fun RemindersScreen(
                     contentAlignment = Alignment.Center,
                 ) {
                     IconButton(onClick = { showSettingsSheet = true }, modifier = Modifier.size(36.dp)) {
-                        Icon(Icons.Default.Settings, contentDescription = "Notification settings", tint = WarmInkMute, modifier = Modifier.size(18.dp))
+                        Icon(
+                            Icons.Default.Settings,
+                            contentDescription = "Notification settings",
+                            tint = WarmInkMute,
+                            modifier = Modifier.size(18.dp)
+                        )
                     }
                 }
                 Box(
@@ -175,7 +184,12 @@ fun RemindersScreen(
                     contentAlignment = Alignment.Center,
                 ) {
                     IconButton(onClick = { showAddSheet = true }, modifier = Modifier.size(36.dp)) {
-                        Icon(Icons.Default.Add, contentDescription = "Add birthday", tint = WarmBlack, modifier = Modifier.size(20.dp))
+                        Icon(
+                            Icons.Default.Add,
+                            contentDescription = "Add birthday",
+                            tint = WarmBlack,
+                            modifier = Modifier.size(20.dp)
+                        )
                     }
                 }
             }
@@ -192,7 +206,8 @@ fun RemindersScreen(
                 // ── Next-up hero ─────────────────────────────────────────────
                 if (nextUp != null) {
                     item {
-                        val daysUntil = ChronoUnit.DAYS.between(today, LocalDate.ofEpochDay(nextUp.nextBirthdayEpochDay))
+                        val daysUntil =
+                            ChronoUnit.DAYS.between(today, LocalDate.ofEpochDay(nextUp.nextBirthdayEpochDay))
                         NextUpHeroCard(birthday = nextUp, daysUntil = daysUntil)
                         Spacer(Modifier.height(14.dp))
                     }
@@ -209,23 +224,49 @@ fun RemindersScreen(
                         )
                     }
                     items(later, key = { it.id }) { birthday ->
-                        val daysUntil = ChronoUnit.DAYS.between(today, LocalDate.ofEpochDay(birthday.nextBirthdayEpochDay))
+                        val daysUntil =
+                            ChronoUnit.DAYS.between(today, LocalDate.ofEpochDay(birthday.nextBirthdayEpochDay))
+
+                        val userBirthDate = remember {
+                            val prefs = context.getSharedPreferences("calculator_prefs", Context.MODE_PRIVATE)
+                            prefs.getString("birth_date", null)?.let { runCatching { LocalDate.parse(it) }.getOrNull() }
+                        }
+                        val compatibility = remember(userBirthDate, birthday) {
+                            userBirthDate?.let { birthDate ->
+                                viewModel.getCompatibilityWithSavedBirthday(birthday)
+                            }
+                        }
+
                         BirthdayTimelineRow(
                             birthday = birthday,
                             daysUntil = daysUntil,
                             onDelete = { viewModel.deleteBirthday(birthday) },
                             onToggleNotification = { viewModel.toggleNotification(birthday) },
+                            compatibilityResult = compatibility,
                         )
                     }
                 } else if (nextUp != null) {
                     item {
                         // Only one birthday saved
-                        val daysUntil = ChronoUnit.DAYS.between(today, LocalDate.ofEpochDay(nextUp.nextBirthdayEpochDay))
+                        val daysUntil =
+                            ChronoUnit.DAYS.between(today, LocalDate.ofEpochDay(nextUp.nextBirthdayEpochDay))
+
+                        val userBirthDate = remember {
+                            val prefs = context.getSharedPreferences("calculator_prefs", Context.MODE_PRIVATE)
+                            prefs.getString("birth_date", null)?.let { runCatching { LocalDate.parse(it) }.getOrNull() }
+                        }
+                        val compatibility = remember(userBirthDate, nextUp) {
+                            userBirthDate?.let { birthDate ->
+                                viewModel.getCompatibilityWithSavedBirthday(nextUp)
+                            }
+                        }
+
                         BirthdayTimelineRow(
                             birthday = nextUp,
                             daysUntil = daysUntil,
                             onDelete = { viewModel.deleteBirthday(nextUp) },
                             onToggleNotification = { viewModel.toggleNotification(nextUp) },
+                            compatibilityResult = compatibility,
                         )
                     }
                 }
@@ -295,6 +336,7 @@ private fun BirthdayTimelineRow(
     daysUntil: Long,
     onDelete: () -> Unit,
     onToggleNotification: () -> Unit,
+    compatibilityResult: CompatibilityResult? = null,
 ) {
     Row(
         modifier = Modifier
@@ -305,7 +347,12 @@ private fun BirthdayTimelineRow(
     ) {
         Text(birthday.emoji, fontSize = 22.sp)
         Column(modifier = Modifier.weight(1f)) {
-            Text(birthday.name, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.SemiBold, color = WarmInk)
+            Text(
+                birthday.name,
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.SemiBold,
+                color = WarmInk
+            )
             Text(
                 text = when {
                     daysUntil == 0L -> "Birthday today!"
@@ -334,10 +381,101 @@ private fun BirthdayTimelineRow(
             )
         }
         IconButton(onClick = onDelete, modifier = Modifier.size(32.dp)) {
-            Icon(Icons.Default.Delete, contentDescription = "Delete", tint = WarmInkDim, modifier = Modifier.size(18.dp))
+            Icon(
+                Icons.Default.Delete,
+                contentDescription = "Delete",
+                tint = WarmInkDim,
+                modifier = Modifier.size(18.dp)
+            )
         }
     }
     Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(WarmSurfaceSoft))
+
+    compatibilityResult?.let {
+        CompatibilityResultRow(result = it)
+    }
+}
+
+@Composable
+private fun CompatibilityResultRow(result: CompatibilityResult) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 8.dp, start = 20.dp, end = 20.dp, bottom = 16.dp)
+            .clip(RoundedCornerShape(12.dp))
+            .background(WarmSurface)
+            .padding(16.dp),
+    ) {
+        Text(
+            "COMPATIBILITY",
+            style = MaterialTheme.typography.labelSmall,
+            color = WarmInkDim,
+        )
+        Spacer(Modifier.height(8.dp))
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                "Cosmic Match",
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.SemiBold,
+                color = WarmInk,
+            )
+            Text(
+                "${result.overallScore}%",
+                fontFamily = SerifFamily,
+                fontSize = 24.sp,
+                color = WarmTeal,
+                fontWeight = FontWeight.Bold,
+            )
+        }
+
+        Spacer(Modifier.height(10.dp))
+
+        Text(
+            result.headline,
+            style = MaterialTheme.typography.bodySmall,
+            color = WarmInkMute,
+            fontFamily = SerifFamily,
+        )
+
+        Spacer(Modifier.height(12.dp))
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            StatChip(label = "Western", value = "${result.westernScore}%", modifier = Modifier.weight(1f))
+            StatChip(label = "Chinese", value = "${result.chineseScore}%", modifier = Modifier.weight(1f))
+        }
+    }
+}
+
+@Composable
+private fun StatChip(label: String, value: String, modifier: Modifier = Modifier) {
+    Column(
+        modifier = modifier
+            .clip(RoundedCornerShape(8.dp))
+            .background(WarmSurfaceSoft)
+            .padding(vertical = 8.dp, horizontal = 12.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(4.dp),
+    ) {
+        Text(
+            label,
+            style = MaterialTheme.typography.labelSmall,
+            color = WarmInkDim,
+        )
+        Text(
+            value,
+            style = MaterialTheme.typography.bodySmall,
+            fontWeight = FontWeight.SemiBold,
+            color = WarmInk,
+        )
+    }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -499,7 +637,10 @@ private fun AddBirthdaySheet(
                     datePickerState.selectedDateMillis?.let { millis ->
                         val picked = Instant.ofEpochMilli(millis).atZone(ZoneId.of("UTC")).toLocalDate()
                         if (picked.isAfter(LocalDate.now())) dateError = true
-                        else { selectedDate = picked; dateError = false }
+                        else {
+                            selectedDate = picked
+                            dateError = false
+                        }
                     }
                     showDatePicker = false
                 }) { Text("OK") }
@@ -597,12 +738,12 @@ private fun AddBirthdaySheet(
                         Spacer(Modifier.height(4.dp))
                         Text(
                             text = if (dateError) "Date cannot be in the future"
-                                   else selectedDate?.format(DateTimeFormatter.ofLocalizedDate(FormatStyle.LONG))
-                                   ?: "Tap to select",
+                            else selectedDate?.format(DateTimeFormatter.ofLocalizedDate(FormatStyle.LONG))
+                                ?: "Tap to select",
                             style = MaterialTheme.typography.bodyLarge,
                             color = if (dateError) MaterialTheme.colorScheme.error
-                                    else if (selectedDate != null) WarmInk
-                                    else WarmInkMute,
+                            else if (selectedDate != null) WarmInk
+                            else WarmInkMute,
                         )
                     }
                     Icon(
@@ -616,9 +757,18 @@ private fun AddBirthdaySheet(
             Button(
                 modifier = Modifier.fillMaxWidth(),
                 onClick = {
-                    if (name.isBlank()) { nameError = true; return@Button }
-                    val date = selectedDate ?: run { dateError = true; return@Button }
-                    if (date.isAfter(LocalDate.now())) { dateError = true; return@Button }
+                    if (name.isBlank()) {
+                        nameError = true
+                        return@Button
+                    }
+                    val date = selectedDate ?: run {
+                        dateError = true
+                        return@Button
+                    }
+                    if (date.isAfter(LocalDate.now())) {
+                        dateError = true
+                        return@Button
+                    }
                     onSave(name.trim(), date, selectedEmoji)
                 },
                 colors = ButtonDefaults.buttonColors(

@@ -13,6 +13,7 @@ import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Icon
+import androidx.compose.runtime.remember
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
@@ -48,6 +49,8 @@ import com.willowvibe.agereveal.ui.theme.WarmInk
 import com.willowvibe.agereveal.ui.theme.WarmInkDim
 import com.willowvibe.agereveal.ui.theme.WarmSurface
 import com.willowvibe.agereveal.ui.viewmodel.CalculatorViewModel
+import com.willowvibe.agereveal.ui.viewmodel.CompatibilityViewModel
+import com.willowvibe.agereveal.ui.viewmodel.RemindersViewModel
 import kotlinx.coroutines.launch
 
 sealed class Screen(val route: String, val label: String, val icon: ImageVector) {
@@ -172,10 +175,14 @@ fun AppNavGraph(adManager: AdManager) {
                 CompareScreen(onShowInterstitial = { adManager.maybeShowInterstitial() })
             }
             composable(Screen.Compatibility.route) {
-                CompatibilityScreen()
+                val navEntry = navController.getBackStackEntry(Screen.Compatibility.route)
+                val viewModel: CompatibilityViewModel = hiltViewModel(navEntry)
+                CompatibilityScreen(viewModel = viewModel)
             }
             composable(Screen.Reminders.route) {
-                RemindersScreen()
+                val navEntry = navController.getBackStackEntry(Screen.Reminders.route)
+                val viewModel: RemindersViewModel = hiltViewModel(navEntry)
+                RemindersScreen(viewModel = viewModel)
             }
             composable(Screen.Settings.route) {
                 SettingsScreen(onBack = { navController.popBackStack() })

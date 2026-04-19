@@ -18,6 +18,8 @@ import javax.inject.Inject
 data class CompatibilityUiState(
     val dateA: LocalDate? = null,
     val dateB: LocalDate? = null,
+    val nameA: String = "",
+    val nameB: String = "",
     val result: CompatibilityResult? = null,
     val isSameDate: Boolean = false,
     val error: String? = null,
@@ -39,7 +41,9 @@ class CompatibilityViewModel @Inject constructor(
         }
         _uiState.update { state ->
             val same = state.dateB != null && state.dateB == date
-            val result = if (!same) state.dateB?.let { calculator.calculate(date, it) } else null
+            val result = if (!same) state.dateB?.let {
+                calculator.calculate(date, it, state.nameA.ifEmpty { "Person A" }, state.nameB.ifEmpty { "Person B" })
+            } else null
             state.copy(dateA = date, result = result, isSameDate = same, error = null)
         }
     }
@@ -51,10 +55,15 @@ class CompatibilityViewModel @Inject constructor(
         }
         _uiState.update { state ->
             val same = state.dateA != null && state.dateA == date
-            val result = if (!same) state.dateA?.let { calculator.calculate(it, date) } else null
+            val result = if (!same) state.dateA?.let {
+                calculator.calculate(it, date, state.nameA.ifEmpty { "Person A" }, state.nameB.ifEmpty { "Person B" })
+            } else null
             state.copy(dateB = date, result = result, isSameDate = same, error = null)
         }
     }
+
+    fun setNameA(name: String) = _uiState.update { it.copy(nameA = name) }
+    fun setNameB(name: String) = _uiState.update { it.copy(nameB = name) }
 
     fun clearError() = _uiState.update { it.copy(error = null) }
 

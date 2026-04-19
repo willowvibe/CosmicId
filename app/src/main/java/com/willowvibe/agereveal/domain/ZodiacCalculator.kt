@@ -1,6 +1,7 @@
 package com.willowvibe.agereveal.domain
 
 import java.time.LocalDate
+import java.time.LocalTime
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -17,23 +18,23 @@ class ZodiacCalculator @Inject constructor(
 ) {
 
     fun getWesternZodiac(month: Int, day: Int): String = when {
-        (month == 3 && day >= 21) || (month == 4 && day <= 19)   -> "Aries ♈"
-        (month == 4 && day >= 20) || (month == 5 && day <= 20)   -> "Taurus ♉"
-        (month == 5 && day >= 21) || (month == 6 && day <= 20)   -> "Gemini ♊"
-        (month == 6 && day >= 21) || (month == 7 && day <= 22)   -> "Cancer ♋"
-        (month == 7 && day >= 23) || (month == 8 && day <= 22)   -> "Leo ♌"
-        (month == 8 && day >= 23) || (month == 9 && day <= 22)   -> "Virgo ♍"
-        (month == 9 && day >= 23) || (month == 10 && day <= 22)  -> "Libra ♎"
+        (month == 3 && day >= 21) || (month == 4 && day <= 19) -> "Aries ♈"
+        (month == 4 && day >= 20) || (month == 5 && day <= 20) -> "Taurus ♉"
+        (month == 5 && day >= 21) || (month == 6 && day <= 20) -> "Gemini ♊"
+        (month == 6 && day >= 21) || (month == 7 && day <= 22) -> "Cancer ♋"
+        (month == 7 && day >= 23) || (month == 8 && day <= 22) -> "Leo ♌"
+        (month == 8 && day >= 23) || (month == 9 && day <= 22) -> "Virgo ♍"
+        (month == 9 && day >= 23) || (month == 10 && day <= 22) -> "Libra ♎"
         (month == 10 && day >= 23) || (month == 11 && day <= 21) -> "Scorpio ♏"
         (month == 11 && day >= 22) || (month == 12 && day <= 21) -> "Sagittarius ♐"
-        (month == 12 && day >= 22) || (month == 1 && day <= 19)  -> "Capricorn ♑"
-        (month == 1 && day >= 20) || (month == 2 && day <= 18)   -> "Aquarius ♒"
-        else                                                     -> "Pisces ♓"
+        (month == 12 && day >= 22) || (month == 1 && day <= 19) -> "Capricorn ♑"
+        (month == 1 && day >= 20) || (month == 2 && day <= 18) -> "Aquarius ♒"
+        else -> "Pisces ♓"
     }
 
     /** Vedic Rashi derived from the Sun's sidereal ecliptic longitude (12 × 30° signs). */
-    fun getRashi(birthDate: LocalDate): String {
-        val longitude = astronomy.siderealSunLongitude(birthDate)
+    fun getRashi(birthDate: LocalDate, birthTime: LocalTime? = null): String {
+        val longitude = astronomy.siderealSunLongitude(birthDate, birthTime)
         val index = ((longitude / 30.0).toInt() % 12 + 12) % 12
         return rashiOrder[index]
     }

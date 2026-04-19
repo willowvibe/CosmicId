@@ -45,23 +45,22 @@
 
 **Branch:** [`feature/phase-3-depth-retention`](https://github.com/willowvibe/AgeReveal/tree/feature/phase-3-depth-retention)
 
-### Completed ✅ (v0.3)
+### Completed ✅ (v0.4)
 - **Zodiac Compatibility Screen** — 5th tab; enter two birthdays and get Western + Chinese compatibility score with element analysis and shareable headline
 - **Notification Time Customization** — Settings gear on Birthdays tab; choose reminder hour (7 AM – 9 PM presets); stored in SharedPreferences, reschedules all active WorkManager jobs
 - **Google Calendar Export** — `CalendarExport.kt` utility for one-tap Intent to add birthdays to Google Calendar
 - **Astrology Explanations** — `AstroInfoDialog.kt` with educational dialogs for Western Zodiac, Rashi, Nakshatra, Chinese Zodiac, and Moon Phase
+- **Zodiac Compatibility for Saved Birthdays** — Display compatibility scores when viewing saved birthdays; users can now see Western + Chinese compatibility between any saved birthday and their own birth date
 
 ### High Priority (In Progress)
 - [ ] **Birth Time Support** — Optional time picker alongside date; pass exact time to AstronomicalCalculator for precise Nakshatra + Rashi (Moon moves ~13°/day so time matters); show "Approximate" vs "Exact" label
 - [ ] **Milestone Push Notifications** — Schedule WorkManager jobs for upcoming day-milestones (1,000th, 5,000th, 10,000th…); "You turn 10,000 days old tomorrow 🎉" — toggle per-milestone in Details screen
-- [ ] **Zodiac Compatibility Share Card** — Generate a shareable bitmap for the compatibility result (reuse ShareCardGenerator with a new COMPATIBILITY theme)
 - [ ] **Life Timeline Visual** — Horizontal/vertical scrollable timeline of past + future milestones with achievement badges; gamification to drive return visits
-- [ ] **Zodiac Compatibility for Saved Birthdays** — On the Birthdays tab, tap any saved birthday to see compatibility with the user's own birth date (requires storing user's own date persistently)
 - [ ] **Settings Screen** — Dedicated settings tab or overflow menu: theme (light/dark/auto), language, notification defaults, clear data
 
 ### Build Status
-- **APK:** `AgeReveal-0.3-debug.apk` (27.5 MB)
-- **Version:** 0.3 (updated from 0.2)
+- **APK:** `app/build/outputs/apk/debug/app-debug.apk` (27.5 MB)
+- **Version:** 0.4 (updated from 0.3)
 
 ## Ideas Backlog 💡
 - Sync saved birthdays across devices via Firebase Firestore (cloud backup)

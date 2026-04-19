@@ -102,15 +102,16 @@ Still pending:
 - **Google Calendar Export** — `CalendarExport.kt` utility for one-tap Intent to add birthdays to Google Calendar
 - **Astrology Explanations** — `AstroInfoDialog.kt` with educational dialogs for Western Zodiac, Rashi, Nakshatra, Chinese Zodiac, and Moon Phase
 
+### Completed ✅
+- **Zodiac Compatibility for Saved Birthdays** — Display compatibility scores when viewing saved birthdays; users can now see Western + Chinese compatibility between any saved birthday and their own birth date
+
 ### High Priority (In Progress)
 - [ ] **Birth Time Support** — Optional time picker for precise Nakshatra + Rashi calculation
-- [ ] **Milestone Push Notifications** — Schedule WorkManager jobs for upcoming day-milestones
-- [ ] **Zodiac Compatibility Share Card** — Generate shareable bitmap for compatibility result
+- [ ] **Milestone Push Notifications** — Schedule WorkManager jobs for upcoming day-milestones (built-in, but requires UI integration)
 - [ ] **Life Timeline Visual** — Scrollable timeline of milestones with achievement badges
-- [ ] **Settings Screen** — Dedicated settings tab with theme, language, notification defaults
 
 See [`feature/phase-3-depth-retention`](https://github.com/willowvibe/AgeReveal/tree/feature/phase-3-depth-retention) branch for active development.
 
 ### Build Status
-- **APK Location:** `AgeReveal-0.3-debug.apk`
-- **Version:** 0.3 (updated from 0.2)
+- **APK Location:** `app/build/outputs/apk/debug/app-debug.apk`
+- **Version:** 0.4 (updated from 0.3)
