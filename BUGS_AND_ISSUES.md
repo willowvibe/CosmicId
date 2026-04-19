@@ -1,6 +1,6 @@
 # AgeReveal — Bugs & Edge Case Issues
 
-_Last updated: 2026-04-19 — v0.6_
+_Last updated: 2026-04-19 — v0.7_
 
 This document tracks known bugs, edge cases, and fragile areas in the codebase. Resolved items are kept for historical reference. For planned work see [TASKS.md](TASKS.md).
 
@@ -31,7 +31,7 @@ This document tracks known bugs, edge cases, and fragile areas in the codebase. 
 ---
 
 ### BUG-002 — Interstitial Ad Impression Counter Resets on App Kill
-**Status:** 🟢 Fixed in v0.6  
+**Status:** 🟢 Fixed in v0.7  
 **Severity:** Low (monetisation impact)  
 **File:** `ads/AdManager.kt`  
 **Description:** The interstitial impression count and last-shown timestamp are held in memory. If the user force-stops or the OS kills the app, the counter resets and the interstitial can fire again immediately on next app open rather than respecting the 5-minute cooldown.  
@@ -74,7 +74,7 @@ This document tracks known bugs, edge cases, and fragile areas in the codebase. 
 ## Notifications & Scheduling
 
 ### BUG-006 — `SCHEDULE_EXACT_ALARM` Permission Silently Fails on Android 12+
-**Status:** 🟢 Fixed in v0.6  
+**Status:** 🟢 Fixed in v0.7  
 **Severity:** Medium (feature breakage, silent)  
 **File:** `notification/BirthdayNotificationScheduler.kt`  
 **Description:** On Android 12 (API 31) and above, apps must hold `SCHEDULE_EXACT_ALARM` or `USE_EXACT_ALARM` permission to set exact alarms. The manifest declares both permissions, but if the user has revoked or not granted exact alarm permission via the system settings, `WorkManager`'s exact scheduling silently falls back to inexact timing (or fails entirely on some OEMs), causing birthday notifications to fire at unpredictable times or not at all.  
@@ -141,7 +141,7 @@ This document tracks known bugs, edge cases, and fragile areas in the codebase. 
 ---
 
 ### BUG-013 — `AdManager` Uses `WeakReference<Activity>` Which May Be Prematurely Collected
-**Status:** 🟢 Fixed in v0.6  
+**Status:** 🟢 Fixed in v0.7  
 **Severity:** Low (intermittent ad failure)  
 **File:** `ads/AdManager.kt`  
 **Description:** `AdManager` stores the current `Activity` as a `WeakReference` to avoid memory leaks. In some low-memory situations, the GC may collect the weak reference between when the rewarded/interstitial ad is shown and the ad callback fires, causing the ad to not display.  
@@ -152,7 +152,7 @@ This document tracks known bugs, edge cases, and fragile areas in the codebase. 
 ## UI & UX
 
 ### BUG-014 — No Accessibility Labels on Icon-Only Buttons and Share Cards
-**Status:** 🟢 Fixed in v0.6  
+**Status:** 🟢 Fixed in v0.7  
 **Severity:** Medium (accessibility)  
 **Files:** `ui/screen/RemindersScreen.kt`, `ui/screen/CompatibilityScreen.kt`, `ui/screen/SettingsScreen.kt`  
 **Description:** Several icon-only `IconButton` composables (e.g., info buttons, delete buttons on Reminders screen) and the rendered share card image do not have `contentDescription` set. TalkBack users cannot identify these elements.  
@@ -175,7 +175,7 @@ This document tracks known bugs, edge cases, and fragile areas in the codebase. 
 ---
 
 ### BUG-016 — Date Picker Has No Minimum Year Guard Below API 26
-**Status:** 🟢 Fixed in v0.6  
+**Status:** 🟢 Fixed in v0.7  
 **Severity:** Very Low  
 **File:** `ui/screen/CalculatorScreen.kt`  
 **Description:** `java.time.LocalDate` supports dates back to year −999 999 999. The date picker does not enforce a minimum year. If a user manually inputs a year before 1900, the astronomical calculations may produce unreliable results because the Meeus ephemeris is calibrated for modern dates.  
@@ -184,11 +184,11 @@ This document tracks known bugs, edge cases, and fragile areas in the codebase. 
 ---
 
 ### BUG-017 — Compare Screen Interstitial Counter Not Shared With `AdManager` Cooldown
-**Status:** 🟡 Open  
+**Status:** 🟢 Fixed in v0.7  
 **Severity:** Low  
 **Files:** `ui/viewmodel/CompareViewModel.kt`, `ads/AdManager.kt`  
 **Description:** The logic that decides when to show the interstitial ad (after 2nd comparison, 5-min cooldown) is duplicated between `CompareViewModel` and `AdManager`. If the interstitial is triggered from another screen in the future, the cooldown state won't be synchronised.  
-**Fix needed:** Centralise the impression counter and cooldown logic entirely within `AdManager`; `CompareViewModel` should only call `adManager.showInterstitialIfReady(activity)`.
+**Fix applied:** CompareViewModel now accepts AdManager dependency and calls `adManager.maybeShowInterstitial()`. Clear comparison count after showing interstitial.
 
 ---
 
@@ -215,8 +215,9 @@ This document tracks known bugs, edge cases, and fragile areas in the codebase. 
 | BUG-007 | Milestone Notification Scheduler Not Connected to UI | v0.5 |
 | BUG-009 | `CalendarExport` Fails Silently If No Calendar App | v0.5 |
 | BUG-012 | Rewarded Ad Unlock Button Not Disabled When Ad Fails to Load | v0.5 |
-| BUG-002 | Interstitial Ad Counter Resets on App Kill | v0.6 |
-| BUG-006 | SCHEDULE_EXACT_ALARM Permission Check | v0.6 |
-| BUG-013 | AdManager WeakReference Issue | v0.6 |
-| BUG-014 | Accessibility Labels on Icon-Only Buttons | v0.6 |
-| BUG-016 | Date Picker Minimum Year Guard | v0.6 |
+| BUG-002 | Interstitial Ad Counter Resets on App Kill | v0.7 |
+| BUG-006 | SCHEDULE_EXACT_ALARM Permission Check | v0.7 |
+| BUG-013 | AdManager WeakReference Issue | v0.7 |
+| BUG-017 | Compare Screen Interstitial Counter Not Shared | v0.7 |
+| BUG-014 | Accessibility Labels on Icon-Only Buttons | v0.7 |
+| BUG-016 | Date Picker Minimum Year Guard | v0.7 |
