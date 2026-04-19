@@ -71,8 +71,16 @@ fun CompareScreen(
     val uiState by viewModel.uiState.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
 
+    // Trigger interstitial after 3rd comparison
     LaunchedEffect(uiState.comparisonCount) {
-        if (uiState.comparisonCount > 0 && uiState.comparisonCount % 3 == 0) onShowInterstitial()
+        if (uiState.comparisonCount == 3) onShowInterstitial()
+    }
+
+    // Clear comparison count after showing interstitial
+    LaunchedEffect(uiState.comparisonCount) {
+        if (uiState.comparisonCount > 0 && uiState.comparisonCount % 3 == 0) {
+            viewModel.clearComparisonCount()
+        }
     }
     LaunchedEffect(uiState.error) {
         uiState.error?.let { snackbarHostState.showSnackbar(it); viewModel.clearError() }
