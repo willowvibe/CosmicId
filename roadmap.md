@@ -41,7 +41,15 @@
 - [ ] In-app review prompt after user shares their card
 - [ ] Remove ads IAP at ₹99 one-time (optional paywall)
 
-## Phase 3: Depth & Retention 🔭
+## Phase 3: Depth & Retention 🔭 (In Progress)
+
+**Branch:** [`feature/phase-3-depth-retention`](https://github.com/willowvibe/AgeReveal/tree/feature/phase-3-depth-retention)
+
+### Completed ✅
+- **Zodiac Compatibility Screen** — 5th tab; enter two birthdays and get Western + Chinese compatibility score with element analysis and shareable headline
+- **Notification Time Customization** — Settings gear on Birthdays tab; choose reminder hour (7 AM – 9 PM presets); stored in SharedPreferences, reschedules all active WorkManager jobs
+
+### High Priority (Ready to Implement)
 - [ ] **Birth Time Support** — Optional time picker alongside date; pass exact time to AstronomicalCalculator for precise Nakshatra + Rashi (Moon moves ~13°/day so time matters); show "Approximate" vs "Exact" label
 - [ ] **Milestone Push Notifications** — Schedule WorkManager jobs for upcoming day-milestones (1,000th, 5,000th, 10,000th…); "You turn 10,000 days old tomorrow 🎉" — toggle per-milestone in Details screen
 - [ ] **Zodiac Compatibility Share Card** — Generate a shareable bitmap for the compatibility result (reuse ShareCardGenerator with a new COMPATIBILITY theme)

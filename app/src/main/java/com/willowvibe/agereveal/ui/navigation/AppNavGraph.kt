@@ -48,11 +48,11 @@ import com.willowvibe.agereveal.ui.viewmodel.CalculatorViewModel
 import kotlinx.coroutines.launch
 
 sealed class Screen(val route: String, val label: String, val icon: ImageVector) {
-    data object Calculator    : Screen("calculator",    "Age",     Icons.Default.Calculate)
-    data object Details       : Screen("details",       "Profile", Icons.Default.Star)
-    data object Compare       : Screen("compare",       "Compare", Icons.Default.CompareArrows)
-    data object Compatibility : Screen("compatibility", "Match",   Icons.Default.Favorite)
-    data object Reminders     : Screen("reminders",     "Bdays",   Icons.Default.Cake)
+    data object Calculator : Screen("calculator", "Age", Icons.Default.Calculate)
+    data object Details : Screen("details", "Profile", Icons.Default.Star)
+    data object Compare : Screen("compare", "Compare", Icons.Default.CompareArrows)
+    data object Compatibility : Screen("compatibility", "Match", Icons.Default.Favorite)
+    data object Reminders : Screen("reminders", "Bdays", Icons.Default.Cake)
 }
 
 private val bottomNavItems = listOf(
