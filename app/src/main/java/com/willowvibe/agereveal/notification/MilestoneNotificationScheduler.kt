@@ -31,9 +31,9 @@ class MilestoneNotificationScheduler @Inject constructor(
         const val CHANNEL_NAME = "Milestone Reminders"
         const val KEY_TARGET_DAYS = "target_days"
         const val ALL_MILESTONES_TAG = "all_milestones"
-        const val NOTIFICATION_ID_BASE = 10_000
+        const val NOTIFICATION_ID_BASE = 1_000_000
 
-        private val MILESTONE_TARGETS = listOf(1_000, 5_000, 10_000, 15_000, 20_000, 25_000)
+        private val MILESTONE_TARGETS = listOf(500, 1_000, 2_000, 3_000, 5_000, 7_000, 10_000, 12_500, 15_000, 20_000, 25_000, 30_000)
     }
 
     init {

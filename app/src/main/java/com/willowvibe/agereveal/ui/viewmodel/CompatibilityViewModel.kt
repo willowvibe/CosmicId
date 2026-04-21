@@ -44,7 +44,7 @@ class CompatibilityViewModel @Inject constructor(
             val result = if (!same) state.dateB?.let {
                 calculator.calculate(date, it, state.nameA.ifEmpty { "Person A" }, state.nameB.ifEmpty { "Person B" })
             } else null
-            state.copy(dateA = date, result = result, isSameDate = same, error = null)
+            state.copy(dateA = date, result = result, isSameDate = same, error = if (same) "Both dates are the same — compatibility requires two different birth dates" else null)
         }
     }
 
@@ -58,7 +58,7 @@ class CompatibilityViewModel @Inject constructor(
             val result = if (!same) state.dateA?.let {
                 calculator.calculate(it, date, state.nameA.ifEmpty { "Person A" }, state.nameB.ifEmpty { "Person B" })
             } else null
-            state.copy(dateB = date, result = result, isSameDate = same, error = null)
+            state.copy(dateB = date, result = result, isSameDate = same, error = if (same) "Both dates are the same — compatibility requires two different birth dates" else null)
         }
     }
 
