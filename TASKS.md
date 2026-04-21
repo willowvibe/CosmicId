@@ -1,6 +1,6 @@
 # AgeReveal — Tasks & Implementation Checklist
 
-_Last updated: 2026-04-19 — v0.9, Phase 3 complete, Settings screen added_
+_Last updated: 2026-04-21 — v0.9, BUG-015 fixed (settings consolidated)_
 
 ---
 
@@ -71,13 +71,17 @@ Steps:
 - [ ] Entry animation when the screen loads
 
 ### 2d. Dedicated Settings Screen
-**Why:** Settings are currently split across `SettingsScreen.kt` and the Birthdays tab gear icon; consolidate into one place.
+**Why:** Settings were split across `SettingsScreen.kt` and a local sheet in the Birthdays tab gear icon; consolidated into one place (BUG-015).
 
-- [ ] Single Settings tab with sections: Appearance, Notifications, Data, About
-- [ ] Appearance: theme selector (Light / Dark / System default)
-- [ ] Notifications: default reminder hour picker, global enable/disable toggle
-- [ ] Data: "Clear all saved birthdays" with confirmation dialog, export birthdays as CSV
-- [ ] About: app version, open-source licences, privacy policy link
+- ✅ Single Settings tab with sections: Appearance, Notifications, Data, About
+- ✅ Appearance: theme selector (Light / Dark / System default)
+- ✅ Notifications: default reminder hour picker
+- ✅ Data: "Clear all birthdays" with confirmation dialog
+- ✅ About: app version and name
+- ✅ Birthdays tab gear icon now navigates to Settings instead of opening a duplicate local sheet
+- [ ] Notifications: global enable/disable toggle for all birthday reminders
+- [ ] Data: export birthdays as CSV
+- [ ] About: open-source licences and privacy policy link
 
 ---
 
