@@ -22,11 +22,13 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.LocalDateTime
+import java.time.LocalTime
 import java.time.temporal.ChronoUnit
 import javax.inject.Inject
 
 data class CalculatorUiState(
     val birthDate: LocalDate? = null,
+    val birthTime: LocalTime? = null,    // Optional time of birth for precise astrology
     val name: String = "",                // Optional name for display purposes
     val result: AgeResult? = null,
     val isUnlocked: Boolean = false,       // True after rewarded ad watched
@@ -91,6 +93,15 @@ class CalculatorViewModel @Inject constructor(
         }
     }
 
+    fun onBirthTimeSelected(time: LocalTime) {
+        _uiState.update { state ->
+            state.copy(
+                birthTime = time,
+                result = computeResult(state.birthDate ?: return, state.isUnlocked),
+            )
+        }
+    }
+
     /** Called every second by the UI, driven by [tickerSeconds]. */
     fun onTick() {
         val state = _uiState.value
@@ -149,6 +160,7 @@ class CalculatorViewModel @Inject constructor(
         val name = _uiState.value.name.ifEmpty { "You" }
         return ageCalculator.calculate(
             birthDate = birthDate,
+            birthTime = _uiState.value.birthTime,
             totalSecondsOverride = totalSeconds,
             includeUnlocked = includeUnlocked,
         ).copy(name = name)
