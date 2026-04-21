@@ -1,6 +1,6 @@
 # AgeReveal — Bugs & Edge Case Issues
 
-_Last updated: 2026-04-21 — v0.9 (BUG-015 fixed)_
+_Last updated: 2026-04-21 — v0.9 (multiple bug fixes)_
 
 This document tracks known bugs, edge cases, and fragile areas in the codebase. Resolved items are kept for historical reference. For planned work see [TASKS.md](TASKS.md).
 
@@ -294,3 +294,6 @@ This document tracks known bugs, edge cases, and fragile areas in the codebase. 
 | BUG-024 | BirthdayGlanceWidget Hangs on Flow.first() | v0.9 |
 | BUG-025 | Milestone Notification ID Collision with Birthday IDs | v0.9 |
 | BUG-015 | Settings Split Across Birthdays Tab and Settings Tab | v0.9 |
+| BUG-026 | AdManager No Retry Logic on Load Failure | v0.9 |
+| BUG-027 | CalendarExport No Feedback on Missing Calendar App | v0.9 |
+| BUG-028 | Widget May Show Stale Data on Refresh | v0.9 |
