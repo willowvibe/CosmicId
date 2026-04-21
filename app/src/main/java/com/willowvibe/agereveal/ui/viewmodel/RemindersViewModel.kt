@@ -30,6 +30,12 @@ class RemindersViewModel @Inject constructor(
 
     val notificationHour: StateFlow<Int> = notificationScheduler.notificationHour
 
+    // Cached once at construction — avoids repeated disk I/O on every compatibility lookup
+    private val cachedUserBirthDate: LocalDate? = context
+        .getSharedPreferences("calculator_prefs", Context.MODE_PRIVATE)
+        .getString("birth_date", null)
+        ?.let { runCatching { LocalDate.parse(it) }.getOrNull() }
+
     fun addBirthday(name: String, birthDate: LocalDate, emoji: String = "🎂") {
         if (birthDate.isAfter(LocalDate.now())) return
         viewModelScope.launch {
@@ -76,10 +82,7 @@ class RemindersViewModel @Inject constructor(
         }
     }
 
-    fun getUserBirthDate(): LocalDate? {
-        val prefs = context.getSharedPreferences("calculator_prefs", Context.MODE_PRIVATE)
-        return prefs.getString("birth_date", null)?.let { runCatching { LocalDate.parse(it) }.getOrNull() }
-    }
+    fun getUserBirthDate(): LocalDate? = cachedUserBirthDate
 
     fun getCompatibilityWithSavedBirthday(savedBirthday: SavedBirthday): CompatibilityResult? {
         val userBirthDate = getUserBirthDate() ?: return null
