@@ -29,7 +29,6 @@ import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.NotificationsOff
-import androidx.compose.foundation.border
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -50,7 +49,6 @@ import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -59,7 +57,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -89,13 +86,11 @@ import java.time.temporal.ChronoUnit
 @Composable
 fun RemindersScreen(
     viewModel: RemindersViewModel = hiltViewModel(),
+    onNavigateToSettings: () -> Unit = {},
 ) {
     val birthdays by viewModel.birthdays.collectAsState()
-    val notificationHour by viewModel.notificationHour.collectAsState()
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    val settingsSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     var showAddSheet by remember { mutableStateOf(false) }
-    var showSettingsSheet by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
 
@@ -106,18 +101,6 @@ fun RemindersScreen(
             onSave = { name, date, emoji ->
                 viewModel.addBirthday(name, date, emoji)
                 scope.launch { sheetState.hide() }.invokeOnCompletion { showAddSheet = false }
-            },
-        )
-    }
-
-    if (showSettingsSheet) {
-        NotificationSettingsSheet(
-            sheetState = settingsSheetState,
-            currentHour = notificationHour,
-            onDismiss = { showSettingsSheet = false },
-            onHourSelected = { hour ->
-                viewModel.setNotificationHour(hour)
-                scope.launch { settingsSheetState.hide() }.invokeOnCompletion { showSettingsSheet = false }
             },
         )
     }
@@ -167,10 +150,10 @@ fun RemindersScreen(
                         .background(WarmSurface),
                     contentAlignment = Alignment.Center,
                 ) {
-                    IconButton(onClick = { showSettingsSheet = true }, modifier = Modifier.size(36.dp)) {
+                    IconButton(onClick = onNavigateToSettings, modifier = Modifier.size(36.dp)) {
                         Icon(
                             Icons.Default.Settings,
-                            contentDescription = "Notification settings",
+                            contentDescription = "Open settings",
                             tint = WarmInkMute,
                             modifier = Modifier.size(18.dp)
                         )
@@ -509,104 +492,6 @@ private fun EmptyBirthdaysState(modifier: Modifier = Modifier) {
 // ─────────────────────────────────────────────────────────────────────────────
 // Add Birthday Bottom Sheet
 // ─────────────────────────────────────────────────────────────────────────────
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Notification Settings Bottom Sheet
-// ─────────────────────────────────────────────────────────────────────────────
-
-private val HOUR_PRESETS = listOf(7, 8, 9, 10, 12, 17, 18, 21)
-
-private fun formatHour(hour: Int): String {
-    val suffix = if (hour < 12) "AM" else "PM"
-    val display = when {
-        hour == 0 || hour == 12 -> 12
-        hour > 12 -> hour - 12
-        else -> hour
-    }
-    return "$display $suffix"
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun NotificationSettingsSheet(
-    sheetState: androidx.compose.material3.SheetState,
-    currentHour: Int,
-    onDismiss: () -> Unit,
-    onHourSelected: (Int) -> Unit,
-) {
-    var selected by remember(currentHour) { mutableIntStateOf(currentHour) }
-
-    ModalBottomSheet(
-        onDismissRequest = onDismiss,
-        sheetState = sheetState,
-        containerColor = WarmSurface,
-    ) {
-        Column(
-            modifier = Modifier
-                .padding(horizontal = 24.dp)
-                .padding(bottom = 32.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-        ) {
-            Text(
-                "Reminder Time",
-                fontFamily = SerifFamily,
-                fontSize = 22.sp,
-                color = WarmInk,
-                fontWeight = FontWeight.Normal,
-            )
-            Text(
-                "Notifications fire 1 day before each birthday at the time you choose.",
-                style = MaterialTheme.typography.bodySmall,
-                color = WarmInkDim,
-            )
-
-            // Hour preset chips
-            val rows = HOUR_PRESETS.chunked(4)
-            rows.forEach { rowHours ->
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    rowHours.forEach { hour ->
-                        val isSelected = hour == selected
-                        Box(
-                            modifier = Modifier
-                                .weight(1f)
-                                .clip(RoundedCornerShape(10.dp))
-                                .background(if (isSelected) WarmTeal.copy(alpha = 0.2f) else WarmSurfaceSoft)
-                                .border(
-                                    width = if (isSelected) 1.5.dp else 0.dp,
-                                    color = if (isSelected) WarmTeal else Color.Transparent,
-                                    shape = RoundedCornerShape(10.dp),
-                                )
-                                .clickable { selected = hour }
-                                .padding(vertical = 10.dp),
-                            contentAlignment = Alignment.Center,
-                        ) {
-                            Text(
-                                formatHour(hour),
-                                style = MaterialTheme.typography.bodySmall,
-                                fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
-                                color = if (isSelected) WarmTeal else WarmInkMute,
-                            )
-                        }
-                    }
-                }
-            }
-
-            Button(
-                modifier = Modifier.fillMaxWidth(),
-                onClick = { onHourSelected(selected) },
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = WarmTeal,
-                    contentColor = WarmBlack,
-                ),
-            ) {
-                Text("Save — ${formatHour(selected)}", fontWeight = FontWeight.SemiBold)
-            }
-        }
-    }
-}
 
 private val EMOJI_OPTIONS = listOf("🎂", "🎉", "🎈", "❤️", "⭐", "🌟", "🌷", "✨", "🚀", "🎸", "👶", "🐾")
 

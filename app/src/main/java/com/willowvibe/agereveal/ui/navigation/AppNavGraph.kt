@@ -185,7 +185,10 @@ fun AppNavGraph(adManager: AdManager) {
             composable(Screen.Reminders.route) {
                 val navEntry = navController.getBackStackEntry(Screen.Reminders.route)
                 val viewModel: RemindersViewModel = hiltViewModel(navEntry)
-                RemindersScreen(viewModel = viewModel)
+                RemindersScreen(
+                    viewModel = viewModel,
+                    onNavigateToSettings = { navController.navigate(Screen.Settings.route) },
+                )
             }
             composable(Screen.Settings.route) {
                 val viewModel: RemindersViewModel = hiltViewModel()

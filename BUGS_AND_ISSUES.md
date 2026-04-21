@@ -1,6 +1,6 @@
 # AgeReveal — Bugs & Edge Case Issues
 
-_Last updated: 2026-04-21 — v0.9_
+_Last updated: 2026-04-21 — v0.9 (BUG-015 fixed)_
 
 This document tracks known bugs, edge cases, and fragile areas in the codebase. Resolved items are kept for historical reference. For planned work see [TASKS.md](TASKS.md).
 
@@ -182,11 +182,11 @@ This document tracks known bugs, edge cases, and fragile areas in the codebase. 
 ---
 
 ### BUG-015 — Settings Are Split Across Two Locations (UX Fragmentation)
-**Status:** 🟡 Known Design Issue  
+**Status:** 🟢 Fixed in v0.9  
 **Severity:** Low  
-**Files:** `ui/screen/SettingsScreen.kt`, `ui/screen/RemindersScreen.kt`  
-**Description:** Notification time preferences are accessed via a gear icon in the Birthdays tab, while theme and other settings live in a separate Settings tab. This inconsistency may confuse users who expect all settings in one place.  
-**Fix needed:** Consolidate into a single Settings screen (TASKS.md §2d).
+**Files:** `ui/screen/SettingsScreen.kt`, `ui/screen/RemindersScreen.kt`, `ui/navigation/AppNavGraph.kt`  
+**Description:** Notification time preferences were accessed via a gear icon in the Birthdays tab (opening a local `NotificationSettingsSheet`), while theme and other settings lived in a separate Settings tab. Users expecting all settings in one place had no indication of the split.  
+**Fix applied:** Removed `NotificationSettingsSheet` and its supporting code from `RemindersScreen`. The gear icon in the Birthdays header now navigates directly to the Settings screen via `onNavigateToSettings`. All settings — notification time, appearance, data management, and about — are now consolidated in the single Settings tab.
 
 ---
 
@@ -293,3 +293,4 @@ This document tracks known bugs, edge cases, and fragile areas in the codebase. 
 | BUG-023 | Compatibility Screen Silent on Same-Date Input | v0.9 |
 | BUG-024 | BirthdayGlanceWidget Hangs on Flow.first() | v0.9 |
 | BUG-025 | Milestone Notification ID Collision with Birthday IDs | v0.9 |
+| BUG-015 | Settings Split Across Birthdays Tab and Settings Tab | v0.9 |
