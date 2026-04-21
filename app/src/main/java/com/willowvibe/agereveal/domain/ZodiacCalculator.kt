@@ -38,7 +38,10 @@ class ZodiacCalculator @Inject constructor(
     fun getRashi(birthDate: LocalDate, birthTime: LocalTime? = null): String {
         val longitude = astronomy.siderealSunLongitude(birthDate, birthTime)
         val index = ((longitude / 30.0).toInt() % 12 + 12) % 12
-        return rashiOrder[index]
+        val name = rashiOrder[index]
+        val posInSign = longitude % 30.0
+        // Within 1° of a sign boundary — Sun moves ~1°/day so cusp = ±1 day of sign change
+        return if (posInSign < 1.0 || posInSign > 29.0) "$name ⚠ Cusp" else name
     }
 
     private val rashiOrder = listOf(

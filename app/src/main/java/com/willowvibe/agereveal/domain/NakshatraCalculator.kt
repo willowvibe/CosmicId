@@ -35,6 +35,9 @@ class NakshatraCalculator @Inject constructor(
     fun getNakshatra(birthDate: LocalDate, birthTime: LocalTime? = null): String {
         val longitude = astronomy.siderealMoonLongitude(birthDate, birthTime)
         val index = ((longitude / nakshatraArc).toInt() % 27 + 27) % 27
-        return nakshatraNames[index]
+        val name = nakshatraNames[index]
+        val posInNakshatra = longitude % nakshatraArc
+        // Within 1° of a nakshatra boundary — Moon moves ~13°/day, so 1° ≈ 2 hours of travel
+        return if (posInNakshatra < 1.0 || posInNakshatra > (nakshatraArc - 1.0)) "$name ⚠ Cusp" else name
     }
 }
