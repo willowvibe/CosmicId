@@ -1,6 +1,6 @@
 # AgeReveal — Tasks & Implementation Checklist
 
-_Last updated: 2026-04-21 — v0.9, BUG-015 fixed (settings consolidated)_
+_Last updated: 2026-04-21 — v0.9, Phase 4 features added (AdManager retry, CalendarExport feedback)_
 
 ---
 

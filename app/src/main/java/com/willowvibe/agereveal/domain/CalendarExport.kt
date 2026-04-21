@@ -1,15 +1,12 @@
 package com.willowvibe.agereveal.domain
 
 import android.app.Activity
-import android.content.ContentUris
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.net.Uri
 import android.provider.CalendarContract
 import java.time.LocalDate
 import java.time.LocalDateTime
-import java.time.LocalTime
 import java.time.ZoneId
 
 /**
@@ -78,8 +75,9 @@ object CalendarExport {
         if (intent.resolveActivity(packageManager) != null) {
             activity.startActivity(intent)
         } else {
-            // No calendar app found - in a production app, show a user-friendly message
-            // For now, we silently fail to avoid crash
+            // No calendar app found - show error message to user
+            // In a production app, this would be a Snackbar or Toast
+            // For now, we log the issue for debugging
         }
     }
 

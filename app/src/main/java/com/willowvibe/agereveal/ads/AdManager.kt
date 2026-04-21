@@ -39,6 +39,10 @@ class AdManager @Inject constructor(
         const val INTERSTITIAL_AD_UNIT_ID = "ca-app-pub-3940256099942544/1033173712"
 
         private const val INTERSTITIAL_COOLDOWN_MS = 5 * 60 * 1_000L  // 5 minutes
+
+        // Retry configuration for ad loading failures
+        private const val MAX_REWARDED_AD_RETRIES = 3
+        private const val MAX_INTERSTITIAL_AD_RETRIES = 3
     }
 
     private val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
@@ -66,6 +70,8 @@ class AdManager @Inject constructor(
 
     private var rewardedAd: RewardedAd? = null
 
+    private var rewardedAdRetryCount = 0
+
     fun preloadRewardedAd() {
         RewardedAd.load(
             context,
@@ -74,10 +80,17 @@ class AdManager @Inject constructor(
             object : RewardedAdLoadCallback() {
                 override fun onAdLoaded(ad: RewardedAd) {
                     rewardedAd = ad
+                    rewardedAdRetryCount = 0
                 }
 
                 override fun onAdFailedToLoad(error: LoadAdError) {
-                    rewardedAd = null
+                    if (rewardedAdRetryCount < MAX_REWARDED_AD_RETRIES) {
+                        rewardedAdRetryCount++
+                        preloadRewardedAd()
+                    } else {
+                        rewardedAd = null
+                        rewardedAdRetryCount = 0
+                    }
                 }
             },
         )
@@ -124,6 +137,8 @@ class AdManager @Inject constructor(
     @Volatile
     private var lastInterstitialShownMs: Long = prefs.getLong(KEY_LAST_INTERSTITIAL_SHOWN, 0L)
 
+    private var interstitialAdRetryCount = 0
+
     fun preloadInterstitialAd() {
         InterstitialAd.load(
             context,
@@ -132,10 +147,17 @@ class AdManager @Inject constructor(
             object : InterstitialAdLoadCallback() {
                 override fun onAdLoaded(ad: InterstitialAd) {
                     interstitialAd = ad
+                    interstitialAdRetryCount = 0
                 }
 
                 override fun onAdFailedToLoad(e: LoadAdError) {
-                    interstitialAd = null
+                    if (interstitialAdRetryCount < MAX_INTERSTITIAL_AD_RETRIES) {
+                        interstitialAdRetryCount++
+                        preloadInterstitialAd()
+                    } else {
+                        interstitialAd = null
+                        interstitialAdRetryCount = 0
+                    }
                 }
             },
         )

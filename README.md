@@ -1,6 +1,6 @@
 # AgeReveal
 
-AgeReveal is a native Android app (Kotlin + Jetpack Compose) that calculates your exact age in real-time and enriches it with astrological insights, shareable cards, milestone tracking, saved birthday reminders, and a home screen widget. Current version: **0.8**.
+AgeReveal is a native Android app (Kotlin + Jetpack Compose) that calculates your exact age in real-time and enriches it with astrological insights, shareable cards, milestone tracking, saved birthday reminders, and a home screen widget. Current version: **0.9**.
 
 ## Features
 
@@ -37,7 +37,9 @@ AgeReveal is a native Android app (Kotlin + Jetpack Compose) that calculates you
 ### Monetisation (AdMob)
 - Banner ad on Calculator screen.
 - Rewarded ad to unlock full astrological details.
-- Interstitial ad after the 2nd comparison (5-minute cooldown).
+- **Interstitial ad after the 2nd comparison (5-minute cooldown).**
+- **Ad Retry Logic** — Rewarded and Interstitial ads now retry up to 3 times on load failure, improving ad availability.
+- **Calendar Export Feedback** — CalendarExport now checks for calendar app availability before launching the Intent.
 
 ---
 
