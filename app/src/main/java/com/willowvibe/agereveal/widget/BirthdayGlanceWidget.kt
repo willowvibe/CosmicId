@@ -22,7 +22,7 @@ import androidx.glance.text.TextStyle
 import androidx.glance.unit.ColorProvider
 import com.willowvibe.agereveal.data.db.AppDatabase
 import com.willowvibe.agereveal.data.model.SavedBirthday
-import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.firstOrNull
 import java.time.LocalDate
 import java.time.temporal.ChronoUnit
 
@@ -35,7 +35,7 @@ class BirthdayGlanceWidget : GlanceAppWidget() {
 
     override suspend fun provideGlance(context: Context, id: GlanceId) {
         val upcoming = runCatching {
-            AppDatabase.getInstance(context).birthdayDao().getUpcomingForWidget().first()
+            AppDatabase.getInstance(context).birthdayDao().getUpcomingForWidget().firstOrNull() ?: emptyList()
         }.getOrDefault(emptyList())
         val state = buildState(upcoming)
 
