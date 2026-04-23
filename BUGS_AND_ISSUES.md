@@ -1,6 +1,6 @@
 # AgeReveal — Bugs & Edge Case Issues
 
-_Last updated: 2026-04-21 — v0.9 (multiple bug fixes)_
+_Last updated: 2026-04-23 — v0.9.1 (Settings screen fix, ViewModel consolidation)_
 
 This document tracks known bugs, edge cases, and fragile areas in the codebase. Resolved items are kept for historical reference. For planned work see [TASKS.md](TASKS.md).
 
@@ -151,7 +151,7 @@ This document tracks known bugs, edge cases, and fragile areas in the codebase. 
 **Status:** 🟢 Fixed in v0.5  
 **Severity:** Low (UX)  
 **File:** `ads/AdManager.kt`  
-**Description:** If the rewarded ad failed to load, the "Unlock Details" button remained tappable but produced no result.  
+**Description:** If the rewarded ad fails to load, the "Unlock Details" button remained tappable but produced no result.  
 **Fix applied:** Added `isRewardedAdAvailable()` method; UI conditionally shows/hides the unlock button based on ad availability.
 
 ---
@@ -237,6 +237,19 @@ This document tracks known bugs, edge cases, and fragile areas in the codebase. 
 
 ---
 
+### BUG-029 — Settings Screen Used Wrong ViewModel Type
+**Status:** 🟢 Fixed in v0.9.1  
+**Severity:** High (feature broken)  
+**Files:** `ui/screen/SettingsScreen.kt`, `ui/viewmodel/SettingsViewModel.kt`, `ui/navigation/AppNavGraph.kt`  
+**Description:** The Settings screen was incorrectly using `RemindersViewModel` instead of `SettingsViewModel`. This caused a compile error because `RemindersViewModel` lacked the required methods (`milestoneEnabled`, `setMilestoneEnabled`, `clearAllBirthdays`, `notificationHour`, `setNotificationHour`).  
+**Fix applied:** 
+- Refactored `SettingsScreen.kt` to use `SettingsViewModel` instead of `RemindersViewModel`
+- Added `notificationHour` property and `setNotificationHour()` method to `SettingsViewModel`
+- Added `clearAllBirthdays()` method to `SettingsViewModel`
+- Updated `AppNavGraph.kt` to inject `SettingsViewModel` for the Settings route
+
+---
+
 ## Widget
 
 ### BUG-024 — `BirthdayGlanceWidget` Could Hang Indefinitely on `Flow.first()`
@@ -297,3 +310,4 @@ This document tracks known bugs, edge cases, and fragile areas in the codebase. 
 | BUG-026 | AdManager No Retry Logic on Load Failure | v0.9 |
 | BUG-027 | CalendarExport No Feedback on Missing Calendar App | v0.9 |
 | BUG-028 | Widget May Show Stale Data on Refresh | v0.9 |
+| BUG-029 | Settings Screen Used Wrong ViewModel Type | v0.9.1 |

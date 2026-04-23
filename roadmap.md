@@ -51,20 +51,22 @@
 ## Phase 3: Depth & Retention 🔭 (In Progress)
 
 **Branch:** `feature/phase-3-depth-retention`
-**Version:** 0.4
+**Version:** 0.4 (pending 0.9.1)
 
 ### Completed ✅
 - [x] **Google Calendar Export** — `CalendarExport.kt` one-tap Intent to add any birthday to Google Calendar
 - [x] **Astrology Explanations** — `AstroInfoDialog.kt` educational dialogs for Western Zodiac, Rashi, Nakshatra, Chinese Zodiac, and Moon Phase
 - [x] **Zodiac Compatibility for Saved Birthdays** — Compatibility scores accessible from the Saved Birthdays list; Western + Chinese scoring between any saved birthday and the user's own birth date
+- [x] **Dedicated Settings Screen** — Consolidated tab with Appearance (theme), Notifications (default hour, global toggle), Data (clear saved birthdays, CSV export), and About sections
 
 ### High Priority (In Progress)
 - [ ] **Birth Time Support** — Optional time picker alongside the date picker; pass exact `LocalDateTime` to `AstronomicalCalculator` for precise Nakshatra + Rashi; display *Exact* vs *Approximate* label
 - [ ] **Milestone Push Notifications UI** — Wire `MilestoneNotificationScheduler` into `DetailsUnlockScreen`; per-milestone enable/disable toggle; "next milestone in X days" banner on Calculator screen
 - [ ] **Life Timeline Visual** — Scrollable `LazyRow`/`LazyColumn` of past (achieved) and future (upcoming) milestones with badges; tappable to share milestone card
 
-### Normal Priority
-- [ ] **Dedicated Settings Screen** — Consolidated tab with Appearance (theme), Notifications (default hour, global toggle), Data (clear saved birthdays, CSV export), and About sections
+### Completed in v0.9.1
+- [x] **Settings Screen ViewModel Fix** — Corrected `SettingsScreen` to use `SettingsViewModel` instead of `RemindersViewModel` (BUG-029)
+- [x] **Automated Test Coverage** — Added JUnit 4 unit tests for all domain calculators
 
 ---
 
@@ -95,9 +97,10 @@
 
 | Item | Value |
 |---|---|
-| Version | 0.9 |
+| Version | 0.9.1 |
 | minSdk | 26 (desugaring enables API 21+) |
 | targetSdk | 35 |
 | compileSdk | 36 |
 | Debug APK | `app/build/outputs/apk/debug/app-debug.apk` |
 | Active branch | `feature/phase-3-depth-retention` |
+| Build Status | ✅ Passing tests, all known bugs resolved |

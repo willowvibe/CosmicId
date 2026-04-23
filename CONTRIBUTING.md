@@ -60,6 +60,9 @@ When filing a bug report, include:
 - **JDK 17** (bundled with Android Studio)
 - An Android device or emulator running **API 26+** (API 21–25 supported via desugaring)
 
+### Recent Updates
+- **v0.9.1 (2026-04-23):** Settings screen now correctly uses `SettingsViewModel` instead of `RemindersViewModel`. If you're building after pulling recent changes, ensure your local branch has the latest ViewModel updates.
+
 ### Steps
 1. Clone the repository.
 2. Open the project root in Android Studio.

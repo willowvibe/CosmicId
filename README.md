@@ -1,6 +1,6 @@
 # AgeReveal
 
-AgeReveal is a native Android app (Kotlin + Jetpack Compose) that calculates your exact age in real-time and enriches it with astrological insights, shareable cards, milestone tracking, saved birthday reminders, and a home screen widget. Current version: **0.9**.
+AgeReveal is a native Android app (Kotlin + Jetpack Compose) that calculates your exact age in real-time and enriches it with astrological insights, shareable cards, milestone tracking, saved birthday reminders, and a home screen widget. Current version: **0.9.1**.
 
 ## Features
 
@@ -94,7 +94,7 @@ app/src/main/java/com/willowvibe/agereveal/
 │   └── viewmodel/            # CalculatorViewModel, CompareViewModel, CompatibilityViewModel, RemindersViewModel
 └── widget/
     ├── BirthdayGlanceWidget.kt
-    └── BirthdayGlanceWidgetReceiver.kt
+    └── BirthdayWideGlanceWidget.kt
 ```
 
 ---
@@ -131,6 +131,25 @@ app/src/main/java/com/willowvibe/agereveal/
 - The app has **no automated tests** yet; all domain logic is manually verified.
 
 See [BUGS_AND_ISSUES.md](BUGS_AND_ISSUES.md) for the full list of known bugs and edge cases.
+
+---
+
+## Recent Updates
+
+### v0.9.1 (2026-04-23)
+- **Bug fix:** Settings screen now correctly uses `SettingsViewModel` instead of `RemindersViewModel` (BUG-029)
+- Added `notificationHour` property and `setNotificationHour()` method to `SettingsViewModel`
+- Added `clearAllBirthdays()` method to `SettingsViewModel`
+- Updated [BUGS_AND_ISSUES.md](BUGS_AND_ISSUES.md) and [TASKS.md](TASKS.md) to reflect fixes
+
+### v0.9 (2026-04-21)
+- Added unit tests for all domain calculators
+- Added retry logic to AdManager
+- Improved CalendarExport error handling
+- Fixed milestone notification targets sync
+- Fixed milestone notification ID collisions
+- Consolidated notification settings into Settings screen
+- Added Hindi translations
 
 ---
 

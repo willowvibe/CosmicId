@@ -1,6 +1,6 @@
 # AgeReveal — Tasks & Implementation Checklist
 
-_Last updated: 2026-04-21 — v0.9, Phase 4 features added (AdManager retry, CalendarExport feedback)_
+_Last updated: 2026-04-23 — v0.9.1 (Settings screen ViewModel fix, Markdown updates)_
 
 ---
 
@@ -73,12 +73,15 @@ Steps:
 ### 2d. Dedicated Settings Screen
 **Why:** Settings were split across `SettingsScreen.kt` and a local sheet in the Birthdays tab gear icon; consolidated into one place (BUG-015).
 
-- ✅ Single Settings tab with sections: Appearance, Notifications, Data, About
-- ✅ Appearance: theme selector (Light / Dark / System default)
-- ✅ Notifications: default reminder hour picker
-- ✅ Data: "Clear all birthdays" with confirmation dialog
-- ✅ About: app version and name
-- ✅ Birthdays tab gear icon now navigates to Settings instead of opening a duplicate local sheet
+- [x] Single Settings tab with sections: Appearance, Notifications, Data, About
+- [x] Appearance: theme selector (Light / Dark / System default)
+- [x] Notifications: default reminder hour picker
+- [x] Data: "Clear all birthdays" with confirmation dialog
+- [x] About: app version and name
+- [x] Birthdays tab gear icon now navigates to Settings instead of opening a duplicate local sheet
+- [x] SettingsScreen.kt uses correct `SettingsViewModel` instead of `RemindersViewModel` (BUG-029)
+- [x] Milestone notification targets match AgeCalculator exactly (BUG-020)
+- [x] Milestone notification IDs won't collide with birthday IDs (BUG-025)
 - [ ] Notifications: global enable/disable toggle for all birthday reminders
 - [ ] Data: export birthdays as CSV
 - [ ] About: open-source licences and privacy policy link
@@ -88,8 +91,8 @@ Steps:
 ## 3. Phase 2 — Post-Launch Additions
 
 Completed:
-- ✅ Zodiac Compatibility Screen (5th tab)
-- ✅ Notification Time Customisation (Birthdays tab gear icon)
+- [x] Zodiac Compatibility Screen (5th tab)
+- [x] Notification Time Customisation (Birthdays tab gear icon)
 
 Pending:
 - [ ] **Hindi UI toggle** — In-app language switch using Android `LocaleList` / `AppCompatDelegate.setApplicationLocales`; strings already in `values/strings.xml` (need translation file `values-hi/strings.xml`)
@@ -105,7 +108,7 @@ Pending:
 - [ ] **WhatsApp sticker cards** — 512 × 512 transparent-background PNG export following WhatsApp sticker pack format
 - [ ] **Age trivia / quiz** — "Guess who was born closest to you?" game mode using saved birthdays
 - [ ] **Yearly re-engagement notification** — "You've now lived X days!" notification sent on the user's own birthday each year
-- [ ] **Days-until-retirement calculator** — Configurable target age; shows remaining working days and % of working life completed
+- [ ] **Days-until-retirement calculator** — Configurable target age; remaining working days + % of working life completed
 - [ ] **Lock screen widget** — API 33+ `AppWidgetProviderInfo.WIDGET_FEATURE_RECONFIGURABLE`
 - [ ] **Widgets for iOS** — Evaluate React Native or Flutter port with WidgetKit
 
@@ -114,12 +117,12 @@ Pending:
 ## 5. Technical Debt & Improvements
 
 ### 5a. Testing
-**Status:** No automated tests exist. All logic is manually verified.
+**Status:** Unit tests added for all domain calculators in v0.9. Still need instrumented tests.
 
-- [ ] Unit tests for `AgeCalculator` — edge cases: Feb 29, Jan 1, today's date, year 0, very old dates (>100 years)
-- [ ] Unit tests for `AstronomicalCalculator` — verify Sun/Moon positions against known reference dates
-- [ ] Unit tests for `ZodiacCalculator` and `NakshatraCalculator` — boundary dates between signs/nakshatras
-- [ ] Unit tests for `ZodiacCompatibilityCalculator` — scoring for all sign combinations
+- [x] Unit tests for `AgeCalculator` — edge cases: Feb 29, Jan 1, today's date, year 0, very old dates (>100 years)
+- [x] Unit tests for `AstronomicalCalculator` — verify Sun/Moon positions against known reference dates
+- [x] Unit tests for `ZodiacCalculator` and `NakshatraCalculator` — boundary dates between signs/nakshatras
+- [x] Unit tests for `ZodiacCompatibilityCalculator` — scoring for all sign combinations
 - [ ] Unit tests for `BirthdayRepository` — CRUD + `nextBirthdayEpochDay` auto-computation
 - [ ] Unit tests for `BirthdayNotificationScheduler` — Feb 29 edge case, past birthday same year
 - [ ] UI tests (Compose test) — Calculator screen happy path, date validation errors
