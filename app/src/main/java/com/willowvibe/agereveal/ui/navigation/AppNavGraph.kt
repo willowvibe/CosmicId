@@ -53,6 +53,7 @@ import com.willowvibe.agereveal.ui.theme.WarmSurface
 import com.willowvibe.agereveal.ui.viewmodel.CalculatorViewModel
 import com.willowvibe.agereveal.ui.viewmodel.CompatibilityViewModel
 import com.willowvibe.agereveal.ui.viewmodel.RemindersViewModel
+import com.willowvibe.agereveal.ui.viewmodel.SettingsViewModel
 import kotlinx.coroutines.launch
 
 sealed class Screen(val route: String, val label: String, val icon: ImageVector) {
@@ -195,10 +196,10 @@ fun AppNavGraph(adManager: AdManager) {
                 )
             }
             composable(Screen.Settings.route) {
-                val viewModel: RemindersViewModel = hiltViewModel()
+                val settingsViewModel: SettingsViewModel = hiltViewModel()
                 SettingsScreen(
                     onBack = { navController.popBackStack() },
-                    viewModel = viewModel
+                    settingsViewModel = settingsViewModel
                 )
             }
             composable(Screen.Timeline.route) {

@@ -56,6 +56,17 @@ class CalculatorViewModel @Inject constructor(
     val uiState: StateFlow<CalculatorUiState> = _uiState.asStateFlow()
 
     init {
+        // Set up share error handlers
+        shareCardGenerator.setShareErrorHandler { error ->
+            _uiState.update { it.copy(error = "Failed to share card: ${error.message}") }
+        }
+        shareCardGenerator.setMilestoneShareErrorHandler { error ->
+            _uiState.update { it.copy(error = "Failed to share milestone: ${error.message}") }
+        }
+        shareCardGenerator.setCompatibilityShareErrorHandler { error ->
+            _uiState.update { it.copy(error = "Failed to share compatibility: ${error.message}") }
+        }
+
         // Restore previously entered birth date + time
         val savedDate = prefs.getString("birth_date", null)
             ?.let { runCatching { LocalDate.parse(it) }.getOrNull() }

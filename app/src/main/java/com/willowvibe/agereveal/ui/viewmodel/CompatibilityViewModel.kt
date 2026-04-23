@@ -34,6 +34,13 @@ class CompatibilityViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(CompatibilityUiState())
     val uiState: StateFlow<CompatibilityUiState> = _uiState.asStateFlow()
 
+    init {
+        // Set up share error handlers
+        shareCardGenerator.setCompatibilityShareErrorHandler { error ->
+            _uiState.update { it.copy(error = "Failed to share compatibility: ${error.message}") }
+        }
+    }
+
     fun onDateASelected(date: LocalDate) {
         if (date.isAfter(LocalDate.now())) {
             _uiState.update { it.copy(error = "Date cannot be in the future") }

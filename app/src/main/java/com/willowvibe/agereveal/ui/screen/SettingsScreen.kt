@@ -61,7 +61,6 @@ import com.willowvibe.agereveal.ui.theme.WarmInkMute
 import com.willowvibe.agereveal.ui.theme.WarmSurface
 import com.willowvibe.agereveal.ui.theme.WarmSurfaceSoft
 import com.willowvibe.agereveal.ui.theme.WarmTeal
-import com.willowvibe.agereveal.ui.viewmodel.RemindersViewModel
 import com.willowvibe.agereveal.ui.viewmodel.SettingsViewModel
 
 private const val PRIVACY_POLICY_URL = "https://willowvibe.com/agereveal/privacy"
@@ -69,13 +68,12 @@ private const val PRIVACY_POLICY_URL = "https://willowvibe.com/agereveal/privacy
 @Composable
 fun SettingsScreen(
     onBack: () -> Unit,
-    viewModel: RemindersViewModel = hiltViewModel(),
     settingsViewModel: SettingsViewModel = hiltViewModel(),
 ) {
-    val notificationHour by viewModel.notificationHour.collectAsState()
     val themeMode by settingsViewModel.themeMode.collectAsState()
     val languageTag by settingsViewModel.languageTag.collectAsState()
     val notificationsEnabled by settingsViewModel.notificationsEnabled.collectAsState()
+    val notificationHour by settingsViewModel.notificationHour.collectAsState()
     var showClearDialog by remember { mutableStateOf(false) }
     val context = LocalContext.current
 
@@ -105,7 +103,7 @@ fun SettingsScreen(
             },
             confirmButton = {
                 TextButton(onClick = {
-                    viewModel.clearAllBirthdays()
+                    settingsViewModel.clearAllBirthdays()
                     showClearDialog = false
                 }) {
                     Text(
@@ -187,7 +185,7 @@ fun SettingsScreen(
                     )
                     NotificationHourGrid(
                         currentHour = notificationHour,
-                        onHourSelected = viewModel::setNotificationHour,
+                        onHourSelected = settingsViewModel::setNotificationHour,
                     )
                 }
             }
@@ -201,7 +199,7 @@ fun SettingsScreen(
                         color = WarmInkDim,
                     )
                     MilestoneToggleGrid(
-                        viewModel = settingsViewModel,
+                        settingsViewModel = settingsViewModel,
                     )
                 }
             }
@@ -333,7 +331,7 @@ fun SettingsScreen(
 }
 
 @Composable
-private fun MilestoneToggleGrid(viewModel: SettingsViewModel) {
+private fun MilestoneToggleGrid(settingsViewModel: SettingsViewModel) {
     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
         MilestoneNotificationScheduler.MILESTONE_TARGETS.chunked(3).forEach { rowTargets ->
             Row(
@@ -341,12 +339,12 @@ private fun MilestoneToggleGrid(viewModel: SettingsViewModel) {
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 rowTargets.forEach { target ->
-                    val enabled by viewModel.milestoneEnabled(target).collectAsState(initial = true)
+                    val enabled by settingsViewModel.milestoneEnabled(target).collectAsState(initial = true)
                     MilestoneChip(
                         target = target,
                         enabled = enabled,
                         modifier = Modifier.weight(1f),
-                        onToggle = { viewModel.setMilestoneEnabled(target, !enabled) },
+                        onToggle = { settingsViewModel.setMilestoneEnabled(target, !enabled) },
                     )
                 }
                 // fill remaining weight slots so last row isn't stretched
