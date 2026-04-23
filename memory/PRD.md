@@ -34,6 +34,16 @@ AdMob). Single-activity architecture. minSdk 26, targetSdk 35, compileSdk 36.
 
 ## What's implemented (this run)
 
+* 2026-04-23 — **Play Store assets rendered** (`scripts/render_store_assets.py`):
+  - `store_listing/icon_512.png` — 512×512 launcher icon (teal→amber gradient disc,
+    serif "A" numeral, clock dial anchor ticks, rounded-squircle shape).
+  - `store_listing/feature_graphic.png` — 1024×500 banner with headline, feature
+    chips (EN / हिन्दी via Noto Sans Devanagari), and prominent clock dial.
+  - `store_listing/screenshots/01–07_*.png` — 7 marketing phone mocks (1080×2400)
+    covering Hero, Cosmic Profile, Life Timeline, Cosmic Match, Saved Birthdays
+    with widget preview, Settings (Hindi + milestone grid), and Share card preview.
+  - All validated via AI visual review (icon 9/10, feature 8/10, hero 8/10 — clean
+    layout, legible text, correct Devanagari rendering, no overlapping elements).
 * 2026-04-23 — **Features a-e from the Play Store roadmap**:
   - [a] Birth Time Support: TimePicker in Calculator, `SavedBirthday.birthTime` + Room
     Migration 1→2, threaded through `AgeCalculator` / `ZodiacCalculator` /

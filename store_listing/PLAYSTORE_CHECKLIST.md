@@ -38,9 +38,17 @@ cp keystore.properties.example keystore.properties
 |---|---|
 | Short description (80 chars max) | `store_listing/short_description.txt` |
 | Full description (4 000 chars max) | `store_listing/full_description.txt` |
-| App icon 512×512 PNG | **TODO** — render from `mipmap-anydpi-v26/ic_launcher.xml` at 512 px |
-| Feature graphic 1024×500 PNG | **TODO** — design a banner with app name + "Live age & astrology" |
-| Phone screenshots (2–8, portrait) | **TODO** — see `store_listing/screenshots/README.md` for recommended shots |
+| App icon 512×512 PNG | `store_listing/icon_512.png` ✅ generated |
+| Feature graphic 1024×500 PNG | `store_listing/feature_graphic.png` ✅ generated |
+| Phone screenshots (2–8, portrait) | `store_listing/screenshots/01–07_*.png` ✅ generated (1080×2400) |
+
+> **Note:** The generated PNGs are programmatic marketing mocks in the app's exact
+> palette and typography — ready to upload as-is. Replace any with real captures
+> from an Android device later. Regenerate anytime with:
+>
+> ```bash
+> python3 scripts/render_store_assets.py
+> ```
 
 ## 4. Privacy policy
 
