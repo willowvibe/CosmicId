@@ -18,6 +18,10 @@ junit = "4.13.2"
 junitExt = "1.2.1"
 espressoCore = "3.6.1"
 material = "1.12.0"
+appcompat = "1.7.0"
+playReview = "2.0.2"
+datastore = "1.1.1"
+roomTesting = "2.7.0"
 
 [libraries]
 # AndroidX core
@@ -63,6 +67,16 @@ androidx-hilt-compiler = { group = "androidx.hilt", name = "hilt-compiler", vers
 play-services-ads = { group = "com.google.android.gms", name = "play-services-ads", version.ref = "admob" }
 material = { group = "com.google.android.material", name = "material", version.ref = "material" }
 
+# AppCompat (needed for per-app locales: AppCompatDelegate.setApplicationLocales)
+androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
+
+# In-app review (Google Play Core)
+play-review = { group = "com.google.android.play", name = "review", version.ref = "playReview" }
+play-review-ktx = { group = "com.google.android.play", name = "review-ktx", version.ref = "playReview" }
+
+# DataStore (theme + preferences)
+androidx-datastore-preferences = { group = "androidx.datastore", name = "datastore-preferences", version.ref = "datastore" }
+
 # Java 8+ API desugaring (for LocalDate on API < 26)
 desugar-jdk-libs = { group = "com.android.tools", name = "desugar_jdk_libs", version.ref = "desugar" }
 
@@ -70,6 +84,7 @@ desugar-jdk-libs = { group = "com.android.tools", name = "desugar_jdk_libs", ver
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitExt" }
 androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
+androidx-room-testing = { group = "androidx.room", name = "room-testing", version.ref = "roomTesting" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

@@ -1,13 +1,16 @@
 package com.willowvibe.agereveal.ui.viewmodel
 
+import android.app.Activity
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.willowvibe.agereveal.data.model.AgeResult
 import com.willowvibe.agereveal.data.model.Milestone
+import com.willowvibe.agereveal.data.preferences.UserPreferencesRepository
 import com.willowvibe.agereveal.domain.AgeCalculator
 import com.willowvibe.agereveal.domain.ShareCardGenerator
 import com.willowvibe.agereveal.notification.MilestoneNotificationScheduler
+import com.willowvibe.agereveal.util.ReviewHelper
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
@@ -16,6 +19,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
@@ -41,22 +45,32 @@ class CalculatorViewModel @Inject constructor(
     private val ageCalculator: AgeCalculator,
     private val shareCardGenerator: ShareCardGenerator,
     private val milestoneNotificationScheduler: MilestoneNotificationScheduler,
-    @ApplicationContext context: Context,
+    private val userPrefs: UserPreferencesRepository,
+    private val reviewHelper: ReviewHelper,
+    @ApplicationContext private val appContext: Context,
 ) : ViewModel() {
 
-    private val prefs = context.getSharedPreferences("calculator_prefs", Context.MODE_PRIVATE)
+    private val prefs = appContext.getSharedPreferences("calculator_prefs", Context.MODE_PRIVATE)
 
     private val _uiState = MutableStateFlow(CalculatorUiState())
     val uiState: StateFlow<CalculatorUiState> = _uiState.asStateFlow()
 
     init {
-        // Restore previously entered birth date without resetting milestones or unlock state
-        prefs.getString("birth_date", null)
+        // Restore previously entered birth date + time
+        val savedDate = prefs.getString("birth_date", null)
             ?.let { runCatching { LocalDate.parse(it) }.getOrNull() }
             ?.takeIf { !it.isAfter(LocalDate.now()) }
-            ?.let { date ->
-                _uiState.update { it.copy(birthDate = date, result = computeResult(date, includeUnlocked = false)) }
+        val savedTime = prefs.getString("birth_time", null)
+            ?.let { runCatching { LocalTime.parse(it) }.getOrNull() }
+        if (savedDate != null) {
+            _uiState.update {
+                it.copy(
+                    birthDate = savedDate,
+                    birthTime = savedTime,
+                    result = computeResult(savedDate, savedTime, includeUnlocked = false),
+                )
             }
+        }
     }
 
     /** Get the user's birth date (if set). */
@@ -80,24 +94,32 @@ class CalculatorViewModel @Inject constructor(
         }
         // Cancel stale milestone notifications from any previously saved birth date
         milestoneNotificationScheduler.cancelAll()
-        // Schedule milestone notifications for the new birth date
-        milestoneNotificationScheduler.scheduleUpcomingMilestones(date)
+        // Schedule milestone notifications for the new birth date, respecting user prefs
+        viewModelScope.launch {
+            val enabled = MilestoneNotificationScheduler.MILESTONE_TARGETS
+                .filter { userPrefs.milestoneEnabled(it).first() }
+                .toSet()
+            milestoneNotificationScheduler.scheduleUpcomingMilestones(date, enabled)
+        }
         prefs.edit().putString("birth_date", date.toString()).apply()
         _uiState.update { state ->
             state.copy(
                 birthDate = date,
                 error = null,
                 isUnlocked = false,
-                result = computeResult(date, includeUnlocked = false),
+                result = computeResult(date, state.birthTime, includeUnlocked = false),
             )
         }
     }
 
-    fun onBirthTimeSelected(time: LocalTime) {
+    fun onBirthTimeSelected(time: LocalTime?) {
+        if (time != null) prefs.edit().putString("birth_time", time.toString()).apply()
+        else prefs.edit().remove("birth_time").apply()
         _uiState.update { state ->
+            val date = state.birthDate ?: return@update state.copy(birthTime = time)
             state.copy(
                 birthTime = time,
-                result = computeResult(state.birthDate ?: return, state.isUnlocked),
+                result = computeResult(date, time, state.isUnlocked),
             )
         }
     }
@@ -107,7 +129,7 @@ class CalculatorViewModel @Inject constructor(
         val state = _uiState.value
         val birthDate = state.birthDate ?: return
         _uiState.update {
-            it.copy(result = computeResult(birthDate, it.isUnlocked))
+            it.copy(result = computeResult(birthDate, it.birthTime, it.isUnlocked))
         }
     }
 
@@ -118,31 +140,55 @@ class CalculatorViewModel @Inject constructor(
         _uiState.update {
             it.copy(
                 isUnlocked = true,
-                result = computeResult(birthDate, includeUnlocked = true),
+                result = computeResult(birthDate, it.birthTime, includeUnlocked = true),
             )
         }
-        milestoneNotificationScheduler.scheduleUpcomingMilestones(birthDate)
+        viewModelScope.launch {
+            val enabled = MilestoneNotificationScheduler.MILESTONE_TARGETS
+                .filter { userPrefs.milestoneEnabled(it).first() }
+                .toSet()
+            milestoneNotificationScheduler.scheduleUpcomingMilestones(birthDate, enabled)
+        }
+    }
+
+    /** Toggle a single milestone target on/off and update WorkManager accordingly. */
+    fun setMilestoneEnabled(targetDays: Int, enabled: Boolean) {
+        val date = _uiState.value.birthDate
+        viewModelScope.launch {
+            userPrefs.setMilestoneEnabled(targetDays, enabled)
+            if (date != null) {
+                if (enabled) milestoneNotificationScheduler.scheduleSingle(date, targetDays)
+                else milestoneNotificationScheduler.cancelSingle(date, targetDays)
+            }
+        }
     }
 
     /**
      * Generate and share the age card via the Android share sheet.
      * No-op if no birth date has been selected yet.
+     * [activity] (optional) is used to trigger the in-app review flow after a successful share.
      */
-    fun shareCard(theme: ShareCardGenerator.CardTheme = ShareCardGenerator.CardTheme.DARK_COSMOS) {
+    fun shareCard(
+        theme: ShareCardGenerator.CardTheme = ShareCardGenerator.CardTheme.DARK_COSMOS,
+        activity: Activity? = null,
+    ) {
         val result = _uiState.value.result ?: return
         viewModelScope.launch(Dispatchers.IO) {
             shareCardGenerator.share(result, theme)
         }
+        reviewHelper.maybePromptAfterShare(activity)
     }
 
     /** Share a dedicated milestone card (e.g. "You'll turn 10,000 days old on…"). */
     fun shareMilestoneCard(
         milestone: Milestone,
         theme: ShareCardGenerator.CardTheme = ShareCardGenerator.CardTheme.FESTIVE_INDIA,
+        activity: Activity? = null,
     ) {
         viewModelScope.launch(Dispatchers.IO) {
             shareCardGenerator.shareMilestone(milestone, theme)
         }
+        reviewHelper.maybePromptAfterShare(activity)
     }
 
     fun setAdLoading(loading: Boolean) = _uiState.update { it.copy(isAdLoading = loading) }
@@ -152,7 +198,11 @@ class CalculatorViewModel @Inject constructor(
 
     // ---------------------------------------------------------------------------
 
-    private fun computeResult(birthDate: LocalDate, includeUnlocked: Boolean): AgeResult {
+    private fun computeResult(
+        birthDate: LocalDate,
+        birthTime: LocalTime?,
+        includeUnlocked: Boolean,
+    ): AgeResult {
         val now = LocalDateTime.now()
         val totalSeconds = ChronoUnit.SECONDS.between(
             birthDate.atStartOfDay(), now,
@@ -160,7 +210,7 @@ class CalculatorViewModel @Inject constructor(
         val name = _uiState.value.name.ifEmpty { "You" }
         return ageCalculator.calculate(
             birthDate = birthDate,
-            birthTime = _uiState.value.birthTime,
+            birthTime = birthTime,
             totalSecondsOverride = totalSeconds,
             includeUnlocked = includeUnlocked,
         ).copy(name = name)

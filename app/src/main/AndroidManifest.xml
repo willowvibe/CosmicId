@@ -12,6 +12,9 @@
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
     <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
 
+    <!-- Per-app locales (Android 13+ system language picker) -->
+    <!-- The localeConfig resource is declared via android:localeConfig on the application tag below -->
+
     <application
         android:name=".AgeRevealApp"
         android:allowBackup="true"
@@ -19,6 +22,7 @@
         android:fullBackupContent="@xml/backup_rules"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
+        android:localeConfig="@xml/locales_config"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.AgeReveal">
@@ -41,16 +45,30 @@
             </intent-filter>
         </activity>
 
-        <!-- Home screen widget: Glance-based birthday countdown -->
+        <!-- Home screen widget: 2×2 birthday countdown -->
         <receiver
             android:name=".widget.BirthdayGlanceWidgetReceiver"
-            android:exported="true">
+            android:exported="true"
+            android:label="@string/app_short_name">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
             </intent-filter>
             <meta-data
                 android:name="android.appwidget.provider"
                 android:resource="@xml/widget_info" />
+        </receiver>
+
+        <!-- Home screen widget: 4×2 wide (3 upcoming birthdays) -->
+        <receiver
+            android:name=".widget.BirthdayWideGlanceWidgetReceiver"
+            android:exported="true"
+            android:label="@string/app_short_name">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_info_wide" />
         </receiver>
 
         <!-- WorkManager: birthday reminder scheduling -->

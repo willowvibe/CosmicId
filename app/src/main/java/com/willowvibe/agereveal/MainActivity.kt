@@ -9,20 +9,29 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.lifecycleScope
 import com.willowvibe.agereveal.ads.AdManager
+import com.willowvibe.agereveal.data.preferences.UserPreferencesRepository
 import com.willowvibe.agereveal.ui.navigation.AppNavGraph
 import com.willowvibe.agereveal.ui.theme.AgeRevealTheme
+import com.willowvibe.agereveal.util.LocaleManager
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 /**
  * Single-activity entry point.
  * Hosts the full Compose NavGraph — all screens are composable destinations.
+ *
+ * Extends [ComponentActivity] (sufficient for Compose) — per-app locales work via
+ * AppCompatDelegate's static application-level API; the activity type does not matter.
  */
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
 
     @Inject lateinit var adManager: AdManager
+    @Inject lateinit var userPrefs: UserPreferencesRepository
 
     private val notificationPermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { /* granted or denied — notifications work accordingly */ }
@@ -30,6 +39,11 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+
+        // Apply persisted locale before any Compose content inflates
+        lifecycleScope.launch {
+            runCatching { LocaleManager.apply(userPrefs.languageTag.first()) }
+        }
 
         requestNotificationPermissionIfNeeded()
 

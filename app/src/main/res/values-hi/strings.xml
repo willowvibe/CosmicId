@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- App -->
+    <string name="app_name">उम्र कैलकुलेटर: जन्मदिन के दिन</string>
+    <string name="app_short_name">AgeReveal</string>
+    <string name="widget_description">जन्मदिन काउंटडाउन विजेट — अगले सहेजे गए जन्मदिन तक बचे दिन दिखाता है।</string>
+    <string name="widget_description_wide">वाइड जन्मदिन विजेट — अगले 3 आगामी जन्मदिन दिखाता है।</string>
+
+    <!-- Bottom navigation -->
+    <string name="nav_age">उम्र</string>
+    <string name="nav_profile">प्रोफ़ाइल</string>
+    <string name="nav_compare">तुलना</string>
+    <string name="nav_match">मिलान</string>
+    <string name="nav_birthdays">जन्मदिन</string>
+    <string name="nav_settings">सेटिंग्स</string>
+    <string name="nav_timeline">टाइमलाइन</string>
+
+    <!-- Calculator -->
+    <string name="live">लाइव</string>
+    <string name="born">जन्म</string>
+    <string name="tap_to_set_birthday">अपना जन्मदिन चुनने के लिए टैप करें</string>
+    <string name="tap_to_begin">शुरू करने के लिए ऊपर दी गई तारीख पर टैप करें</string>
+    <string name="name">नाम</string>
+    <string name="enter_your_name">अपना नाम दर्ज करें</string>
+    <string name="birth_time_optional">जन्म समय (वैकल्पिक)</string>
+    <string name="tap_to_set_birth_time">सटीक ज्योतिष के लिए जन्म समय चुनें</string>
+    <string name="birth_time_set">समय: %1$s</string>
+    <string name="clear_birth_time">हटाएँ</string>
+    <string name="ok">ठीक है</string>
+    <string name="cancel">रद्द करें</string>
+    <string name="years">वर्ष</string>
+    <string name="months">महीने</string>
+    <string name="days">दिन</string>
+    <string name="seconds_alive">जीवन के सेकंड</string>
+    <string name="seconds_per_second">+1 प्रति\nसेकंड</string>
+    <string name="stat_days">दिन</string>
+    <string name="stat_hours">घंटे</string>
+    <string name="stat_next_bday">अगला जन्मदिन</string>
+    <string name="next_milestone_in_days">अगला पड़ाव %1$d दिन में · %2$s</string>
+
+    <!-- Teased details -->
+    <string name="your_profile_label">आपकी वैदिक एवं कॉस्मिक प्रोफ़ाइल</string>
+    <string name="tap_to_reveal">अपनी प्रोफ़ाइल देखने के लिए टैप करें</string>
+    <string name="share_your_profile">अपना प्रोफ़ाइल कार्ड शेयर करें</string>
+
+    <!-- Settings -->
+    <string name="settings_title">सेटिंग्स</string>
+    <string name="settings_back">वापस</string>
+    <string name="section_notifications">सूचनाएँ</string>
+    <string name="section_data">डेटा</string>
+    <string name="section_about">जानकारी</string>
+    <string name="section_appearance">रूप</string>
+    <string name="section_language">भाषा</string>
+    <string name="section_milestones">पड़ाव सूचनाएँ</string>
+    <string name="reminder_time_title">जन्मदिन रिमाइंडर समय</string>
+    <string name="reminder_time_desc">हर जन्मदिन से 1 दिन पहले चुने गए समय पर सूचना भेजी जाएगी।</string>
+    <string name="enable_birthday_notifications">जन्मदिन रिमाइंडर</string>
+    <string name="enable_birthday_notifications_desc">सभी जन्मदिन सूचनाएँ चालू या बंद करें</string>
+    <string name="milestones_desc">चुनें कि कौन से जीवन-दिन पड़ाव पर सूचित किया जाए।</string>
+    <string name="milestone_count_days">%1$s दिन</string>
+    <string name="clear_all_title">सभी जन्मदिन मिटाएँ</string>
+    <string name="clear_all_desc">सभी सहेजे गए जन्मदिन और उनकी सूचनाएँ हटाएँ</string>
+    <string name="clear_all_confirm_title">सभी जन्मदिन हटाएँ?</string>
+    <string name="clear_all_confirm_body">यह सभी सहेजे गए जन्मदिन स्थायी रूप से हटा देगा और उनकी सूचनाएँ रद्द कर देगा।</string>
+    <string name="clear_all_action">सब मिटाएँ</string>
+    <string name="export_csv_title">जन्मदिन निर्यात (CSV)</string>
+    <string name="export_csv_desc">सभी सहेजे गए जन्मदिन CSV फ़ाइल में शेयर करें</string>
+    <string name="app_theme">ऐप थीम</string>
+    <string name="choose_theme_desc">ऐप का रूप चुनें</string>
+    <string name="theme_system">सिस्टम डिफ़ॉल्ट</string>
+    <string name="theme_light">लाइट</string>
+    <string name="theme_dark">डार्क</string>
+    <string name="version_label">संस्करण</string>
+    <string name="app_label">ऐप</string>
+    <string name="made_with_love">❤ के साथ भारत में बनाया गया</string>
+    <string name="privacy_policy">गोपनीयता नीति</string>
+    <string name="language_label">ऐप भाषा</string>
+    <string name="language_desc">अपनी पसंदीदा भाषा चुनें</string>
+    <string name="language_english">English</string>
+    <string name="language_hindi">हिन्दी (Hindi)</string>
+
+    <!-- Accessibility -->
+    <string name="cd_settings">सेटिंग्स</string>
+    <string name="cd_change_date">जन्म तिथि बदलें</string>
+    <string name="cd_change_time">जन्म समय बदलें</string>
+    <string name="cd_unlock">अनलॉक</string>
+    <string name="cd_share">शेयर</string>
+    <string name="cd_back">वापस</string>
+    <string name="cd_delete_all">सभी सहेजे गए जन्मदिन मिटाएँ</string>
+    <string name="cd_warning">चेतावनी: यह सभी जन्मदिन स्थायी रूप से हटा देगा</string>
+    <string name="cd_toggle_notification">सूचना टॉगल करें</string>
+
+    <!-- Milestones -->
+    <string name="life_timeline">जीवन टाइमलाइन</string>
+    <string name="life_lived">जीवन जिया</string>
+    <string name="todays_milestone">आज का पड़ाव!</string>
+    <string name="days_alive_count">%1$s दिन जीवित</string>
+    <string name="milestone_generic">%1$d दिन</string>
+    <string name="milestone_today">आज ✦</string>
+    <string name="milestone_past">✓</string>
+    <string name="milestone_future">%1$d दिन में</string>
+    <string name="milestone_th_day">%1$sवाँ दिन</string>
+
+    <!-- Errors -->
+    <string name="err_birth_future">जन्म तिथि भविष्य में नहीं हो सकती</string>
+    <string name="err_ad_not_ready">विज्ञापन तैयार नहीं है — कुछ देर बाद पुनः प्रयास करें</string>
+    <string name="err_no_calendar_app">कोई कैलेंडर ऐप इंस्टॉल नहीं है</string>
+    <string name="err_same_date">दोनों तिथियाँ समान हैं — मिलान के लिए दो अलग तिथियाँ चाहिए</string>
+
+    <!-- Share / review -->
+    <string name="rate_us_title">AgeReveal पसंद आया?</string>
+    <string name="rate_us_body">प्ले स्टोर पर हमें रेट करने के लिए स्टार पर टैप करें।</string>
+</resources>

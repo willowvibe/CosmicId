@@ -21,6 +21,10 @@ import javax.inject.Singleton
  * All milestone jobs share the [ALL_MILESTONES_TAG] tag so they can be bulk-cancelled
  * when the birth date changes. Each job also carries a unique work name based on
  * the birth date's epoch day and target, preventing duplicate scheduling.
+ *
+ * Per-milestone enablement is tracked in the ViewModel layer via
+ * [com.willowvibe.agereveal.data.preferences.UserPreferencesRepository]; the scheduler
+ * itself is a passive executor so that it remains testable without DataStore I/O.
  */
 @Singleton
 class MilestoneNotificationScheduler @Inject constructor(
@@ -33,7 +37,13 @@ class MilestoneNotificationScheduler @Inject constructor(
         const val ALL_MILESTONES_TAG = "all_milestones"
         const val NOTIFICATION_ID_BASE = 1_000_000
 
-        private val MILESTONE_TARGETS = listOf(500, 1_000, 2_000, 3_000, 5_000, 7_000, 10_000, 12_500, 15_000, 20_000, 25_000, 30_000)
+        val MILESTONE_TARGETS = listOf(
+            500, 1_000, 2_000, 3_000, 5_000, 7_000, 10_000, 12_500,
+            15_000, 20_000, 25_000, 30_000,
+        )
+
+        fun uniqueWorkName(birthDate: LocalDate, target: Int) =
+            "milestone_${birthDate.toEpochDay()}_$target"
     }
 
     init {
@@ -42,38 +52,55 @@ class MilestoneNotificationScheduler @Inject constructor(
 
     /**
      * Cancels any previously scheduled milestone jobs and schedules new ones for all
-     * future milestones derived from [birthDate]. Milestones that have already passed
-     * are silently skipped.
+     * future milestones in [enabledTargets] derived from [birthDate]. Milestones that
+     * have already passed are silently skipped.
+     *
+     * When [enabledTargets] is null, all targets in [MILESTONE_TARGETS] are scheduled
+     * (backwards-compatible default).
      */
-    fun scheduleUpcomingMilestones(birthDate: LocalDate) {
+    fun scheduleUpcomingMilestones(
+        birthDate: LocalDate,
+        enabledTargets: Set<Int>? = null,
+    ) {
         val today = LocalDate.now()
         cancelAll()
 
-        MILESTONE_TARGETS.forEach { target ->
-            val milestoneDate = birthDate.plusDays(target.toLong())
-            if (!milestoneDate.isAfter(today)) return@forEach
-
-            val fireAtMs = milestoneDate
-                .atStartOfDay(ZoneId.systemDefault())
-                .toInstant()
-                .toEpochMilli()
-            val delayMs = fireAtMs - System.currentTimeMillis()
-            if (delayMs <= 0) return@forEach
-
-            val uniqueWorkName = "milestone_${birthDate.toEpochDay()}_$target"
-            val request = OneTimeWorkRequestBuilder<MilestoneReminderWorker>()
-                .setInitialDelay(delayMs, TimeUnit.MILLISECONDS)
-                .setInputData(workDataOf(KEY_TARGET_DAYS to target))
-                .addTag(ALL_MILESTONES_TAG)
-                .addTag(uniqueWorkName)
-                .build()
-
-            WorkManager.getInstance(context).enqueueUniqueWork(
-                uniqueWorkName,
-                ExistingWorkPolicy.KEEP,
-                request,
-            )
+        val targets = MILESTONE_TARGETS.filter { enabledTargets == null || it in enabledTargets }
+        targets.forEach { target ->
+            scheduleSingle(birthDate, target, today)
         }
+    }
+
+    /** Schedule a single milestone target if it is in the future. */
+    fun scheduleSingle(birthDate: LocalDate, target: Int, today: LocalDate = LocalDate.now()) {
+        val milestoneDate = birthDate.plusDays(target.toLong())
+        if (!milestoneDate.isAfter(today)) return
+
+        val fireAtMs = milestoneDate
+            .atStartOfDay(ZoneId.systemDefault())
+            .toInstant()
+            .toEpochMilli()
+        val delayMs = fireAtMs - System.currentTimeMillis()
+        if (delayMs <= 0) return
+
+        val name = uniqueWorkName(birthDate, target)
+        val request = OneTimeWorkRequestBuilder<MilestoneReminderWorker>()
+            .setInitialDelay(delayMs, TimeUnit.MILLISECONDS)
+            .setInputData(workDataOf(KEY_TARGET_DAYS to target))
+            .addTag(ALL_MILESTONES_TAG)
+            .addTag(name)
+            .build()
+
+        WorkManager.getInstance(context).enqueueUniqueWork(
+            name,
+            ExistingWorkPolicy.KEEP,
+            request,
+        )
+    }
+
+    /** Cancel a single milestone's scheduled worker (matches the tag built in [scheduleSingle]). */
+    fun cancelSingle(birthDate: LocalDate, target: Int) {
+        WorkManager.getInstance(context).cancelAllWorkByTag(uniqueWorkName(birthDate, target))
     }
 
     fun cancelAll() {

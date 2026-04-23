@@ -8,8 +8,8 @@ import kotlinx.coroutines.withContext
 import com.willowvibe.agereveal.data.db.BirthdayDao
 import com.willowvibe.agereveal.data.model.SavedBirthday
 import com.willowvibe.agereveal.widget.BirthdayGlanceWidget
+import com.willowvibe.agereveal.widget.BirthdayWideGlanceWidget
 import dagger.hilt.android.qualifiers.ApplicationContext
-import java.time.DateTimeException
 import java.time.LocalDate
 import java.time.temporal.ChronoUnit
 import javax.inject.Inject
@@ -69,6 +69,10 @@ class BirthdayRepository @Inject constructor(
                 for (glanceId in glanceIds) {
                     BirthdayGlanceWidget().update(context, glanceId)
                 }
+                val wideIds = manager.getGlanceIds(BirthdayWideGlanceWidget::class.java)
+                for (glanceId in wideIds) {
+                    BirthdayWideGlanceWidget().update(context, glanceId)
+                }
             }
         }
     }
@@ -82,11 +86,12 @@ class BirthdayRepository @Inject constructor(
 
     /**
      * Returns [birthDate] adjusted to [year], safely handling Feb 29 birthdays
-     * in non-leap years by mapping to Mar 1 instead of throwing [DateTimeException].
+     * in non-leap years by mapping to Mar 1 (not Feb 28, which is `withYear`'s default).
      */
-    private fun yearSafeBirthday(birthDate: LocalDate, year: Int): LocalDate = try {
-        birthDate.withYear(year)
-    } catch (_: DateTimeException) {
-        LocalDate.of(year, 3, 1)
+    private fun yearSafeBirthday(birthDate: LocalDate, year: Int): LocalDate {
+        if (birthDate.monthValue == 2 && birthDate.dayOfMonth == 29 && !java.time.Year.isLeap(year.toLong())) {
+            return LocalDate.of(year, 3, 1)
+        }
+        return birthDate.withYear(year)
     }
 }

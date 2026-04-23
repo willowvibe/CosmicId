@@ -10,10 +10,14 @@ import com.willowvibe.agereveal.data.model.SavedBirthday
 /**
  * Room database — single table for [SavedBirthday].
  * Increment [version] and provide a migration whenever the schema changes.
+ *
+ * Schema history:
+ *  v1  — initial
+ *  v2  — added SavedBirthday.birthTime (nullable TEXT)
  */
 @Database(
     entities = [SavedBirthday::class],
-    version = 1,
+    version = 2,
     exportSchema = true,
 )
 @TypeConverters(RoomConverters::class)
@@ -39,12 +43,7 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     DATABASE_NAME,
                 )
-                    // Explicit migration objects must be added before any schema change
-                    // See: BUG-001 in BUGS_AND_ISSUES.md
-                    .addMigrations(
-                        // Migration 1 -> 2 example (commented until needed):
-                        // Migration1to2()
-                    )
+                    .addMigrations(*Migrations.ALL)
                     .build()
                     .also { INSTANCE = it }
             }

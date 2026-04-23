@@ -23,6 +23,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccessTime
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Settings
@@ -40,7 +41,10 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TimePicker
 import androidx.compose.material3.rememberDatePickerState
+import androidx.compose.material3.rememberTimePickerState
+import androidx.compose.material3.AlertDialog
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -77,6 +81,7 @@ import com.willowvibe.agereveal.ui.theme.WarmTeal
 import com.willowvibe.agereveal.ui.viewmodel.CalculatorViewModel
 import java.time.Instant
 import java.time.LocalDate
+import java.time.LocalTime
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
@@ -200,6 +205,12 @@ fun CalculatorScreen(
                     onDateSelected = viewModel::onBirthDateSelected,
                 )
 
+                // ── Birth time (optional, for precise Nakshatra/Rashi) ────────
+                BirthTimeRow(
+                    selectedTime = uiState.birthTime,
+                    onTimeSelected = viewModel::onBirthTimeSelected,
+                )
+
                 uiState.result?.let { result ->
                     AnimatedVisibility(
                         visible = true,
@@ -215,6 +226,9 @@ fun CalculatorScreen(
 
                             // ── Mini stat chips ───────────────────────────────
                             MiniStatRow(result)
+
+                            // ── Next milestone countdown ──────────────────────
+                            NextMilestoneChip(result)
 
                             // ── Teased cosmic profile ─────────────────────────
                             TeasedDetails(
@@ -600,6 +614,151 @@ private fun formatHeartbeats(n: Long): String = when {
     n >= 1_000_000_000 -> "%.2f B".format(n / 1_000_000_000.0)
     n >= 1_000_000 -> "%.1f M".format(n / 1_000_000.0)
     else -> "%,d".format(n)
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Birth time (optional)
+// ─────────────────────────────────────────────────────────────────────────────
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun BirthTimeRow(
+    selectedTime: LocalTime?,
+    onTimeSelected: (LocalTime?) -> Unit,
+) {
+    var showDialog by remember { mutableStateOf(false) }
+    val timePickerState = rememberTimePickerState(
+        initialHour = selectedTime?.hour ?: 12,
+        initialMinute = selectedTime?.minute ?: 0,
+        is24Hour = false,
+    )
+
+    if (showDialog) {
+        AlertDialog(
+            onDismissRequest = { showDialog = false },
+            containerColor = WarmSurface,
+            titleContentColor = WarmInk,
+            title = { Text("Birth time (optional)", color = WarmInk) },
+            text = {
+                Column {
+                    Text(
+                        "Set a precise birth time for exact Nakshatra/Rashi — otherwise results are labelled Approximate.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = WarmInkDim,
+                    )
+                    Spacer(Modifier.height(16.dp))
+                    TimePicker(state = timePickerState)
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    onTimeSelected(LocalTime.of(timePickerState.hour, timePickerState.minute))
+                    showDialog = false
+                }) { Text("Set") }
+            },
+            dismissButton = {
+                Row {
+                    if (selectedTime != null) {
+                        TextButton(onClick = {
+                            onTimeSelected(null)
+                            showDialog = false
+                        }) { Text("Clear") }
+                    }
+                    TextButton(onClick = { showDialog = false }) { Text("Cancel") }
+                }
+            },
+        )
+    }
+
+    Column {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 12.dp)
+                .clickable { showDialog = true },
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    "BIRTH TIME (OPTIONAL)",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = WarmInkDim,
+                )
+                Spacer(Modifier.height(4.dp))
+                Text(
+                    text = selectedTime?.format(DateTimeFormatter.ofPattern("h:mm a"))
+                        ?: "Tap to set birth time for precise astrology",
+                    style = MaterialTheme.typography.bodyMedium.copy(fontSize = 14.sp),
+                    color = if (selectedTime != null) WarmTeal else WarmInkMute,
+                )
+            }
+            Box(
+                modifier = Modifier
+                    .size(34.dp)
+                    .clip(CircleShape)
+                    .background(WarmSurface),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    Icons.Default.AccessTime,
+                    contentDescription = "Change birth time",
+                    tint = if (selectedTime != null) WarmTeal else WarmInkMute,
+                    modifier = Modifier.size(16.dp),
+                )
+            }
+        }
+        HorizontalDivider(color = WarmSurfaceSoft, thickness = 1.dp)
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Next milestone countdown chip (shown when the next milestone is within 30 days)
+// ─────────────────────────────────────────────────────────────────────────────
+
+private val MILESTONE_TARGETS_CALC = listOf(
+    500, 1_000, 2_000, 3_000, 5_000, 7_000, 10_000, 12_500,
+    15_000, 20_000, 25_000, 30_000,
+)
+
+@Composable
+private fun NextMilestoneChip(result: AgeResult) {
+    val days = result.totalDays
+    val nextTarget = MILESTONE_TARGETS_CALC.firstOrNull { it > days } ?: return
+    val daysAway = nextTarget - days
+    if (daysAway > 30) return
+
+    val formattedTarget = "%,d".format(nextTarget)
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
+            .background(WarmAmber.copy(alpha = 0.12f))
+            .padding(horizontal = 14.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text("✦", color = WarmAmber, fontSize = 18.sp)
+        Spacer(Modifier.width(10.dp))
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                "NEXT MILESTONE",
+                style = MaterialTheme.typography.labelSmall,
+                color = WarmAmber,
+            )
+            Text(
+                "$formattedTarget days alive — in $daysAway day${if (daysAway == 1L) "" else "s"}",
+                style = MaterialTheme.typography.bodySmall,
+                fontWeight = FontWeight.SemiBold,
+                color = WarmInk,
+            )
+        }
+        Text(
+            "$daysAway",
+            fontFamily = SerifFamily,
+            fontSize = 22.sp,
+            color = WarmAmber,
+        )
+    }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

@@ -43,6 +43,7 @@ import java.time.LocalDate
 fun LifeTimelineScreen(
     milestones: List<Milestone>,
     onDismiss: () -> Unit,
+    onShare: (Milestone) -> Unit = {},
 ) {
     Column(
         modifier = Modifier
@@ -85,14 +86,14 @@ fun LifeTimelineScreen(
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             items(milestones) { milestone ->
-                MilestoneRow(milestone)
+                MilestoneRow(milestone, onShare = { onShare(milestone) })
             }
         }
     }
 }
 
 @Composable
-private fun MilestoneRow(milestone: Milestone) {
+private fun MilestoneRow(milestone: Milestone, onShare: () -> Unit = {}) {
     val isPast = milestone.isPast
     val isToday = milestone.date == LocalDate.now()
 
@@ -101,7 +102,7 @@ private fun MilestoneRow(milestone: Milestone) {
             .fillMaxWidth()
             .clip(RoundedCornerShape(12.dp))
             .background(WarmSurface)
-            .clickable { /* TODO: Share milestone */ }
+            .clickable { onShare() }
             .padding(16.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,

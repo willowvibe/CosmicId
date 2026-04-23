@@ -17,6 +17,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.NotificationsActive
+import androidx.compose.material.icons.filled.NotificationsOff
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilledTonalButton
@@ -27,6 +29,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -117,6 +122,9 @@ fun DetailsUnlockScreen(
                         totalDays = result.totalDays,
                         isUnlocked = uiState.isUnlocked,
                         onShare = onShareMilestone,
+                        onToggleNotification = { target, enabled ->
+                            viewModel.setMilestoneEnabled(target, enabled)
+                        },
                     )
                 }
 
@@ -280,6 +288,7 @@ private fun MilestoneTimeline(
     totalDays: Long,
     isUnlocked: Boolean,
     onShare: (Milestone) -> Unit,
+    onToggleNotification: (Int, Boolean) -> Unit = { _, _ -> },
 ) {
     Column(
         modifier = Modifier
@@ -312,6 +321,7 @@ private fun MilestoneTimeline(
                 milestone = milestone,
                 isUnlocked = isUnlocked,
                 onShare = { onShare(milestone) },
+                onToggleNotification = onToggleNotification,
             )
             if (index < milestones.size - 1) {
                 // Connecting vertical line between dots (aligned with the dot at start = 12.dp padding + 4dp offset)
@@ -372,6 +382,7 @@ private fun MilestoneRow(
     milestone: Milestone,
     isUnlocked: Boolean,
     onShare: () -> Unit,
+    onToggleNotification: (Int, Boolean) -> Unit = { _, _ -> },
 ) {
     val isToday = milestone.daysAway == 0L
     val dotColor = when {
@@ -389,6 +400,10 @@ private fun MilestoneRow(
         milestone.isPast -> WarmTeal
         else -> WarmInkDim
     }
+    // Per-milestone notification toggle — collect from DataStore via Calculator VM prefs.
+    // Because this composable is stateless w.r.t. DataStore, we store the toggle state
+    // locally and call back up to the ViewModel on change.
+    var notifyEnabled by remember { mutableStateOf(true) }
 
     Row(
         modifier = Modifier
@@ -428,6 +443,23 @@ private fun MilestoneRow(
                     Icons.Default.Share,
                     contentDescription = "Share milestone",
                     tint = WarmTeal,
+                    modifier = Modifier.size(15.dp),
+                )
+            }
+        }
+        if (isUnlocked && !milestone.isPast && !isToday) {
+            IconButton(
+                onClick = {
+                    notifyEnabled = !notifyEnabled
+                    onToggleNotification(milestone.targetDays, notifyEnabled)
+                },
+                modifier = Modifier.size(32.dp),
+            ) {
+                Icon(
+                    imageVector = if (notifyEnabled) Icons.Default.NotificationsActive
+                    else Icons.Default.NotificationsOff,
+                    contentDescription = "Toggle milestone notification",
+                    tint = if (notifyEnabled) WarmTeal else WarmInkDim,
                     modifier = Modifier.size(15.dp),
                 )
             }

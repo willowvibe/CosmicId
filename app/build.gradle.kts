@@ -1,3 +1,6 @@
+import java.util.Properties
+import java.io.FileInputStream
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -5,6 +8,18 @@ plugins {
     alias(libs.plugins.ksp)
     alias(libs.plugins.hilt)
 }
+
+// ── Release signing ─────────────────────────────────────────────────────────
+// Reads keystore details from `keystore.properties` at project root (git-ignored).
+// See keystore.properties.example for the required keys. Builds fall back to the
+// debug keystore automatically if `keystore.properties` is not present.
+val keystorePropertiesFile = rootProject.file("keystore.properties")
+val keystoreProperties = Properties().apply {
+    if (keystorePropertiesFile.exists()) {
+        load(FileInputStream(keystorePropertiesFile))
+    }
+}
+val hasReleaseKeystore = keystoreProperties.getProperty("storeFile")?.isNotBlank() == true
 
 android {
     namespace = "com.willowvibe.agereveal"
@@ -15,7 +30,7 @@ android {
         minSdk = 26  // java.time is native on API 26+; use desugaring below for API 21+
         //noinspection OldTargetApi
         targetSdk = 35
-        versionCode = 1
+        versionCode = 2
         // Read version from VERSION file
         val versionFile = File(projectDir.absolutePath + "/../VERSION")
         versionName = if (versionFile.exists()) {
@@ -25,9 +40,27 @@ android {
         }
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        vectorDrawables.useSupportLibrary = true
+
+        // Per-app language support — enables system-level language picker integration
+        resourceConfigurations += listOf("en", "hi")
 
         // Passing AdMob App ID via manifest placeholder (set real ID in local.properties or CI)
         manifestPlaceholders["admobAppId"] = "ca-app-pub-3940256099942544~3347511713" // test ID
+    }
+
+    signingConfigs {
+        if (hasReleaseKeystore) {
+            create("release") {
+                storeFile = rootProject.file(keystoreProperties.getProperty("storeFile"))
+                storePassword = keystoreProperties.getProperty("storePassword")
+                keyAlias = keystoreProperties.getProperty("keyAlias")
+                keyPassword = keystoreProperties.getProperty("keyPassword")
+                enableV1Signing = true
+                enableV2Signing = true
+                enableV3Signing = true
+            }
+        }
     }
 
     buildTypes {
@@ -38,6 +71,10 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            // Use real release keystore when available; otherwise Gradle uses debug keystore
+            // so the AAB can still be assembled locally for testing.
+            signingConfig = if (hasReleaseKeystore) signingConfigs.getByName("release")
+            else signingConfigs.getByName("debug")
         }
         debug {
             applicationIdSuffix = ".debug"
@@ -60,6 +97,32 @@ android {
         compose = true
         buildConfig = true
     }
+
+    // Expose Room schemas to version control (for migration tests)
+    ksp {
+        arg("room.schemaLocation", "$projectDir/schemas")
+    }
+
+    sourceSets {
+        getByName("androidTest").assets.srcDirs("$projectDir/schemas")
+    }
+
+    packaging {
+        resources {
+            excludes += setOf(
+                "/META-INF/{AL2.0,LGPL2.1}",
+                "META-INF/LICENSE*",
+                "META-INF/NOTICE*",
+            )
+        }
+    }
+
+    lint {
+        // Don't block release builds on non-fatal lint warnings. Fatal issues still fail.
+        abortOnError = false
+        checkReleaseBuilds = true
+        warningsAsErrors = false
+    }
 }
 
 dependencies {
@@ -68,6 +131,7 @@ dependencies {
 
     // AndroidX Core
     implementation(libs.androidx.core.ktx)
+    implementation(libs.androidx.appcompat) // AppCompatDelegate.setApplicationLocales
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.androidx.activity.compose)
@@ -106,12 +170,20 @@ dependencies {
     implementation(libs.play.services.ads)
     implementation(libs.material)
 
+    // In-app review prompt (after first share)
+    implementation(libs.play.review)
+    implementation(libs.play.review.ktx)
+
+    // DataStore for theme / user preferences
+    implementation(libs.androidx.datastore.preferences)
+
     // Testing
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.ui.test.junit4)
+    androidTestImplementation(libs.androidx.room.testing)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
 }

@@ -9,7 +9,6 @@ import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.workDataOf
 import dagger.hilt.android.qualifiers.ApplicationContext
-import java.time.DateTimeException
 import java.time.LocalDate
 import java.time.ZoneId
 import java.time.temporal.ChronoUnit
@@ -116,10 +115,11 @@ class BirthdayNotificationScheduler @Inject constructor(
         return next
     }
 
-    private fun yearSafeBirthday(birthDate: LocalDate, year: Int): LocalDate = try {
-        birthDate.withYear(year)
-    } catch (_: DateTimeException) {
-        LocalDate.of(year, 3, 1)
+    private fun yearSafeBirthday(birthDate: LocalDate, year: Int): LocalDate {
+        if (birthDate.monthValue == 2 && birthDate.dayOfMonth == 29 && !java.time.Year.isLeap(year.toLong())) {
+            return LocalDate.of(year, 3, 1)
+        }
+        return birthDate.withYear(year)
     }
 
     private fun createNotificationChannel() {

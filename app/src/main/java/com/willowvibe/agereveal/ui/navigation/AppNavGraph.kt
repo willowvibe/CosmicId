@@ -27,6 +27,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavDestination.Companion.hierarchy
@@ -35,6 +36,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import android.app.Activity
 import com.willowvibe.agereveal.ads.AdManager
 import com.willowvibe.agereveal.domain.ShareCardGenerator
 import com.willowvibe.agereveal.ui.screen.CalculatorScreen
@@ -80,6 +82,8 @@ fun AppNavGraph(adManager: AdManager) {
     val currentDest = navBackStackEntry?.destination
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
+    val context = LocalContext.current
+    val activity = context as? Activity
 
     // Show bottom bar on all screens
     val showBottomBar = true
@@ -135,7 +139,7 @@ fun AppNavGraph(adManager: AdManager) {
                 CalculatorScreen(
                     viewModel = viewModel,
                     adManager = adManager,
-                    onShareCard = { theme -> viewModel.shareCard(theme) },
+                    onShareCard = { theme -> viewModel.shareCard(theme, activity) },
                     onUnlockMore = {
                         adManager.showRewardedAd(
                             onRewarded = {
@@ -171,7 +175,7 @@ fun AppNavGraph(adManager: AdManager) {
                             },
                         )
                     },
-                    onShareMilestone = { milestone -> viewModel.shareMilestoneCard(milestone) },
+                    onShareMilestone = { milestone -> viewModel.shareMilestoneCard(milestone, activity = activity) },
                 )
             }
             composable(Screen.Compare.route) {
@@ -207,7 +211,8 @@ fun AppNavGraph(adManager: AdManager) {
                 val milestones = viewModel.uiState.value.result?.milestones ?: emptyList()
                 LifeTimelineScreen(
                     milestones = milestones,
-                    onDismiss = { navController.popBackStack() }
+                    onDismiss = { navController.popBackStack() },
+                    onShare = { milestone -> viewModel.shareMilestoneCard(milestone, activity = activity) },
                 )
             }
         }
