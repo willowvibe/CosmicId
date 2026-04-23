@@ -39,36 +39,36 @@ Steps:
 
 ---
 
-## 2. Phase 3 — High Priority (In Progress)
+## 2. Phase 3 — High Priority (Complete)
 
 ### 2a. Birth Time Support
 **Why:** Nakshatra and Rashi calculations use the Moon's position which moves ~13°/day; without birth time, the result can be off by one nakshatra or rashi.
 
-- [ ] Add optional time picker below the date picker on the Calculator screen
-- [ ] Store birth time alongside birth date in `AgeResult` (already immutable, needs new field)
-- [ ] Pass exact `LocalDateTime` to `AstronomicalCalculator` instead of noon default
-- [ ] Display *"Exact"* vs *"Approximate"* label on Rashi and Nakshatra cards in `DetailsUnlockScreen`
-- [ ] Propagate time to `SavedBirthday` entity (requires Room migration — see Section 5b)
-- [ ] Update `CompareScreen` and `CompatibilityScreen` if birth time is relevant there
+- [x] Add optional time picker below the date picker on the Calculator screen
+- [x] Store birth time alongside birth date in `AgeResult` (already immutable, needs new field)
+- [x] Pass exact `LocalDateTime` to `AstronomicalCalculator` instead of noon default
+- [x] Display *"Exact"* vs *"Approximate"* label on Rashi and Nakshatra cards in `DetailsUnlockScreen`
+- [x] Propagate time to `SavedBirthday` entity (requires Room migration — see Section 5b)
+- [x] Update `CompareScreen` and `CompatibilityScreen` if birth time is relevant there
 
 ### 2b. Milestone Push Notifications — UI Integration
 **Why:** `MilestoneNotificationScheduler.kt` is already built; it just needs to be wired into the UI.
 
-- [ ] Add a milestones section in `DetailsUnlockScreen` listing upcoming day-milestones
-- [ ] Per-milestone toggle (enabled/disabled) stored in `SharedPreferences`
-- [ ] On toggle enable, call `MilestoneNotificationScheduler.schedule(...)` for that milestone
-- [ ] On toggle disable, cancel the WorkManager job by its unique tag
-- [ ] Show "next milestone in X days" countdown on the Calculator screen when a milestone is within 30 days
+- [x] Add a milestones section in `DetailsUnlockScreen` listing upcoming day-milestones
+- [x] Per-milestone toggle (enabled/disabled) stored in `SharedPreferences`
+- [x] On toggle enable, call `MilestoneNotificationScheduler.schedule(...)` for that milestone
+- [x] On toggle disable, cancel the WorkManager job by its unique tag
+- [x] Show "next milestone in X days" countdown on the Calculator screen when a milestone is within 30 days
 
 ### 2c. Life Timeline Visual
 **Why:** Gamification / re-engagement; users can see past achievements and anticipate future ones.
 
-- [ ] New `TimelineScreen` or expandable section in `CalculatorScreen`
-- [ ] Horizontal or vertical scrollable `LazyRow`/`LazyColumn` of milestone cards
-- [ ] Past milestones shown as *achieved* (filled badge + date)
-- [ ] Future milestones shown as *upcoming* (outlined badge + countdown)
-- [ ] Tappable milestone card → opens share sheet for that milestone card
-- [ ] Entry animation when the screen loads
+- [x] New `TimelineScreen` or expandable section in `CalculatorScreen`
+- [x] Horizontal or vertical scrollable `LazyRow`/`LazyColumn` of milestone cards
+- [x] Past milestones shown as *achieved* (filled badge + date)
+- [x] Future milestones shown as *upcoming* (outlined badge + countdown)
+- [x] Tappable milestone card → opens share sheet for that milestone card
+- [x] Entry animation when the screen loads
 
 ### 2d. Dedicated Settings Screen
 **Why:** Settings were split across `SettingsScreen.kt` and a local sheet in the Birthdays tab gear icon; consolidated into one place (BUG-015).
@@ -82,9 +82,9 @@ Steps:
 - [x] SettingsScreen.kt uses correct `SettingsViewModel` instead of `RemindersViewModel` (BUG-029)
 - [x] Milestone notification targets match AgeCalculator exactly (BUG-020)
 - [x] Milestone notification IDs won't collide with birthday IDs (BUG-025)
-- [ ] Notifications: global enable/disable toggle for all birthday reminders
-- [ ] Data: export birthdays as CSV
-- [ ] About: open-source licences and privacy policy link
+- [x] Notifications: global enable/disable toggle for all birthday reminders
+- [x] Data: export birthdays as CSV
+- [x] About: open-source licences and privacy policy link
 
 ---
 
@@ -93,12 +93,16 @@ Steps:
 Completed:
 - [x] Zodiac Compatibility Screen (5th tab)
 - [x] Notification Time Customisation (Birthdays tab gear icon)
+- [x] In-app review prompt — Trigger `ReviewManager.requestReviewFlow()` after first share (SHARE_THRESHOLD = 1)
+- [x] CSV Export — BirthdayCsvExporter.kt exports via share sheet with FileProvider
+- [x] Google Calendar Export — CalendarExport.kt one-tap Intent to add birthdays to Google Calendar
+- [x] Calendar app availability check — `isCalendarAppAvailable()` guard added
+- [x] Hindi translations — `values-hi/strings.xml` added for locale switching
 
 Pending:
-- [ ] **Hindi UI toggle** — In-app language switch using Android `LocaleList` / `AppCompatDelegate.setApplicationLocales`; strings already in `values/strings.xml` (need translation file `values-hi/strings.xml`)
 - [ ] **4 × 2 home screen widget** — Wider Glance widget showing 3 upcoming birthdays with days-remaining; update `widget_info.xml` with new `minResizeWidth`
-- [ ] **In-app review prompt** — Trigger `ReviewManager.requestReviewFlow()` after user shares a card (first share only, or after 3rd share)
 - [ ] **Remove Ads IAP (₹99)** — One-time purchase via Google Play Billing Library 6+; on successful purchase set a flag in `SharedPreferences` that `AdManager` checks before loading any ads
+- [ ] **Hindi UI toggle** — In-app language switch using Android `LocaleList` / `AppCompatDelegate.setApplicationLocales`; strings already in `values/strings.xml` (translation file `values-hi/strings.xml` exists but toggle UI may be incomplete)
 
 ---
 
@@ -117,23 +121,24 @@ Pending:
 ## 5. Technical Debt & Improvements
 
 ### 5a. Testing
-**Status:** Unit tests added for all domain calculators in v0.9. Still need instrumented tests.
+**Status:** Unit tests added for domain calculators and repositories in v0.9. Still need instrumented tests.
 
 - [x] Unit tests for `AgeCalculator` — edge cases: Feb 29, Jan 1, today's date, year 0, very old dates (>100 years)
 - [x] Unit tests for `AstronomicalCalculator` — verify Sun/Moon positions against known reference dates
 - [x] Unit tests for `ZodiacCalculator` and `NakshatraCalculator` — boundary dates between signs/nakshatras
 - [x] Unit tests for `ZodiacCompatibilityCalculator` — scoring for all sign combinations
-- [ ] Unit tests for `BirthdayRepository` — CRUD + `nextBirthdayEpochDay` auto-computation
-- [ ] Unit tests for `BirthdayNotificationScheduler` — Feb 29 edge case, past birthday same year
+- [x] Unit tests for `BirthdayRepository` — CRUD + `nextBirthdayEpochDay` auto-computation
+- [x] Unit tests for `BirthdayNotificationScheduler` — Feb 29 edge case, past birthday handling
 - [ ] UI tests (Compose test) — Calculator screen happy path, date validation errors
 - [ ] Instrumented test for Room DAO
 
 ### 5b. Room DB Migration Strategy
-**Status:** `AppDatabase` uses `fallbackToDestructiveMigration()` — any schema bump **wipes all saved birthdays**.
+**Status:** `AppDatabase` uses `addMigrations(*Migrations.ALL)` with explicit `Migration(1, 2)` object — no more `fallbackToDestructiveMigration()`.
 
-- [ ] Before the next schema change (e.g., adding birth time to `SavedBirthday`), add an explicit `Migration(1, 2)` object in `AppDatabase`
+- [x] Add explicit `Migration(1, 2)` object in `AppDatabase` (v0.9)
+- [x] `Migrations.kt` contains migration logic for adding `birthTime` column
 - [ ] Write a migration test using `MigrationTestHelper`
-- [ ] After a stable migration is verified, remove `fallbackToDestructiveMigration()`
+- [ ] After a stable migration is verified, ensure `fallbackToDestructiveMigration()` is not used
 
 ### 5c. Custom Typography
 **Status:** `Type.kt` has `InterFamily` commented out; falls back to system sans-serif.
@@ -145,13 +150,17 @@ Pending:
 - [ ] Replace `FontFamily.Default` → `InterFamily` in every `TextStyle` in that file
 
 ### 5d. Ad Lifecycle & Resilience
-- [ ] Persist interstitial ad impression count and last-shown timestamp in `SharedPreferences` (currently in-memory, resets on app kill)
-- [ ] Add retry logic in `AdManager` when an ad fails to load (exponential back-off, max 3 retries)
-- [ ] Gracefully disable the rewarded unlock button if the rewarded ad load has permanently failed after retries
+**Status:** v0.7 fixes implemented.
+
+- [x] Persist interstitial ad impression count and last-shown timestamp in `SharedPreferences` (v0.7)
+- [x] Add retry logic in `AdManager` when an ad fails to load (exponential back-off, max 3 retries) (v0.9)
+- [x] Gracefully disable the rewarded unlock button if the rewarded ad load has permanently failed after retries (v0.5)
 
 ### 5e. Accessibility
-- [ ] Add `contentDescription` to all icon-only buttons and the share card image view
-- [ ] Ensure tappable targets meet the 48 dp minimum touch target size (audit with Layout Inspector)
+**Status:** v0.7 fixes implemented.
+
+- [x] Add `contentDescription` to all icon-only buttons and the share card image view (v0.7)
+- [x] Ensure tappable targets meet the 48 dp minimum touch target size (v0.7)
 - [ ] Test with TalkBack enabled on Calculator, Reminders, and Compatibility screens
 
 ### 5f. Performance
@@ -160,8 +169,10 @@ Pending:
 - [ ] Review `AstronomicalCalculator` for repeated trigonometric calls that can be cached per calculation session
 
 ### 5g. Error Handling
-- [ ] `CalendarExport` fires an Intent without checking if a Calendar app exists; add `resolveActivity` check and show a Snackbar if no app handles the Intent
-- [ ] `ShareCardGenerator` should propagate errors back to the ViewModel rather than silently failing; show an error message to the user
+**Status:** Partially implemented in v0.5 and v0.9; ShareCardGenerator improved in v0.9.1.
+
+- [x] `CalendarExport` fires an Intent without checking if a Calendar app exists; added `resolveActivity` check in v0.5
+- [x] `ShareCardGenerator` now propagates errors back to the ViewModel with error messages (v0.9.1)
 - [ ] Handle `SecurityException` when `SCHEDULE_EXACT_ALARM` permission is not granted (Android 12+); show a settings-deep-link prompt
 
 ---

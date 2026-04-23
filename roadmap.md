@@ -48,23 +48,22 @@
 
 ---
 
-## Phase 3: Depth & Retention 🔭 (In Progress)
+## Phase 3: Depth & Retention 🔭 (Complete)
 
 **Branch:** `feature/phase-3-depth-retention`
-**Version:** 0.4 (pending 0.9.1)
+**Version:** 0.9.1
 
 ### Completed ✅
-- [x] **Google Calendar Export** — `CalendarExport.kt` one-tap Intent to add any birthday to Google Calendar
+- [x] **Google Calendar Export** — `CalendarExport.kt` one-tap Intent to add any birthday to Google Calendar with app availability check
+- [x] **CSV Export** — `BirthdayCsvExporter.kt` exports all saved birthdays via share sheet
 - [x] **Astrology Explanations** — `AstroInfoDialog.kt` educational dialogs for Western Zodiac, Rashi, Nakshatra, Chinese Zodiac, and Moon Phase
 - [x] **Zodiac Compatibility for Saved Birthdays** — Compatibility scores accessible from the Saved Birthdays list; Western + Chinese scoring between any saved birthday and the user's own birth date
 - [x] **Dedicated Settings Screen** — Consolidated tab with Appearance (theme), Notifications (default hour, global toggle), Data (clear saved birthdays, CSV export), and About sections
-
-### High Priority (In Progress)
-- [ ] **Birth Time Support** — Optional time picker alongside the date picker; pass exact `LocalDateTime` to `AstronomicalCalculator` for precise Nakshatra + Rashi; display *Exact* vs *Approximate* label
-- [ ] **Milestone Push Notifications UI** — Wire `MilestoneNotificationScheduler` into `DetailsUnlockScreen`; per-milestone enable/disable toggle; "next milestone in X days" banner on Calculator screen
-- [ ] **Life Timeline Visual** — Scrollable `LazyRow`/`LazyColumn` of past (achieved) and future (upcoming) milestones with badges; tappable to share milestone card
-
-### Completed in v0.9.1
+- [x] **Birth Time Support** — Optional time picker alongside the date picker; pass exact `LocalDateTime` to `AstronomicalCalculator` for precise Nakshatra + Rashi; display *Exact* vs *Approximate* label
+- [x] **Milestone Push Notifications UI** — Per-milestone enable/disable toggle in Settings; "next milestone in X days" banner on Calculator screen when within 30 days
+- [x] **Life Timeline Visual** — Scrollable `LazyRow` of past (achieved) and future (upcoming) milestones with badges; tappable to share milestone card
+- [x] **In-app Review Prompt** — Triggered after first share (SHARE_THRESHOLD = 1)
+- [x] **Hindi Translations** — `values-hi/strings.xml` added for locale switching
 - [x] **Settings Screen ViewModel Fix** — Corrected `SettingsScreen` to use `SettingsViewModel` instead of `RemindersViewModel` (BUG-029)
 - [x] **Automated Test Coverage** — Added JUnit 4 unit tests for all domain calculators
 
@@ -83,13 +82,12 @@
 
 ## Technical Debt Backlog ⚙️
 
-- [ ] **No automated tests** — Add unit tests for all domain calculators, Room DAO, and key ViewModels (see [TASKS.md §5a](TASKS.md))
-- [ ] **Room `fallbackToDestructiveMigration`** — Must add explicit `Migration` objects before any schema change to avoid wiping saved birthdays
-- [ ] **Interstitial counter is in-memory** — Impression count and cooldown timestamp reset on app kill; persist in `SharedPreferences`
+- [ ] **No automated tests** — Add unit tests for Room DAO and UI tests (Compose test)
+- [ ] **Room migration test** — Add `MigrationTestHelper` test for explicit `Migration(1, 2)`
 - [ ] **Inter font disabled** — `Type.kt` falls back to system sans-serif; font files not yet included in the repo
-- [ ] **Bitmap rendering on main thread** — `ShareCardGenerator` should run entirely on `Dispatchers.Default`
-- [ ] **No accessibility labels** — Icon-only buttons and share cards lack `contentDescription` for TalkBack users
-- [ ] **CalendarExport no fallback** — If no calendar app is installed the Intent fails silently; need a `resolveActivity` guard
+- [ ] **Bitmap rendering on main thread** — `ShareCardGenerator` bitmap generation runs on Dispatchers.Default, but `startActivity` is posted to main thread
+- [ ] **CalendarExport no fallback** — If no calendar app is installed the Intent fails silently; need a `resolveActivity` guard (v0.5 implemented `isCalendarAppAvailable()`)
+- [ ] **SecurityException handling** — Handle `SCHEDULE_EXACT_ALARM` permission not granted on Android 12+; show settings-deep-link prompt
 
 ---
 

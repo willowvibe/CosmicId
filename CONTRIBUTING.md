@@ -61,7 +61,7 @@ When filing a bug report, include:
 - An Android device or emulator running **API 26+** (API 21–25 supported via desugaring)
 
 ### Recent Updates
-- **v0.9.1 (2026-04-23):** Settings screen now correctly uses `SettingsViewModel` instead of `RemindersViewModel`. If you're building after pulling recent changes, ensure your local branch has the latest ViewModel updates.
+- **v0.9.1 (2026-04-23):** Phase 3 complete - Birth time support, milestone notifications, life timeline visual, and consolidated Settings screen. Settings screen now correctly uses `SettingsViewModel` instead of `RemindersViewModel`. If you're building after pulling recent changes, ensure your local branch has the latest ViewModel updates.
 
 ### Steps
 1. Clone the repository.

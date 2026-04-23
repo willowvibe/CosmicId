@@ -39,6 +39,8 @@ import kotlin.math.abs
  * image is never cropped by WhatsApp (16:9 preview), Instagram Stories (9:16), or any
  * other platform. The 900×600 content area is centred vertically within the square and
  * the theme background fills the remaining top/bottom margins (BUG-011).
+ *
+ * Error handling: If sharing fails, the [onShareError] callback is invoked on the main thread.
  */
 @Singleton
 class ShareCardGenerator @Inject constructor(
@@ -49,6 +51,26 @@ class ShareCardGenerator @Inject constructor(
 
     private val sharingCard = AtomicBoolean(false)
     private val sharingMilestone = AtomicBoolean(false)
+
+    // Error callback — invoked on main thread when sharing fails
+    private var onShareError: ((Throwable) -> Unit)? = null
+    private var onMilestoneShareError: ((Throwable) -> Unit)? = null
+    private var onCompatibilityShareError: ((Throwable) -> Unit)? = null
+
+    /** Register an error callback for share failures. */
+    fun setShareErrorHandler(handler: ((Throwable) -> Unit)?) {
+        onShareError = handler
+    }
+
+    /** Register an error callback for milestone share failures. */
+    fun setMilestoneShareErrorHandler(handler: ((Throwable) -> Unit)?) {
+        onMilestoneShareError = handler
+    }
+
+    /** Register an error callback for compatibility share failures. */
+    fun setCompatibilityShareErrorHandler(handler: ((Throwable) -> Unit)?) {
+        onCompatibilityShareError = handler
+    }
 
     companion object {
         /** Logical content width/height — all coordinate maths inside draw* functions uses these. */
@@ -163,6 +185,8 @@ class ShareCardGenerator @Inject constructor(
                     } else {
                         context.startActivity(chooser.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
                     }
+                } catch (e: Exception) {
+                    onShareError?.invoke(e)
                 } finally {
                     sharingCard.set(false)
                 }
@@ -170,6 +194,7 @@ class ShareCardGenerator @Inject constructor(
         } catch (e: Exception) {
             bitmap?.recycle()
             sharingCard.set(false)
+            onShareError?.invoke(e)
         }
     }
 
@@ -194,6 +219,8 @@ class ShareCardGenerator @Inject constructor(
                     chooser.clipData = ClipData.newRawUri("", uri)
                     chooser.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                     context.startActivity(chooser)
+                } catch (e: Exception) {
+                    onMilestoneShareError?.invoke(e)
                 } finally {
                     sharingMilestone.set(false)
                 }
@@ -201,6 +228,7 @@ class ShareCardGenerator @Inject constructor(
         } catch (e: Exception) {
             bitmap?.recycle()
             sharingMilestone.set(false)
+            onMilestoneShareError?.invoke(e)
         }
     }
 
@@ -224,6 +252,8 @@ class ShareCardGenerator @Inject constructor(
                     chooser.clipData = ClipData.newRawUri("", uri)
                     chooser.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                     context.startActivity(chooser)
+                } catch (e: Exception) {
+                    onCompatibilityShareError?.invoke(e)
                 } finally {
                     sharingCompatibility.set(false)
                 }
@@ -231,6 +261,7 @@ class ShareCardGenerator @Inject constructor(
         } catch (e: Exception) {
             bitmap?.recycle()
             sharingCompatibility.set(false)
+            onCompatibilityShareError?.invoke(e)
         }
     }
 

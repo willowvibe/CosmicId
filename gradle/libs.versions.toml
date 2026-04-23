@@ -22,6 +22,7 @@ appcompat = "1.7.0"
 playReview = "2.0.2"
 datastore = "1.1.1"
 roomTesting = "2.7.0"
+coroutinesTest = "1.9.0"
 
 [libraries]
 # AndroidX core
@@ -85,6 +86,9 @@ junit = { group = "junit", name = "junit", version.ref = "junit" }
 androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitExt" }
 androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
 androidx-room-testing = { group = "androidx.room", name = "room-testing", version.ref = "roomTesting" }
+
+# Kotlin Coroutines Testing
+kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version.ref = "coroutinesTest" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
