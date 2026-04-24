@@ -171,13 +171,18 @@ private fun AstroTile(result: AgeResult, isUnlocked: Boolean) {
             )
             Spacer(Modifier.height(6.dp))
             if (isUnlocked && result.westernZodiac.isNotEmpty()) {
+                val westernLabel = if (result.birthTime == null) {
+                    "${result.westernZodiac} (Approximate)"
+                } else {
+                    result.westernZodiac
+                }
                 val rashiLabel = if (result.birthTime == null) {
                     "${result.rashi} (Approximate)"
                 } else {
                     result.rashi
                 }
                 Text(
-                    "${result.westernZodiac} · $rashiLabel",
+                    "$westernLabel · $rashiLabel",
                     fontFamily = SerifFamily,
                     fontWeight = FontWeight.Normal,
                     fontSize = 28.sp,

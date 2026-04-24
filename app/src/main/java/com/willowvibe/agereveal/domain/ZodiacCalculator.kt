@@ -19,19 +19,21 @@ class ZodiacCalculator @Inject constructor(
     private val astronomy: AstronomicalCalculator,
 ) {
 
-    fun getWesternZodiac(month: Int, day: Int): String = when {
-        (month == 3 && day >= 21) || (month == 4 && day <= 19) -> "Aries ♈"
-        (month == 4 && day >= 20) || (month == 5 && day <= 20) -> "Taurus ♉"
-        (month == 5 && day >= 21) || (month == 6 && day <= 20) -> "Gemini ♊"
-        (month == 6 && day >= 21) || (month == 7 && day <= 22) -> "Cancer ♋"
-        (month == 7 && day >= 23) || (month == 8 && day <= 22) -> "Leo ♌"
-        (month == 8 && day >= 23) || (month == 9 && day <= 22) -> "Virgo ♍"
-        (month == 9 && day >= 23) || (month == 10 && day <= 22) -> "Libra ♎"
-        (month == 10 && day >= 23) || (month == 11 && day <= 21) -> "Scorpio ♏"
-        (month == 11 && day >= 22) || (month == 12 && day <= 21) -> "Sagittarius ♐"
-        (month == 12 && day >= 22) || (month == 1 && day <= 19) -> "Capricorn ♑"
-        (month == 1 && day >= 20) || (month == 2 && day <= 18) -> "Aquarius ♒"
-        else -> "Pisces ♓"
+    private val westernSignNames = listOf(
+        "Aries ♈", "Taurus ♉", "Gemini ♊", "Cancer ♋",
+        "Leo ♌", "Virgo ♍", "Libra ♎", "Scorpio ♏",
+        "Sagittarius ♐", "Capricorn ♑", "Aquarius ♒", "Pisces ♓"
+    )
+
+    /** Western (tropical) zodiac from the Sun's ecliptic longitude with cusp detection. */
+    fun getWesternZodiac(birthDate: LocalDate, birthTime: LocalTime? = null): String {
+        val snapshot = astronomy.snapshot(birthDate, birthTime)
+        val longitude = snapshot.tropicalSunLongitude
+        val index = ((longitude / 30.0).toInt() % 12 + 12) % 12
+        val name = westernSignNames[index]
+        val posInSign = longitude % 30.0
+        // Within 1° of a sign boundary — Sun moves ~1°/day so cusp = ±1 day of sign change
+        return if (posInSign < 1.0 || posInSign > 29.0) "$name ⚠ Cusp" else name
     }
 
     /** Vedic Rashi derived from the Sun's sidereal ecliptic longitude (12 × 30° signs). */

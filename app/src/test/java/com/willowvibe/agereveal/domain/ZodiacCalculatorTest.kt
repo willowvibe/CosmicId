@@ -10,30 +10,62 @@ class ZodiacCalculatorTest {
 
     private lateinit var calculator: ZodiacCalculator
 
+    private val allWesternSigns = listOf(
+        "Aries", "Taurus", "Gemini", "Cancer",
+        "Leo", "Virgo", "Libra", "Scorpio",
+        "Sagittarius", "Capricorn", "Aquarius", "Pisces"
+    )
+
     @Before
     fun setUp() {
         calculator = ZodiacCalculator(AstronomicalCalculator())
     }
 
     // -------------------------------------------------------------------------
-    // Western zodiac (date-based boundary checks)
+    // Western zodiac — Sun longitude based
     // -------------------------------------------------------------------------
 
-    @Test fun `aries starts march 21`()   { assertEquals("Aries ♈",       calculator.getWesternZodiac(3, 21)) }
-    @Test fun `aries ends april 19`()     { assertEquals("Aries ♈",       calculator.getWesternZodiac(4, 19)) }
-    @Test fun `taurus starts april 20`()  { assertEquals("Taurus ♉",      calculator.getWesternZodiac(4, 20)) }
-    @Test fun `taurus ends may 20`()      { assertEquals("Taurus ♉",      calculator.getWesternZodiac(5, 20)) }
-    @Test fun `gemini starts may 21`()    { assertEquals("Gemini ♊",      calculator.getWesternZodiac(5, 21)) }
-    @Test fun `cancer starts june 21`()   { assertEquals("Cancer ♋",      calculator.getWesternZodiac(6, 21)) }
-    @Test fun `leo starts july 23`()      { assertEquals("Leo ♌",         calculator.getWesternZodiac(7, 23)) }
-    @Test fun `virgo starts aug 23`()     { assertEquals("Virgo ♍",       calculator.getWesternZodiac(8, 23)) }
-    @Test fun `libra starts sep 23`()     { assertEquals("Libra ♎",       calculator.getWesternZodiac(9, 23)) }
-    @Test fun `scorpio starts oct 23`()   { assertEquals("Scorpio ♏",     calculator.getWesternZodiac(10, 23)) }
-    @Test fun `sagittarius starts nov 22`(){ assertEquals("Sagittarius ♐", calculator.getWesternZodiac(11, 22)) }
-    @Test fun `capricorn starts dec 22`() { assertEquals("Capricorn ♑",   calculator.getWesternZodiac(12, 22)) }
-    @Test fun `aquarius starts jan 20`()  { assertEquals("Aquarius ♒",    calculator.getWesternZodiac(1, 20)) }
-    @Test fun `pisces starts feb 19`()    { assertEquals("Pisces ♓",      calculator.getWesternZodiac(2, 19)) }
-    @Test fun `pisces ends march 20`()    { assertEquals("Pisces ♓",      calculator.getWesternZodiac(3, 20)) }
+    @Test
+    fun `western zodiac returns a known sign`() {
+        val sign = calculator.getWesternZodiac(LocalDate.of(1990, 6, 15))
+        val base = sign.removeSuffix(" ⚠ Cusp")
+        assertTrue("Unknown sign: $sign", allWesternSigns.any { base.startsWith(it) })
+    }
+
+    @Test
+    fun `aries around march equinox 2020`() {
+        // Vernal equinox 2020 was ~20 Mar 03:50 UTC → Sun enters Aries
+        val sign = calculator.getWesternZodiac(LocalDate.of(2020, 3, 21))
+        assertTrue("Expected Aries around equinox, got: $sign", sign.contains("Aries"))
+    }
+
+    @Test
+    fun `libra around september equinox 2020`() {
+        // Autumnal equinox 2020 was ~22 Sep 13:30 UTC → Sun enters Libra
+        val sign = calculator.getWesternZodiac(LocalDate.of(2020, 9, 23))
+        assertTrue("Expected Libra around equinox, got: $sign", sign.contains("Libra"))
+    }
+
+    @Test
+    fun `cusp flag appears within 1 degree of boundary`() {
+        // Search a full year for any cusp markers — they should be rare but present.
+        val start = LocalDate.of(2000, 1, 1)
+        var cuspCount = 0
+        for (i in 0..364) {
+            val result = calculator.getWesternZodiac(start.plusDays(i.toLong()))
+            if (result.endsWith(" ⚠ Cusp")) cuspCount++
+        }
+        // With 12 boundaries and Sun at ~1°/day, we expect ~24 cusp days per year.
+        assertTrue("Expected some cusp days, got $cuspCount", cuspCount >= 10)
+    }
+
+    @Test
+    fun `no exception thrown for any day in a full year`() {
+        val start = LocalDate.of(2000, 1, 1)
+        for (i in 0..364) {
+            calculator.getWesternZodiac(start.plusDays(i.toLong()))
+        }
+    }
 
     // -------------------------------------------------------------------------
     // Chinese zodiac — Lunar New Year boundary (BUG-004 regression)

@@ -26,8 +26,8 @@ class ZodiacCompatibilityCalculator @Inject constructor(
 ) {
 
     fun calculate(dateA: LocalDate, dateB: LocalDate, nameA: String = "", nameB: String = ""): CompatibilityResult {
-        val westernA = zodiacCalculator.getWesternZodiac(dateA.monthValue, dateA.dayOfMonth)
-        val westernB = zodiacCalculator.getWesternZodiac(dateB.monthValue, dateB.dayOfMonth)
+        val westernA = zodiacCalculator.getWesternZodiac(dateA)
+        val westernB = zodiacCalculator.getWesternZodiac(dateB)
         val chineseA = zodiacCalculator.getChineseZodiac(dateA)
         val chineseB = zodiacCalculator.getChineseZodiac(dateB)
         val elementA = getWesternElement(dateA.monthValue, dateA.dayOfMonth)
