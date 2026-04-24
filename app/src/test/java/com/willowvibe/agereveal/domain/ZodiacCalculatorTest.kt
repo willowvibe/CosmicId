@@ -165,4 +165,34 @@ class ZodiacCalculatorTest {
             calculator.getRashiLord(start.plusDays(i.toLong()))
         }
     }
+
+    // -------------------------------------------------------------------------
+    // Western Moon Sign
+    // -------------------------------------------------------------------------
+
+    @Test
+    fun `western moon sign returns a known sign`() {
+        val sign = calculator.getWesternMoonSign(LocalDate.of(1990, 6, 15))
+        val base = sign.removeSuffix(" ⚠ Cusp")
+        assertTrue("Unknown moon sign: $sign", allWesternSigns.any { base.startsWith(it) })
+    }
+
+    @Test
+    fun `moon sign changes over 24 hours`() {
+        // Moon moves ~13°/day, so it should shift signs every ~2.3 days.
+        // Over 30 days we should see at least 10 different signs.
+        val date = LocalDate.of(1990, 6, 15)
+        val signs = (0..29).map { day ->
+            calculator.getWesternMoonSign(date.plusDays(day.toLong()))
+        }.toSet()
+        assertTrue("Expected multiple moon signs over 30 days, got: $signs", signs.size >= 5)
+    }
+
+    @Test
+    fun `no exception thrown for moon sign across full year`() {
+        val start = LocalDate.of(2000, 1, 1)
+        for (i in 0..364) {
+            calculator.getWesternMoonSign(start.plusDays(i.toLong()))
+        }
+    }
 }

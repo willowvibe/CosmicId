@@ -190,6 +190,29 @@ private fun AstroTile(result: AgeResult, isUnlocked: Boolean) {
                     letterSpacing = (-0.5).sp,
                     color = if (result.birthTime == null) WarmAmber else WarmInk,
                 )
+                if (result.westernMoonSign.isNotEmpty()) {
+                    Spacer(Modifier.height(4.dp))
+                    Row {
+                        Text(
+                            "Moon Sign ",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = if (result.birthTime == null) WarmInkDim else WarmInkMute
+                        )
+                        Text(
+                            result.westernMoonSign,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = if (result.birthTime == null) WarmAmber else WarmInk,
+                            fontWeight = if (result.birthTime == null) FontWeight.Normal else FontWeight.Medium
+                        )
+                        if (result.birthTime == null) {
+                            Text(
+                                " (Approximate)",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = WarmInkMute
+                            )
+                        }
+                    }
+                }
                 if (result.chineseZodiac.isNotEmpty()) {
                     val chineseParts = result.chineseZodiac.split(" ", limit = 2)
                     val chineseLabel = if (chineseParts.size >= 2)

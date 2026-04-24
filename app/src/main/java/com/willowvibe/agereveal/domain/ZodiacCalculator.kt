@@ -36,6 +36,17 @@ class ZodiacCalculator @Inject constructor(
         return if (posInSign < 1.0 || posInSign > 29.0) "$name ⚠ Cusp" else name
     }
 
+    /** Western Moon sign from the Moon's tropical ecliptic longitude with cusp detection. */
+    fun getWesternMoonSign(birthDate: LocalDate, birthTime: LocalTime? = null): String {
+        val snapshot = astronomy.snapshot(birthDate, birthTime)
+        val longitude = snapshot.tropicalMoonLongitude
+        val index = ((longitude / 30.0).toInt() % 12 + 12) % 12
+        val name = westernSignNames[index]
+        val posInSign = longitude % 30.0
+        // Moon moves ~13°/day, so 1° ≈ ~2 hours near a boundary
+        return if (posInSign < 1.0 || posInSign > 29.0) "$name ⚠ Cusp" else name
+    }
+
     /** Vedic Rashi derived from the Sun's sidereal ecliptic longitude (12 × 30° signs). */
     fun getRashi(birthDate: LocalDate, birthTime: LocalTime? = null): String {
         val snapshot = astronomy.snapshot(birthDate, birthTime)
