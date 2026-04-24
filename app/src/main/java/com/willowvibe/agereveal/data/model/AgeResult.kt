@@ -42,6 +42,7 @@ data class AgeResult(
     val nakshatra: String = "",
     val nakshatraPada: String = "",
     val chineseZodiac: String = "",
+    val chineseStemBranch: String = "",
 
     // Fun fact (unlockable)
     val estimatedHeartbeats: Long = 0L,

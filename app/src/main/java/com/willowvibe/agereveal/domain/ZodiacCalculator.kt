@@ -140,6 +140,37 @@ class ZodiacCalculator @Inject constructor(
         return LocalDate.of(year, month, day.coerceIn(1, 28))
     }
 
+    // ---------------------------------------------------------------------------
+    // Chinese Stem-Branch (Heavenly Stem + Earthly Branch) with Wu Xing element
+    // ---------------------------------------------------------------------------
+
+    private val heavenlyStems = listOf(
+        "甲 Jia", "乙 Yi", "丙 Bing", "丁 Ding", "戊 Wu",
+        "己 Ji", "庚 Geng", "辛 Xin", "壬 Ren", "癸 Gui",
+    )
+
+    private val stemElements = listOf(
+        "Wood", "Wood", "Fire", "Fire", "Earth",
+        "Earth", "Metal", "Metal", "Water", "Water",
+    )
+
+    private val earthlyBranches = listOf(
+        "子 Zi", "丑 Chou", "寅 Yin", "卯 Mao", "辰 Chen", "巳 Si",
+        "午 Wu", "未 Wei", "申 Shen", "酉 You", "戌 Xu", "亥 Hai",
+    )
+
+    /** Returns the full Chinese stem-branch with element, e.g. "Jia-Chen / Wood-Dragon". */
+    fun getChineseStemBranch(date: LocalDate): String {
+        val chineseYear = getChineseYear(date)
+        val stemIndex = ((chineseYear - 4) % 10 + 10) % 10
+        val branchIndex = ((chineseYear - 4) % 12 + 12) % 12
+        val stem = heavenlyStems[stemIndex]
+        val branch = earthlyBranches[branchIndex]
+        val element = stemElements[stemIndex]
+        val animal = chineseZodiacCycle[branchIndex].split(" ").last()
+        return "$stem-$branch / $element-$animal"
+    }
+
     companion object {
         /**
          * Chinese New Year dates for Gregorian years 1900–2100 (201 entries).

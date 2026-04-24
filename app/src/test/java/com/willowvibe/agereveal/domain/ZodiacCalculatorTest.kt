@@ -121,6 +121,42 @@ class ZodiacCalculatorTest {
     }
 
     // -------------------------------------------------------------------------
+    // Chinese Stem-Branch
+    // -------------------------------------------------------------------------
+
+    @Test
+    fun `stem branch for 2024 is Jia Chen Wood Dragon`() {
+        val sb = calculator.getChineseStemBranch(LocalDate.of(2024, 6, 1))
+        assertTrue("Expected Jia-Chen / Wood-Dragon, got: $sb",
+            sb.contains("Jia") && sb.contains("Chen") && sb.contains("Wood") && sb.contains("Dragon"))
+    }
+
+    @Test
+    fun `stem branch for 1984 is Jia Zi Wood Rat`() {
+        // 1984 is the start of the 60-year cycle
+        val sb = calculator.getChineseStemBranch(LocalDate.of(1984, 3, 1))
+        assertTrue("Expected Jia-Zi / Wood-Rat, got: $sb",
+            sb.contains("Jia") && sb.contains("Zi") && sb.contains("Wood") && sb.contains("Rat"))
+    }
+
+    @Test
+    fun `stem branch cycle repeats every 60 years`() {
+        val date1 = LocalDate.of(1984, 6, 1)
+        val date2 = LocalDate.of(2044, 6, 1)
+        assertEquals(
+            calculator.getChineseStemBranch(date1),
+            calculator.getChineseStemBranch(date2),
+        )
+    }
+
+    @Test
+    fun `stem branch respects lunar new year cutoff`() {
+        // Jan 2000 is still 1999 in Chinese calendar → Ji-Mao / Earth-Rabbit
+        val sb = calculator.getChineseStemBranch(LocalDate.of(2000, 1, 25))
+        assertTrue("Expected Rabbit before CNY, got: $sb", sb.contains("Rabbit"))
+    }
+
+    // -------------------------------------------------------------------------
     // Rashi cusp detection (BUG-005)
     // -------------------------------------------------------------------------
 

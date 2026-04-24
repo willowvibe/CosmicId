@@ -213,7 +213,16 @@ private fun AstroTile(result: AgeResult, isUnlocked: Boolean) {
                         }
                     }
                 }
-                if (result.chineseZodiac.isNotEmpty()) {
+                if (result.chineseStemBranch.isNotEmpty()) {
+                    Text(
+                        result.chineseStemBranch,
+                        fontFamily = SerifFamily,
+                        fontWeight = FontWeight.Normal,
+                        fontSize = 18.sp,
+                        letterSpacing = (-0.3).sp,
+                        color = WarmInk,
+                    )
+                } else if (result.chineseZodiac.isNotEmpty()) {
                     val chineseParts = result.chineseZodiac.split(" ", limit = 2)
                     val chineseLabel = if (chineseParts.size >= 2)
                         "Year of the ${chineseParts[1]} ${chineseParts[0]}"
