@@ -1,6 +1,6 @@
 # AgeReveal
 
-AgeReveal is a native Android app (Kotlin + Jetpack Compose) that calculates your exact age in real-time and enriches it with astrological insights, shareable cards, milestone tracking, saved birthday reminders, and a home screen widget. Current version: **0.9.1**.
+AgeReveal is a native Android app (Kotlin + Jetpack Compose) that calculates your exact age in real-time and enriches it with astrological insights, shareable cards, milestone tracking, saved birthday reminders, and a home screen widget. Current version: **0.9.2**.
 
 ## Features
 
@@ -10,10 +10,14 @@ AgeReveal is a native Android app (Kotlin + Jetpack Compose) that calculates you
 - **Age Compare** — Two date-picker comparison showing the exact age difference between two people.
 
 ### Astrological Insights (Rewarded Ad Unlock)
-- **Western Zodiac** — Tropical sun-sign (date-based).
+- **Western Zodiac** — Tropical sun-sign computed from the Sun's ecliptic longitude with cusp detection (⚠) when near a boundary.
+- **Western Moon Sign** — Moon's tropical longitude for emotional-nature analysis; distinct from Vedic Rashi.
 - **Vedic Rashi** — Sidereal sun sign via Lahiri ayanamsa; labelled *Approximate* until birth time is provided.
+- **Rashi Lord** — The ruling planet (graha) of your Vedic Rashi displayed alongside the sign.
 - **Nakshatra** — One of 27 lunar mansions based on the Moon's sidereal position; labelled *Approximate* without birth time.
-- **Chinese Zodiac** — 12-year cycle.
+- **Nakshatra Pada** — Quarter (1st–4th) of your nakshatra, refining the lunar mansion influence.
+- **Chinese Zodiac** — 12-year cycle with Lunar New Year awareness.
+- **Chinese Stem-Branch** — Full Heavenly Stem + Earthly Branch with Wu Xing element (e.g., "Jia-Chen / Wood-Dragon").
 - **Heartbeat Estimate** — Lifetime heartbeats at 72 BPM average.
 - **Astrology Info Dialogs** — Educational overlays explaining each astrological system.
 
@@ -80,8 +84,9 @@ app/src/main/java/com/willowvibe/agereveal/
 ├── domain/
 │   ├── AgeCalculator.kt      # Core age + milestone logic (java.time)
 │   ├── AstronomicalCalculator.kt  # Ephemeris: sidereal Sun/Moon positions
-│   ├── ZodiacCalculator.kt        # Western, Vedic Rashi, Chinese Zodiac
-│   ├── NakshatraCalculator.kt     # 27 lunar mansions
+│   ├── EphemerisSnapshot.kt       # Immutable cached ephemeris per birth moment
+│   ├── ZodiacCalculator.kt        # Western, Vedic Rashi, Chinese Zodiac + Stem-Branch
+│   ├── NakshatraCalculator.kt     # 27 lunar mansions + Pada (quarters)
 │   ├── ZodiacCompatibilityCalculator.kt  # Compatibility scoring
 │   ├── ShareCardGenerator.kt      # Bitmap card renderer + share Intent
 │   └── CalendarExport.kt          # Google Calendar add-event Intent
@@ -127,16 +132,27 @@ app/src/main/java/com/willowvibe/agereveal/
 
 ## Known Limitations
 
-- Nakshatra and Vedic Rashi calculations are **approximate** (date-only) until birth time input is implemented.
-- The ephemeris uses low-precision Meeus algorithms (±1° accuracy) — sufficient for sign/nakshatra identification but not for exact degrees.
-- Room DB uses `fallbackToDestructiveMigration()` — a schema change **will wipe saved birthdays** until explicit `Migration` objects are added.
-- The app has **no automated tests** yet; all domain logic is manually verified.
+- Nakshatra, Vedic Rashi, and Western Moon Sign calculations are **approximate** when birth time is not provided; the app defaults to 12:00 local time and labels results as *Approximate*.
+- The ephemeris uses medium-precision Meeus algorithms (Sun ~0.01°, Moon ~0.1°) — sufficient for sign/nakshatra/pada identification but not for exact degree-level work.
+- Room DB uses explicit `Migration(1, 2)` — schema changes are safe, but `fallbackToDestructiveMigration()` is still present as a fallback.
+- Unit tests cover all domain calculators; UI and instrumented tests are pending.
 
 See [BUGS_AND_ISSUES.md](BUGS_AND_ISSUES.md) for the full list of known bugs and edge cases.
 
 ---
 
 ## Recent Updates
+
+### v0.9.2 (2026-04-24)
+- **Astrology improvements:**
+  - **EphemerisSnapshot** — Caches Julian Day, Sun/Moon longitudes, and ayanamsa per birth moment, eliminating redundant computation.
+  - **Nakshatra Pada** — Computes the 1st–4th quarter of each nakshatra (3°20′ each).
+  - **Western Zodiac (Sun longitude)** — Replaced static date table with tropical Sun longitude for astronomically accurate sign determination; adds ⚠ Cusp within 1° of boundary.
+  - **Western Moon Sign** — New field using Moon's tropical longitude.
+  - **Rashi Lord** — Displays the ruling planet (graha) for each Vedic rashi.
+  - **Chinese Stem-Branch** — Full Heavenly Stem + Earthly Branch with Wu Xing element (e.g., "Jia-Chen / Wood-Dragon").
+- Updated `DetailsUnlockScreen` and `AstroInfoDialog` with all new astrology fields.
+- Unit tests added for all new calculators.
 
 ### v0.9.1 (2026-04-23)
 - **Bug fix:** Settings screen now correctly uses `SettingsViewModel` instead of `RemindersViewModel` (BUG-029)

@@ -171,13 +171,18 @@ private fun AstroTile(result: AgeResult, isUnlocked: Boolean) {
             )
             Spacer(Modifier.height(6.dp))
             if (isUnlocked && result.westernZodiac.isNotEmpty()) {
+                val westernLabel = if (result.birthTime == null) {
+                    "${result.westernZodiac} (Approximate)"
+                } else {
+                    result.westernZodiac
+                }
                 val rashiLabel = if (result.birthTime == null) {
                     "${result.rashi} (Approximate)"
                 } else {
                     result.rashi
                 }
                 Text(
-                    "${result.westernZodiac} · $rashiLabel",
+                    "$westernLabel · $rashiLabel",
                     fontFamily = SerifFamily,
                     fontWeight = FontWeight.Normal,
                     fontSize = 28.sp,
@@ -185,7 +190,39 @@ private fun AstroTile(result: AgeResult, isUnlocked: Boolean) {
                     letterSpacing = (-0.5).sp,
                     color = if (result.birthTime == null) WarmAmber else WarmInk,
                 )
-                if (result.chineseZodiac.isNotEmpty()) {
+                if (result.westernMoonSign.isNotEmpty()) {
+                    Spacer(Modifier.height(4.dp))
+                    Row {
+                        Text(
+                            "Moon Sign ",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = if (result.birthTime == null) WarmInkDim else WarmInkMute
+                        )
+                        Text(
+                            result.westernMoonSign,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = if (result.birthTime == null) WarmAmber else WarmInk,
+                            fontWeight = if (result.birthTime == null) FontWeight.Normal else FontWeight.Medium
+                        )
+                        if (result.birthTime == null) {
+                            Text(
+                                " (Approximate)",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = WarmInkMute
+                            )
+                        }
+                    }
+                }
+                if (result.chineseStemBranch.isNotEmpty()) {
+                    Text(
+                        result.chineseStemBranch,
+                        fontFamily = SerifFamily,
+                        fontWeight = FontWeight.Normal,
+                        fontSize = 18.sp,
+                        letterSpacing = (-0.3).sp,
+                        color = WarmInk,
+                    )
+                } else if (result.chineseZodiac.isNotEmpty()) {
                     val chineseParts = result.chineseZodiac.split(" ", limit = 2)
                     val chineseLabel = if (chineseParts.size >= 2)
                         "Year of the ${chineseParts[1]} ${chineseParts[0]}"
@@ -199,6 +236,22 @@ private fun AstroTile(result: AgeResult, isUnlocked: Boolean) {
                         color = WarmInk,
                     )
                 }
+                if (result.rashiLord.isNotEmpty()) {
+                    Spacer(Modifier.height(4.dp))
+                    Row {
+                        Text(
+                            "Rashi Lord ",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = WarmInkMute
+                        )
+                        Text(
+                            result.rashiLord,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = WarmInk,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+                }
                 if (result.nakshatra.isNotEmpty()) {
                     Spacer(Modifier.height(8.dp))
                     Row {
@@ -209,6 +262,29 @@ private fun AstroTile(result: AgeResult, isUnlocked: Boolean) {
                         )
                         Text(
                             result.nakshatra,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = if (result.birthTime == null) WarmAmber else WarmInk,
+                            fontWeight = if (result.birthTime == null) FontWeight.Normal else FontWeight.Medium
+                        )
+                        if (result.birthTime == null) {
+                            Text(
+                                " (Approximate)",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = WarmInkMute
+                            )
+                        }
+                    }
+                }
+                if (result.nakshatraPada.isNotEmpty()) {
+                    Spacer(Modifier.height(4.dp))
+                    Row {
+                        Text(
+                            "Pada ",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = if (result.birthTime == null) WarmInkDim else WarmInkMute
+                        )
+                        Text(
+                            result.nakshatraPada,
                             style = MaterialTheme.typography.bodySmall,
                             color = if (result.birthTime == null) WarmAmber else WarmInk,
                             fontWeight = if (result.birthTime == null) FontWeight.Normal else FontWeight.Medium

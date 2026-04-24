@@ -33,11 +33,29 @@ class NakshatraCalculator @Inject constructor(
     )
 
     fun getNakshatra(birthDate: LocalDate, birthTime: LocalTime? = null): String {
-        val longitude = astronomy.siderealMoonLongitude(birthDate, birthTime)
+        val snapshot = astronomy.snapshot(birthDate, birthTime)
+        val longitude = snapshot.siderealMoonLongitude
         val index = ((longitude / nakshatraArc).toInt() % 27 + 27) % 27
         val name = nakshatraNames[index]
         val posInNakshatra = longitude % nakshatraArc
         // Within 1° of a nakshatra boundary — Moon moves ~13°/day, so 1° ≈ 2 hours of travel
         return if (posInNakshatra < 1.0 || posInNakshatra > (nakshatraArc - 1.0)) "$name ⚠ Cusp" else name
+    }
+
+    /** Returns the nakshatra with its pada (quarter), e.g. "Rohini — 2nd Pada". */
+    fun getNakshatraWithPada(birthDate: LocalDate, birthTime: LocalTime? = null): String {
+        val snapshot = astronomy.snapshot(birthDate, birthTime)
+        val longitude = snapshot.siderealMoonLongitude
+        val nakshatraIndex = ((longitude / nakshatraArc).toInt() % 27 + 27) % 27
+        val posInNakshatra = longitude % nakshatraArc
+        val padaIndex = (posInNakshatra / (nakshatraArc / 4.0)).toInt().coerceIn(0, 3)
+        val name = nakshatraNames[nakshatraIndex]
+        val pada = when (padaIndex) {
+            0 -> "1st Pada"
+            1 -> "2nd Pada"
+            2 -> "3rd Pada"
+            else -> "4th Pada"
+        }
+        return "$name — $pada"
     }
 }

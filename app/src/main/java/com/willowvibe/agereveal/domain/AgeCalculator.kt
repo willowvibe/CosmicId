@@ -67,13 +67,14 @@ class AgeCalculator @Inject constructor(
             dayOfWeekBorn = birthDate.dayOfWeek.name,
             dayOfWeekNextBirthday = nextBirthday.dayOfWeek.name,
             milestones = if (includeUnlocked) getMilestones(birthDate, today) else emptyList(),
-            westernZodiac = if (includeUnlocked) zodiacCalculator.getWesternZodiac(
-                birthDate.monthValue,
-                birthDate.dayOfMonth
-            ) else "",
+            westernZodiac = if (includeUnlocked) zodiacCalculator.getWesternZodiac(birthDate, birthTime) else "",
+            westernMoonSign = if (includeUnlocked) zodiacCalculator.getWesternMoonSign(birthDate, birthTime) else "",
             rashi = if (includeUnlocked) zodiacCalculator.getRashi(birthDate, birthTime) else "",
+            rashiLord = if (includeUnlocked) zodiacCalculator.getRashiLord(birthDate, birthTime) else "",
             nakshatra = if (includeUnlocked) nakshatraCalculator.getNakshatra(birthDate, birthTime) else "",
+            nakshatraPada = if (includeUnlocked) nakshatraCalculator.getNakshatraWithPada(birthDate, birthTime) else "",
             chineseZodiac = if (includeUnlocked) zodiacCalculator.getChineseZodiac(birthDate) else "",
+            chineseStemBranch = if (includeUnlocked) zodiacCalculator.getChineseStemBranch(birthDate) else "",
             estimatedHeartbeats = if (includeUnlocked) estimateHeartbeats(totalMinutes) else 0L,
             isExact = birthTime != null,
         )

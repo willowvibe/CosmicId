@@ -19,24 +19,38 @@ class ZodiacCalculator @Inject constructor(
     private val astronomy: AstronomicalCalculator,
 ) {
 
-    fun getWesternZodiac(month: Int, day: Int): String = when {
-        (month == 3 && day >= 21) || (month == 4 && day <= 19) -> "Aries ♈"
-        (month == 4 && day >= 20) || (month == 5 && day <= 20) -> "Taurus ♉"
-        (month == 5 && day >= 21) || (month == 6 && day <= 20) -> "Gemini ♊"
-        (month == 6 && day >= 21) || (month == 7 && day <= 22) -> "Cancer ♋"
-        (month == 7 && day >= 23) || (month == 8 && day <= 22) -> "Leo ♌"
-        (month == 8 && day >= 23) || (month == 9 && day <= 22) -> "Virgo ♍"
-        (month == 9 && day >= 23) || (month == 10 && day <= 22) -> "Libra ♎"
-        (month == 10 && day >= 23) || (month == 11 && day <= 21) -> "Scorpio ♏"
-        (month == 11 && day >= 22) || (month == 12 && day <= 21) -> "Sagittarius ♐"
-        (month == 12 && day >= 22) || (month == 1 && day <= 19) -> "Capricorn ♑"
-        (month == 1 && day >= 20) || (month == 2 && day <= 18) -> "Aquarius ♒"
-        else -> "Pisces ♓"
+    private val westernSignNames = listOf(
+        "Aries ♈", "Taurus ♉", "Gemini ♊", "Cancer ♋",
+        "Leo ♌", "Virgo ♍", "Libra ♎", "Scorpio ♏",
+        "Sagittarius ♐", "Capricorn ♑", "Aquarius ♒", "Pisces ♓"
+    )
+
+    /** Western (tropical) zodiac from the Sun's ecliptic longitude with cusp detection. */
+    fun getWesternZodiac(birthDate: LocalDate, birthTime: LocalTime? = null): String {
+        val snapshot = astronomy.snapshot(birthDate, birthTime)
+        val longitude = snapshot.tropicalSunLongitude
+        val index = ((longitude / 30.0).toInt() % 12 + 12) % 12
+        val name = westernSignNames[index]
+        val posInSign = longitude % 30.0
+        // Within 1° of a sign boundary — Sun moves ~1°/day so cusp = ±1 day of sign change
+        return if (posInSign < 1.0 || posInSign > 29.0) "$name ⚠ Cusp" else name
+    }
+
+    /** Western Moon sign from the Moon's tropical ecliptic longitude with cusp detection. */
+    fun getWesternMoonSign(birthDate: LocalDate, birthTime: LocalTime? = null): String {
+        val snapshot = astronomy.snapshot(birthDate, birthTime)
+        val longitude = snapshot.tropicalMoonLongitude
+        val index = ((longitude / 30.0).toInt() % 12 + 12) % 12
+        val name = westernSignNames[index]
+        val posInSign = longitude % 30.0
+        // Moon moves ~13°/day, so 1° ≈ ~2 hours near a boundary
+        return if (posInSign < 1.0 || posInSign > 29.0) "$name ⚠ Cusp" else name
     }
 
     /** Vedic Rashi derived from the Sun's sidereal ecliptic longitude (12 × 30° signs). */
     fun getRashi(birthDate: LocalDate, birthTime: LocalTime? = null): String {
-        val longitude = astronomy.siderealSunLongitude(birthDate, birthTime)
+        val snapshot = astronomy.snapshot(birthDate, birthTime)
+        val longitude = snapshot.siderealSunLongitude
         val index = ((longitude / 30.0).toInt() % 12 + 12) % 12
         val name = rashiOrder[index]
         val posInSign = longitude % 30.0
@@ -58,6 +72,20 @@ class ZodiacCalculator @Inject constructor(
         "Kumbha (कुम्भ)",         // 300° – 330°
         "Meena (मीन)",           // 330° – 360°
     )
+
+    private val rashiLords = listOf(
+        "Mars", "Venus", "Mercury", "Moon",
+        "Sun", "Mercury", "Venus", "Mars",
+        "Jupiter", "Saturn", "Saturn", "Jupiter",
+    )
+
+    /** Returns the ruling planet (graha) of the Vedic Rashi for the given birth date. */
+    fun getRashiLord(birthDate: LocalDate, birthTime: LocalTime? = null): String {
+        val snapshot = astronomy.snapshot(birthDate, birthTime)
+        val longitude = snapshot.siderealSunLongitude
+        val index = ((longitude / 30.0).toInt() % 12 + 12) % 12
+        return rashiLords[index]
+    }
 
     // ---------------------------------------------------------------------------
     // Chinese Zodiac — 12-year cycle, Lunar New Year aware
@@ -110,6 +138,37 @@ class ZodiacCalculator @Inject constructor(
         val month = if (approxDay > 31) 2 else 1
         val day = if (approxDay > 31) approxDay - 31 else approxDay
         return LocalDate.of(year, month, day.coerceIn(1, 28))
+    }
+
+    // ---------------------------------------------------------------------------
+    // Chinese Stem-Branch (Heavenly Stem + Earthly Branch) with Wu Xing element
+    // ---------------------------------------------------------------------------
+
+    private val heavenlyStems = listOf(
+        "甲 Jia", "乙 Yi", "丙 Bing", "丁 Ding", "戊 Wu",
+        "己 Ji", "庚 Geng", "辛 Xin", "壬 Ren", "癸 Gui",
+    )
+
+    private val stemElements = listOf(
+        "Wood", "Wood", "Fire", "Fire", "Earth",
+        "Earth", "Metal", "Metal", "Water", "Water",
+    )
+
+    private val earthlyBranches = listOf(
+        "子 Zi", "丑 Chou", "寅 Yin", "卯 Mao", "辰 Chen", "巳 Si",
+        "午 Wu", "未 Wei", "申 Shen", "酉 You", "戌 Xu", "亥 Hai",
+    )
+
+    /** Returns the full Chinese stem-branch with element, e.g. "Jia-Chen / Wood-Dragon". */
+    fun getChineseStemBranch(date: LocalDate): String {
+        val chineseYear = getChineseYear(date)
+        val stemIndex = ((chineseYear - 4) % 10 + 10) % 10
+        val branchIndex = ((chineseYear - 4) % 12 + 12) % 12
+        val stem = heavenlyStems[stemIndex]
+        val branch = earthlyBranches[branchIndex]
+        val element = stemElements[stemIndex]
+        val animal = chineseZodiacCycle[branchIndex].split(" ").last()
+        return "$stem-$branch / $element-$animal"
     }
 
     companion object {

@@ -1,6 +1,6 @@
 # AgeReveal — Tasks & Implementation Checklist
 
-_Last updated: 2026-04-23 — v0.9.1 (Settings screen ViewModel fix, Markdown updates)_
+_Last updated: 2026-04-24 — v0.9.2 (Astrology calculation improvements — EphemerisSnapshot, Nakshatra Pada, Western Moon sign, Rashi Lord, Chinese Stem-Branch)_
 
 ---
 
@@ -115,6 +115,48 @@ Pending:
 - [ ] **Days-until-retirement calculator** — Configurable target age; remaining working days + % of working life completed
 - [ ] **Lock screen widget** — API 33+ `AppWidgetProviderInfo.WIDGET_FEATURE_RECONFIGURABLE`
 - [ ] **Widgets for iOS** — Evaluate React Native or Flutter port with WidgetKit
+
+---
+
+## 5. Astrology Calculation Improvements (Active — feature/astrology-improvements-20260424)
+
+**Goal:** Improve accuracy, completeness, and user trust in all three astrology systems (Western, Vedic, Chinese). Address known approximation gaps and add deeper interpretive data.
+
+### 5a. Vedic Astrology Enhancements
+**Status:** Implemented in v0.9.2.
+
+- [x] **Nakshatra Pada (quarter) calculation** — Each nakshatra has 4 padas (3°20′ each). `NakshatraCalculator.getNakshatraWithPada()` exposes pada name in `DetailsUnlockScreen`.
+- [x] **Rashi lord (graha) display** — Each rashi has a ruling planet (e.g., Mesha → Mars). `ZodiacCalculator.getRashiLord()` added; displayed in `DetailsUnlockScreen`.
+- [ ] **Dasha (Vimshottari) approximation** — Compute the current Mahadasha / Antardasha based on Moon's nakshatra at birth. This is a major engagement feature; start with a simplified lookup table and a "Current Dasha" card in `DetailsUnlockScreen`.
+- [ ] **Tithi calculation** — Lunar day (1–30) derived from Moon–Sun elongation. Add `TithiCalculator` and a tithi card (useful for users who follow lunar calendars).
+- [ ] **Ayanamsa verification** — The current Lahiri formula is linear; verify against the standard 23.85306° + 5028.84″/cy − 1.397″/cy² formula used by NASA/JPL. Add unit tests against known ephemeris reference dates (e.g., 1 Jan 2000, 1 Jan 1950).
+- [ ] **Location (latitude/longitude) support** — Birth time alone is not enough for exact sidereal calculations; the ascendant (Lagna) changes every ~4 minutes. Add optional location picker (lat/lon or city search) and store it in `AgeResult` / `SavedBirthday`. **Blocked by:** UI design for location input.
+
+### 5b. Western Astrology Enhancements
+**Status:** Sun-longitude zodiac and Moon sign implemented in v0.9.2.
+
+- [x] **Sun longitude-based Western zodiac** — Replaced the static date-table in `ZodiacCalculator.getWesternZodiac()` with a call to `AstronomicalCalculator.sunLongitude()` so that users born on cusp dates get the astronomically correct sign. Cusp warning (⚠) added when within 1° of boundary.
+- [x] **Moon sign (Western)** — `ZodiacCalculator.getWesternMoonSign()` computes Moon's tropical longitude and displays the Western moon sign alongside the sun sign. Distinct from Vedic Rashi.
+- [ ] **Rising sign (Ascendant) approximation** — With birth time + location, compute the ascendant using the standard Campanus or Placidus house formula. Start with a simplified algorithm (sidereal time → ascendant longitude) and a disclaimer about accuracy.
+- [ ] **Planetary positions summary** — Show a "Planet | Sign" table (Sun, Moon, Mercury, Venus, Mars, Jupiter, Saturn) in a new "Planetary Positions" card. Re-use the existing Meeus formulas where possible.
+
+### 5c. Chinese Astrology Enhancements
+**Status:** Stem-branch with Wu Xing element implemented in v0.9.2.
+
+- [x] **Five-element (Wu Xing) stem-branch calculation** — `ZodiacCalculator.getChineseStemBranch()` returns the full Heavenly Stem + Earthly Branch (e.g., "Jia-Chen / Wood-Dragon" for 2024) with the associated element (Wood, Fire, Earth, Metal, Water).
+- [ ] **Chinese zodiac compatibility matrix** — Expand `ZodiacCompatibilityCalculator` with a proper 12×12 Chinese compatibility table (trine / clash / harm / punishment relationships) and blend it into the overall score.
+- [ ] **Ba Zi (Four Pillars) approximation** — Compute Year, Month, Day, and Hour pillars. This is the most requested Chinese-astrology feature. Start with Year and Month pillars only (Day pillar requires a lookup table for solar terms / 節氣).
+- [ ] **Lunar birthday display** — Show the user's birth date converted to Chinese lunar calendar (month + day). Use a simplified astronomical new-moon table or an existing library like `cn.lilytwins.lib:chinese-lunar-calendar`.
+
+### 5d. Cross-System Polish
+- [ ] **Unified astrology data model** — Create `AstrologyProfile` data class that holds all computed values (Western sun/moon/rising, Vedic rashi/nakshatra/pada/dasha lord, Chinese animal/stem-branch/element) so that `DetailsUnlockScreen`, `CompatibilityScreen`, and share cards draw from a single source of truth.
+- [ ] **Astrology deep-link / share card redesign** — The current share card shows only Western + Chinese zodiac. Redesign to show a 3-column layout (Western | Vedic | Chinese) or a tabbed view.
+- [ ] **Add explanatory tooltips** — Each card in `DetailsUnlockScreen` should have a small ℹ️ icon that opens `AstrologyExplanationDialog` with context-specific text (e.g., "Your Moon sign represents your emotional nature...").
+- [x] **Unit-test coverage for all new calculators** — Tests added for `NakshatraCalculator.getNakshatraWithPada()`, `ZodiacCalculator.getWesternZodiac()` (sun-longitude), `getWesternMoonSign()`, `getRashiLord()`, and `getChineseStemBranch()`.
+
+### 5e. Performance & Accuracy
+- [x] **Cache ephemeris results per calculation session** — `AstronomicalCalculator` now produces an `EphemerisSnapshot` per birth date-time, caching JD, tropical/sidereal Sun and Moon longitudes, and ayanamsa.
+- [ ] **Replace noon-default with time-zone-aware default** — When the user does not provide a birth time, the current code uses 12:00 local time (via `atTime(12, 0)`). For users in time zones far from UT, this can shift the Moon by several degrees. Use the device's current time zone offset as a better approximation, or at least document the limitation.
 
 ---
 
