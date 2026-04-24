@@ -1,6 +1,6 @@
 # AgeReveal — Bugs & Edge Case Issues
 
-_Last updated: 2026-04-23 — v0.9.1 (Phase 3 complete, Settings fix, ViewModel consolidation)_
+_Last updated: 2026-04-24 — v0.9.2 (Astrology improvements: EphemerisSnapshot, Nakshatra Pada, Western Moon sign, Rashi Lord, Chinese Stem-Branch)_
 
 This document tracks known bugs, edge cases, and fragile areas in the codebase. Resolved items are kept for historical reference. For planned work see [TASKS.md](TASKS.md).
 
@@ -314,7 +314,16 @@ This document tracks known bugs, edge cases, and fragile areas in the codebase. 
 
 ---
 
-## Recent Updates (v0.9.1)
+## Recent Updates (v0.9.2)
+
+| ID | Issue | Fixed In |
+|---|---|---|
+| BUG-032 | Western Zodiac used static date table instead of Sun longitude | v0.9.2 |
+| BUG-033 | AstronomicalCalculator recomputed JD/trig for every field | v0.9.2 |
+
+## Historical Updates
+
+### v0.9.1
 
 | ID | Issue | Fixed In |
 |---|---|---|

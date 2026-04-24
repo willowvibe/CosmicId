@@ -42,16 +42,16 @@
 
 ### Pending
 - [ ] **Hindi UI toggle** — In-app language switch using `AppCompatDelegate.setApplicationLocales`; requires `values-hi/strings.xml` translation file
-- [ ] **4 × 2 home screen widget** — Wider Glance widget showing 3 upcoming birthdays with days-remaining
-- [ ] **In-app review prompt** — Trigger `ReviewManager.requestReviewFlow()` after user shares their first card
+- [x] **4 × 2 home screen widget** — Wider Glance widget showing 3 upcoming birthdays with days-remaining
+- [x] **In-app review prompt** — Trigger `ReviewManager.requestReviewFlow()` after user shares their first card
 - [ ] **Remove Ads IAP (₹99)** — One-time purchase via Google Play Billing Library 6+; `AdManager` checks a `SharedPreferences` flag before loading any ad
 
 ---
 
 ## Phase 3: Depth & Retention 🔭 (Complete)
 
-**Branch:** `feature/phase-3-depth-retention`
-**Version:** 0.9.1
+**Branch:** `feature/astrology-improvements-20260424`
+**Version:** 0.9.2
 
 ### Completed ✅
 - [x] **Google Calendar Export** — `CalendarExport.kt` one-tap Intent to add any birthday to Google Calendar with app availability check
@@ -82,11 +82,11 @@
 
 ## Technical Debt Backlog ⚙️
 
-- [ ] **No automated tests** — Add unit tests for Room DAO and UI tests (Compose test)
+- [x] **No automated tests** — Unit tests added for all domain calculators in v0.9; Room DAO and UI tests (Compose test) still pending
 - [ ] **Room migration test** — Add `MigrationTestHelper` test for explicit `Migration(1, 2)`
 - [ ] **Inter font disabled** — `Type.kt` falls back to system sans-serif; font files not yet included in the repo
-- [ ] **Bitmap rendering on main thread** — `ShareCardGenerator` bitmap generation runs on Dispatchers.Default, but `startActivity` is posted to main thread
-- [ ] **CalendarExport no fallback** — If no calendar app is installed the Intent fails silently; need a `resolveActivity` guard (v0.5 implemented `isCalendarAppAvailable()`)
+- [x] **Bitmap rendering on main thread** — `ShareCardGenerator` bitmap generation moved to `Dispatchers.IO` in v0.9
+- [x] **CalendarExport no fallback** — `isCalendarAppAvailable()` guard added in v0.5
 - [ ] **SecurityException handling** — Handle `SCHEDULE_EXACT_ALARM` permission not granted on Android 12+; show settings-deep-link prompt
 
 ---
@@ -95,10 +95,10 @@
 
 | Item | Value |
 |---|---|
-| Version | 0.9.1 |
+| Version | 0.9.2 |
 | minSdk | 26 (desugaring enables API 21+) |
 | targetSdk | 35 |
 | compileSdk | 36 |
 | Debug APK | `app/build/outputs/apk/debug/app-debug.apk` |
-| Active branch | `feature/phase-3-depth-retention` |
+| Active branch | `feature/astrology-improvements-20260424` |
 | Build Status | ✅ Passing tests, all known bugs resolved |

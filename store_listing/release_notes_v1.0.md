@@ -12,6 +12,12 @@ Highlights
 - 🪟 **4×2 wide widget** — next 3 upcoming birthdays on your home screen
 - ⭐ **In-app review** — rate us right from the app after sharing your card
 - 🔒 **Room migration** — safe DB schema upgrades (your saved birthdays survive future updates)
+- 🔮 **Enhanced Astrology** —
+  - Western Zodiac now uses Sun longitude (not a static date table) with cusp detection
+  - Western Moon Sign — your emotional-nature sign
+  - Nakshatra Pada — the quarter (1st–4th) of your lunar mansion
+  - Rashi Lord — the ruling planet of your Vedic sun sign
+  - Chinese Stem-Branch — full Heavenly Stem + Earthly Branch with Wu Xing element (e.g., "Jia-Chen / Wood-Dragon")
 
 Fixes
 - Theme selector now persists across restarts
@@ -19,3 +25,4 @@ Fixes
 - Share cards are a perfect square (900×900) so no more cropping on WhatsApp/Instagram
 - Milestone notification IDs can no longer collide with birthday IDs
 - BirthdayRepository notifies both the 2×2 and 4×2 widgets after every change
+- Ephemeris calculations are now cached per birth moment for better performance
