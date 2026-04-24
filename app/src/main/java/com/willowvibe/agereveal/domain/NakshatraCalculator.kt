@@ -33,7 +33,8 @@ class NakshatraCalculator @Inject constructor(
     )
 
     fun getNakshatra(birthDate: LocalDate, birthTime: LocalTime? = null): String {
-        val longitude = astronomy.siderealMoonLongitude(birthDate, birthTime)
+        val snapshot = astronomy.snapshot(birthDate, birthTime)
+        val longitude = snapshot.siderealMoonLongitude
         val index = ((longitude / nakshatraArc).toInt() % 27 + 27) % 27
         val name = nakshatraNames[index]
         val posInNakshatra = longitude % nakshatraArc

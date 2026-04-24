@@ -103,17 +103,27 @@ class AstronomicalCalculator @Inject constructor() {
         return 23.85306 + t * (5028.84 / 3600.0) - t * t * (1.397 / 3600.0)
     }
 
-    fun siderealSunLongitude(birthDate: LocalDate, birthTime: LocalTime? = null): Double {
+    fun snapshot(birthDate: LocalDate, birthTime: LocalTime? = null): EphemerisSnapshot {
         val localDateTime = birthTime?.let { bt -> birthDate.atTime(bt) } ?: birthDate.atTime(12, 0)
         val jd = julianDay(localDateTime)
-        return norm360(sunLongitude(jd) - lahiriAyanamsa(jd))
+        val ayanamsa = lahiriAyanamsa(jd)
+        val sun = sunLongitude(jd)
+        val moon = moonLongitude(jd)
+        return EphemerisSnapshot(
+            jd = jd,
+            tropicalSunLongitude = sun,
+            siderealSunLongitude = norm360(sun - ayanamsa),
+            tropicalMoonLongitude = moon,
+            siderealMoonLongitude = norm360(moon - ayanamsa),
+            ayanamsa = ayanamsa,
+        )
     }
 
-    fun siderealMoonLongitude(birthDate: LocalDate, birthTime: LocalTime? = null): Double {
-        val localDateTime = birthTime?.let { bt -> birthDate.atTime(bt) } ?: birthDate.atTime(12, 0)
-        val jd = julianDay(localDateTime)
-        return norm360(moonLongitude(jd) - lahiriAyanamsa(jd))
-    }
+    fun siderealSunLongitude(birthDate: LocalDate, birthTime: LocalTime? = null): Double =
+        snapshot(birthDate, birthTime).siderealSunLongitude
+
+    fun siderealMoonLongitude(birthDate: LocalDate, birthTime: LocalTime? = null): Double =
+        snapshot(birthDate, birthTime).siderealMoonLongitude
 
     /** Julian Day Number at the given date-time (for precise calculations with birth time). */
     fun julianDay(dateTime: java.time.LocalDateTime): Double {

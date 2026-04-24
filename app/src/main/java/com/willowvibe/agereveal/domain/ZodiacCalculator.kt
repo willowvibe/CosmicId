@@ -36,7 +36,8 @@ class ZodiacCalculator @Inject constructor(
 
     /** Vedic Rashi derived from the Sun's sidereal ecliptic longitude (12 × 30° signs). */
     fun getRashi(birthDate: LocalDate, birthTime: LocalTime? = null): String {
-        val longitude = astronomy.siderealSunLongitude(birthDate, birthTime)
+        val snapshot = astronomy.snapshot(birthDate, birthTime)
+        val longitude = snapshot.siderealSunLongitude
         val index = ((longitude / 30.0).toInt() % 12 + 12) % 12
         val name = rashiOrder[index]
         val posInSign = longitude % 30.0
