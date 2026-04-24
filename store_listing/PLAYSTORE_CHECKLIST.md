@@ -27,7 +27,7 @@ cp keystore.properties.example keystore.properties
 
 | Field | Value |
 |---|---|
-| App name | Age Calculator: Birthday Days |
+| App name | AgeReveal |
 | Default language | English (United States) |
 | App category | Lifestyle |
 | Free / Paid | Free |

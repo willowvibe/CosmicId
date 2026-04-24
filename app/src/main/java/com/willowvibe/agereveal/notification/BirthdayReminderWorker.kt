@@ -3,8 +3,11 @@ package com.willowvibe.agereveal.notification
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.os.Build
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
+import androidx.core.content.ContextCompat
 import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
@@ -28,6 +31,17 @@ class BirthdayReminderWorker @AssistedInject constructor(
         val id   = inputData.getLong(BirthdayNotificationScheduler.KEY_ID, -1L)
 
         if (id < 0) return Result.failure()
+
+        // Android 13+ (API 33): POST_NOTIFICATIONS is a runtime permission.
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(
+                    applicationContext,
+                    android.Manifest.permission.POST_NOTIFICATIONS,
+                ) != PackageManager.PERMISSION_GRANTED
+            ) {
+                return Result.failure()
+            }
+        }
 
         val intent = Intent(applicationContext, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK

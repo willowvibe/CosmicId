@@ -66,6 +66,8 @@ import java.time.format.FormatStyle
 @Composable
 fun CompareScreen(
     viewModel: CompareViewModel = hiltViewModel(),
+    defaultDateA: java.time.LocalDate? = null,
+    defaultNameA: String = "",
     onShowInterstitial: () -> Unit,
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -84,6 +86,16 @@ fun CompareScreen(
     }
     LaunchedEffect(uiState.error) {
         uiState.error?.let { snackbarHostState.showSnackbar(it); viewModel.clearError() }
+    }
+
+    // Pre-fill Person A with "You" tab data on first visit
+    LaunchedEffect(Unit) {
+        if (uiState.dateA == null && defaultDateA != null) {
+            viewModel.onPersonADateSelected(defaultDateA, defaultNameA.ifBlank { "Person A" })
+        }
+        if (uiState.labelA == "Person A" && defaultNameA.isNotBlank()) {
+            viewModel.onPersonANameChanged(defaultNameA)
+        }
     }
 
     Box(

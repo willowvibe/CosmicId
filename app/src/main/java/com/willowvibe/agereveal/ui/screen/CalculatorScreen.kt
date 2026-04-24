@@ -62,6 +62,12 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.AdSize
@@ -98,6 +104,7 @@ fun CalculatorScreen(
     val uiState by viewModel.uiState.collectAsState()
     val ticker by viewModel.tickerSeconds.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
+    val focusManager = LocalFocusManager.current
     var showThemePicker by remember { mutableStateOf(false) }
 
     LaunchedEffect(ticker) { viewModel.onTick() }
@@ -172,6 +179,7 @@ fun CalculatorScreen(
             Column(
                 modifier = Modifier
                     .weight(1f)
+                    .pointerInput(Unit) { detectTapGestures { focusManager.clearFocus() } }
                     .verticalScroll(rememberScrollState())
                     .padding(horizontal = 20.dp),
                 verticalArrangement = Arrangement.spacedBy(18.dp),
@@ -190,6 +198,8 @@ fun CalculatorScreen(
                     },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                    keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = WarmTeal,
                         unfocusedBorderColor = WarmInkDim,
@@ -230,13 +240,41 @@ fun CalculatorScreen(
                             // ── Next milestone countdown ──────────────────────
                             NextMilestoneChip(result)
 
-                            // ── Teased cosmic profile ─────────────────────────
-                            TeasedDetails(
-                                result = result,
-                                isUnlocked = uiState.isUnlocked,
-                                onReveal = onUnlockMore,
-                                onShare = { showThemePicker = true },
-                            )
+                            // ── Cosmic profile ────────────────────────────────
+                            if (!uiState.isUnlocked) {
+                                WatchAdBanner(
+                                    isLoading = uiState.isAdLoading,
+                                    onWatch = onUnlockMore,
+                                )
+                                Spacer(Modifier.height(14.dp))
+                            }
+                            AstroTile(result = result, isUnlocked = uiState.isUnlocked)
+
+                            if (uiState.isUnlocked) {
+                                Spacer(Modifier.height(14.dp))
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clip(RoundedCornerShape(14.dp))
+                                        .background(WarmSurface)
+                                        .clickable { showThemePicker = true }
+                                        .padding(16.dp),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically,
+                                ) {
+                                    Text(
+                                        "Share your cosmic profile",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = WarmInk,
+                                    )
+                                    Icon(
+                                        imageVector = Icons.Default.Share,
+                                        contentDescription = "Share",
+                                        tint = WarmTeal,
+                                        modifier = Modifier.size(20.dp),
+                                    )
+                                }
+                            }
                         }
                     }
                 } ?: run {

@@ -144,7 +144,7 @@ fun DetailsUnlockScreen(
 // ─────────────────────────────────────────────────────────────────────────────
 
 @Composable
-private fun AstroTile(result: AgeResult, isUnlocked: Boolean) {
+internal fun AstroTile(result: AgeResult, isUnlocked: Boolean) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -325,7 +325,7 @@ private fun AstroTile(result: AgeResult, isUnlocked: Boolean) {
 // ─────────────────────────────────────────────────────────────────────────────
 
 @Composable
-private fun WatchAdBanner(isLoading: Boolean, onWatch: () -> Unit) {
+internal fun WatchAdBanner(isLoading: Boolean, onWatch: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -578,7 +578,7 @@ private fun formatHeartbeatsLong(n: Long): String = when {
     else -> "%,d".format(n)
 }
 
-private fun moonPhaseHint(month: Int): String = when (month) {
+internal fun moonPhaseHint(month: Int): String = when (month) {
     1, 2 -> "waxing crescent moon"
     3, 4 -> "full moon season"
     5, 6 -> "waning gibbous moon"

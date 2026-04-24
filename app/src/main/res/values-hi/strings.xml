@@ -1,15 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- App -->
-    <string name="app_name">उम्र कैलकुलेटर: जन्मदिन के दिन</string>
+    <string name="app_name">AgeReveal</string>
     <string name="app_short_name">AgeReveal</string>
     <string name="widget_description">जन्मदिन काउंटडाउन विजेट — अगले सहेजे गए जन्मदिन तक बचे दिन दिखाता है।</string>
     <string name="widget_description_wide">वाइड जन्मदिन विजेट — अगले 3 आगामी जन्मदिन दिखाता है।</string>
 
     <!-- Bottom navigation -->
-    <string name="nav_age">उम्र</string>
+    <string name="nav_age">आप</string>
     <string name="nav_profile">प्रोफ़ाइल</string>
-    <string name="nav_compare">तुलना</string>
+    <!-- nav_compare removed — Compare tab replaced by Match -->
     <string name="nav_match">मिलान</string>
     <string name="nav_birthdays">जन्मदिन</string>
     <string name="nav_settings">सेटिंग्स</string>
@@ -89,6 +89,10 @@
     <string name="cd_delete_all">सभी सहेजे गए जन्मदिन मिटाएँ</string>
     <string name="cd_warning">चेतावनी: यह सभी जन्मदिन स्थायी रूप से हटा देगा</string>
     <string name="cd_toggle_notification">सूचना टॉगल करें</string>
+
+    <!-- Age comparison -->
+    <string name="age_comparison">उम्र तुलना</string>
+    <string name="age_same">दोनों की उम्र समान है ✦</string>
 
     <!-- Milestones -->
     <string name="life_timeline">जीवन टाइमलाइन</string>
