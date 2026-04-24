@@ -37,6 +37,7 @@ data class AgeResult(
     // Zodiac & Vedic (unlockable)
     val westernZodiac: String = "",
     val rashi: String = "",
+    val rashiLord: String = "",
     val nakshatra: String = "",
     val nakshatraPada: String = "",
     val chineseZodiac: String = "",

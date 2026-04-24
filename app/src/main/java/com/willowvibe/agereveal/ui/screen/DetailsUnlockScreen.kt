@@ -204,6 +204,22 @@ private fun AstroTile(result: AgeResult, isUnlocked: Boolean) {
                         color = WarmInk,
                     )
                 }
+                if (result.rashiLord.isNotEmpty()) {
+                    Spacer(Modifier.height(4.dp))
+                    Row {
+                        Text(
+                            "Rashi Lord ",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = WarmInkMute
+                        )
+                        Text(
+                            result.rashiLord,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = WarmInk,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+                }
                 if (result.nakshatra.isNotEmpty()) {
                     Spacer(Modifier.height(8.dp))
                     Row {

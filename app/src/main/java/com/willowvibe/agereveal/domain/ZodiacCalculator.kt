@@ -62,6 +62,20 @@ class ZodiacCalculator @Inject constructor(
         "Meena (मीन)",           // 330° – 360°
     )
 
+    private val rashiLords = listOf(
+        "Mars", "Venus", "Mercury", "Moon",
+        "Sun", "Mercury", "Venus", "Mars",
+        "Jupiter", "Saturn", "Saturn", "Jupiter",
+    )
+
+    /** Returns the ruling planet (graha) of the Vedic Rashi for the given birth date. */
+    fun getRashiLord(birthDate: LocalDate, birthTime: LocalTime? = null): String {
+        val snapshot = astronomy.snapshot(birthDate, birthTime)
+        val longitude = snapshot.siderealSunLongitude
+        val index = ((longitude / 30.0).toInt() % 12 + 12) % 12
+        return rashiLords[index]
+    }
+
     // ---------------------------------------------------------------------------
     // Chinese Zodiac — 12-year cycle, Lunar New Year aware
     // ---------------------------------------------------------------------------

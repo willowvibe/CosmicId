@@ -139,4 +139,30 @@ class ZodiacCalculatorTest {
             calculator.getRashi(d) // must not throw
         }
     }
+
+    // -------------------------------------------------------------------------
+    // Rashi Lord
+    // -------------------------------------------------------------------------
+
+    @Test
+    fun `rashi lord returns a known planet`() {
+        val lord = calculator.getRashiLord(LocalDate.of(1990, 6, 15))
+        val knownLords = listOf("Sun", "Moon", "Mars", "Mercury", "Jupiter", "Venus", "Saturn")
+        assertTrue("Unknown lord: $lord", lord in knownLords)
+    }
+
+    @Test
+    fun `rashi lord matches rashi index`() {
+        // Mesha (Aries) lord = Mars
+        val meshaLord = calculator.getRashiLord(LocalDate.of(2020, 4, 15))
+        assertEquals("Mars", meshaLord)
+    }
+
+    @Test
+    fun `no exception thrown for rashi lord across full year`() {
+        val start = LocalDate.of(2000, 1, 1)
+        for (i in 0..364) {
+            calculator.getRashiLord(start.plusDays(i.toLong()))
+        }
+    }
 }
