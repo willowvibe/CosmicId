@@ -1,8 +1,15 @@
 package com.willowvibe.agereveal.domain
 
 import java.time.LocalDate
+import java.time.Period
 import javax.inject.Inject
 import javax.inject.Singleton
+
+data class AgeInfo(
+    val years: Int,
+    val months: Int,
+    val days: Int,
+)
 
 data class CompatibilityResult(
     val personAWestern: String,
@@ -18,6 +25,10 @@ data class CompatibilityResult(
     val description: String,
     val nameA: String = "",
     val nameB: String = "",
+    val relationshipType: RelationshipType = RelationshipType.Romantic,
+    val personAAge: AgeInfo? = null,
+    val personBAge: AgeInfo? = null,
+    val ageGapLabel: String = "",
 )
 
 @Singleton
@@ -25,7 +36,13 @@ class ZodiacCompatibilityCalculator @Inject constructor(
     private val zodiacCalculator: ZodiacCalculator,
 ) {
 
-    fun calculate(dateA: LocalDate, dateB: LocalDate, nameA: String = "", nameB: String = ""): CompatibilityResult {
+    fun calculate(
+        dateA: LocalDate,
+        dateB: LocalDate,
+        nameA: String = "",
+        nameB: String = "",
+        relationshipType: RelationshipType = RelationshipType.Romantic,
+    ): CompatibilityResult {
         val westernA = zodiacCalculator.getWesternZodiac(dateA)
         val westernB = zodiacCalculator.getWesternZodiac(dateB)
         val chineseA = zodiacCalculator.getChineseZodiac(dateA)
@@ -34,7 +51,20 @@ class ZodiacCompatibilityCalculator @Inject constructor(
         val elementB = getWesternElement(dateB.monthValue, dateB.dayOfMonth)
         val westernScore = westernCompatibilityScore(dateA, dateB)
         val chineseScore = chineseCompatibilityScore(dateA, dateB)
-        val overallScore = (westernScore * 0.5 + chineseScore * 0.5).toInt()
+        val overallScore = when (relationshipType) {
+            RelationshipType.Romantic -> (westernScore * 0.5 + chineseScore * 0.5).toInt()
+            RelationshipType.Sibling -> (westernScore * 0.4 + chineseScore * 0.6).toInt()
+            RelationshipType.Friendship -> (westernScore * 0.6 + chineseScore * 0.4).toInt()
+            RelationshipType.Regular -> (westernScore * 0.5 + chineseScore * 0.5).toInt()
+        }
+        val today = LocalDate.now()
+        val ageA = Period.between(dateA, today)
+        val ageB = Period.between(dateB, today)
+        val ageGapLabel = computeAgeGapLabel(
+            nameA.ifEmpty { "Person A" },
+            nameB.ifEmpty { "Person B" },
+            dateA, dateB,
+        )
         return CompatibilityResult(
             personAWestern = westernA,
             personBWestern = westernB,
@@ -44,11 +74,15 @@ class ZodiacCompatibilityCalculator @Inject constructor(
             personBChinese = chineseB,
             westernScore = westernScore,
             chineseScore = chineseScore,
-            overallScore = overallScore,
-            headline = getHeadline(overallScore),
-            description = getDescription(elementA, elementB),
+            overallScore = overallScore.coerceIn(0, 100),
+            headline = getHeadline(overallScore.coerceIn(0, 100), relationshipType),
+            description = getDescription(elementA, elementB, relationshipType),
             nameA = nameA,
             nameB = nameB,
+            relationshipType = relationshipType,
+            personAAge = AgeInfo(ageA.years, ageA.months, ageA.days),
+            personBAge = AgeInfo(ageB.years, ageB.months, ageB.days),
+            ageGapLabel = ageGapLabel,
         )
     }
 
@@ -105,48 +139,160 @@ class ZodiacCompatibilityCalculator @Inject constructor(
         }
     }
 
-    private fun getHeadline(score: Int): String = when {
-        score >= 90 -> "Cosmic Soulmates ✨"
-        score >= 80 -> "Deeply Compatible 💫"
-        score >= 70 -> "Strong Connection 🌟"
-        score >= 60 -> "Good Match 💛"
-        score >= 50 -> "Balanced Pair ⚖️"
-        score >= 40 -> "Growth Partnership 🌱"
-        else -> "Dynamic Tension ⚡"
+    private fun getHeadline(score: Int, type: RelationshipType): String = when (type) {
+        RelationshipType.Romantic -> when {
+            score >= 90 -> "Cosmic Soulmates ✨"
+            score >= 80 -> "Deeply Compatible 💫"
+            score >= 70 -> "Strong Connection 🌟"
+            score >= 60 -> "Good Match 💛"
+            score >= 50 -> "Balanced Pair ⚖️"
+            score >= 40 -> "Growth Partnership 🌱"
+            else -> "Dynamic Tension ⚡"
+        }
+        RelationshipType.Sibling -> when {
+            score >= 90 -> "Soul Siblings ✨"
+            score >= 80 -> "Deeply Bonded 💫"
+            score >= 70 -> "Strong Kinship 🌟"
+            score >= 60 -> "Family Harmony 💛"
+            score >= 50 -> "Balanced Siblings ⚖️"
+            score >= 40 -> "Learning Together 🌱"
+            else -> "Contrasting Spirits ⚡"
+        }
+        RelationshipType.Friendship -> when {
+            score >= 90 -> "Kindred Spirits ✨"
+            score >= 80 -> "True Friends 💫"
+            score >= 70 -> "Strong Friendship 🌟"
+            score >= 60 -> "Good Companions 💛"
+            score >= 50 -> "Balanced Buddies ⚖️"
+            score >= 40 -> "Growing Together 🌱"
+            else -> "Dynamic Duo ⚡"
+        }
+        RelationshipType.Regular -> when {
+            score >= 90 -> "Cosmic Alignment ✨"
+            score >= 80 -> "Deep Harmony 💫"
+            score >= 70 -> "Strong Resonance 🌟"
+            score >= 60 -> "Good Fit 💛"
+            score >= 50 -> "Balanced Pair ⚖️"
+            score >= 40 -> "Mutual Growth 🌱"
+            else -> "Dynamic Contrast ⚡"
+        }
     }
 
-    private fun getDescription(elementA: String, elementB: String): String {
+    private fun getDescription(elementA: String, elementB: String, type: RelationshipType): String {
         val pair = setOf(elementA, elementB)
-        return when {
-            pair == setOf("Fire", "Air") ->
-                "Fire and Air fuel each other — an energetic, passionate connection full of ideas and adventure."
-
-            pair == setOf("Earth", "Water") ->
-                "Earth and Water nourish each other — a deeply grounded and emotionally fulfilling bond."
-
-            elementA == elementB && elementA == "Fire" ->
-                "Two Fire signs ignite together — intense chemistry, passion, and shared drive."
-
-            elementA == elementB && elementA == "Earth" ->
-                "Two Earth signs build steadily — reliable, practical, and deeply loyal."
-
-            elementA == elementB && elementA == "Air" ->
-                "Two Air signs connect intellectually — brilliant conversations and shared ideals."
-
-            elementA == elementB && elementA == "Water" ->
-                "Two Water signs flow together — deep empathy and emotional understanding."
-
-            pair == setOf("Fire", "Water") ->
-                "Fire and Water challenge each other — intense attraction with opposing energies requiring balance."
-
-            pair == setOf("Fire", "Earth") ->
-                "Fire and Earth complement each other — passion tempered by practicality."
-
-            pair == setOf("Air", "Water") ->
-                "Air and Water bring dreams to life — imagination meets deep feeling."
-
-            else ->
-                "Air and Earth balance each other — creative thinking grounded in stability."
+        return when (type) {
+            RelationshipType.Romantic -> partnerDescription(pair, elementA, elementB)
+            RelationshipType.Sibling -> siblingDescription(pair, elementA, elementB)
+            RelationshipType.Friendship -> friendDescription(pair, elementA, elementB)
+            RelationshipType.Regular -> regularDescription(pair, elementA, elementB)
         }
+    }
+
+    private fun partnerDescription(pair: Set<String>, elementA: String, elementB: String): String = when {
+        pair == setOf("Fire", "Air") ->
+            "Fire and Air fuel each other — an energetic, passionate connection full of ideas and adventure."
+        pair == setOf("Earth", "Water") ->
+            "Earth and Water nourish each other — a deeply grounded and emotionally fulfilling bond."
+        elementA == elementB && elementA == "Fire" ->
+            "Two Fire signs ignite together — intense chemistry, passion, and shared drive."
+        elementA == elementB && elementA == "Earth" ->
+            "Two Earth signs build steadily — reliable, practical, and deeply loyal."
+        elementA == elementB && elementA == "Air" ->
+            "Two Air signs connect intellectually — brilliant conversations and shared ideals."
+        elementA == elementB && elementA == "Water" ->
+            "Two Water signs flow together — deep empathy and emotional understanding."
+        pair == setOf("Fire", "Water") ->
+            "Fire and Water challenge each other — intense attraction with opposing energies requiring balance."
+        pair == setOf("Fire", "Earth") ->
+            "Fire and Earth complement each other — passion tempered by practicality."
+        pair == setOf("Air", "Water") ->
+            "Air and Water bring dreams to life — imagination meets deep feeling."
+        else ->
+            "Air and Earth balance each other — creative thinking grounded in stability."
+    }
+
+    private fun siblingDescription(pair: Set<String>, elementA: String, elementB: String): String = when {
+        pair == setOf("Fire", "Air") ->
+            "One sibling sparks ideas, the other fans the flames — a lively household full of energy and laughter."
+        pair == setOf("Earth", "Water") ->
+            "A nurturing sibling bond — one offers steady support while the other brings emotional depth."
+        elementA == elementB && elementA == "Fire" ->
+            "Two fiery siblings — competitive but fiercely protective of each other."
+        elementA == elementB && elementA == "Earth" ->
+            "Reliable and loyal siblings who always have each other's backs through thick and thin."
+        elementA == elementB && elementA == "Air" ->
+            "Curious and communicative siblings who love debating ideas and exploring the world together."
+        elementA == elementB && elementA == "Water" ->
+            "Deeply intuitive siblings who understand each other without words — a profound emotional bond."
+        pair == setOf("Fire", "Water") ->
+            "Contrasting energies create a dynamic sibling relationship — passion meets patience."
+        pair == setOf("Fire", "Earth") ->
+            "One sibling dreams big, the other keeps things practical — a complementary team."
+        pair == setOf("Air", "Water") ->
+            "Imagination meets feeling — siblings who create beautiful memories together."
+        else ->
+            "Grounded and thoughtful siblings — one brings ideas, the other brings structure."
+    }
+
+    private fun friendDescription(pair: Set<String>, elementA: String, elementB: String): String = when {
+        pair == setOf("Fire", "Air") ->
+            "An unstoppable friend duo — Fire brings boldness, Air brings fresh perspectives. Adventure awaits."
+        pair == setOf("Earth", "Water") ->
+            "A comforting friendship — Earth keeps things real while Water understands your feelings deeply."
+        elementA == elementB && elementA == "Fire" ->
+            "Two fire spirits as friends — always ready for spontaneity, excitement, and mutual encouragement."
+        elementA == elementB && elementA == "Earth" ->
+            "Steadfast friends who show up consistently — loyalty and trust define this bond."
+        elementA == elementB && elementA == "Air" ->
+            "Intellectual besties — endless conversations, shared curiosity, and mental stimulation."
+        elementA == elementB && elementA == "Water" ->
+            "Emotionally in-sync friends who offer genuine empathy and a safe space for vulnerability."
+        pair == setOf("Fire", "Water") ->
+            "A friendship of contrasts — one motivates action, the other brings reflection. Both grow."
+        pair == setOf("Fire", "Earth") ->
+            "The dreamer and the planner — friends who balance ambition with grounded support."
+        pair == setOf("Air", "Water") ->
+            "One friend lifts you with ideas, the other holds you with understanding — a beautiful balance."
+        else ->
+            "Creative and stable friends — you bring out the best in each other's strengths."
+    }
+
+    private fun regularDescription(pair: Set<String>, elementA: String, elementB: String): String = when {
+        pair == setOf("Fire", "Air") ->
+            "Fire and Air create momentum together — energetic collaboration and mutual inspiration."
+        pair == setOf("Earth", "Water") ->
+            "Earth and Water blend naturally — stable support meets emotional awareness."
+        elementA == elementB && elementA == "Fire" ->
+            "Two Fire energies amplify each other — bold, passionate, and action-oriented together."
+        elementA == elementB && elementA == "Earth" ->
+            "Shared Earth brings consistency, dependability, and a solid foundation to this connection."
+        elementA == elementB && elementA == "Air" ->
+            "Two Air minds think alike — intellectual exchange and forward-looking perspectives."
+        elementA == elementB && elementA == "Water" ->
+            "Two Water souls resonate — empathy, intuition, and emotional depth in harmony."
+        pair == setOf("Fire", "Water") ->
+            "Opposing forces create a balanced dynamic — energy and calm in productive tension."
+        pair == setOf("Fire", "Earth") ->
+            "Fire inspires action, Earth provides structure — a complementary pairing."
+        pair == setOf("Air", "Water") ->
+            "Ideas meet intuition — a connection that bridges thought and feeling."
+        else ->
+            "Creative vision meets practical grounding — a well-rounded dynamic."
+    }
+
+    private fun computeAgeGapLabel(nameA: String, nameB: String, dateA: LocalDate, dateB: LocalDate): String {
+        if (dateA == dateB) return "Both are the same age ✦"
+        val (olderName, olderDate, youngerDate) = if (dateA.isBefore(dateB)) {
+            Triple(nameA, dateA, dateB)
+        } else {
+            Triple(nameB, dateB, dateA)
+        }
+        val gap = Period.between(olderDate, youngerDate)
+        val parts = mutableListOf<String>()
+        if (gap.years > 0) parts.add("${gap.years} year${if (gap.years == 1) "" else "s"}")
+        if (gap.months > 0) parts.add("${gap.months} month${if (gap.months == 1) "" else "s"}")
+        if (gap.days > 0) parts.add("${gap.days} day${if (gap.days == 1) "" else "s"}")
+        val gapString = parts.joinToString(", ")
+        return "$olderName is older by $gapString"
     }
 }

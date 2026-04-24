@@ -8,7 +8,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Cake
 import androidx.compose.material.icons.filled.Calculate
-import androidx.compose.material.icons.automirrored.filled.CompareArrows
+// Compare tab removed — Match tab handles cosmic compatibility
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Star
@@ -21,6 +21,7 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -41,7 +42,7 @@ import com.willowvibe.agereveal.ads.AdManager
 import com.willowvibe.agereveal.domain.ShareCardGenerator
 import com.willowvibe.agereveal.ui.screen.CalculatorScreen
 import com.willowvibe.agereveal.ui.screen.CompatibilityScreen
-import com.willowvibe.agereveal.ui.screen.CompareScreen
+// CompareScreen removed — functionality merged into Match tab
 import com.willowvibe.agereveal.ui.screen.DetailsUnlockScreen
 import com.willowvibe.agereveal.ui.screen.LifeTimelineScreen
 import com.willowvibe.agereveal.ui.screen.RemindersScreen
@@ -57,9 +58,9 @@ import com.willowvibe.agereveal.ui.viewmodel.SettingsViewModel
 import kotlinx.coroutines.launch
 
 sealed class Screen(val route: String, val label: String, val icon: ImageVector) {
-    data object Calculator : Screen("calculator", "Age", Icons.Default.Calculate)
+    data object Calculator : Screen("calculator", "You", Icons.Default.Calculate)
     data object Details : Screen("details", "Profile", Icons.Default.Star)
-    data object Compare : Screen("compare", "Compare", Icons.AutoMirrored.Filled.CompareArrows)
+    // data object Compare removed — Match tab now handles all compatibility
     data object Compatibility : Screen("compatibility", "Match", Icons.Default.Favorite)
     data object Reminders : Screen("reminders", "Bdays", Icons.Default.Cake)
     data object Settings : Screen("settings", "Settings", Icons.Default.Settings)
@@ -68,11 +69,8 @@ sealed class Screen(val route: String, val label: String, val icon: ImageVector)
 
 private val bottomNavItems = listOf(
     Screen.Calculator,
-    Screen.Details,
-    Screen.Compare,
     Screen.Compatibility,
     Screen.Reminders,
-    Screen.Settings,
     Screen.Timeline,
 )
 
@@ -145,7 +143,6 @@ fun AppNavGraph(adManager: AdManager) {
                         adManager.showRewardedAd(
                             onRewarded = {
                                 viewModel.onRewardedAdEarned()
-                                navController.navigate(Screen.Details.route)
                             },
                             onNotReady = {
                                 scope.launch {
@@ -179,17 +176,22 @@ fun AppNavGraph(adManager: AdManager) {
                     onShareMilestone = { milestone -> viewModel.shareMilestoneCard(milestone, activity = activity) },
                 )
             }
-            composable(Screen.Compare.route) {
-                CompareScreen(onShowInterstitial = { adManager.maybeShowInterstitial() })
+            composable(Screen.Compatibility.route) { backStackEntry ->
+                val viewModel: CompatibilityViewModel = hiltViewModel(backStackEntry)
+                val calcEntry = remember(navController) {
+                    runCatching { navController.getBackStackEntry(Screen.Calculator.route) }.getOrNull()
+                }
+                val calcVm = calcEntry?.let { hiltViewModel<CalculatorViewModel>(it) }
+                val defaultDateA = remember(calcVm) { calcVm?.uiState?.value?.birthDate }
+                val defaultNameA = remember(calcVm) { calcVm?.uiState?.value?.name ?: "" }
+                CompatibilityScreen(
+                    viewModel = viewModel,
+                    defaultDateA = defaultDateA,
+                    defaultNameA = defaultNameA,
+                )
             }
-            composable(Screen.Compatibility.route) {
-                val navEntry = navController.getBackStackEntry(Screen.Compatibility.route)
-                val viewModel: CompatibilityViewModel = hiltViewModel(navEntry)
-                CompatibilityScreen(viewModel = viewModel)
-            }
-            composable(Screen.Reminders.route) {
-                val navEntry = navController.getBackStackEntry(Screen.Reminders.route)
-                val viewModel: RemindersViewModel = hiltViewModel(navEntry)
+            composable(Screen.Reminders.route) { backStackEntry ->
+                val viewModel: RemindersViewModel = hiltViewModel(backStackEntry)
                 RemindersScreen(
                     viewModel = viewModel,
                     onNavigateToSettings = { navController.navigate(Screen.Settings.route) },

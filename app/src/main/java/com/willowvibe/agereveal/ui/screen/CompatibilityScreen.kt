@@ -50,12 +50,16 @@ import com.willowvibe.agereveal.domain.ShareCardGenerator
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.willowvibe.agereveal.R
+import com.willowvibe.agereveal.domain.AgeInfo
 import com.willowvibe.agereveal.domain.CompatibilityResult
+import com.willowvibe.agereveal.domain.RelationshipType
 import com.willowvibe.agereveal.ui.theme.SerifFamily
 import com.willowvibe.agereveal.ui.theme.WarmAmber
 import com.willowvibe.agereveal.ui.theme.WarmBlack
@@ -76,6 +80,8 @@ import java.time.format.FormatStyle
 @Composable
 fun CompatibilityScreen(
     viewModel: CompatibilityViewModel = hiltViewModel(),
+    defaultDateA: java.time.LocalDate? = null,
+    defaultNameA: String = "",
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
@@ -83,6 +89,16 @@ fun CompatibilityScreen(
 
     LaunchedEffect(uiState.error) {
         uiState.error?.let { snackbarHostState.showSnackbar(it); viewModel.clearError() }
+    }
+
+    // Pre-fill Person A with "You" tab data on first visit
+    LaunchedEffect(Unit) {
+        if (uiState.dateA == null && defaultDateA != null) {
+            viewModel.onDateASelected(defaultDateA)
+        }
+        if (uiState.nameA.isBlank() && defaultNameA.isNotBlank()) {
+            viewModel.setNameA(defaultNameA)
+        }
     }
 
     if (showThemePicker) {
@@ -133,6 +149,12 @@ fun CompatibilityScreen(
                     .padding(horizontal = 20.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
+                // ── Relationship type selector ────────────────────────────────
+                RelationshipTypeSelector(
+                    selected = uiState.relationshipType,
+                    onSelect = viewModel::setRelationshipType,
+                )
+
                 // ── Person A ──────────────────────────────────────────────────
                 PersonDateCard(
                     label = "PERSON A",
@@ -225,6 +247,7 @@ fun CompatibilityScreen(
                                     slideInVertically(tween(500), { it / 3 }),
                         ) {
                             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                                AgeComparisonCard(result)
                                 CompatibilityResultCard(result)
                                 FilledTonalButton(
                                     onClick = { showThemePicker = true },
@@ -251,6 +274,42 @@ fun CompatibilityScreen(
             hostState = snackbarHostState,
             modifier = Modifier.align(Alignment.BottomCenter),
         )
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Relationship type selector
+// ─────────────────────────────────────────────────────────────────────────────
+
+@Composable
+private fun RelationshipTypeSelector(
+    selected: RelationshipType,
+    onSelect: (RelationshipType) -> Unit,
+) {
+    val types = RelationshipType.entries
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        types.forEach { type ->
+            val isSelected = type == selected
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .clip(RoundedCornerShape(10.dp))
+                    .background(if (isSelected) WarmTeal else WarmSurface)
+                    .clickable { onSelect(type) }
+                    .padding(vertical = 10.dp),
+                contentAlignment = Alignment.Center,
+            ) {
+                Text(
+                    type.displayName,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = if (isSelected) WarmBlack else WarmInkDim,
+                    fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
+                )
+            }
+        }
     }
 }
 
@@ -343,6 +402,78 @@ private fun PersonDateCard(
                 )
             }
         }
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Age comparison card
+// ─────────────────────────────────────────────────────────────────────────────
+
+@Composable
+private fun AgeComparisonCard(result: CompatibilityResult) {
+    val ageA = result.personAAge
+    val ageB = result.personBAge
+    if (ageA == null || ageB == null) return
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(14.dp))
+            .background(WarmSurface)
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
+        Text(
+            stringResource(R.string.age_comparison),
+            style = MaterialTheme.typography.labelSmall,
+            color = WarmInkDim,
+        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            AgeChip(
+                name = result.nameA.ifEmpty { "Person A" },
+                age = ageA,
+                modifier = Modifier.weight(1f),
+            )
+            AgeChip(
+                name = result.nameB.ifEmpty { "Person B" },
+                age = ageB,
+                modifier = Modifier.weight(1f),
+            )
+        }
+        Text(
+            result.ageGapLabel,
+            style = MaterialTheme.typography.bodyMedium,
+            color = WarmAmber,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.fillMaxWidth(),
+        )
+    }
+}
+
+@Composable
+private fun AgeChip(name: String, age: AgeInfo, modifier: Modifier = Modifier) {
+    Column(
+        modifier = modifier
+            .clip(RoundedCornerShape(10.dp))
+            .background(WarmSurfaceSoft)
+            .padding(horizontal = 12.dp, vertical = 10.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Text(
+            name,
+            style = MaterialTheme.typography.labelSmall,
+            color = WarmInkDim,
+        )
+        Spacer(Modifier.height(4.dp))
+        Text(
+            "${age.years}y ${age.months}m ${age.days}d",
+            fontFamily = SerifFamily,
+            fontSize = 18.sp,
+            color = WarmInk,
+        )
     }
 }
 

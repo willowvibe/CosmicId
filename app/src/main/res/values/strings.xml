@@ -1,15 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- App -->
-    <string name="app_name">Age Calculator: Birthday Days</string>
+    <string name="app_name">AgeReveal</string>
     <string name="app_short_name">AgeReveal</string>
     <string name="widget_description">Birthday countdown widget — shows days until the next saved birthday.</string>
     <string name="widget_description_wide">Wide birthday widget — shows the next 3 upcoming birthdays.</string>
 
     <!-- Bottom navigation -->
-    <string name="nav_age">Age</string>
+    <string name="nav_age">You</string>
     <string name="nav_profile">Profile</string>
-    <string name="nav_compare">Compare</string>
+    <!-- nav_compare removed — Compare tab replaced by Match -->
     <string name="nav_match">Match</string>
     <string name="nav_birthdays">Bdays</string>
     <string name="nav_settings">Settings</string>
@@ -89,6 +89,10 @@
     <string name="cd_delete_all">Clear all saved birthdays</string>
     <string name="cd_warning">Warning: This will permanently delete all birthdays</string>
     <string name="cd_toggle_notification">Toggle notification</string>
+
+    <!-- Age comparison -->
+    <string name="age_comparison">AGE COMPARISON</string>
+    <string name="age_same">Both are the same age ✦</string>
 
     <!-- Milestones -->
     <string name="life_timeline">Life Timeline</string>
