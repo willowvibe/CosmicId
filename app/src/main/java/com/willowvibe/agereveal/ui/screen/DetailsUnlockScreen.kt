@@ -222,6 +222,29 @@ private fun AstroTile(result: AgeResult, isUnlocked: Boolean) {
                         }
                     }
                 }
+                if (result.nakshatraPada.isNotEmpty()) {
+                    Spacer(Modifier.height(4.dp))
+                    Row {
+                        Text(
+                            "Pada ",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = if (result.birthTime == null) WarmInkDim else WarmInkMute
+                        )
+                        Text(
+                            result.nakshatraPada,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = if (result.birthTime == null) WarmAmber else WarmInk,
+                            fontWeight = if (result.birthTime == null) FontWeight.Normal else FontWeight.Medium
+                        )
+                        if (result.birthTime == null) {
+                            Text(
+                                " (Approximate)",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = WarmInkMute
+                            )
+                        }
+                    }
+                }
             } else {
                 // Placeholder when not yet unlocked
                 Text(

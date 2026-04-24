@@ -73,6 +73,7 @@ class AgeCalculator @Inject constructor(
             ) else "",
             rashi = if (includeUnlocked) zodiacCalculator.getRashi(birthDate, birthTime) else "",
             nakshatra = if (includeUnlocked) nakshatraCalculator.getNakshatra(birthDate, birthTime) else "",
+            nakshatraPada = if (includeUnlocked) nakshatraCalculator.getNakshatraWithPada(birthDate, birthTime) else "",
             chineseZodiac = if (includeUnlocked) zodiacCalculator.getChineseZodiac(birthDate) else "",
             estimatedHeartbeats = if (includeUnlocked) estimateHeartbeats(totalMinutes) else 0L,
             isExact = birthTime != null,

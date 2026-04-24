@@ -73,4 +73,46 @@ class NakshatraCalculatorTest {
                 allNakshatras.any { base.startsWith(it) })
         }
     }
+
+    // -------------------------------------------------------------------------
+    // Nakshatra Pada
+    // -------------------------------------------------------------------------
+
+    @Test
+    fun `pada result contains nakshatra name and pada`() {
+        val result = calculator.getNakshatraWithPada(LocalDate.of(1990, 6, 15))
+        assertTrue("Expected nakshatra + pada, got: $result",
+            result.contains(" — ") && result.endsWith("Pada"))
+    }
+
+    @Test
+    fun `pada index is between 1st and 4th`() {
+        val start = LocalDate.of(2000, 1, 1)
+        for (i in 0..364) {
+            val result = calculator.getNakshatraWithPada(start.plusDays(i.toLong()))
+            assertTrue("Invalid pada format: $result",
+                result.endsWith("1st Pada") || result.endsWith("2nd Pada") ||
+                result.endsWith("3rd Pada") || result.endsWith("4th Pada"))
+        }
+    }
+
+    @Test
+    fun `pada changes within a single nakshatra across hours`() {
+        // On a given date the Moon moves ~13°/day ≈ 0.55°/hour.
+        // A pada is 3.33°, so it should shift every ~6 hours.
+        val date = LocalDate.of(1990, 6, 15)
+        val padas = (0..23).map { hour ->
+            calculator.getNakshatraWithPada(date, LocalTime.of(hour, 0))
+        }.toSet()
+        // We expect at least 2 different padas over 24 hours.
+        assertTrue("Expected multiple padas over 24h, got only: $padas", padas.size >= 2)
+    }
+
+    @Test
+    fun `pada does not crash for any day in a full year`() {
+        val start = LocalDate.of(2000, 1, 1)
+        for (i in 0..364) {
+            calculator.getNakshatraWithPada(start.plusDays(i.toLong()))
+        }
+    }
 }

@@ -30,6 +30,10 @@ val astrologyTerms = listOf(
         description = "A Nakshatra is a lunar mansion in Vedic astrology. There are 27 Nakshatras, each spanning 13 degrees and 20 minutes of the moon's orbit. Your Nakshatra reveals deeper insights about your personality, life purpose, and spiritual journey. It's used to determine the most auspicious times for various activities."
     ),
     AstrologyTerm(
+        title = "Nakshatra Pada",
+        description = "Each nakshatra is divided into four equal quarters called padas (3°20′ each). Your pada refines the nakshatra's influence and determines your navamsa (D-9 chart) placement, offering deeper insight into your inner nature and life path."
+    ),
+    AstrologyTerm(
         title = "Chinese Zodiac",
         description = "The Chinese zodiac is a 12-year cycle, with each year represented by a specific animal. Your Chinese zodiac sign is determined by your birth year. The animals are: Rat, Ox, Tiger, Rabbit, Dragon, Snake, Horse, Goat, Monkey, Rooster, Dog, and Pig. Each animal is associated with particular characteristics and fortunes."
     ),
