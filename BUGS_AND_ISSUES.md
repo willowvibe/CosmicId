@@ -334,7 +334,7 @@ This document tracks known bugs, edge cases, and fragile areas in the codebase. 
 
 # AgeReveal — Bugs & Edge Case Issues
 
-_Last updated: 2026-05-02 — v1.0.2 (Share compatibility crash fixed, Appium UI testing completed, BUG-037/038/039 fixed)_
+_Last updated: 2026-05-02 — v1.0.3 (BUG-041/042/043 fixed)_
 
 This document tracks known bugs, edge cases, and fragile areas in the codebase. 
 
@@ -503,6 +503,55 @@ All major interactive elements were exercised with the rebuilt v1.0.1 APK:
 - Removed the redundant `FLAG_ACTIVITY_NEW_TASK` on the inner intent (it was never used).
 
 **Files changed:** `domain/ShareCardGenerator.kt`
+
+---
+
+#### 🟢 BUG-041 — `RollingDigits` Composition Leak
+**Status:** Fixed in v1.0.3
+**Severity:** Medium — visual stutter / unnecessary recompositions
+**Component:** `CalculatorScreen.kt` — `RollingDigits` composable
+
+**Description:** The `RollingDigits` composable used `forEach { char -> }` to iterate over formatted digits inside a `Row`. Without `key()`, Compose could not distinguish individual `AnimatedContent` nodes, causing all digit animations to restart on every number change and potential memory pressure during rapid updates.
+
+**Fix applied:**
+- Changed `forEachIndexed` to a standard `for` loop so composable calls (`key()`) are valid in the loop body.
+- Wrapped each digit's `AnimatedContent` in `key(index) { ... }` for stable identity across recompositions.
+- Replaced deprecated `with` infix operator (enter transition + exit transition) with `togetherWith` (Compose Animation 1.5+).
+
+**Files changed:** `ui/screen/CalculatorScreen.kt`
+
+---
+
+#### 🟢 BUG-042 — Missing Widget Preview Images
+**Status:** Fixed in v1.0.3
+**Severity:** Low — Play Store listing and launcher widget picker UX
+**Component:** `widget_info.xml`, `widget_info_wide.xml`
+
+**Description:** Both `appwidget-provider` XML files lacked `android:previewImage`, resulting in blank/generic previews in the system widget picker and Play Store listing screenshots.
+
+**Fix applied:**
+- Added `android:previewImage="@drawable/widget_preview_birthday"` to `widget_info.xml`.
+- Added `android:previewImage="@drawable/widget_preview_birthday_wide"` to `widget_info_wide.xml`.
+- Created `widget_preview_birthday.xml` — 110dp×110dp rounded rectangle with Dark Cosmos background (#1a1a2e) and 16dp corners.
+- Created `widget_preview_birthday_wide.xml` — 250dp×110dp rounded rectangle with matching styling.
+
+**Files changed:** `res/xml/widget_info.xml`, `res/xml/widget_info_wide.xml`, `res/drawable/widget_preview_birthday.xml`, `res/drawable/widget_preview_birthday_wide.xml`
+
+---
+
+#### 🟢 BUG-043 — AdManager Retry Hammering
+**Status:** Fixed in v1.0.3
+**Severity:** Medium — risk of AdMob rate-limiting
+**Component:** `ads/AdManager.kt`
+
+**Description:** On ad load failure, `onAdFailedToLoad` immediately called `preloadRewardedAd()` / `preloadInterstitialAd()` with zero delay. Three rapid failures = three instant requests to AdMob, risking throttling or account penalties.
+
+**Fix applied:**
+- Introduced exponential backoff using `Handler(Looper.getMainLooper()).postDelayed()`.
+- Delay schedule: 1s → 2s → 4s across the 3 retry attempts (`delayMs = 1000L * (1L shl attempt)`).
+- Same pattern applied to both rewarded and interstitial preload callbacks.
+
+**Files changed:** `ads/AdManager.kt`
 
 ---
 
