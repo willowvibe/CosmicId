@@ -334,7 +334,7 @@ This document tracks known bugs, edge cases, and fragile areas in the codebase. 
 
 # AgeReveal — Bugs & Edge Case Issues
 
-_Last updated: 2026-05-02 — v1.0.1 (Appium UI testing completed, BUG-037/038/039 fixed)_
+_Last updated: 2026-05-02 — v1.0.2 (Share compatibility crash fixed, Appium UI testing completed, BUG-037/038/039 fixed)_
 
 This document tracks known bugs, edge cases, and fragile areas in the codebase. 
 
@@ -398,30 +398,31 @@ This document tracks known bugs, edge cases, and fragile areas in the codebase.
 
 **Testing Tool:** Appium v3.3.1 with UiAutomator2 driver v7.1.2  
 **Device:** Android Emulator (Medium_Phone, API 37, Android 15)  
-**APK:** `AgeReveal-v1.0-release.apk`  
+**APK:** `AgeReveal-v1.0.1-release.apk`  
 **Session:** Appium MCP server with UiAutomator2 instrumentation
 
-### Testing Coverage
+### Testing Coverage (v1.0.1 APK Validation)
 
-All major interactive elements were exercised:
+All major interactive elements were exercised with the rebuilt v1.0.1 APK:
 
 | Feature | Test Result |
 |---------|-------------|
-| Name input field | ✅ Accepts text input |
-| BORN date picker | ✅ Opens native date dialog |
-| TIME time picker | ✅ Opens native time dialog |
+| Name input field | ✅ Accepts text input; sanitization strips control characters |
+| BORN date picker | ✅ Opens native date dialog; Cancel dismisses correctly |
+| TIME time picker | ✅ Opens native time dialog; Set/Cancel work correctly |
 | LOCATION field | ✅ Opens custom lat/lng dialog |
-| Location dialog — Clear | ✅ Clears coordinates |
 | Location dialog — Cancel | ✅ Cancels without saving |
-| Location dialog — Set | ✅ Saves coordinates |
-| Settings button (top header) | ✅ Opens Settings screen |
+| Location dialog — Set | ✅ Saves coordinates (tested in prior session) |
+| Settings button (top header) | ✅ Opens Settings screen with all sections |
 | Bottom nav — You | ✅ Navigates to main screen |
-| Bottom nav — Match | ✅ Navigates to Cosmic Match |
-| Bottom nav — Bdays | ✅ Navigates to Birthdays |
+| Bottom nav — Match | ✅ Navigates to Cosmic Match screen |
+| Bottom nav — Bdays | ✅ Navigates to Birthdays (empty state) |
 | Bottom nav — Timeline | ✅ Navigates to Life Timeline |
-| Watch & Reveal (ad unlock) | ✅ Opens interstitial test ad |
+| Share profile | ✅ Opens card theme picker; Dark Cosmos → Android share sheet |
 | Age calculation display | ✅ Shows years, months, days, hours, seconds, next birthday |
-| Zodiac info display | ✅ Shows Western, Vedic, Chinese zodiac |
+| Zodiac info display | ✅ Shows Western, Vedic, Chinese, Moon, Lord, Lagna, Tithi, Nakshatra |
+| Live seconds counter | ✅ Ticks every second (ticker flow active) |
+| Settings screen sections | ✅ Notifications, Milestones, Appearance, Language, Data all render |
 
 ### New Issues Discovered
 
@@ -478,10 +479,40 @@ All major interactive elements were exercised:
 
 ---
 
+#### 🟢 BUG-040 — Share Compatibility Crash: Missing FLAG_ACTIVITY_NEW_TASK
+**Status:** Fixed in v1.0.2  
+**Severity:** High — crash on real devices when sharing from Match screen
+**Component:** `ShareCardGenerator` (compatibility and milestone share)
+
+**Description:** Tapping the share button on the Match (Cosmic Match) screen crashes with:
+> `Calling startActivity() from outside of an Activity context requires the FLAG_ACTIVITY_NEW_TASK flag`
+
+**Root Cause:** `shareCompatibility()` and `shareMilestone()` added `FLAG_ACTIVITY_NEW_TASK` to the inner `Intent`, but `Intent.createChooser()` creates a *new* chooser `Intent` that does **not** inherit flags from the inner intent. When `context` is an `ApplicationContext` (not an `Activity`), Android requires `FLAG_ACTIVITY_NEW_TASK` on the chooser itself.
+
+`share()` already handled this correctly by checking `if (context is Activity)` before calling `startActivity()`, but `shareMilestone()` and `shareCompatibility()` were missing the same guard.
+
+**Fix applied:**
+- Updated both `shareMilestone()` and `shareCompatibility()` to match the `share()` pattern:
+  ```kotlin
+  if (context is android.app.Activity) {
+      context.startActivity(chooser)
+  } else {
+      context.startActivity(chooser.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+  }
+  ```
+- Removed the redundant `FLAG_ACTIVITY_NEW_TASK` on the inner intent (it was never used).
+
+**Files changed:** `domain/ShareCardGenerator.kt`
+
+---
+
 ### Observations (Non-blocking)
 
 1. **"LIVE" badge:** Decorative `TextView` next to the AgeReveal title (`clickable="false"`, no `content-desc`). Acceptable if purely a status indicator.
 2. **"Test Ad" label:** Appears on the main screen — expected for a debug/release build with Google test ads.
-3. **Settings screen:** Correctly opens from the top header button (`content-desc="Settings"`). Contains Notifications, Birthday reminder time, Milestone notifications, and Appearance sections. All sections render correctly.
-4. **Ad flow:** "Watch & Reveal" opens a full-screen interstitial test ad (YouTube Kids). Dismissing the ad returns to the main screen correctly.
-5. **Bottom nav:** All four tabs (You, Match, Bdays, Timeline) are accessible and navigate correctly. They were initially missing from the accessibility tree in the first session but appeared after app state stabilized — this may indicate a race condition in initial rendering.
+3. **Settings screen:** Correctly opens from the top header button (`content-desc="Settings"`). Contains Notifications, Birthday reminder time, Milestone notifications, Appearance, Language, and Data sections. All sections render correctly.
+4. **Ad flow:** "Watch & Reveal" was not visible during this test session because the selected birth date (May 2, 2026 = today) produces an age of 0 with no meaningful locked data to reveal. In prior testing it opened a full-screen interstitial test ad.
+5. **Bottom nav:** All four tabs (You, Match, Bdays, Timeline) are accessible and navigate correctly.
+6. **Accessibility semantics:** Content descriptions are now properly exposed on interactive elements ("Settings", "Change birth date", "Change TIME", "Change LOCATION"), confirming the BUG-038 fixes are active in the v1.0.1 build.
+7. **Name field sanitization:** Input sanitization successfully prevents ISO control character injection; the field caps at 50 characters.
+8. **Zodiac display:** Detailed astrology grid renders correctly with all fields (Western, Vedic, Chinese, Moon, Lord, Lagna, Tithi, Nakshatra) after setting birth date and time.
