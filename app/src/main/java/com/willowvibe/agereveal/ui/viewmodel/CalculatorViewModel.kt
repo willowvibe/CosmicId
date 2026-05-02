@@ -5,6 +5,7 @@ import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.willowvibe.agereveal.data.model.AgeResult
+import com.willowvibe.agereveal.data.model.GeoLocation
 import com.willowvibe.agereveal.data.model.Milestone
 import com.willowvibe.agereveal.data.preferences.UserPreferencesRepository
 import com.willowvibe.agereveal.domain.AgeCalculator
@@ -27,12 +28,15 @@ import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
+import java.time.OffsetDateTime
+import java.time.ZoneOffset
 import java.time.temporal.ChronoUnit
 import javax.inject.Inject
 
 data class CalculatorUiState(
     val birthDate: LocalDate? = null,
     val birthTime: LocalTime? = null,    // Optional time of birth for precise astrology
+    val location: GeoLocation? = null,   // Optional birth location for exact Lagna
     val name: String = "",                // Optional name for display purposes
     val result: AgeResult? = null,
     val isUnlocked: Boolean = false,       // True after rewarded ad watched
@@ -67,18 +71,21 @@ class CalculatorViewModel @Inject constructor(
             _uiState.update { it.copy(error = "Failed to share compatibility: ${error.message}") }
         }
 
-        // Restore previously entered birth date + time
+        // Restore previously entered birth date + time + location
         val savedDate = prefs.getString("birth_date", null)
             ?.let { runCatching { LocalDate.parse(it) }.getOrNull() }
             ?.takeIf { !it.isAfter(LocalDate.now()) }
         val savedTime = prefs.getString("birth_time", null)
             ?.let { runCatching { LocalTime.parse(it) }.getOrNull() }
+        val savedLocation = prefs.getString("birth_location", null)
+            ?.let { runCatching { parseLocation(it) }.getOrNull() }
         if (savedDate != null) {
             _uiState.update {
                 it.copy(
                     birthDate = savedDate,
                     birthTime = savedTime,
-                    result = computeResult(savedDate, savedTime, includeUnlocked = false),
+                    location = savedLocation,
+                    result = computeResult(savedDate, savedTime, includeUnlocked = false, location = savedLocation),
                 )
             }
         }
@@ -118,7 +125,7 @@ class CalculatorViewModel @Inject constructor(
                 birthDate = date,
                 error = null,
                 isUnlocked = false,
-                result = computeResult(date, state.birthTime, includeUnlocked = false),
+                result = computeResult(date, state.birthTime, includeUnlocked = false, location = state.location),
             )
         }
     }
@@ -130,7 +137,7 @@ class CalculatorViewModel @Inject constructor(
             val date = state.birthDate ?: return@update state.copy(birthTime = time)
             state.copy(
                 birthTime = time,
-                result = computeResult(date, time, state.isUnlocked),
+                result = computeResult(date, time, state.isUnlocked, location = state.location),
             )
         }
     }
@@ -140,7 +147,7 @@ class CalculatorViewModel @Inject constructor(
         val state = _uiState.value
         val birthDate = state.birthDate ?: return
         _uiState.update {
-            it.copy(result = computeResult(birthDate, it.birthTime, it.isUnlocked))
+            it.copy(result = computeResult(birthDate, it.birthTime, it.isUnlocked, location = it.location))
         }
     }
 
@@ -151,7 +158,7 @@ class CalculatorViewModel @Inject constructor(
         _uiState.update {
             it.copy(
                 isUnlocked = true,
-                result = computeResult(birthDate, it.birthTime, includeUnlocked = true),
+                result = computeResult(birthDate, it.birthTime, includeUnlocked = true, location = it.location),
             )
         }
         viewModelScope.launch {
@@ -207,12 +214,29 @@ class CalculatorViewModel @Inject constructor(
     fun clearError() = _uiState.update { it.copy(error = null) }
     fun onNameChanged(name: String) = _uiState.update { it.copy(name = name) }
 
+    /** Set or clear the birth location for exact Lagna calculation. */
+    fun onLocationSelected(location: GeoLocation?) {
+        if (location != null) {
+            prefs.edit().putString("birth_location", serializeLocation(location)).apply()
+        } else {
+            prefs.edit().remove("birth_location").apply()
+        }
+        _uiState.update { state ->
+            val date = state.birthDate ?: return@update state.copy(location = location)
+            state.copy(
+                location = location,
+                result = computeResult(date, state.birthTime, state.isUnlocked, location = location),
+            )
+        }
+    }
+
     // ---------------------------------------------------------------------------
 
     private fun computeResult(
         birthDate: LocalDate,
         birthTime: LocalTime?,
         includeUnlocked: Boolean,
+        location: GeoLocation? = null,
     ): AgeResult {
         val now = LocalDateTime.now()
         val totalSeconds = ChronoUnit.SECONDS.between(
@@ -224,6 +248,21 @@ class CalculatorViewModel @Inject constructor(
             birthTime = birthTime,
             totalSecondsOverride = totalSeconds,
             includeUnlocked = includeUnlocked,
+            zoneOffset = OffsetDateTime.now().offset,
+            location = location,
         ).copy(name = name)
+    }
+
+    private fun serializeLocation(location: GeoLocation): String {
+        return "${location.latitude},${location.longitude},${location.label}"
+    }
+
+    private fun parseLocation(serialized: String): GeoLocation {
+        val parts = serialized.split(",", limit = 3)
+        return GeoLocation(
+            latitude = parts[0].toDouble(),
+            longitude = parts[1].toDouble(),
+            label = parts.getOrElse(2) { "" },
+        )
     }
 }

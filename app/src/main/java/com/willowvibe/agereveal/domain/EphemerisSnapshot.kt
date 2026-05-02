@@ -12,4 +12,5 @@ data class EphemerisSnapshot(
     val tropicalMoonLongitude: Double,
     val siderealMoonLongitude: Double,
     val ayanamsa: Double,
+    val tithi: Int = 0,
 )

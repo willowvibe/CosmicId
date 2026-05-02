@@ -29,6 +29,7 @@ data class CompatibilityResult(
     val personAAge: AgeInfo? = null,
     val personBAge: AgeInfo? = null,
     val ageGapLabel: String = "",
+    val chineseRelationshipLabel: String = "",
 )
 
 @Singleton
@@ -51,6 +52,7 @@ class ZodiacCompatibilityCalculator @Inject constructor(
         val elementB = getWesternElement(dateB.monthValue, dateB.dayOfMonth)
         val westernScore = westernCompatibilityScore(dateA, dateB)
         val chineseScore = chineseCompatibilityScore(dateA, dateB)
+        val chineseLabel = chineseRelationshipLabel(dateA, dateB)
         val overallScore = when (relationshipType) {
             RelationshipType.Romantic -> (westernScore * 0.5 + chineseScore * 0.5).toInt()
             RelationshipType.Sibling -> (westernScore * 0.4 + chineseScore * 0.6).toInt()
@@ -83,6 +85,7 @@ class ZodiacCompatibilityCalculator @Inject constructor(
             personAAge = AgeInfo(ageA.years, ageA.months, ageA.days),
             personBAge = AgeInfo(ageB.years, ageB.months, ageB.days),
             ageGapLabel = ageGapLabel,
+            chineseRelationshipLabel = chineseLabel,
         )
     }
 
@@ -128,14 +131,117 @@ class ZodiacCompatibilityCalculator @Inject constructor(
         val yearB = zodiacCalculator.getChineseYear(dateB)
         val indexA = ((yearA - 1900) % 12 + 12) % 12
         val indexB = ((yearB - 1900) % 12 + 12) % 12
-        if (indexA == indexB) return 85
-        // Trine groups: {0,4,8}, {1,5,9}, {2,6,10}, {3,7,11}
-        if (indexA % 4 == indexB % 4) return 92
-        val diff = minOf(kotlin.math.abs(indexA - indexB), 12 - kotlin.math.abs(indexA - indexB))
+        return chineseCompatibilityMatrix(indexA, indexB)
+    }
+
+    private fun chineseRelationshipLabel(dateA: LocalDate, dateB: LocalDate): String {
+        val yearA = zodiacCalculator.getChineseYear(dateA)
+        val yearB = zodiacCalculator.getChineseYear(dateB)
+        val indexA = ((yearA - 1900) % 12 + 12) % 12
+        val indexB = ((yearB - 1900) % 12 + 12) % 12
+        return chineseRelationshipName(indexA, indexB)
+    }
+
+    /**
+     * Full 12×12 Chinese zodiac compatibility matrix.
+     *
+     * Relationships in priority order:
+     * 1. 六合 (Six Harmonies) — best pairs: 92
+     * 2. 三合 (Trine) — same element group: 95
+     * 3. Same sign: 88 (certain signs have self-punishment: 42)
+     * 4. 相冲 (Clash) — opposite signs: 35
+     * 5. 相害 (Harm) — six harm pairs: 45
+     * 6. 相刑 (Punishment) — triple groups & Rat-Rabbit: 40
+     * 7. Default diff-based: adjacent 75, diff 2/10 → 70, diff 3/9 → 65, diff 4/8 → 60, diff 5/7 → 55
+     */
+    private fun chineseCompatibilityMatrix(a: Int, b: Int): Int {
+        if (a == b) {
+            // Self-punishment for Dragon(4), Horse(6), Rooster(9), Pig(11)
+            return if (a in setOf(4, 6, 9, 11)) 42 else 88
+        }
+
+        val pair = setOf(a, b)
+        val diff = minOf(kotlin.math.abs(a - b), 12 - kotlin.math.abs(a - b))
+
+        // 六合 (Six Harmonies) — best-matched pairs
+        val sixHarmonies = setOf(
+            setOf(0, 1), setOf(2, 11), setOf(3, 10),
+            setOf(4, 9), setOf(5, 8), setOf(6, 7),
+        )
+        if (pair in sixHarmonies) return 92
+
+        // 三合 (Trine) — same element group
+        if (a % 4 == b % 4) return 95
+
+        // 相冲 (Clash) — opposite signs
+        if (diff == 6) return 35
+
+        // 相刑 (Punishment) — triple groups + Rat-Rabbit. Checked before Harm
+        // because punishment is the more severe relationship when a pair belongs
+        // to both categories (e.g. Tiger-Snake).
+        val punishmentPairs = setOf(
+            setOf(2, 5), setOf(2, 8), setOf(5, 8),   // Tiger-Snake-Monkey
+            setOf(1, 7), setOf(1, 10), setOf(7, 10), // Ox-Goat-Dog
+            setOf(0, 3),                               // Rat-Rabbit
+        )
+        if (pair in punishmentPairs) return 40
+
+        // 相害 (Harm) — six harmful pairs
+        val harmPairs = setOf(
+            setOf(0, 7), setOf(1, 6), setOf(2, 5),
+            setOf(3, 4), setOf(8, 11), setOf(9, 10),
+        )
+        if (pair in harmPairs) return 45
+
         return when (diff) {
-            6 -> 38  // Direct clash
-            4, 8 -> 62  // Neutral-compatible
-            else -> 70
+            1, 11 -> 75
+            2, 10 -> 70
+            3, 9 -> 65
+            4, 8 -> 60
+            5, 7 -> 55
+            else -> 60
+        }
+    }
+
+    /** Human-readable label for the Chinese zodiac relationship between two indices. */
+    private fun chineseRelationshipName(a: Int, b: Int): String {
+        if (a == b) {
+            return if (a in setOf(4, 6, 9, 11)) "Self-Punishment" else "Same Sign"
+        }
+
+        val pair = setOf(a, b)
+        val diff = minOf(kotlin.math.abs(a - b), 12 - kotlin.math.abs(a - b))
+
+        val sixHarmonies = setOf(
+            setOf(0, 1), setOf(2, 11), setOf(3, 10),
+            setOf(4, 9), setOf(5, 8), setOf(6, 7),
+        )
+        if (pair in sixHarmonies) return "六合 Harmony"
+
+        if (a % 4 == b % 4) return "三合 Trine"
+
+        if (diff == 6) return "相冲 Clash"
+
+        val punishmentPairs = setOf(
+            setOf(2, 5), setOf(2, 8), setOf(5, 8),
+            setOf(1, 7), setOf(1, 10), setOf(7, 10),
+            setOf(0, 3),
+        )
+        if (pair in punishmentPairs) return "相刑 Punishment"
+
+        val harmPairs = setOf(
+            setOf(0, 7), setOf(1, 6), setOf(2, 5),
+            setOf(3, 4), setOf(8, 11), setOf(9, 10),
+        )
+        if (pair in harmPairs) return "相害 Harm"
+
+        return when (diff) {
+            1, 11 -> "Adjacent"
+            2, 10 -> "Neutral"
+            3, 9 -> "Distant"
+            4, 8 -> "Tense"
+            5, 7 -> "Challenging"
+            else -> "Neutral"
         }
     }
 

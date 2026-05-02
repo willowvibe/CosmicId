@@ -1,10 +1,12 @@
 package com.willowvibe.agereveal.domain
 
 import com.willowvibe.agereveal.data.model.AgeResult
+import com.willowvibe.agereveal.data.model.GeoLocation
 import com.willowvibe.agereveal.data.model.Milestone
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.Period
+import java.time.ZoneOffset
 import java.time.temporal.ChronoUnit
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -18,6 +20,8 @@ import javax.inject.Singleton
 class AgeCalculator @Inject constructor(
     private val zodiacCalculator: ZodiacCalculator,
     private val nakshatraCalculator: NakshatraCalculator,
+    private val dashaCalculator: DashaCalculator,
+    private val baZiCalculator: BaZiCalculator,
 ) {
 
     /**
@@ -33,6 +37,8 @@ class AgeCalculator @Inject constructor(
         today: LocalDate = LocalDate.now(),
         totalSecondsOverride: Long = -1L,
         includeUnlocked: Boolean = false,
+        zoneOffset: ZoneOffset? = null,
+        location: GeoLocation? = null,
     ): AgeResult {
         require(!birthDate.isAfter(today)) { "Birth date cannot be in the future" }
 
@@ -67,14 +73,19 @@ class AgeCalculator @Inject constructor(
             dayOfWeekBorn = birthDate.dayOfWeek.name,
             dayOfWeekNextBirthday = nextBirthday.dayOfWeek.name,
             milestones = if (includeUnlocked) getMilestones(birthDate, today) else emptyList(),
-            westernZodiac = if (includeUnlocked) zodiacCalculator.getWesternZodiac(birthDate, birthTime) else "",
-            westernMoonSign = if (includeUnlocked) zodiacCalculator.getWesternMoonSign(birthDate, birthTime) else "",
-            rashi = if (includeUnlocked) zodiacCalculator.getRashi(birthDate, birthTime) else "",
-            rashiLord = if (includeUnlocked) zodiacCalculator.getRashiLord(birthDate, birthTime) else "",
-            nakshatra = if (includeUnlocked) nakshatraCalculator.getNakshatra(birthDate, birthTime) else "",
-            nakshatraPada = if (includeUnlocked) nakshatraCalculator.getNakshatraWithPada(birthDate, birthTime) else "",
+            westernZodiac = if (includeUnlocked) zodiacCalculator.getWesternZodiac(birthDate, birthTime, zoneOffset) else "",
+            westernMoonSign = if (includeUnlocked) zodiacCalculator.getWesternMoonSign(birthDate, birthTime, zoneOffset) else "",
+            rashi = if (includeUnlocked) zodiacCalculator.getRashi(birthDate, birthTime, zoneOffset) else "",
+            rashiLord = if (includeUnlocked) zodiacCalculator.getRashiLord(birthDate, birthTime, zoneOffset) else "",
+            approximateAscendant = if (includeUnlocked) zodiacCalculator.getApproximateAscendant(birthDate, birthTime, zoneOffset, location) else "",
+            tithi = if (includeUnlocked) zodiacCalculator.getTithi(birthDate, birthTime, zoneOffset) else "",
+            nakshatra = if (includeUnlocked) nakshatraCalculator.getNakshatra(birthDate, birthTime, zoneOffset) else "",
+            nakshatraPada = if (includeUnlocked) nakshatraCalculator.getNakshatraWithPada(birthDate, birthTime, zoneOffset) else "",
             chineseZodiac = if (includeUnlocked) zodiacCalculator.getChineseZodiac(birthDate) else "",
             chineseStemBranch = if (includeUnlocked) zodiacCalculator.getChineseStemBranch(birthDate) else "",
+            planetPositions = if (includeUnlocked) zodiacCalculator.getPlanetPositions(birthDate, birthTime, zoneOffset) else emptyList(),
+            dashaInfo = if (includeUnlocked) dashaCalculator.getDashaInfo(birthDate, birthTime, zoneOffset) else "",
+            baZiInfo = if (includeUnlocked) baZiCalculator.getBaZiSummary(birthDate) else "",
             estimatedHeartbeats = if (includeUnlocked) estimateHeartbeats(totalMinutes) else 0L,
             isExact = birthTime != null,
         )

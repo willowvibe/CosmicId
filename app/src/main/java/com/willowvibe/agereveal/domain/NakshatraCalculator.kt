@@ -2,6 +2,7 @@ package com.willowvibe.agereveal.domain
 
 import java.time.LocalDate
 import java.time.LocalTime
+import java.time.ZoneOffset
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -32,8 +33,12 @@ class NakshatraCalculator @Inject constructor(
         "Purva Bhadrapada (पूर्व भाद्रपद)", "Uttara Bhadrapada (उत्तर भाद्रपद)", "Revati (रेवती)",
     )
 
-    fun getNakshatra(birthDate: LocalDate, birthTime: LocalTime? = null): String {
-        val snapshot = astronomy.snapshot(birthDate, birthTime)
+    fun getNakshatra(
+        birthDate: LocalDate,
+        birthTime: LocalTime? = null,
+        zoneOffset: ZoneOffset? = null,
+    ): String {
+        val snapshot = astronomy.snapshot(birthDate, birthTime, zoneOffset)
         val longitude = snapshot.siderealMoonLongitude
         val index = ((longitude / nakshatraArc).toInt() % 27 + 27) % 27
         val name = nakshatraNames[index]
@@ -43,8 +48,12 @@ class NakshatraCalculator @Inject constructor(
     }
 
     /** Returns the nakshatra with its pada (quarter), e.g. "Rohini — 2nd Pada". */
-    fun getNakshatraWithPada(birthDate: LocalDate, birthTime: LocalTime? = null): String {
-        val snapshot = astronomy.snapshot(birthDate, birthTime)
+    fun getNakshatraWithPada(
+        birthDate: LocalDate,
+        birthTime: LocalTime? = null,
+        zoneOffset: ZoneOffset? = null,
+    ): String {
+        val snapshot = astronomy.snapshot(birthDate, birthTime, zoneOffset)
         val longitude = snapshot.siderealMoonLongitude
         val nakshatraIndex = ((longitude / nakshatraArc).toInt() % 27 + 27) % 27
         val posInNakshatra = longitude % nakshatraArc

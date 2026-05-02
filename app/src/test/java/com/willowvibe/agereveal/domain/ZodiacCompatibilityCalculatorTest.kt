@@ -102,24 +102,93 @@ class ZodiacCompatibilityCalculatorTest {
     // -------------------------------------------------------------------------
 
     @Test
-    fun `same chinese year scores 85`() {
-        // Both Dragon (2000)
+    fun `same chinese year scores 88`() {
+        // Both Rat (1900) — not a self-punishment sign
+        val result = calculator.calculate(
+            LocalDate.of(1900, 5, 1),
+            LocalDate.of(1900, 9, 1),
+        )
+        assertEquals(88, result.chineseScore)
+    }
+
+    @Test
+    fun `same chinese self punishment year scores 42`() {
+        // Both Dragon (2000) — Dragon has self-punishment
         val result = calculator.calculate(
             LocalDate.of(2000, 5, 1),
             LocalDate.of(2000, 9, 1),
         )
-        assertEquals(85, result.chineseScore)
+        assertEquals(42, result.chineseScore)
     }
 
     @Test
-    fun `chinese trine group scores 92`() {
+    fun `chinese trine group scores 95`() {
         // Rat(0), Dragon(4), Monkey(8) are trine (index % 4 == 0)
-        // Rat 1900 (after CNY) and Dragon 2000 (after CNY)
         val result = calculator.calculate(
             LocalDate.of(1900, 3, 1),  // Rat year
             LocalDate.of(2000, 5, 1),  // Dragon year
         )
+        assertEquals(95, result.chineseScore)
+    }
+
+    @Test
+    fun `chinese six harmonies scores 92`() {
+        // Rat(0) and Ox(1) are 六合
+        val result = calculator.calculate(
+            LocalDate.of(1900, 3, 1),  // Rat year
+            LocalDate.of(1901, 3, 1),  // Ox year
+        )
         assertEquals(92, result.chineseScore)
+    }
+
+    @Test
+    fun `chinese clash scores 35`() {
+        // Rat(0) and Horse(6) are opposite (diff=6)
+        val result = calculator.calculate(
+            LocalDate.of(1900, 3, 1),  // Rat year
+            LocalDate.of(1918, 3, 1),  // Horse year
+        )
+        assertEquals(35, result.chineseScore)
+    }
+
+    @Test
+    fun `chinese harm scores 45`() {
+        // Rat(0) and Goat(7) are 相害
+        val result = calculator.calculate(
+            LocalDate.of(1900, 3, 1),  // Rat year
+            LocalDate.of(1919, 3, 1),  // Goat year
+        )
+        assertEquals(45, result.chineseScore)
+    }
+
+    @Test
+    fun `chinese punishment scores 40`() {
+        // Tiger(2) and Snake(5) are 相刑
+        val result = calculator.calculate(
+            LocalDate.of(1902, 3, 1),  // Tiger year
+            LocalDate.of(1905, 3, 1),  // Snake year
+        )
+        assertEquals(40, result.chineseScore)
+    }
+
+    @Test
+    fun `chinese self punishment scores 42`() {
+        // Dragon(4) with Dragon(4) has self-punishment
+        val result = calculator.calculate(
+            LocalDate.of(1904, 3, 1),  // Dragon year
+            LocalDate.of(1916, 3, 1),  // Dragon year
+        )
+        assertEquals(42, result.chineseScore)
+    }
+
+    @Test
+    fun `chinese relationship label is present`() {
+        val result = calculator.calculate(
+            LocalDate.of(1900, 3, 1),
+            LocalDate.of(1901, 3, 1),
+        )
+        assertTrue("Label should not be blank: ${result.chineseRelationshipLabel}",
+            result.chineseRelationshipLabel.isNotBlank())
     }
 
     // -------------------------------------------------------------------------
@@ -137,12 +206,13 @@ class ZodiacCompatibilityCalculatorTest {
 
     @Test
     fun `score 90+ gives cosmic soulmates headline`() {
-        // Aries + Leo: westernScore = 95, use Chinese same year for high combined score
+        // Aries + Leo: western trine = 95
+        // Rat(1900) + Dragon(2000): Chinese trine = 95
+        // overall = 95 → "Cosmic Soulmates"
         val result = calculator.calculate(
-            LocalDate.of(2000, 4, 1),  // Aries, Dragon
-            LocalDate.of(2000, 8, 1),  // Leo, Dragon
+            LocalDate.of(1900, 4, 1),  // Aries, Rat year (after CNY Jan 31)
+            LocalDate.of(2000, 8, 1),  // Leo, Dragon year (after CNY Feb 5)
         )
-        // westernScore=95, chineseScore=85 → overall=90 → "Cosmic Soulmates"
         assertTrue("Unexpected headline: ${result.headline}",
             result.headline.contains("Cosmic Soulmates"))
     }

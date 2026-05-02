@@ -8,9 +8,7 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
-    <!-- Schedule exact alarms for birthday reminders -->
-    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
-    <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
+    <!-- WorkManager handles notification scheduling internally; no exact alarm permissions required. -->
 
     <!-- Per-app locales (Android 13+ system language picker) -->
     <!-- The localeConfig resource is declared via android:localeConfig on the application tag below -->

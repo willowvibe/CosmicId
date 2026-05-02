@@ -39,7 +39,7 @@ android {
             "1.0"
         }
 
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        testInstrumentationRunner = "com.willowvibe.agereveal.HiltTestRunner"
         vectorDrawables.useSupportLibrary = true
 
         // Per-app language support — enables system-level language picker integration
@@ -185,6 +185,9 @@ dependencies {
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.ui.test.junit4)
     androidTestImplementation(libs.androidx.room.testing)
+    // Hilt testing for instrumented tests
+    androidTestImplementation("com.google.dagger:hilt-android-testing:${libs.versions.hilt.get()}")
+    kspAndroidTest("com.google.dagger:hilt-compiler:${libs.versions.hilt.get()}")
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
 }

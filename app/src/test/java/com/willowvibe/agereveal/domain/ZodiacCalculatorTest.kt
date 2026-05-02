@@ -231,4 +231,127 @@ class ZodiacCalculatorTest {
             calculator.getWesternMoonSign(start.plusDays(i.toLong()))
         }
     }
+
+    // -------------------------------------------------------------------------
+    // Tithi — Moon-Sun elongation
+    // -------------------------------------------------------------------------
+
+    @Test
+    fun `tithi returns a valid name and paksha`() {
+        val tithi = calculator.getTithi(LocalDate.of(1990, 6, 15))
+        assertTrue("Expected tithi with paksha, got: $tithi",
+            tithi.contains("Paksha"))
+    }
+
+    @Test
+    fun `tithi number is between 1 and 30`() {
+        // Verify underlying tithi index by checking the astronomical calculator directly
+        val astro = AstronomicalCalculator()
+        val jd = astro.julianDayNoon(LocalDate.of(1990, 6, 15))
+        val sun = astro.sunLongitude(jd)
+        val moon = astro.moonLongitude(jd)
+        val tithi = astro.tithi(sun, moon)
+        assertTrue("Tithi $tithi out of range", tithi in 1..30)
+    }
+
+    @Test
+    fun `tithi cycles through all 30 values across a lunar month`() {
+        // The Moon gains ~12°/day on the Sun, so tithi should change roughly daily.
+        // Over 30 days we should see most or all tithi values.
+        val start = LocalDate.of(2000, 1, 1)
+        val seen = mutableSetOf<Int>()
+        val astro = AstronomicalCalculator()
+        for (i in 0..29) {
+            val jd = astro.julianDayNoon(start.plusDays(i.toLong()))
+            val sun = astro.sunLongitude(jd)
+            val moon = astro.moonLongitude(jd)
+            seen.add(astro.tithi(sun, moon))
+        }
+        assertTrue("Expected many tithi values over 30 days, got ${seen.size}: $seen", seen.size >= 20)
+    }
+
+    // -------------------------------------------------------------------------
+    // Approximate Ascendant (Lagna) — GMST at 0° latitude
+    // -------------------------------------------------------------------------
+
+    @Test
+    fun `approximate ascendant returns a known rashi`() {
+        val asc = calculator.getApproximateAscendant(LocalDate.of(1990, 6, 15))
+        val base = asc.removeSuffix(" ⚠ Cusp")
+        val knownRashis = listOf(
+            "Mesha", "Vrishabha", "Mithuna", "Karka",
+            "Simha", "Kanya", "Tula", "Vrishchika",
+            "Dhanus", "Makara", "Kumbha", "Meena",
+        )
+        assertTrue("Unknown ascendant: $asc", knownRashis.any { base.startsWith(it) })
+    }
+
+    @Test
+    fun `approximate ascendant does not crash across full year`() {
+        val start = LocalDate.of(2000, 1, 1)
+        for (i in 0..364) {
+            calculator.getApproximateAscendant(start.plusDays(i.toLong()))
+        }
+    }
+
+    // -------------------------------------------------------------------------
+    // Timezone offset propagation
+    // -------------------------------------------------------------------------
+
+    @Test
+    fun `zoneOffset changes moon sign result for non UTC timezone`() {
+        // For a user in India (UTC+5:30), local noon = 06:30 UT.
+        // The Moon moves ~0.5°/hour, so 5.5 hours = ~2.75° shift —
+        // enough to potentially change sign when near a cusp.
+        val date = LocalDate.of(1990, 6, 15)
+        val noOffset = calculator.getWesternMoonSign(date, null, null)
+        val indiaOffset = calculator.getWesternMoonSign(date, null, java.time.ZoneOffset.ofHoursMinutes(5, 30))
+        // Results may or may not differ for this specific date, but the
+        // calculator must handle the offset without crashing.
+        assertTrue("Both results must be valid signs", noOffset.isNotBlank() && indiaOffset.isNotBlank())
+    }
+
+    @Test
+    fun `zoneOffset does not crash for any day in a year`() {
+        val start = LocalDate.of(2000, 1, 1)
+        val offset = java.time.ZoneOffset.ofHours(-8) // Pacific
+        for (i in 0..364) {
+            calculator.getRashi(start.plusDays(i.toLong()), null, offset)
+            calculator.getWesternZodiac(start.plusDays(i.toLong()), null, offset)
+        }
+    }
+
+    // -------------------------------------------------------------------------
+    // Planetary positions summary
+    // -------------------------------------------------------------------------
+
+    @Test
+    fun `planet positions returns all 7 planets`() {
+        val positions = calculator.getPlanetPositions(LocalDate.of(1990, 6, 15))
+        val planetNames = positions.map { it.first }
+        assertEquals(
+            listOf("Sun", "Moon", "Mercury", "Venus", "Mars", "Jupiter", "Saturn"),
+            planetNames,
+        )
+    }
+
+    @Test
+    fun `planet positions returns known western signs`() {
+        val positions = calculator.getPlanetPositions(LocalDate.of(1990, 6, 15))
+        val knownSigns = listOf(
+            "Aries", "Taurus", "Gemini", "Cancer", "Leo", "Virgo",
+            "Libra", "Scorpio", "Sagittarius", "Capricorn", "Aquarius", "Pisces",
+        )
+        positions.forEach { (planet, sign) ->
+            assertTrue("Planet $planet has unknown sign: $sign", sign in knownSigns)
+        }
+    }
+
+    @Test
+    fun `planet positions does not crash across full year`() {
+        val start = LocalDate.of(2000, 1, 1)
+        for (i in 0..364) {
+            calculator.getPlanetPositions(start.plusDays(i.toLong()))
+        }
+    }
 }

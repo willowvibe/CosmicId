@@ -2,10 +2,13 @@ package com.willowvibe.agereveal.domain
 
 import java.time.LocalDate
 import java.time.LocalTime
+import java.time.ZoneOffset
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlin.math.cos
 import kotlin.math.floor
 import kotlin.math.sin
+import kotlin.math.sqrt
 
 /**
  * Medium-precision ephemeris for sidereal Rashi (Sun sign) and Nakshatra (lunar mansion).
@@ -103,9 +106,82 @@ class AstronomicalCalculator @Inject constructor() {
         return 23.85306 + t * (5028.84 / 3600.0) - t * t * (1.397 / 3600.0)
     }
 
-    fun snapshot(birthDate: LocalDate, birthTime: LocalTime? = null): EphemerisSnapshot {
+    /**
+     * Greenwich Mean Sidereal Time in degrees, normalised to [0, 360).
+     *
+     * Linear approximation accurate to ~0.1°, sufficient for an approximate
+     * ascendant when the observer's latitude is unknown.
+     */
+    fun greenwichMeanSiderealTime(jd: Double): Double {
+        return norm360(280.46061837 + 360.98564736629 * (jd - 2451545.0))
+    }
+
+    /**
+     * Approximate tropical ascendant (Rising Sign) longitude in degrees.
+     *
+     * Uses GMST at 0° longitude and assumes the observer is on the equator
+     * (latitude = 0°). This gives the "equatorial ascendant" — a valid
+     * astronomical reference point. For users at mid-latitudes the true
+     * ascendant can differ by 1-2 signs (~30-60°), so the result must
+     * always be displayed with an "Approximate" label.
+     */
+    fun approximateAscendantLongitude(jd: Double): Double {
+        val epsilon = Math.toRadians(23.4397)           // obliquity of ecliptic
+        val theta = Math.toRadians(greenwichMeanSiderealTime(jd))
+        val ascRad = kotlin.math.atan2(
+            kotlin.math.cos(theta),
+            -(kotlin.math.sin(theta) * kotlin.math.cos(epsilon)),
+        )
+        return norm360(Math.toDegrees(ascRad))
+    }
+
+    /**
+     * Exact tropical ascendant longitude in degrees, using observer latitude
+     * and longitude for precise Local Sidereal Time.
+     *
+     * Formula: atan2(sin(LST), cos(LST) * cos(ε) - tan(φ) * sin(ε))
+     * where LST = GMST + longitude, ε = obliquity, φ = latitude.
+     *
+     * Accuracy is ~±0.5° — sufficient for sign-level (30° bin) determination.
+     */
+    fun exactAscendantLongitude(
+        jd: Double,
+        latitude: Double,
+        longitude: Double,
+    ): Double {
+        val epsilon = Math.toRadians(23.4397)
+        val gmst = greenwichMeanSiderealTime(jd)
+        val lst = Math.toRadians(norm360(gmst + longitude))
+        val latRad = Math.toRadians(latitude)
+        val ascRad = kotlin.math.atan2(
+            kotlin.math.sin(lst),
+            kotlin.math.cos(lst) * kotlin.math.cos(epsilon) - kotlin.math.tan(latRad) * kotlin.math.sin(epsilon),
+        )
+        return norm360(Math.toDegrees(ascRad))
+    }
+
+    /**
+     * Tithi (lunar day, 1–30) derived from Moon–Sun elongation.
+     *
+     * Each tithi spans 12° of elongation. 1–15 = Shukla Paksha (waxing),
+     * 16–30 = Krishna Paksha (waning). Amavasya = 30, Purnima = 15.
+     */
+    fun tithi(sunLongitude: Double, moonLongitude: Double): Int {
+        val elongation = norm360(moonLongitude - sunLongitude)
+        return (elongation / 12.0).toInt() + 1
+    }
+
+    fun snapshot(
+        birthDate: LocalDate,
+        birthTime: LocalTime? = null,
+        zoneOffset: ZoneOffset? = null,
+    ): EphemerisSnapshot {
         val localDateTime = birthTime?.let { bt -> birthDate.atTime(bt) } ?: birthDate.atTime(12, 0)
-        val jd = julianDay(localDateTime)
+        // Convert local time to UT when zone offset is known; otherwise assume input is UT.
+        val utDateTime = zoneOffset?.let {
+            localDateTime.atOffset(it).withOffsetSameInstant(ZoneOffset.UTC).toLocalDateTime()
+        } ?: localDateTime
+        val jd = julianDay(utDateTime)
         val ayanamsa = lahiriAyanamsa(jd)
         val sun = sunLongitude(jd)
         val moon = moonLongitude(jd)
@@ -116,14 +192,21 @@ class AstronomicalCalculator @Inject constructor() {
             tropicalMoonLongitude = moon,
             siderealMoonLongitude = norm360(moon - ayanamsa),
             ayanamsa = ayanamsa,
+            tithi = tithi(sun, moon),
         )
     }
 
-    fun siderealSunLongitude(birthDate: LocalDate, birthTime: LocalTime? = null): Double =
-        snapshot(birthDate, birthTime).siderealSunLongitude
+    fun siderealSunLongitude(
+        birthDate: LocalDate,
+        birthTime: LocalTime? = null,
+        zoneOffset: ZoneOffset? = null,
+    ): Double = snapshot(birthDate, birthTime, zoneOffset).siderealSunLongitude
 
-    fun siderealMoonLongitude(birthDate: LocalDate, birthTime: LocalTime? = null): Double =
-        snapshot(birthDate, birthTime).siderealMoonLongitude
+    fun siderealMoonLongitude(
+        birthDate: LocalDate,
+        birthTime: LocalTime? = null,
+        zoneOffset: ZoneOffset? = null,
+    ): Double = snapshot(birthDate, birthTime, zoneOffset).siderealMoonLongitude
 
     /** Julian Day Number at the given date-time (for precise calculations with birth time). */
     fun julianDay(dateTime: java.time.LocalDateTime): Double {
@@ -141,5 +224,89 @@ class AstronomicalCalculator @Inject constructor() {
                 date.dayOfMonth + b - 1524.5 + dayFraction
     }
 
+    // ---------------------------------------------------------------------------
+    // Planetary positions — simplified geocentric longitude
+    // ---------------------------------------------------------------------------
+
+    /**
+     * Geocentric tropical ecliptic longitude of a planet in degrees, [0, 360).
+     *
+     * Uses Keplerian mean elements + first-order eccentric correction, then
+     * subtracts Earth's position to get geocentric longitude. Accuracy is
+     * ~±2° — sufficient for zodiac sign determination (30° bins).
+     *
+     * @param jd Julian Day
+     * @param planet One of: MERCURY, VENUS, MARS, JUPITER, SATURN.
+     */
+    fun planetLongitude(jd: Double, planet: Planet): Double {
+        val d = jd - 2451545.0
+
+        // Earth's heliocentric longitude ≈ Sun's geocentric + 180°
+        val sunGeo = sunLongitude(jd)
+        val earthHelio = norm360(sunGeo + 180.0)
+        val earthRad = 1.0 // AU (sufficient for sign-level; Earth's orbit is nearly circular)
+
+        val (meanLon, dailyMotion, eccentricity, semiMajorAxis) = planet.elements
+        val meanAnomaly = Math.toRadians(norm360(meanLon + dailyMotion * d - planet.perihelion))
+        val eccentricAnomaly = solveKepler(meanAnomaly, eccentricity)
+        val trueAnomaly = 2.0 * kotlin.math.atan(
+            kotlin.math.sqrt((1.0 + eccentricity) / (1.0 - eccentricity)) *
+                kotlin.math.tan(eccentricAnomaly / 2.0)
+        )
+        val planetHelio = norm360(planet.perihelion + Math.toDegrees(trueAnomaly))
+        val planetRad = semiMajorAxis * (1.0 - eccentricity * kotlin.math.cos(eccentricAnomaly))
+
+        // Cartesian difference (planet - Earth)
+        val x = planetRad * cos(Math.toRadians(planetHelio)) - earthRad * cos(Math.toRadians(earthHelio))
+        val y = planetRad * sin(Math.toRadians(planetHelio)) - earthRad * sin(Math.toRadians(earthHelio))
+
+        return norm360(Math.toDegrees(kotlin.math.atan2(y, x)))
+    }
+
+    private fun solveKepler(meanAnomaly: Double, eccentricity: Double): Double {
+        var e = meanAnomaly
+        repeat(6) {
+            e = meanAnomaly + eccentricity * kotlin.math.sin(e)
+        }
+        return e
+    }
+
     private fun norm360(x: Double): Double = ((x % 360.0) + 360.0) % 360.0
+
+    /**
+     * Supported planets for the [planetLongitude] helper.
+     * Keplerian elements are mean values at J2000 (NASA/JPL).
+     */
+    enum class Planet(
+        val elements: PlanetElements,
+        val perihelion: Double,
+    ) {
+        MERCURY(
+            elements = PlanetElements(meanLon = 252.25084, dailyMotion = 4.0923388, eccentricity = 0.20563661, semiMajorAxis = 0.387098),
+            perihelion = 77.457796,
+        ),
+        VENUS(
+            elements = PlanetElements(meanLon = 181.97973, dailyMotion = 1.6021302, eccentricity = 0.00677188, semiMajorAxis = 0.723330),
+            perihelion = 131.53298,
+        ),
+        MARS(
+            elements = PlanetElements(meanLon = -4.553432, dailyMotion = 0.5240320, eccentricity = 0.09340062, semiMajorAxis = 1.523679),
+            perihelion = -23.943629,
+        ),
+        JUPITER(
+            elements = PlanetElements(meanLon = 34.35148, dailyMotion = 0.0830912, eccentricity = 0.04849793, semiMajorAxis = 5.202603),
+            perihelion = 14.274952,
+        ),
+        SATURN(
+            elements = PlanetElements(meanLon = 50.07744, dailyMotion = 0.0334448, eccentricity = 0.05415006, semiMajorAxis = 9.554909),
+            perihelion = 92.861407,
+        ),
+    }
+
+    data class PlanetElements(
+        val meanLon: Double,
+        val dailyMotion: Double,
+        val eccentricity: Double,
+        val semiMajorAxis: Double,
+    )
 }

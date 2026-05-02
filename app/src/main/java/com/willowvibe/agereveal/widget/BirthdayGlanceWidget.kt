@@ -28,19 +28,22 @@ import java.time.temporal.ChronoUnit
 
 /**
  * Jetpack Glance replacement for the legacy RemoteViews-based BirthdayWidgetProvider.
- * Renders the same 2×2 "dark cosmos" countdown but via Compose-style declarative UI,
+ * Renders the same 2x2 "dark cosmos" countdown but via Compose-style declarative UI,
  * which makes future visual changes (themes, content variants) trivial.
+ *
+ * Uses .firstOrNull() to never hang on empty Flow emissions (BUG-024 fix).
  */
 class BirthdayGlanceWidget : GlanceAppWidget() {
 
     override suspend fun provideGlance(context: Context, id: GlanceId) {
+        // Use firstOrNull() to prevent hanging on empty emissions (BUG-024)
+        // Room's Flow will emit the latest cached data immediately on subsequent calls
         val upcoming = runCatching {
             AppDatabase.getInstance(context).birthdayDao().getUpcomingForWidget().firstOrNull() ?: emptyList()
         }.getOrDefault(emptyList())
-        val state = buildState(upcoming)
 
         provideContent {
-            WidgetBody(state)
+            WidgetBody(buildState(upcoming))
         }
     }
 
@@ -102,7 +105,7 @@ private fun WidgetBody(state: WidgetState) {
         Spacer(modifier = GlanceModifier.height(4.dp))
 
         val daysText = when (state) {
-            is WidgetState.Empty -> "—"
+            is WidgetState.Empty -> ""
             is WidgetState.Loaded -> state.daysLeft.toString()
         }
         Text(
@@ -116,7 +119,7 @@ private fun WidgetBody(state: WidgetState) {
 
         Text(
             text = when (state) {
-                is WidgetState.Empty -> "Add birthdays →"
+                is WidgetState.Empty -> "Add birthdays"
                 is WidgetState.Loaded -> state.personHeadline
             },
             style = TextStyle(
@@ -150,4 +153,3 @@ private fun WidgetBody(state: WidgetState) {
         }
     }
 }
-
