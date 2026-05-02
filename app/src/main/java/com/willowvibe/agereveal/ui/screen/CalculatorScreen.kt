@@ -74,6 +74,10 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.AdSize
@@ -131,7 +135,8 @@ fun CalculatorScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(WarmBlack),
+            .background(WarmBlack)
+            .pointerInput(Unit) { detectTapGestures { focusManager.clearFocus() } },
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
             // ── Header ──────────────────────────────────────────────────────
@@ -185,7 +190,6 @@ fun CalculatorScreen(
             Column(
                 modifier = Modifier
                     .weight(1f)
-                    .pointerInput(Unit) { detectTapGestures { focusManager.clearFocus() } }
                     .verticalScroll(rememberScrollState())
                     .padding(horizontal = 20.dp),
                 verticalArrangement = Arrangement.spacedBy(18.dp),
@@ -256,10 +260,14 @@ fun CalculatorScreen(
                                         .fillMaxWidth()
                                         .clip(RoundedCornerShape(14.dp))
                                         .background(WarmSurface)
-                                        .clickable {
-                                            shareHaptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                            showThemePicker = true
-                                        }
+                                        .clickable(
+                                            role = Role.Button,
+                                            onClick = {
+                                                shareHaptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                                showThemePicker = true
+                                            },
+                                        )
+                                        .semantics { contentDescription = "Share your cosmic profile" }
                                         .padding(16.dp),
                                     horizontalArrangement = Arrangement.SpaceBetween,
                                     verticalAlignment = Alignment.CenterVertically,
@@ -353,7 +361,11 @@ private fun BirthAnchorRow(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(bottom = 12.dp)
-                .clickable { showDialog = true },
+                .clickable(
+                    role = Role.Button,
+                    onClick = { showDialog = true },
+                )
+                .semantics { contentDescription = "Change birth date, currently ${selectedDate?.format(DateTimeFormatter.ofLocalizedDate(FormatStyle.LONG)) ?: "not set"}" },
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
@@ -609,10 +621,14 @@ private fun TeasedDetails(
             .fillMaxWidth()
             .clip(RoundedCornerShape(14.dp))
             .background(WarmSurface)
-            .clickable {
-                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                onReveal()
-            }
+            .clickable(
+                role = Role.Button,
+                onClick = {
+                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                    onReveal()
+                },
+            )
+            .semantics { contentDescription = if (!isUnlocked) "Unlock your Vedic and cosmic profile" else "Share your cosmic profile" }
             .padding(16.dp),
     ) {
         Row(
@@ -876,7 +892,11 @@ internal fun PrecisionChip(
         modifier = modifier
             .clip(RoundedCornerShape(10.dp))
             .background(WarmSurface)
-            .clickable { onClick() }
+            .clickable(
+                role = Role.Button,
+                onClick = onClick,
+            )
+            .semantics { contentDescription = "$label: $value" }
             .padding(horizontal = 12.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween,

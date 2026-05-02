@@ -334,7 +334,7 @@ This document tracks known bugs, edge cases, and fragile areas in the codebase. 
 
 # AgeReveal — Bugs & Edge Case Issues
 
-_Last updated: 2026-05-01 — v1.0.0-rc1_
+_Last updated: 2026-05-02 — v1.0.1 (Appium UI testing completed, BUG-037/038/039 fixed)_
 
 This document tracks known bugs, edge cases, and fragile areas in the codebase. 
 
@@ -391,3 +391,97 @@ This document tracks known bugs, edge cases, and fragile areas in the codebase.
 | No date selected on Add Birthday sheet | ✅ Fixed | Treats missing date as validation error (`dateError = true`) |
 | Equal-age comparison | ✅ Fixed | Shows "Same birthday!" instead of mislabelling Person B as older |
 | Today's date (age = 0) | ✅ Verified | `Period.between(today, today)` returns 0; displays correctly |
+
+---
+
+## Appium Automated UI Testing — New Findings (2026-05-02)
+
+**Testing Tool:** Appium v3.3.1 with UiAutomator2 driver v7.1.2  
+**Device:** Android Emulator (Medium_Phone, API 37, Android 15)  
+**APK:** `AgeReveal-v1.0-release.apk`  
+**Session:** Appium MCP server with UiAutomator2 instrumentation
+
+### Testing Coverage
+
+All major interactive elements were exercised:
+
+| Feature | Test Result |
+|---------|-------------|
+| Name input field | ✅ Accepts text input |
+| BORN date picker | ✅ Opens native date dialog |
+| TIME time picker | ✅ Opens native time dialog |
+| LOCATION field | ✅ Opens custom lat/lng dialog |
+| Location dialog — Clear | ✅ Clears coordinates |
+| Location dialog — Cancel | ✅ Cancels without saving |
+| Location dialog — Set | ✅ Saves coordinates |
+| Settings button (top header) | ✅ Opens Settings screen |
+| Bottom nav — You | ✅ Navigates to main screen |
+| Bottom nav — Match | ✅ Navigates to Cosmic Match |
+| Bottom nav — Bdays | ✅ Navigates to Birthdays |
+| Bottom nav — Timeline | ✅ Navigates to Life Timeline |
+| Watch & Reveal (ad unlock) | ✅ Opens interstitial test ad |
+| Age calculation display | ✅ Shows years, months, days, hours, seconds, next birthday |
+| Zodiac info display | ✅ Shows Western, Vedic, Chinese zodiac |
+
+### New Issues Discovered
+
+#### 🟢 BUG-037 — Name Field Corrupted by Scroll Gestures
+**Status:** Fixed in v1.0.1  
+**Severity:** High — data corruption, accessibility blocker  
+**Component:** `android.widget.EditText` (Name field)
+
+**Description:** When the Name `EditText` has focus and a scroll/swipe gesture is performed, the gesture metadata is appended to the field value as text.
+
+**Root Cause:** `detectTapGestures` was applied on the same `Column` as `verticalScroll`, causing pointer-input conflicts. The nested gesture detectors on a single composable interfered with each other, and motion events could leak into the focused `EditText` during scroll gestures.
+
+**Fix applied:**
+- Moved `.pointerInput(Unit) { detectTapGestures { focusManager.clearFocus() } }` from the scrollable inner `Column` to the outer `Box` container (CalculatorScreen.kt). This separates the tap-to-clear-focus gesture from the scrollable content, eliminating the conflict.
+- Added input sanitization in `CalculatorViewModel.onNameChanged()` to strip ISO control characters and cap length at 50 chars as a defense-in-depth measure.
+
+**Files changed:** `ui/screen/CalculatorScreen.kt`, `ui/viewmodel/CalculatorViewModel.kt`
+
+---
+
+#### 🟢 BUG-038 — Custom Clickable Elements Missing Button Role
+**Status:** Fixed in v1.0.1  
+**Severity:** Medium  
+**Component:** Custom clickable rows and chips throughout the app
+
+**Description:** Custom clickable elements (`PrecisionChip`, `BirthAnchorRow`, share row, `TeasedDetails` card) used `Modifier.clickable` without explicitly declaring `Role.Button`, causing them to appear as generic clickable `View`s in the accessibility tree rather than semantic buttons.
+
+**Fix applied:**
+- Added `role = Role.Button` to all `Modifier.clickable` calls on custom interactive elements:
+  - `BirthAnchorRow` (date selector)
+  - `PrecisionChip` (TIME and LOCATION chips)
+  - Share-profile row
+  - `TeasedDetails` unlock/share card
+- Added explicit `contentDescription` semantics to each for clearer screen-reader announcements.
+
+**Note:** `TextButton` composables inside `AlertDialog` (Clear/Cancel/Set) are proper Material3 buttons; their internal `android.widget.Button` child with `clickable="false"` is standard Compose framework behavior — the parent semantic node remains clickable and accessible.
+
+**Files changed:** `ui/screen/CalculatorScreen.kt`
+
+---
+
+#### 🟢 BUG-039 — Zodiac Display Accessibility Confusion
+**Status:** Fixed in v1.0.1  
+**Severity:** Low  
+**Component:** `AstroTile` zodiac display heading and grid
+
+**Description:** Appium testing interpreted the static zodiac heading "WESTERN · VEDIC · CHINESE" and the AstroGrid label "Chinese" as a horizontal carousel with non-interactive tabs. In reality the app displays all zodiac info in a static vertical grid, not a carousel.
+
+**Fix applied:**
+- Added `Modifier.semantics { heading() }` to the "WESTERN · VEDIC · CHINESE" title so screen readers announce it as a section heading.
+- Added `mergeDescendants = true` and `stateDescription` to each `AstroGridItem` so screen readers announce label-value pairs as cohesive units (e.g., "Chinese: Dragon") rather than separate unlabelled text nodes.
+
+**Files changed:** `ui/screen/DetailsUnlockScreen.kt`
+
+---
+
+### Observations (Non-blocking)
+
+1. **"LIVE" badge:** Decorative `TextView` next to the AgeReveal title (`clickable="false"`, no `content-desc`). Acceptable if purely a status indicator.
+2. **"Test Ad" label:** Appears on the main screen — expected for a debug/release build with Google test ads.
+3. **Settings screen:** Correctly opens from the top header button (`content-desc="Settings"`). Contains Notifications, Birthday reminder time, Milestone notifications, and Appearance sections. All sections render correctly.
+4. **Ad flow:** "Watch & Reveal" opens a full-screen interstitial test ad (YouTube Kids). Dismissing the ad returns to the main screen correctly.
+5. **Bottom nav:** All four tabs (You, Match, Bdays, Timeline) are accessible and navigate correctly. They were initially missing from the accessibility tree in the first session but appeared after app state stabilized — this may indicate a race condition in initial rendering.
