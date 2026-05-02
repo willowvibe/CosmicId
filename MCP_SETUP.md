@@ -4,6 +4,33 @@ This project includes local MCP (Model Context Protocol) servers for Claude Code
 
 ## Installed MCP Servers
 
+### Appium MCP Server (`appium-mcp`)
+
+**What it does:**
+- Automates Android/iOS UI testing through natural language
+- Built on Appium (industry-standard mobile automation)
+- Supports UiAutomator2 (Android) and XCUITest (iOS)
+
+**Tools:** `appium_start_session`, `appium_find_element`, `appium_click`, `appium_send_keys`, `appium_scroll`, `appium_get_screenshot`, `appium_get_page_source`, `appium_terminate_app`, `appium_ai` (with `AI_VISION_ENABLED=true`)
+
+**Prerequisites:**
+```bash
+npm install -g appium
+appium driver install uiautomator2
+```
+
+**Startup:**
+```bash
+# 1. Start Appium server
+appium
+
+# 2. The MCP server is auto-started by Claude Code via .mcp.json
+```
+
+**Skill:** `/appium-mobile-test`
+
+---
+
 ### Ollama MCP Server (`mcp-ollama-python`)
 
 **Location:** `tools/mcp/`
@@ -48,15 +75,16 @@ The Ollama MCP server is registered in `.mcp.json` at project root:
 
 ### Skills
 
-Three Claude Code skills are installed in `.claude/skills/`:
+Four Claude Code skills are installed in `.claude/skills/`:
 
 | Skill | Purpose |
 |-------|---------|
+| `appium-mobile-test` | Android app UI automation via Appium |
 | `ollama-android-dev` | Android/Kotlin code generation with local models |
 | `ollama-code-review` | Local code review before commits |
 | `ollama-generate-tests` | Generate instrumented/unit tests |
 
-Invoke with: `/ollama-android-dev`, `/ollama-code-review`, `/ollama-generate-tests`
+Invoke with: `/appium-mobile-test`, `/ollama-android-dev`, `/ollama-code-review`, `/ollama-generate-tests`
 
 ## Requirements
 
