@@ -57,13 +57,14 @@ appium
 
 ### Project-level `.mcp.json`
 
-Five MCP servers are registered in `.mcp.json` at project root:
+Six MCP servers are registered in `.mcp.json` at project root:
 
 ```json
 {
   "mcpServers": {
     "ollama": {
-      "command": "./tools/mcp/start-ollama-mcp.sh",
+      "command": "bash",
+      "args": ["./tools/mcp/start-ollama-mcp.sh"],
       "env": {
         "OLLAMA_HOST": "http://localhost:11434",
         "OLLAMA_MODEL": "qwen3-coder-next:cloud"
@@ -75,17 +76,21 @@ Five MCP servers are registered in `.mcp.json` at project root:
     },
     "filesystem": {
       "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-filesystem@latest", "."]
+      "args": ["-y", "@modelcontextprotocol/server-filesystem", ".", "./app/src", "./tools", "./docs"]
     },
     "git": {
       "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-git@latest", "."]
+      "args": ["-y", "@modelcontextprotocol/server-git", "--repository", "."]
+    },
+    "sqlite": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-sqlite", "--db-path", "./app/schemas"]
     },
     "github": {
       "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-github@latest"],
+      "args": ["-y", "@modelcontextprotocol/server-github"],
       "env": {
-        "GITHUB_PERSONAL_ACCESS_TOKEN": "<your-token-here>"
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "${GITHUB_TOKEN}"
       }
     }
   }
@@ -94,7 +99,7 @@ Five MCP servers are registered in `.mcp.json` at project root:
 
 ### Skills
 
-Four Claude Code skills are installed in `.claude/skills/`:
+Five Claude Code skills are installed in `.claude/skills/`:
 
 | Skill | Purpose |
 |-------|---------|
@@ -102,8 +107,9 @@ Four Claude Code skills are installed in `.claude/skills/`:
 | `ollama-android-dev` | Android/Kotlin code generation with local models |
 | `ollama-code-review` | Local code review before commits |
 | `ollama-generate-tests` | Generate instrumented/unit tests |
+| `ollama-gradle-build` | Run Gradle builds and fix compilation errors with local models |
 
-Invoke with: `/appium-mobile-test`, `/ollama-android-dev`, `/ollama-code-review`, `/ollama-generate-tests`
+Invoke with: `/appium-mobile-test`, `/ollama-android-dev`, `/ollama-code-review`, `/ollama-generate-tests`, `/ollama-gradle-build`
 
 ## Requirements
 

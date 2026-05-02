@@ -1,8 +1,8 @@
 {
   "mcpServers": {
     "ollama": {
-      "command": "./tools/mcp/start-ollama-mcp.sh",
-      "args": [],
+      "command": "bash",
+      "args": ["./tools/mcp/start-ollama-mcp.sh"],
       "description": "Ollama local LLM MCP server — chat, generate, code execution, embeddings",
       "env": {
         "OLLAMA_HOST": "http://localhost:11434",
@@ -19,20 +19,45 @@
     },
     "filesystem": {
       "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-filesystem@latest", "."],
-      "description": "File System MCP server for reading and writing project files"
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
+        ".",
+        "./app/src",
+        "./tools",
+        "./docs"
+      ],
+      "description": "Read/write Kotlin sources, XML layouts, Gradle scripts inside the project"
     },
     "git": {
       "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-git@latest", "."],
-      "description": "Git MCP server for reading history, diffs, and commit assistance"
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-git",
+        "--repository",
+        "."
+      ],
+      "description": "Read git history, diffs, blame — helps Claude write accurate commit messages"
+    },
+    "sqlite": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-sqlite",
+        "--db-path",
+        "./app/schemas"
+      ],
+      "description": "Inspect Room DB schemas and debug BirthdayDao / AppDatabase issues"
     },
     "github": {
       "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-github@latest"],
-      "description": "GitHub MCP server for issues, PRs, and repository operations",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-github"
+      ],
+      "description": "Create issues, PRs, and read GitHub context from within Claude Code",
       "env": {
-        "GITHUB_PERSONAL_ACCESS_TOKEN": ""
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "${GITHUB_TOKEN}"
       }
     }
   }
