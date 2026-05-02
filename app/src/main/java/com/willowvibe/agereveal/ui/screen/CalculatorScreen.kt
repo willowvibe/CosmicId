@@ -1,10 +1,14 @@
 package com.willowvibe.agereveal.ui.screen
 
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.with
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -56,6 +60,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -224,42 +230,36 @@ fun CalculatorScreen(
                 )
 
                 uiState.result?.let { result ->
-                    AnimatedVisibility(
-                        visible = true,
-                        enter = fadeIn(tween(400, easing = FastOutSlowInEasing)) +
-                                slideInVertically(tween(400), { it / 4 }),
-                    ) {
-                        Column(verticalArrangement = Arrangement.spacedBy(18.dp)) {
-                            // ── Clock-face trio ───────────────────────────────
-                            ClockFaceHero(result)
-
-                            // ── Seconds alive strip ───────────────────────────
-                            SecondsStrip(result)
-
-                            // ── Mini stat chips ───────────────────────────────
-                            MiniStatRow(result)
-
-                            // ── Next milestone countdown ──────────────────────
-                            NextMilestoneChip(result)
-
-                            // ── Cosmic profile ────────────────────────────────
-                            if (!uiState.isUnlocked) {
-                                WatchAdBanner(
-                                    isLoading = uiState.isAdLoading,
-                                    onWatch = onUnlockMore,
-                                )
-                                Spacer(Modifier.height(14.dp))
+                    Column(verticalArrangement = Arrangement.spacedBy(18.dp)) {
+                        // Hero stagger entrance — each block fades in with a slight delay
+                        StaggeredEnter(delayMillis = 0) { ClockFaceHero(result) }
+                        StaggeredEnter(delayMillis = 70) { SecondsStrip(result) }
+                        StaggeredEnter(delayMillis = 140) { MiniStatRow(result) }
+                        StaggeredEnter(delayMillis = 210) { NextMilestoneChip(result) }
+                        StaggeredEnter(delayMillis = 280) {
+                            Column {
+                                if (!uiState.isUnlocked) {
+                                    WatchAdBanner(
+                                        isLoading = uiState.isAdLoading,
+                                        onWatch = onUnlockMore,
+                                    )
+                                    Spacer(Modifier.height(14.dp))
+                                }
+                                AstroTile(result = result, isUnlocked = uiState.isUnlocked, hasLocation = uiState.location != null)
                             }
-                            AstroTile(result = result, isUnlocked = uiState.isUnlocked, hasLocation = uiState.location != null)
-
-                            if (uiState.isUnlocked) {
-                                Spacer(Modifier.height(14.dp))
+                        }
+                        if (uiState.isUnlocked) {
+                            StaggeredEnter(delayMillis = 350) {
+                                val shareHaptic = LocalHapticFeedback.current
                                 Row(
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .clip(RoundedCornerShape(14.dp))
                                         .background(WarmSurface)
-                                        .clickable { showThemePicker = true }
+                                        .clickable {
+                                            shareHaptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                            showThemePicker = true
+                                        }
                                         .padding(16.dp),
                                     horizontalArrangement = Arrangement.SpaceBetween,
                                     verticalAlignment = Alignment.CenterVertically,
@@ -328,10 +328,12 @@ private fun BirthAnchorRow(
     val datePickerState = rememberDatePickerState(initialSelectedDateMillis = initialMillis)
 
     if (showDialog) {
+        val haptic = LocalHapticFeedback.current
         DatePickerDialog(
             onDismissRequest = { showDialog = false },
             confirmButton = {
                 TextButton(onClick = {
+                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                     datePickerState.selectedDateMillis?.let { millis ->
                         val selectedDate = Instant.ofEpochMilli(millis).atZone(ZoneId.of("UTC")).toLocalDate()
                         // Validate minimum year (1900) to avoid unreliable astronomical calculations
@@ -435,7 +437,7 @@ private fun AgeNumeral(
         Text(
             text = value,
             fontFamily = SerifFamily,
-            fontWeight = FontWeight.Normal,
+            fontWeight = if (large) FontWeight.Light else FontWeight.Normal,
             fontSize = if (large) 78.sp else 46.sp,
             lineHeight = if (large) 74.sp else 44.sp,
             letterSpacing = (-2).sp,
@@ -477,12 +479,9 @@ internal fun SecondsStrip(result: AgeResult) {
                 style = MaterialTheme.typography.labelSmall,
                 color = WarmInkDim,
             )
-            Text(
-                text = "%,d".format(result.totalSeconds),
-                fontFamily = FontFamily.Monospace,
-                fontWeight = FontWeight.Medium,
+            RollingDigits(
+                number = result.totalSeconds,
                 fontSize = 20.sp,
-                letterSpacing = (-0.5).sp,
                 color = WarmAmber,
             )
         }
@@ -492,6 +491,52 @@ internal fun SecondsStrip(result: AgeResult) {
             color = WarmInkDim,
             textAlign = TextAlign.End,
         )
+    }
+}
+
+/**
+ * Per-digit rolling animation like a digital clock.
+ * Only digit characters animate; commas and separators stay static.
+ */
+@OptIn(androidx.compose.animation.ExperimentalAnimationApi::class)
+@Composable
+internal fun RollingDigits(
+    number: Long,
+    fontSize: androidx.compose.ui.unit.TextUnit,
+    color: androidx.compose.ui.graphics.Color,
+) {
+    val formatted = "%,d".format(number)
+    Row {
+        formatted.forEach { char ->
+            if (char.isDigit()) {
+                AnimatedContent(
+                    targetState = char,
+                    transitionSpec = {
+                        slideInVertically { height -> height } + fadeIn() with
+                            slideOutVertically { height -> -height } + fadeOut()
+                    },
+                    label = "rolling_digit",
+                ) { digit ->
+                    Text(
+                        text = digit.toString(),
+                        fontFamily = FontFamily.Monospace,
+                        fontWeight = FontWeight.Medium,
+                        fontSize = fontSize,
+                        letterSpacing = (-0.5).sp,
+                        color = color,
+                    )
+                }
+            } else {
+                Text(
+                    text = char.toString(),
+                    fontFamily = FontFamily.Monospace,
+                    fontWeight = FontWeight.Medium,
+                    fontSize = fontSize,
+                    letterSpacing = (-0.5).sp,
+                    color = color,
+                )
+            }
+        }
     }
 }
 
@@ -558,12 +603,16 @@ private fun TeasedDetails(
     onShare: () -> Unit,
 ) {
     // Hoverable unlock card
+    val haptic = LocalHapticFeedback.current
     Box(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(14.dp))
             .background(WarmSurface)
-            .clickable { onReveal() }
+            .clickable {
+                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                onReveal()
+            }
             .padding(16.dp),
     ) {
         Row(
@@ -697,7 +746,9 @@ private fun PrecisionRow(
                 }
             },
             confirmButton = {
+                val haptic = LocalHapticFeedback.current
                 TextButton(onClick = {
+                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                     onTimeSelected(LocalTime.of(timePickerState.hour, timePickerState.minute))
                     showTimeDialog = false
                 }) { Text("Set") }
@@ -932,5 +983,23 @@ private fun BannerAdView(adUnitId: String) {
             },
             modifier = Modifier.fillMaxWidth(),
         )
+    }
+}
+
+/**
+ * Wraps [content] in an [AnimatedVisibility] with a staggered fade + slide entrance.
+ * Used for the hero reveal on CalculatorScreen so elements appear sequentially.
+ */
+@Composable
+private fun StaggeredEnter(
+    delayMillis: Int,
+    content: @Composable () -> Unit,
+) {
+    AnimatedVisibility(
+        visible = true,
+        enter = fadeIn(tween(350, delayMillis = delayMillis, easing = FastOutSlowInEasing)) +
+                slideInVertically(tween(350, delayMillis = delayMillis), { it / 5 }),
+    ) {
+        content()
     }
 }

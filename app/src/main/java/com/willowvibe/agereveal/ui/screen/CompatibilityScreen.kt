@@ -49,6 +49,7 @@ import androidx.compose.runtime.setValue
 import com.willowvibe.agereveal.domain.ShareCardGenerator
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -263,7 +264,7 @@ fun CompatibilityScreen(
                                 }
                             }
                         }
-                    }
+                    } ?: EmptyCompatibilityState()
                 }
 
                 Spacer(Modifier.height(16.dp))
@@ -675,4 +676,48 @@ private fun scoreColor(score: Int) = when {
     score >= 80 -> WarmTeal
     score >= 60 -> WarmAmber
     else -> WarmInkDim
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Empty state
+// ─────────────────────────────────────────────────────────────────────────────
+
+@Composable
+private fun EmptyCompatibilityState(modifier: Modifier = Modifier) {
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(16.dp))
+            .background(WarmSurface)
+            .padding(24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Box(
+            modifier = Modifier
+                .size(80.dp)
+                .clip(CircleShape)
+                .background(
+                    Brush.radialGradient(
+                        listOf(WarmAmber.copy(alpha = 0.20f), WarmAmber.copy(alpha = 0.05f)),
+                    )
+                ),
+            contentAlignment = Alignment.Center,
+        ) {
+            Text("🌙", fontSize = 40.sp)
+        }
+        Spacer(Modifier.height(16.dp))
+        Text(
+            "Discover your cosmic match",
+            fontFamily = SerifFamily,
+            fontSize = 20.sp,
+            color = WarmInkMute,
+        )
+        Spacer(Modifier.height(6.dp))
+        Text(
+            "Enter two birth dates above to reveal your compatibility score, age comparison, and Chinese zodiac harmony.",
+            style = MaterialTheme.typography.bodySmall,
+            color = WarmInkDim,
+            textAlign = TextAlign.Center,
+        )
+    }
 }

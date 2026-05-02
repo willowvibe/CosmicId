@@ -34,6 +34,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.text.font.FontStyle
@@ -202,6 +204,7 @@ internal fun AstroTile(result: AgeResult, isUnlocked: Boolean, hasLocation: Bool
                     if (result.tithi.isNotEmpty()) add("Tithi" to result.tithi)
                     if (result.nakshatra.isNotEmpty()) add("Nakshatra" to result.nakshatra)
                     if (result.nakshatraPada.isNotEmpty()) add("Pada" to result.nakshatraPada)
+                    if (result.lunarBirthday.isNotEmpty()) add("Lunar" to result.lunarBirthday)
                 }
                 AstroGrid(items)
 
@@ -413,8 +416,31 @@ internal fun WatchAdBanner(isLoading: Boolean, onWatch: () -> Unit) {
         if (isLoading) {
             CircularProgressIndicator(modifier = Modifier.size(24.dp), color = WarmTeal, strokeWidth = 2.dp)
         } else {
-            FilledTonalButton(onClick = onWatch) {
-                Text("Watch & Reveal", style = MaterialTheme.typography.labelMedium)
+            val haptic = LocalHapticFeedback.current
+            val isDark = MaterialTheme.colorScheme.background == WarmBlack
+            Box {
+                if (isDark) {
+                    Box(
+                        modifier = Modifier
+                            .matchParentSize()
+                            .padding(horizontal = 2.dp, vertical = 4.dp)
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(
+                                Brush.radialGradient(
+                                    listOf(
+                                        WarmTeal.copy(alpha = 0.18f),
+                                        WarmTeal.copy(alpha = 0f),
+                                    ),
+                                )
+                            ),
+                    )
+                }
+                FilledTonalButton(onClick = {
+                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                    onWatch()
+                }) {
+                    Text("Watch & Reveal", style = MaterialTheme.typography.labelMedium)
+                }
             }
         }
     }

@@ -55,6 +55,9 @@ data class AgeResult(
     // Ba Zi (Four Pillars) — Year + Month (unlockable)
     val baZiInfo: String = "",
 
+    // Lunar birthday (unlockable)
+    val lunarBirthday: String = "",
+
     // Fun fact (unlockable)
     val estimatedHeartbeats: Long = 0L,
 

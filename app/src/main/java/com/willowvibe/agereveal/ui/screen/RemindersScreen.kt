@@ -55,9 +55,12 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -472,19 +475,38 @@ private fun EmptyBirthdaysState(modifier: Modifier = Modifier) {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
-        Text("🎂", fontSize = 48.sp)
-        Spacer(Modifier.height(12.dp))
+        Box(
+            modifier = Modifier
+                .size(80.dp)
+                .clip(CircleShape)
+                .background(
+                    Brush.radialGradient(
+                        listOf(WarmTeal.copy(alpha = 0.25f), WarmTeal.copy(alpha = 0.05f)),
+                    )
+                ),
+            contentAlignment = Alignment.Center,
+        ) {
+            Text("✨", fontSize = 40.sp)
+        }
+        Spacer(Modifier.height(16.dp))
         Text(
-            "No birthdays yet",
+            "Your birthday list is empty",
             fontFamily = SerifFamily,
             fontSize = 20.sp,
             color = WarmInkMute,
         )
         Spacer(Modifier.height(6.dp))
         Text(
-            "Tap + to add a friend or family member.",
+            "Save birthdays to get reminders and build your cosmic circle.",
             style = MaterialTheme.typography.bodySmall,
             color = WarmInkDim,
+            textAlign = TextAlign.Center,
+        )
+        Spacer(Modifier.height(20.dp))
+        Text(
+            "Tap the + button above to add someone special.",
+            style = MaterialTheme.typography.labelSmall,
+            color = WarmTeal,
         )
     }
 }
@@ -639,29 +661,50 @@ private fun AddBirthdaySheet(
                 }
             }
 
-            Button(
-                modifier = Modifier.fillMaxWidth(),
-                onClick = {
-                    if (name.isBlank()) {
-                        nameError = true
-                        return@Button
-                    }
-                    val date = selectedDate ?: run {
-                        dateError = true
-                        return@Button
-                    }
-                    if (date.isAfter(LocalDate.now())) {
-                        dateError = true
-                        return@Button
-                    }
-                    onSave(name.trim(), date, selectedEmoji)
-                },
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = WarmTeal,
-                    contentColor = WarmBlack,
-                ),
-            ) {
-                Text("Save Birthday", fontWeight = FontWeight.SemiBold)
+            val haptic = LocalHapticFeedback.current
+            val isDark = MaterialTheme.colorScheme.background == com.willowvibe.agereveal.ui.theme.WarmBlack
+            Box(modifier = Modifier.fillMaxWidth()) {
+                if (isDark) {
+                    Box(
+                        modifier = Modifier
+                            .matchParentSize()
+                            .padding(horizontal = 2.dp, vertical = 4.dp)
+                            .clip(RoundedCornerShape(16.dp))
+                            .background(
+                                Brush.radialGradient(
+                                    listOf(
+                                        WarmTeal.copy(alpha = 0.18f),
+                                        WarmTeal.copy(alpha = 0f),
+                                    ),
+                                )
+                            ),
+                    )
+                }
+                Button(
+                    modifier = Modifier.fillMaxWidth(),
+                    onClick = {
+                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                        if (name.isBlank()) {
+                            nameError = true
+                            return@Button
+                        }
+                        val date = selectedDate ?: run {
+                            dateError = true
+                            return@Button
+                        }
+                        if (date.isAfter(LocalDate.now())) {
+                            dateError = true
+                            return@Button
+                        }
+                        onSave(name.trim(), date, selectedEmoji)
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = WarmTeal,
+                        contentColor = WarmBlack,
+                    ),
+                ) {
+                    Text("Save Birthday", fontWeight = FontWeight.SemiBold)
+                }
             }
         }
     }

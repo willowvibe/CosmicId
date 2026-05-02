@@ -2,25 +2,24 @@ package com.willowvibe.agereveal.ui.theme
 
 import androidx.compose.material3.Typography
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
+import com.willowvibe.agereveal.R
 
 /**
  * Inter (sans-serif) for body / UI text.
  * Serif (Georgia fallback) for display numerals and headings — mirrors the Fraunces
  * intent in the design prototype.
- *
- * To enable Inter: drop Inter-Regular.ttf / Inter-Medium.ttf / Inter-SemiBold.ttf /
- * Inter-Bold.ttf into res/font/ and uncomment InterFamily below.
  */
 
-// val InterFamily = FontFamily(
-//     Font(R.font.inter_regular,   FontWeight.Normal),
-//     Font(R.font.inter_medium,    FontWeight.Medium),
-//     Font(R.font.inter_semibold,  FontWeight.SemiBold),
-//     Font(R.font.inter_bold,      FontWeight.Bold),
-// )
+val InterFamily = FontFamily(
+    Font(R.font.inter_regular, FontWeight.Normal),
+    Font(R.font.inter_medium, FontWeight.Medium),
+    Font(R.font.inter_semibold, FontWeight.SemiBold),
+    Font(R.font.inter_bold, FontWeight.Bold),
+)
 
 val SerifFamily = FontFamily.Serif   // Georgia on Android; swap for Fraunces once bundled
 
@@ -28,7 +27,7 @@ val AppTypography = Typography(
     // Hero display — age numerals (e.g. "27")
     displayLarge = TextStyle(
         fontFamily = SerifFamily,
-        fontWeight = FontWeight.Normal,
+        fontWeight = FontWeight.Light,
         fontSize = 78.sp,
         lineHeight = 74.sp,
         letterSpacing = (-2).sp,
@@ -75,28 +74,28 @@ val AppTypography = Typography(
     ),
     // Row label (e.g. "Total days lived")
     bodyLarge = TextStyle(
-        fontFamily = FontFamily.Default,
+        fontFamily = InterFamily,
         fontWeight = FontWeight.Normal,
         fontSize = 16.sp,
         lineHeight = 24.sp,
     ),
     // Secondary row value
     bodyMedium = TextStyle(
-        fontFamily = FontFamily.Default,
+        fontFamily = InterFamily,
         fontWeight = FontWeight.Medium,
         fontSize = 14.sp,
         lineHeight = 20.sp,
     ),
     // Tertiary text
     bodySmall = TextStyle(
-        fontFamily = FontFamily.Default,
+        fontFamily = InterFamily,
         fontWeight = FontWeight.Normal,
         fontSize = 12.sp,
         lineHeight = 16.sp,
     ),
     // ALL-CAPS micro labels (e.g. "BORN", "SECONDS ALIVE")
     labelLarge = TextStyle(
-        fontFamily = FontFamily.Default,
+        fontFamily = InterFamily,
         fontWeight = FontWeight.SemiBold,
         fontSize = 14.sp,
         lineHeight = 20.sp,
@@ -104,7 +103,7 @@ val AppTypography = Typography(
     ),
     // Standard label
     labelMedium = TextStyle(
-        fontFamily = FontFamily.Default,
+        fontFamily = InterFamily,
         fontWeight = FontWeight.Medium,
         fontSize = 12.sp,
         lineHeight = 16.sp,
@@ -112,8 +111,8 @@ val AppTypography = Typography(
     ),
     // Small chips / badges
     labelSmall = TextStyle(
-        fontFamily = FontFamily.Default,
-        fontWeight = FontWeight.Medium,
+        fontFamily = InterFamily,
+        fontWeight = FontWeight.SemiBold,
         fontSize = 10.sp,
         lineHeight = 14.sp,
         letterSpacing = 1.5.sp,
