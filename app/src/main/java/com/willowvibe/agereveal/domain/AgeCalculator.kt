@@ -22,6 +22,7 @@ class AgeCalculator @Inject constructor(
     private val nakshatraCalculator: NakshatraCalculator,
     private val dashaCalculator: DashaCalculator,
     private val baZiCalculator: BaZiCalculator,
+    private val lunarConverter: LunarCalendarConverter,
 ) {
 
     /**
@@ -86,6 +87,7 @@ class AgeCalculator @Inject constructor(
             planetPositions = if (includeUnlocked) zodiacCalculator.getPlanetPositions(birthDate, birthTime, zoneOffset) else emptyList(),
             dashaInfo = if (includeUnlocked) dashaCalculator.getDashaInfo(birthDate, birthTime, zoneOffset) else "",
             baZiInfo = if (includeUnlocked) baZiCalculator.getBaZiSummary(birthDate) else "",
+            lunarBirthday = if (includeUnlocked) lunarConverter.toLunarString(birthDate) else "",
             estimatedHeartbeats = if (includeUnlocked) estimateHeartbeats(totalMinutes) else 0L,
             isExact = birthTime != null,
         )

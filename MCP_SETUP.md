@@ -4,6 +4,33 @@ This project includes local MCP (Model Context Protocol) servers for Claude Code
 
 ## Installed MCP Servers
 
+### Appium MCP Server (`appium-mcp`)
+
+**What it does:**
+- Automates Android/iOS UI testing through natural language
+- Built on Appium (industry-standard mobile automation)
+- Supports UiAutomator2 (Android) and XCUITest (iOS)
+
+**Tools:** `appium_start_session`, `appium_find_element`, `appium_click`, `appium_send_keys`, `appium_scroll`, `appium_get_screenshot`, `appium_get_page_source`, `appium_terminate_app`, `appium_ai` (with `AI_VISION_ENABLED=true`)
+
+**Prerequisites:**
+```bash
+npm install -g appium
+appium driver install uiautomator2
+```
+
+**Startup:**
+```bash
+# 1. Start Appium server
+appium
+
+# 2. The MCP server is auto-started by Claude Code via .mcp.json
+```
+
+**Skill:** `/appium-mobile-test`
+
+---
+
 ### Ollama MCP Server (`mcp-ollama-python`)
 
 **Location:** `tools/mcp/`
@@ -30,16 +57,40 @@ This project includes local MCP (Model Context Protocol) servers for Claude Code
 
 ### Project-level `.mcp.json`
 
-The Ollama MCP server is registered in `.mcp.json` at project root:
+Six MCP servers are registered in `.mcp.json` at project root:
 
 ```json
 {
   "mcpServers": {
     "ollama": {
-      "command": "/mnt/data2/git_repos/AgeReveal/tools/mcp/start-ollama-mcp.sh",
+      "command": "bash",
+      "args": ["./tools/mcp/start-ollama-mcp.sh"],
       "env": {
         "OLLAMA_HOST": "http://localhost:11434",
         "OLLAMA_MODEL": "qwen3-coder-next:cloud"
+      }
+    },
+    "appium": {
+      "command": "npx",
+      "args": ["-y", "appium-mcp@latest"]
+    },
+    "filesystem": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-filesystem", ".", "./app/src", "./tools", "./docs"]
+    },
+    "git": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-git", "--repository", "."]
+    },
+    "sqlite": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-sqlite", "--db-path", "./app/schemas"]
+    },
+    "github": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-github"],
+      "env": {
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "${GITHUB_TOKEN}"
       }
     }
   }
@@ -48,15 +99,17 @@ The Ollama MCP server is registered in `.mcp.json` at project root:
 
 ### Skills
 
-Three Claude Code skills are installed in `.claude/skills/`:
+Five Claude Code skills are installed in `.claude/skills/`:
 
 | Skill | Purpose |
 |-------|---------|
+| `appium-mobile-test` | Android app UI automation via Appium |
 | `ollama-android-dev` | Android/Kotlin code generation with local models |
 | `ollama-code-review` | Local code review before commits |
 | `ollama-generate-tests` | Generate instrumented/unit tests |
+| `ollama-gradle-build` | Run Gradle builds and fix compilation errors with local models |
 
-Invoke with: `/ollama-android-dev`, `/ollama-code-review`, `/ollama-generate-tests`
+Invoke with: `/appium-mobile-test`, `/ollama-android-dev`, `/ollama-code-review`, `/ollama-generate-tests`, `/ollama-gradle-build`
 
 ## Requirements
 
@@ -85,24 +138,14 @@ Invoke with: `/ollama-android-dev`, `/ollama-code-review`, `/ollama-generate-tes
 To add another open-source MCP server:
 
 ```bash
-# Example: Filesystem MCP server (Node.js)
-npx -y @modelcontextprotocol/server-filesystem /path/to/allow
+# Example: SQLite MCP server
+npx -y @modelcontextprotocol/server-sqlite /path/to/database
 
-# Example: GitHub MCP server
-npx -y @modelcontextprotocol/server-github
+# Example: Command execution MCP server
+npx -y @modelcontextprotocol/server-command
 ```
 
-Then add to `.mcp.json`:
-```json
-{
-  "mcpServers": {
-    "filesystem": {
-      "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-filesystem", "."]
-    }
-  }
-}
-```
+Then add the corresponding entry to `.mcp.json` under `mcpServers`.
 
 ## Resources
 

@@ -31,8 +31,8 @@ All four IDs below generate **no real revenue** and must be swapped for producti
 ## 2. UI/UX & Design Polish (Clutter-Free Enhancements) ✨
 
 ### 2a. Typography & Hierarchy
-- [ ] **Activate Inter Font:** Download Inter TTF files, place in `app/src/main/res/font/`, and uncomment `InterFamily` block in `Type.kt`. Replace all generic system fonts.
-- [ ] **Data Contrast:** Ensure primary numbers (like total age) use thin/light weights, while labels use bold, smaller, all-caps styles to establish clear visual hierarchy.
+- [x] **Activate Inter Font:** Download Inter TTF files, place in `app/src/main/res/font/`, and uncomment `InterFamily` block in `Type.kt`. Replace all generic system fonts.
+- [x] **Data Contrast:** Ensure primary numbers (like total age) use thin/light weights, while labels use bold, smaller, all-caps styles to establish clear visual hierarchy.
 
 ### 2b. Progressive Disclosure & Layout
 - [ ] **Tabbed Details Screen:** Refactor `DetailsUnlockScreen` from a single long scrolling list into a horizontal Pager/Tab layout (e.g., `Overview` | `Western` | `Vedic` | `Chinese`).
@@ -40,13 +40,13 @@ All four IDs below generate **no real revenue** and must be swapped for producti
 - [ ] **Consistent Card Padding:** Standardize all card elevations to 0dp with subtle borders, or pure elevated surfaces with 16dp margins and 16dp internal padding to let data breathe.
 
 ### 2c. Micro-Interactions & Animations
-- [ ] **Number Roll Animation:** Wrap the live-ticking seconds in an `AnimatedContent` block using `slideInVertically` + `fadeIn` so the numbers smoothly roll like a digital clock.
-- [ ] **Hero Stagger Entrance:** Add an enter/reveal stagger animation when the age result first appears on the Calculator screen.
-- [ ] **Haptic Feedback Sweep:** Add `HapticFeedbackType.TextHandleMove` to date/time picker scrolls, and `LongPress` feedback to important button taps (Save, Share, Unlock).
+- [x] **Number Roll Animation:** Wrap the live-ticking seconds in an `AnimatedContent` block using `slideInVertically` + `fadeIn` so the numbers smoothly roll like a digital clock.
+- [x] **Hero Stagger Entrance:** Add an enter/reveal stagger animation when the age result first appears on the Calculator screen.
+- [x] **Haptic Feedback Sweep:** Add `HapticFeedbackType.TextHandleMove` to date/time picker scrolls, and `LongPress` feedback to important button taps (Save, Share, Unlock).
 
 ### 2d. Empty States & Theming
-- [ ] **Beautiful Empty States:** Design and implement aesthetic placeholder graphics + friendly text for the "Saved Birthdays" and "Compare" screens when no data is present.
-- [ ] **Cosmos Glow Effects:** In the Dark Cosmos theme, replace flat backgrounds on primary buttons with subtle gradient glows or colored drop-shadows to emphasize interactivity.
+- [x] **Beautiful Empty States:** Design and implement aesthetic placeholder graphics + friendly text for the "Saved Birthdays" and "Compare" screens when no data is present.
+- [x] **Cosmos Glow Effects:** In the Dark Cosmos theme, replace flat backgrounds on primary buttons with subtle gradient glows or colored drop-shadows to emphasize interactivity.
 
 ---
 
@@ -74,19 +74,19 @@ All four IDs below generate **no real revenue** and must be swapped for producti
 ### 4b. Chinese Astrology
 - [x] **Chinese zodiac compatibility matrix** — Expand `ZodiacCompatibilityCalculator` with a full 12×12 Chinese compatibility table: 六合 (Six Harmonies) 92, 三合 (Trine) 95, 相冲 (Clash) 35, 相害 (Harm) 45, 相刑 (Punishment) 40, self-punishment for Dragon/Horse/Rooster/Pig 42. Displayed in `CompatibilityScreen` as a relationship label.
 - [x] **Ba Zi (Four Pillars) approximation** — `BaZiCalculator` computes Year pillar (delegates to `getChineseStemBranch`) and Month pillar via 五虎遁月 rule with approximate solar month boundaries. Displayed in `DetailsUnlockScreen` as "Year: X · Month: Y".
-- [ ] **Lunar birthday display** — Show the user's birth date converted to Chinese lunar calendar.
+- [x] **Lunar birthday display** — Show the user's birth date converted to Chinese lunar calendar.
 
 ---
 
 ## 5. Technical Debt
 
 ### 5a. Testing
-- [ ] UI tests (Compose test) — Calculator screen happy path, date validation errors
-- [ ] Instrumented test for Room DAO
-- [ ] Write a migration test using `MigrationTestHelper` for explicit `Migration(1, 2)`
+- [x] UI tests (Compose test) — Calculator screen happy path, date validation errors
+- [x] Instrumented test for Room DAO
+- [x] Write a migration test using `MigrationTestHelper` for explicit `Migration(1, 2)`
 
 ### 5b. Performance & Error Handling
-- [ ] Profile widget update frequency — evaluate `GlanceStateDefinition` caching.
+- [x] Profile widget update frequency — evaluate `GlanceStateDefinition` caching. **Evaluation:** `GlanceStateDefinition` caching is unnecessary. `BirthdayRepository.notifyWidget()` triggers immediate updates on every DB change, and Room's in-memory Flow cache makes `firstOrNull()` reads cheap. The 1-hour `updatePeriodMillis` in widget XML is sufficient for the daily countdown refresh. Adding `GlanceStateDefinition` would add complexity without measurable benefit.
 - [x] Hindi UI toggle — In-app language switch via Settings screen using `AppCompatDelegate.setApplicationLocales` (System / English / Hindi).
 - [x] Remove unnecessary exact alarm permissions (`SCHEDULE_EXACT_ALARM` / `USE_EXACT_ALARM`) from manifest — WorkManager does not require them for `setInitialDelay`.
 - [x] Replace noon-default with device time-zone-aware default for astronomical calculations when exact time is missing. `AstronomicalCalculator.snapshot()` now accepts optional `ZoneOffset` and converts local date-time to UT before computing JD. `CalculatorViewModel` passes `OffsetDateTime.now().offset` to ensure accurate ephemeris for users in any timezone.

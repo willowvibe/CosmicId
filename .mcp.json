@@ -9,6 +9,14 @@
         "OLLAMA_MODEL": "qwen3-coder-next:cloud"
       }
     },
+    "appium": {
+      "command": "npx",
+      "args": ["-y", "appium-mcp@latest"],
+      "description": "Appium mobile automation MCP server for Android/iOS UI testing",
+      "env": {
+        "ANDROID_HOME": "/home/harish/Android/Sdk"
+      }
+    },
     "filesystem": {
       "command": "npx",
       "args": [
