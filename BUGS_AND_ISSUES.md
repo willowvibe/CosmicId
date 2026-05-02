@@ -329,3 +329,65 @@ This document tracks known bugs, edge cases, and fragile areas in the codebase. 
 |---|---|---|
 | BUG-030 | ShareCardGenerator error propagation | v0.9.1 |
 | BUG-031 | ShareCardGenerator sets share error handlers in ViewModels | v0.9.1 |
+
+
+
+# AgeReveal — Bugs & Edge Case Issues
+
+_Last updated: 2026-05-01 — v1.0.0-rc1_
+
+This document tracks known bugs, edge cases, and fragile areas in the codebase. 
+
+---
+
+## Status Legend
+
+| Icon | Meaning |
+|---|---|
+| 🔴 | Open — confirmed bug, no fix yet |
+| 🟡 | Open — known limitation or design gap, not strictly a bug |
+| 🟢 | Fixed — resolved in the version noted |
+| ✅ | Verified safe — investigated and confirmed not a bug |
+
+---
+
+## Open Issues & Known Limitations
+
+### 🟢 BUG-034 — Unnecessary Exact Alarm Permissions in Manifest
+**Status:** Fixed  
+**Severity:** Medium (Play Store rejection risk / misdiagnosed crash)  
+**File:** `app/src/main/AndroidManifest.xml`, `notification/BirthdayNotificationScheduler.kt`, `notification/MilestoneNotificationScheduler.kt`  
+**Description:** The manifest declared both `SCHEDULE_EXACT_ALARM` and `USE_EXACT_ALARM`. `USE_EXACT_ALARM` is a restricted permission intended for alarm-clock apps and would cause Play Store rejection for a birthday reminder app. WorkManager's `setInitialDelay` does not require exact alarm permissions, making `SCHEDULE_EXACT_ALARM` unnecessary. Misleading `SecurityException` try-catch blocks were added around `enqueueUniqueWork()`, but this method never throws `SecurityException` for normal work requests.  
+**Fix applied:** Removed both exact alarm permissions from the manifest. Removed dead `SecurityException` catch blocks and unused `PackageManager` import from notification schedulers. Retained backoff criteria as they improve general scheduling resilience.
+
+### 🟢 BUG-035 — Widget Performance (Unnecessary Recomposition)
+**Status:** Fixed  
+**Severity:** Low (Battery/Performance)  
+**File:** `widget/BirthdayGlanceWidget.kt`, `widget/BirthdayWideGlanceWidget.kt`  
+**Description:** The Glance widget updates on every `AppWidgetManager.updateAppWidget` call. Without caching, this would trigger unnecessary DB reads and UI recompositions.  
+**Fix applied:** Used `firstOrNull()` on Room Flow instead of `first()` to prevent hanging and leverage Room's internal caching. Combined with `notifyWidget()` that only triggers on actual data changes, this ensures efficient updates without excessive reads.
+
+### 🟢 BUG-036 — Ascendant / Lagna Approximation Implemented
+**Status:** Fixed (Workaround implemented)  
+**Severity:** Low (Astrological limitation)  
+**Files:** `domain/AstronomicalCalculator.kt`, `domain/ZodiacCalculator.kt`, `ui/screen/DetailsUnlockScreen.kt`  
+**Description:** The app calculates Western zodiac, Vedic Rashi, Chinese zodiac, and stem-branch. True **Ascendant (Rising Sign / Lagna)** requires the observer's latitude and longitude, which the app does not collect.
+
+**Workaround implemented:** `AstronomicalCalculator.approximateAscendantLongitude()` computes the equatorial ascendant using Greenwich Mean Sidereal Time at 0° latitude — a valid astronomical reference point. `ZodiacCalculator.getApproximateAscendant()` maps this to the corresponding Vedic rashi with Lahiri ayanamsa and standard cusp detection (±1°). The UI displays it as **"Lagna (Ascendant) [name] (Approximate — no location)"** in `DetailsUnlockScreen.kt` so users understand it is a rough estimate (typically off by 1-2 signs for mid-latitude users).
+
+**True calculation remains blocked on:** Adding a location picker UI (city / lat-lon), persisting location data, and switching from the equatorial approximation to the full Campanus/Placidus house formula.
+
+---
+
+---
+
+## Edge Cases — Verified
+
+| Scenario | Status | Notes |
+|---|---|---|
+| Feb 29 birthday in non-leap year | ✅ Fixed | `yearSafeBirthday()` maps to Mar 1 |
+| Feb 29 in notification scheduler | ✅ Fixed | Same helper used in `BirthdayReminderWorker` |
+| Future date input | ✅ Fixed | Validated in ViewModels; treats future dates as errors |
+| No date selected on Add Birthday sheet | ✅ Fixed | Treats missing date as validation error (`dateError = true`) |
+| Equal-age comparison | ✅ Fixed | Shows "Same birthday!" instead of mislabelling Person B as older |
+| Today's date (age = 0) | ✅ Verified | `Period.between(today, today)` returns 0; displays correctly |

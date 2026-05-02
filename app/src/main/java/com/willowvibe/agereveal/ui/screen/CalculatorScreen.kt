@@ -215,10 +215,12 @@ fun CalculatorScreen(
                     onDateSelected = viewModel::onBirthDateSelected,
                 )
 
-                // ── Birth time (optional, for precise Nakshatra/Rashi) ────────
-                BirthTimeRow(
-                    selectedTime = uiState.birthTime,
+                // ── Precision settings (birth time + location) ───────────────
+                PrecisionRow(
+                    birthTime = uiState.birthTime,
+                    location = uiState.location,
                     onTimeSelected = viewModel::onBirthTimeSelected,
+                    onLocationSelected = viewModel::onLocationSelected,
                 )
 
                 uiState.result?.let { result ->
@@ -248,7 +250,7 @@ fun CalculatorScreen(
                                 )
                                 Spacer(Modifier.height(14.dp))
                             }
-                            AstroTile(result = result, isUnlocked = uiState.isUnlocked)
+                            AstroTile(result = result, isUnlocked = uiState.isUnlocked, hasLocation = uiState.location != null)
 
                             if (uiState.isUnlocked) {
                                 Spacer(Modifier.height(14.dp))
@@ -398,7 +400,7 @@ private fun BirthAnchorRow(
 // ─────────────────────────────────────────────────────────────────────────────
 
 @Composable
-private fun ClockFaceHero(result: AgeResult) {
+internal fun ClockFaceHero(result: AgeResult) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -453,7 +455,7 @@ private fun AgeNumeral(
 // ─────────────────────────────────────────────────────────────────────────────
 
 @Composable
-private fun SecondsStrip(result: AgeResult) {
+internal fun SecondsStrip(result: AgeResult) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -498,7 +500,7 @@ private fun SecondsStrip(result: AgeResult) {
 // ─────────────────────────────────────────────────────────────────────────────
 
 @Composable
-private fun MiniStatRow(result: AgeResult) {
+internal fun MiniStatRow(result: AgeResult) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(10.dp),
@@ -655,32 +657,38 @@ private fun formatHeartbeats(n: Long): String = when {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Birth time (optional)
+// ─────────────────────────────────────────────────────────────────────────────
+// Precision settings row (birth time + location combined)
 // ─────────────────────────────────────────────────────────────────────────────
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun BirthTimeRow(
-    selectedTime: LocalTime?,
+private fun PrecisionRow(
+    birthTime: LocalTime?,
+    location: com.willowvibe.agereveal.data.model.GeoLocation?,
     onTimeSelected: (LocalTime?) -> Unit,
+    onLocationSelected: (com.willowvibe.agereveal.data.model.GeoLocation?) -> Unit,
 ) {
-    var showDialog by remember { mutableStateOf(false) }
+    var showTimeDialog by remember { mutableStateOf(false) }
+    var showLocationDialog by remember { mutableStateOf(false) }
     val timePickerState = rememberTimePickerState(
-        initialHour = selectedTime?.hour ?: 12,
-        initialMinute = selectedTime?.minute ?: 0,
+        initialHour = birthTime?.hour ?: 12,
+        initialMinute = birthTime?.minute ?: 0,
         is24Hour = false,
     )
+    var latText by remember { mutableStateOf(location?.latitude?.toString() ?: "") }
+    var lonText by remember { mutableStateOf(location?.longitude?.toString() ?: "") }
 
-    if (showDialog) {
+    if (showTimeDialog) {
         AlertDialog(
-            onDismissRequest = { showDialog = false },
+            onDismissRequest = { showTimeDialog = false },
             containerColor = WarmSurface,
             titleContentColor = WarmInk,
             title = { Text("Birth time (optional)", color = WarmInk) },
             text = {
                 Column {
                     Text(
-                        "Set a precise birth time for exact Nakshatra/Rashi — otherwise results are labelled Approximate.",
+                        "Set a precise birth time for exact Nakshatra / Rashi / Dasha.",
                         style = MaterialTheme.typography.bodySmall,
                         color = WarmInkDim,
                     )
@@ -691,18 +699,85 @@ private fun BirthTimeRow(
             confirmButton = {
                 TextButton(onClick = {
                     onTimeSelected(LocalTime.of(timePickerState.hour, timePickerState.minute))
-                    showDialog = false
+                    showTimeDialog = false
                 }) { Text("Set") }
             },
             dismissButton = {
                 Row {
-                    if (selectedTime != null) {
+                    if (birthTime != null) {
                         TextButton(onClick = {
                             onTimeSelected(null)
-                            showDialog = false
+                            showTimeDialog = false
                         }) { Text("Clear") }
                     }
-                    TextButton(onClick = { showDialog = false }) { Text("Cancel") }
+                    TextButton(onClick = { showTimeDialog = false }) { Text("Cancel") }
+                }
+            },
+        )
+    }
+
+    if (showLocationDialog) {
+        AlertDialog(
+            onDismissRequest = { showLocationDialog = false },
+            containerColor = WarmSurface,
+            titleContentColor = WarmInk,
+            title = { Text("Birth location (optional)", color = WarmInk) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Text(
+                        "Enter latitude and longitude for exact Lagna (Ascendant).",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = WarmInkDim,
+                    )
+                    OutlinedTextField(
+                        value = latText,
+                        onValueChange = { latText = it.filter { c -> c.isDigit() || c == '.' || c == '-' } },
+                        label = { Text("Latitude (-90 to 90)", color = WarmInkDim) },
+                        singleLine = true,
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = WarmTeal,
+                            unfocusedBorderColor = WarmInkDim,
+                            focusedTextColor = WarmInk,
+                            unfocusedTextColor = WarmInk,
+                        ),
+                    )
+                    OutlinedTextField(
+                        value = lonText,
+                        onValueChange = { lonText = it.filter { c -> c.isDigit() || c == '.' || c == '-' } },
+                        label = { Text("Longitude (-180 to 180)", color = WarmInkDim) },
+                        singleLine = true,
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = WarmTeal,
+                            unfocusedBorderColor = WarmInkDim,
+                            focusedTextColor = WarmInk,
+                            unfocusedTextColor = WarmInk,
+                        ),
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    val lat = latText.toDoubleOrNull()
+                    val lon = lonText.toDoubleOrNull()
+                    if (lat != null && lon != null && lat in -90.0..90.0 && lon in -180.0..180.0) {
+                        onLocationSelected(
+                            com.willowvibe.agereveal.data.model.GeoLocation(latitude = lat, longitude = lon)
+                        )
+                    }
+                    showLocationDialog = false
+                }) { Text("Set") }
+            },
+            dismissButton = {
+                Row {
+                    if (location != null) {
+                        TextButton(onClick = {
+                            onLocationSelected(null)
+                            latText = ""
+                            lonText = ""
+                            showLocationDialog = false
+                        }) { Text("Clear") }
+                    }
+                    TextButton(onClick = { showLocationDialog = false }) { Text("Cancel") }
                 }
             },
         )
@@ -712,41 +787,77 @@ private fun BirthTimeRow(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(bottom = 12.dp)
-                .clickable { showDialog = true },
+                .padding(bottom = 12.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    "BIRTH TIME (OPTIONAL)",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = WarmInkDim,
-                )
-                Spacer(Modifier.height(4.dp))
-                Text(
-                    text = selectedTime?.format(DateTimeFormatter.ofPattern("h:mm a"))
-                        ?: "Tap to set birth time for precise astrology",
-                    style = MaterialTheme.typography.bodyMedium.copy(fontSize = 14.sp),
-                    color = if (selectedTime != null) WarmTeal else WarmInkMute,
-                )
-            }
-            Box(
-                modifier = Modifier
-                    .size(34.dp)
-                    .clip(CircleShape)
-                    .background(WarmSurface),
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(
-                    Icons.Default.AccessTime,
-                    contentDescription = "Change birth time",
-                    tint = if (selectedTime != null) WarmTeal else WarmInkMute,
-                    modifier = Modifier.size(16.dp),
-                )
-            }
+            // ── Time chip ──────────────────────────────────────────────
+            PrecisionChip(
+                label = "TIME",
+                value = birthTime?.format(DateTimeFormatter.ofPattern("h:mm a")) ?: "Add",
+                isSet = birthTime != null,
+                onClick = { showTimeDialog = true },
+                modifier = Modifier.weight(1f),
+            )
+            Spacer(Modifier.width(10.dp))
+            // ── Location chip ──────────────────────────────────────────
+            PrecisionChip(
+                label = "LOCATION",
+                value = location?.let { "%.1f°, %.1f°".format(it.latitude, it.longitude) } ?: "Add",
+                isSet = location != null,
+                onClick = { showLocationDialog = true },
+                modifier = Modifier.weight(1f),
+            )
         }
         HorizontalDivider(color = WarmSurfaceSoft, thickness = 1.dp)
+    }
+}
+
+@Composable
+internal fun PrecisionChip(
+    label: String,
+    value: String,
+    isSet: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Row(
+        modifier = modifier
+            .clip(RoundedCornerShape(10.dp))
+            .background(WarmSurface)
+            .clickable { onClick() }
+            .padding(horizontal = 12.dp, vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween,
+    ) {
+        Column {
+            Text(
+                label,
+                style = MaterialTheme.typography.labelSmall,
+                color = WarmInkDim,
+            )
+            Spacer(Modifier.height(2.dp))
+            Text(
+                value,
+                style = MaterialTheme.typography.bodyMedium.copy(fontSize = 14.sp),
+                color = if (isSet) WarmTeal else WarmInkMute,
+                fontWeight = if (isSet) FontWeight.SemiBold else FontWeight.Normal,
+            )
+        }
+        Box(
+            modifier = Modifier
+                .size(22.dp)
+                .clip(CircleShape)
+                .background(if (isSet) WarmTeal.copy(alpha = 0.15f) else WarmSurfaceSoft),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                Icons.Default.Edit,
+                contentDescription = "Change $label",
+                tint = if (isSet) WarmTeal else WarmInkMute,
+                modifier = Modifier.size(12.dp),
+            )
+        }
     }
 }
 

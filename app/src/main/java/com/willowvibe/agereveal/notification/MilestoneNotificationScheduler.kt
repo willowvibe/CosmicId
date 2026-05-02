@@ -86,6 +86,11 @@ class MilestoneNotificationScheduler @Inject constructor(
         val name = uniqueWorkName(birthDate, target)
         val request = OneTimeWorkRequestBuilder<MilestoneReminderWorker>()
             .setInitialDelay(delayMs, TimeUnit.MILLISECONDS)
+            .setBackoffCriteria(
+                androidx.work.BackoffPolicy.EXPONENTIAL,
+                androidx.work.WorkRequest.MIN_BACKOFF_MILLIS,
+                TimeUnit.MILLISECONDS
+            )
             .setInputData(workDataOf(KEY_TARGET_DAYS to target))
             .addTag(ALL_MILESTONES_TAG)
             .addTag(name)

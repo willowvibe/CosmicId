@@ -39,10 +39,21 @@ data class AgeResult(
     val westernMoonSign: String = "",
     val rashi: String = "",
     val rashiLord: String = "",
+    val approximateAscendant: String = "",
+    val tithi: String = "",
     val nakshatra: String = "",
     val nakshatraPada: String = "",
     val chineseZodiac: String = "",
     val chineseStemBranch: String = "",
+
+    // Planetary positions summary
+    val planetPositions: List<Pair<String, String>> = emptyList(),
+
+    // Vimshottari Dasha (unlockable)
+    val dashaInfo: String = "",
+
+    // Ba Zi (Four Pillars) — Year + Month (unlockable)
+    val baZiInfo: String = "",
 
     // Fun fact (unlockable)
     val estimatedHeartbeats: Long = 0L,

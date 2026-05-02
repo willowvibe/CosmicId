@@ -108,7 +108,7 @@ fun DetailsUnlockScreen(
                 verticalArrangement = Arrangement.spacedBy(14.dp),
             ) {
                 // ── Big astro tile ───────────────────────────────────────────
-                AstroTile(result = result, isUnlocked = uiState.isUnlocked)
+                AstroTile(result = result, isUnlocked = uiState.isUnlocked, hasLocation = uiState.location != null)
 
                 // ── Watch-ad gate (only when not unlocked) ───────────────────
                 if (!uiState.isUnlocked) {
@@ -144,7 +144,7 @@ fun DetailsUnlockScreen(
 // ─────────────────────────────────────────────────────────────────────────────
 
 @Composable
-internal fun AstroTile(result: AgeResult, isUnlocked: Boolean) {
+internal fun AstroTile(result: AgeResult, isUnlocked: Boolean, hasLocation: Boolean = false) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -171,132 +171,56 @@ internal fun AstroTile(result: AgeResult, isUnlocked: Boolean) {
             )
             Spacer(Modifier.height(6.dp))
             if (isUnlocked && result.westernZodiac.isNotEmpty()) {
-                val westernLabel = if (result.birthTime == null) {
-                    "${result.westernZodiac} (Approximate)"
-                } else {
-                    result.westernZodiac
-                }
-                val rashiLabel = if (result.birthTime == null) {
-                    "${result.rashi} (Approximate)"
-                } else {
-                    result.rashi
-                }
+                // ── Hero: primary signs ────────────────────────────────────
                 Text(
-                    "$westernLabel · $rashiLabel",
+                    "${result.westernZodiac} · ${result.rashi}",
                     fontFamily = SerifFamily,
                     fontWeight = FontWeight.Normal,
                     fontSize = 28.sp,
                     lineHeight = 32.sp,
                     letterSpacing = (-0.5).sp,
-                    color = if (result.birthTime == null) WarmAmber else WarmInk,
+                    color = WarmInk,
                 )
-                if (result.westernMoonSign.isNotEmpty()) {
-                    Spacer(Modifier.height(4.dp))
-                    Row {
-                        Text(
-                            "Moon Sign ",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = if (result.birthTime == null) WarmInkDim else WarmInkMute
-                        )
-                        Text(
-                            result.westernMoonSign,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = if (result.birthTime == null) WarmAmber else WarmInk,
-                            fontWeight = if (result.birthTime == null) FontWeight.Normal else FontWeight.Medium
-                        )
-                        if (result.birthTime == null) {
-                            Text(
-                                " (Approximate)",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = WarmInkMute
-                            )
-                        }
-                    }
+
+                // Single approximate badge instead of repeating everywhere
+                if (result.birthTime == null) {
+                    Spacer(Modifier.height(6.dp))
+                    ApproximateBadge()
                 }
-                if (result.chineseStemBranch.isNotEmpty()) {
-                    Text(
-                        result.chineseStemBranch,
-                        fontFamily = SerifFamily,
-                        fontWeight = FontWeight.Normal,
-                        fontSize = 18.sp,
-                        letterSpacing = (-0.3).sp,
-                        color = WarmInk,
-                    )
-                } else if (result.chineseZodiac.isNotEmpty()) {
-                    val chineseParts = result.chineseZodiac.split(" ", limit = 2)
-                    val chineseLabel = if (chineseParts.size >= 2)
-                        "Year of the ${chineseParts[1]} ${chineseParts[0]}"
-                    else result.chineseZodiac
-                    Text(
-                        chineseLabel,
-                        fontFamily = SerifFamily,
-                        fontWeight = FontWeight.Normal,
-                        fontSize = 20.sp,
-                        letterSpacing = (-0.3).sp,
-                        color = WarmInk,
-                    )
-                }
-                if (result.rashiLord.isNotEmpty()) {
-                    Spacer(Modifier.height(4.dp))
-                    Row {
-                        Text(
-                            "Rashi Lord ",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = WarmInkMute
-                        )
-                        Text(
-                            result.rashiLord,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = WarmInk,
-                            fontWeight = FontWeight.Medium
-                        )
+
+                // ── Compact astrology grid ─────────────────────────────────
+                Spacer(Modifier.height(10.dp))
+                val items = buildList {
+                    if (result.westernMoonSign.isNotEmpty()) add("Moon" to result.westernMoonSign)
+                    if (result.rashiLord.isNotEmpty()) add("Lord" to result.rashiLord)
+                    if (result.chineseStemBranch.isNotEmpty()) add("Chinese" to result.chineseStemBranch.split(" / ").last())
+                    else if (result.chineseZodiac.isNotEmpty()) add("Chinese" to result.chineseZodiac)
+                    if (result.approximateAscendant.isNotEmpty()) {
+                        val lagnaLabel = if (hasLocation) "Lagna" else "Lagna (approx)"
+                        add(lagnaLabel to result.approximateAscendant)
                     }
+                    if (result.tithi.isNotEmpty()) add("Tithi" to result.tithi)
+                    if (result.nakshatra.isNotEmpty()) add("Nakshatra" to result.nakshatra)
+                    if (result.nakshatraPada.isNotEmpty()) add("Pada" to result.nakshatraPada)
                 }
-                if (result.nakshatra.isNotEmpty()) {
-                    Spacer(Modifier.height(8.dp))
-                    Row {
-                        Text(
-                            "Nakshatra ",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = if (result.birthTime == null) WarmInkDim else WarmInkMute
-                        )
-                        Text(
-                            result.nakshatra,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = if (result.birthTime == null) WarmAmber else WarmInk,
-                            fontWeight = if (result.birthTime == null) FontWeight.Normal else FontWeight.Medium
-                        )
-                        if (result.birthTime == null) {
-                            Text(
-                                " (Approximate)",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = WarmInkMute
-                            )
-                        }
-                    }
+                AstroGrid(items)
+
+                // ── Dasha ──────────────────────────────────────────────────
+                if (result.dashaInfo.isNotEmpty()) {
+                    Spacer(Modifier.height(10.dp))
+                    DashaRow(result.dashaInfo)
                 }
-                if (result.nakshatraPada.isNotEmpty()) {
-                    Spacer(Modifier.height(4.dp))
-                    Row {
-                        Text(
-                            "Pada ",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = if (result.birthTime == null) WarmInkDim else WarmInkMute
-                        )
-                        Text(
-                            result.nakshatraPada,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = if (result.birthTime == null) WarmAmber else WarmInk,
-                            fontWeight = if (result.birthTime == null) FontWeight.Normal else FontWeight.Medium
-                        )
-                        if (result.birthTime == null) {
-                            Text(
-                                " (Approximate)",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = WarmInkMute
-                            )
-                        }
-                    }
+
+                // ── Ba Zi ──────────────────────────────────────────────────
+                if (result.baZiInfo.isNotEmpty()) {
+                    Spacer(Modifier.height(10.dp))
+                    BaZiRow(result.baZiInfo)
+                }
+
+                // ── Planet positions ───────────────────────────────────────
+                if (result.planetPositions.isNotEmpty()) {
+                    Spacer(Modifier.height(10.dp))
+                    PlanetPositionTable(result.planetPositions)
                 }
             } else {
                 // Placeholder when not yet unlocked
@@ -314,6 +238,148 @@ internal fun AstroTile(result: AgeResult, isUnlocked: Boolean) {
                     "Watch an ad to reveal your signs",
                     style = MaterialTheme.typography.bodySmall,
                     color = WarmInkDim,
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun ApproximateBadge() {
+    Box(
+        modifier = Modifier
+            .clip(RoundedCornerShape(6.dp))
+            .background(WarmAmber.copy(alpha = 0.12f))
+            .padding(horizontal = 8.dp, vertical = 3.dp),
+    ) {
+        Text(
+            "Approximate — add birth time for exact results",
+            style = MaterialTheme.typography.labelSmall,
+            color = WarmAmber,
+        )
+    }
+}
+
+/**
+ * Compact 2-column grid for astrology label-value pairs.
+ * Falls back to a single column if there is only 1 item.
+ */
+@Composable
+private fun AstroGrid(items: List<Pair<String, String>>) {
+    if (items.isEmpty()) return
+    if (items.size == 1) {
+        AstroGridItem(label = items[0].first, value = items[0].second)
+        return
+    }
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        items.chunked(2).forEach { pair ->
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                AstroGridItem(
+                    label = pair[0].first,
+                    value = pair[0].second,
+                    modifier = Modifier.weight(1f),
+                )
+                if (pair.size > 1) {
+                    AstroGridItem(
+                        label = pair[1].first,
+                        value = pair[1].second,
+                        modifier = Modifier.weight(1f),
+                    )
+                } else {
+                    Spacer(Modifier.weight(1f))
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun AstroGridItem(label: String, value: String, modifier: Modifier = Modifier) {
+    Column(modifier = modifier) {
+        Text(
+            label.uppercase(),
+            style = MaterialTheme.typography.labelSmall,
+            color = WarmInkDim,
+        )
+        Spacer(Modifier.height(2.dp))
+        Text(
+            value,
+            style = MaterialTheme.typography.bodySmall,
+            color = WarmInk,
+            fontWeight = FontWeight.SemiBold,
+        )
+    }
+}
+
+@Composable
+private fun DashaRow(info: String) {
+    Column {
+        Text(
+            "DASHA",
+            style = MaterialTheme.typography.labelSmall,
+            color = WarmInkDim,
+        )
+        Spacer(Modifier.height(2.dp))
+        Text(
+            info,
+            style = MaterialTheme.typography.bodySmall,
+            color = WarmAmber,
+            fontWeight = FontWeight.SemiBold,
+        )
+    }
+}
+
+@Composable
+private fun BaZiRow(info: String) {
+    Column {
+        Text(
+            "BA ZI (FOUR PILLARS)",
+            style = MaterialTheme.typography.labelSmall,
+            color = WarmInkDim,
+        )
+        Spacer(Modifier.height(2.dp))
+        Text(
+            info,
+            style = MaterialTheme.typography.bodySmall,
+            color = WarmInk,
+            fontWeight = FontWeight.Medium,
+        )
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Planet positions table
+// ─────────────────────────────────────────────────────────────────────────────
+
+@Composable
+private fun PlanetPositionTable(positions: List<Pair<String, String>>) {
+    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Text(
+            "PLANETARY POSITIONS",
+            style = MaterialTheme.typography.labelSmall,
+            color = WarmInkDim,
+        )
+        Spacer(Modifier.height(4.dp))
+        positions.forEach { (planet, sign) ->
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    planet,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = WarmInkMute,
+                    fontWeight = FontWeight.Medium,
+                )
+                Text(
+                    sign,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = WarmInk,
+                    fontWeight = FontWeight.SemiBold,
                 )
             }
         }
@@ -413,7 +479,7 @@ private fun MilestoneTimeline(
 }
 
 @Composable
-private fun LifeProgressBar(totalDays: Long) {
+internal fun LifeProgressBar(totalDays: Long) {
     val lifeExpectancyDays = 29_200L // ~80 years
     val progress = (totalDays.toFloat() / lifeExpectancyDays).coerceIn(0f, 1f)
     val years = totalDays / 365
@@ -454,7 +520,7 @@ private fun LifeProgressBar(totalDays: Long) {
 }
 
 @Composable
-private fun MilestoneRow(
+internal fun MilestoneRow(
     milestone: Milestone,
     isUnlocked: Boolean,
     onShare: () -> Unit,
@@ -548,7 +614,7 @@ private fun MilestoneRow(
 // ─────────────────────────────────────────────────────────────────────────────
 
 @Composable
-private fun HeartbeatRow(heartbeats: Long) {
+internal fun HeartbeatRow(heartbeats: Long) {
     Row(
         modifier = Modifier
             .fillMaxWidth()

@@ -30,7 +30,9 @@ class AgeCalculatorBirthTimeTest {
         val astronomy = AstronomicalCalculator()
         zodiac = ZodiacCalculator(astronomy)
         nakshatra = NakshatraCalculator(astronomy)
-        calculator = AgeCalculator(zodiac, nakshatra)
+        val dasha = DashaCalculator(astronomy)
+        val baZi = BaZiCalculator(zodiac)
+        calculator = AgeCalculator(zodiac, nakshatra, dasha, baZi)
     }
 
     @Test

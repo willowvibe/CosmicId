@@ -282,7 +282,7 @@ fun CompatibilityScreen(
 // ─────────────────────────────────────────────────────────────────────────────
 
 @Composable
-private fun RelationshipTypeSelector(
+internal fun RelationshipTypeSelector(
     selected: RelationshipType,
     onSelect: (RelationshipType) -> Unit,
 ) {
@@ -319,7 +319,7 @@ private fun RelationshipTypeSelector(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun PersonDateCard(
+internal fun PersonDateCard(
     label: String,
     name: String,
     date: LocalDate?,
@@ -410,7 +410,7 @@ private fun PersonDateCard(
 // ─────────────────────────────────────────────────────────────────────────────
 
 @Composable
-private fun AgeComparisonCard(result: CompatibilityResult) {
+internal fun AgeComparisonCard(result: CompatibilityResult) {
     val ageA = result.personAAge
     val ageB = result.personBAge
     if (ageA == null || ageB == null) return
@@ -482,7 +482,7 @@ private fun AgeChip(name: String, age: AgeInfo, modifier: Modifier = Modifier) {
 // ─────────────────────────────────────────────────────────────────────────────
 
 @Composable
-private fun CompatibilityResultCard(result: CompatibilityResult) {
+internal fun CompatibilityResultCard(result: CompatibilityResult) {
     Column(
         modifier = Modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(12.dp),
@@ -555,6 +555,26 @@ private fun CompatibilityResultCard(result: CompatibilityResult) {
             ZodiacPairingRow("Element", result.personAElement, result.personBElement)
             HorizontalDivider(color = WarmSurfaceSoft)
             ZodiacPairingRow("Chinese", result.personAChinese, result.personBChinese)
+            if (result.chineseRelationshipLabel.isNotEmpty()) {
+                HorizontalDivider(color = WarmSurfaceSoft)
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        "Relation",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = WarmInkMute,
+                        modifier = Modifier.width(64.dp),
+                    )
+                    Text(
+                        result.chineseRelationshipLabel,
+                        style = MaterialTheme.typography.bodySmall,
+                        fontWeight = FontWeight.SemiBold,
+                        color = WarmAmber,
+                    )
+                }
+            }
         }
 
         // ── Description ───────────────────────────────────────────────────────

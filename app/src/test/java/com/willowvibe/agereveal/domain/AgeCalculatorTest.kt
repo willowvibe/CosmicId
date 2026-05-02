@@ -16,7 +16,9 @@ class AgeCalculatorTest {
         val astronomy = AstronomicalCalculator()
         val zodiac = ZodiacCalculator(astronomy)
         val nakshatra = NakshatraCalculator(astronomy)
-        calculator = AgeCalculator(zodiac, nakshatra)
+        val dasha = DashaCalculator(astronomy)
+        val baZi = BaZiCalculator(zodiac)
+        calculator = AgeCalculator(zodiac, nakshatra, dasha, baZi)
     }
 
     // -------------------------------------------------------------------------

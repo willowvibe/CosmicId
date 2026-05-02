@@ -2,6 +2,7 @@ package com.willowvibe.agereveal.domain
 
 import java.time.LocalDate
 import java.time.LocalTime
+import java.time.ZoneOffset
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -26,8 +27,12 @@ class ZodiacCalculator @Inject constructor(
     )
 
     /** Western (tropical) zodiac from the Sun's ecliptic longitude with cusp detection. */
-    fun getWesternZodiac(birthDate: LocalDate, birthTime: LocalTime? = null): String {
-        val snapshot = astronomy.snapshot(birthDate, birthTime)
+    fun getWesternZodiac(
+        birthDate: LocalDate,
+        birthTime: LocalTime? = null,
+        zoneOffset: ZoneOffset? = null,
+    ): String {
+        val snapshot = astronomy.snapshot(birthDate, birthTime, zoneOffset)
         val longitude = snapshot.tropicalSunLongitude
         val index = ((longitude / 30.0).toInt() % 12 + 12) % 12
         val name = westernSignNames[index]
@@ -37,8 +42,12 @@ class ZodiacCalculator @Inject constructor(
     }
 
     /** Western Moon sign from the Moon's tropical ecliptic longitude with cusp detection. */
-    fun getWesternMoonSign(birthDate: LocalDate, birthTime: LocalTime? = null): String {
-        val snapshot = astronomy.snapshot(birthDate, birthTime)
+    fun getWesternMoonSign(
+        birthDate: LocalDate,
+        birthTime: LocalTime? = null,
+        zoneOffset: ZoneOffset? = null,
+    ): String {
+        val snapshot = astronomy.snapshot(birthDate, birthTime, zoneOffset)
         val longitude = snapshot.tropicalMoonLongitude
         val index = ((longitude / 30.0).toInt() % 12 + 12) % 12
         val name = westernSignNames[index]
@@ -48,8 +57,12 @@ class ZodiacCalculator @Inject constructor(
     }
 
     /** Vedic Rashi derived from the Sun's sidereal ecliptic longitude (12 × 30° signs). */
-    fun getRashi(birthDate: LocalDate, birthTime: LocalTime? = null): String {
-        val snapshot = astronomy.snapshot(birthDate, birthTime)
+    fun getRashi(
+        birthDate: LocalDate,
+        birthTime: LocalTime? = null,
+        zoneOffset: ZoneOffset? = null,
+    ): String {
+        val snapshot = astronomy.snapshot(birthDate, birthTime, zoneOffset)
         val longitude = snapshot.siderealSunLongitude
         val index = ((longitude / 30.0).toInt() % 12 + 12) % 12
         val name = rashiOrder[index]
@@ -79,13 +92,116 @@ class ZodiacCalculator @Inject constructor(
         "Jupiter", "Saturn", "Saturn", "Jupiter",
     )
 
+    private val tithiNames = listOf(
+        "Pratipada", "Dwitiya", "Tritiya", "Chaturthi", "Panchami",
+        "Shashthi", "Saptami", "Ashtami", "Navami", "Dashami",
+        "Ekadashi", "Dwadashi", "Trayodashi", "Chaturdashi", "Purnima",
+        "Pratipada", "Dwitiya", "Tritiya", "Chaturthi", "Panchami",
+        "Shashthi", "Saptami", "Ashtami", "Navami", "Dashami",
+        "Ekadashi", "Dwadashi", "Trayodashi", "Chaturdashi", "Amavasya",
+    )
+
     /** Returns the ruling planet (graha) of the Vedic Rashi for the given birth date. */
-    fun getRashiLord(birthDate: LocalDate, birthTime: LocalTime? = null): String {
-        val snapshot = astronomy.snapshot(birthDate, birthTime)
+    fun getRashiLord(
+        birthDate: LocalDate,
+        birthTime: LocalTime? = null,
+        zoneOffset: ZoneOffset? = null,
+    ): String {
+        val snapshot = astronomy.snapshot(birthDate, birthTime, zoneOffset)
         val longitude = snapshot.siderealSunLongitude
         val index = ((longitude / 30.0).toInt() % 12 + 12) % 12
         return rashiLords[index]
     }
+
+    /**
+     * Tithi (lunar day, 1–30) for the given birth date-time.
+     *
+     * 1–15 = Shukla Paksha (waxing), 16–30 = Krishna Paksha (waning).
+     * Uses tropical Moon–Sun elongation; tithi is a geometric concept
+     * independent of ayanamsa.
+     */
+    fun getTithi(
+        birthDate: LocalDate,
+        birthTime: LocalTime? = null,
+        zoneOffset: ZoneOffset? = null,
+    ): String {
+        val snapshot = astronomy.snapshot(birthDate, birthTime, zoneOffset)
+        val index = (snapshot.tithi - 1).coerceIn(0, 29)
+        val name = tithiNames[index]
+        val paksha = if (snapshot.tithi <= 15) "Shukla" else "Krishna"
+        return "$name ($paksha Paksha)"
+    }
+
+    /**
+     * Vedic Lagna (Ascendant) — exact when [location] is provided, approximate otherwise.
+     *
+     * Without a location, uses Greenwich sidereal time at 0° latitude (equatorial
+     * ascendant) which can be off by 1-2 signs for mid-latitude users.
+     * With a location, computes the true ecliptic ascendant using observer
+     * latitude + longitude and Local Sidereal Time.
+     */
+    fun getApproximateAscendant(
+        birthDate: LocalDate,
+        birthTime: LocalTime? = null,
+        zoneOffset: ZoneOffset? = null,
+        location: com.willowvibe.agereveal.data.model.GeoLocation? = null,
+    ): String {
+        val localDateTime = birthTime?.let { bt -> birthDate.atTime(bt) } ?: birthDate.atTime(12, 0)
+        val utDateTime = zoneOffset?.let {
+            localDateTime.atOffset(it).withOffsetSameInstant(ZoneOffset.UTC).toLocalDateTime()
+        } ?: localDateTime
+        val jd = astronomy.julianDay(utDateTime)
+
+        val tropicalAsc = if (location != null) {
+            astronomy.exactAscendantLongitude(jd, location.latitude, location.longitude)
+        } else {
+            astronomy.approximateAscendantLongitude(jd)
+        }
+        val siderealAsc = norm360(tropicalAsc - astronomy.lahiriAyanamsa(jd))
+        val index = ((siderealAsc / 30.0).toInt() % 12 + 12) % 12
+        val name = rashiOrder[index]
+        val posInSign = siderealAsc % 30.0
+        return if (posInSign < 1.0 || posInSign > 29.0) "$name ⚠ Cusp" else name
+    }
+
+    /**
+     * Planet positions summary — geocentric tropical zodiac sign for each planet.
+     *
+     * Returns a list of (planet name, sign) pairs for Sun, Moon, Mercury, Venus,
+     * Mars, Jupiter, Saturn. Sign names use the western zodiac set.
+     */
+    fun getPlanetPositions(
+        birthDate: LocalDate,
+        birthTime: LocalTime? = null,
+        zoneOffset: ZoneOffset? = null,
+    ): List<Pair<String, String>> {
+        val localDateTime = birthTime?.let { bt -> birthDate.atTime(bt) } ?: birthDate.atTime(12, 0)
+        val utDateTime = zoneOffset?.let {
+            localDateTime.atOffset(it).withOffsetSameInstant(ZoneOffset.UTC).toLocalDateTime()
+        } ?: localDateTime
+        val jd = astronomy.julianDay(utDateTime)
+
+        val sun = astronomy.sunLongitude(jd)
+        val moon = astronomy.moonLongitude(jd)
+
+        val planets = listOf(
+            "Sun" to sun,
+            "Moon" to moon,
+            "Mercury" to astronomy.planetLongitude(jd, AstronomicalCalculator.Planet.MERCURY),
+            "Venus" to astronomy.planetLongitude(jd, AstronomicalCalculator.Planet.VENUS),
+            "Mars" to astronomy.planetLongitude(jd, AstronomicalCalculator.Planet.MARS),
+            "Jupiter" to astronomy.planetLongitude(jd, AstronomicalCalculator.Planet.JUPITER),
+            "Saturn" to astronomy.planetLongitude(jd, AstronomicalCalculator.Planet.SATURN),
+        )
+
+        return planets.map { (name, longitude) ->
+            val index = ((longitude / 30.0).toInt() % 12 + 12) % 12
+            val sign = westernSignNames[index].split(" ").first()
+            name to sign
+        }
+    }
+
+    private fun norm360(x: Double): Double = ((x % 360.0) + 360.0) % 360.0
 
     // ---------------------------------------------------------------------------
     // Chinese Zodiac — 12-year cycle, Lunar New Year aware

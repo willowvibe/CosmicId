@@ -2,92 +2,45 @@
 
 ---
 
-## Phase 1: Core MVP (Days 1–4)
+## Phase 1: Core MVP (Complete) ✅
 
-### Day 1 ✅
-- [x] Project setup: Kotlin + Jetpack Compose, AdMob SDK, Room DB, `build.gradle` `java.time` desugaring
-- [x] Main screen UI: date picker, age result display, live ticking seconds
-- [x] Core date logic: years / months / days / hours / total days calculation
-- [x] Banner ad unit integrated with test ads
-
-### Day 2 ✅
-- [x] Western Zodiac, Vedic Rashi, Nakshatra, Chinese Zodiac lookup functions
-- [x] Milestone days calculator (500, 1 000, 5 000, 10 000, 25 000… days)
-- [x] Rewarded ad integration — preload on startup, unlock flow for astrological details
-- [x] Compare screen — two date pickers, exact age-difference output
-- [x] Interstitial ad with frequency cap (5-minute cooldown, fires after 2nd comparison)
-
-### Day 3 ✅
-- [x] Share card: Canvas bitmap rendering, Dark Cosmos theme, watermark
-- [x] Share Intent → WhatsApp + general share sheet
-- [x] Saved birthdays screen — Room DB, add / delete / edit, WorkManager notification scheduling
-- [x] 2 × 2 home screen widget (Jetpack Glance) with countdown to next birthday
-
-### Day 4 — Polish & Launch 🚧
-- [ ] Enter/reveal animation when age result appears on Calculator screen
-- [ ] Date picker UX polish: scroll snap, haptic feedback on value change
-- [ ] Play Store listing assets (icon 512×512, feature graphic 1024×500, screenshots, descriptions)
-- [ ] Replace all 4 AdMob test IDs with production IDs
-- [ ] Submit for Play Store review
-
-> See [TASKS.md](TASKS.md) for exact file locations and replacement instructions.
+- Main screen UI: date picker, live age ticking seconds, basic calculators.
+- Core logic: years, months, days, hours.
+- AdMob Integrations: Banner, Interstitial, Rewarded.
+- Share cards via Canvas bitmap rendering.
+- Saved birthdays with Room DB & 2×2 Glance widget.
+- Compare birthdays tool.
 
 ---
 
-## Phase 2: Post-Launch Additions 🚀
+## Phase 2: Post-Launch Additions (Complete) ✅
 
-### Completed ✅
-- [x] **Zodiac Compatibility Screen** — 5th tab; enter two birthdays, get Western + Chinese compatibility score with element analysis and shareable headline card
-- [x] **Notification Time Customisation** — Settings gear on Birthdays tab; choose reminder hour (7 AM–9 PM presets); stored in `SharedPreferences`, reschedules all active WorkManager jobs
-
-### Pending
-- [ ] **Hindi UI toggle** — In-app language switch using `AppCompatDelegate.setApplicationLocales`; requires `values-hi/strings.xml` translation file
-- [x] **4 × 2 home screen widget** — Wider Glance widget showing 3 upcoming birthdays with days-remaining
-- [x] **In-app review prompt** — Trigger `ReviewManager.requestReviewFlow()` after user shares their first card
-- [ ] **Remove Ads IAP (₹99)** — One-time purchase via Google Play Billing Library 6+; `AdManager` checks a `SharedPreferences` flag before loading any ad
+- **Zodiac Compatibility Screen** — Western + Chinese compatibility scores.
+- **Notification Customisation** — Settings to choose reminder hour.
+- **4 × 2 Home Screen Widget** — Wider Glance widget showing multiple upcoming birthdays.
+- **In-app Review Prompt** — Triggered after user shares their first card.
 
 ---
 
-## Phase 3: Depth & Retention 🔭 (Complete)
+## Phase 3: Depth & Retention (Complete) ✅
 
-**Branch:** `feature/astrology-improvements-20260424`
-**Version:** 0.9.2
-
-### Completed ✅
-- [x] **Google Calendar Export** — `CalendarExport.kt` one-tap Intent to add any birthday to Google Calendar with app availability check
-- [x] **CSV Export** — `BirthdayCsvExporter.kt` exports all saved birthdays via share sheet
-- [x] **Astrology Explanations** — `AstroInfoDialog.kt` educational dialogs for Western Zodiac, Rashi, Nakshatra, Chinese Zodiac, and Moon Phase
-- [x] **Zodiac Compatibility for Saved Birthdays** — Compatibility scores accessible from the Saved Birthdays list; Western + Chinese scoring between any saved birthday and the user's own birth date
-- [x] **Dedicated Settings Screen** — Consolidated tab with Appearance (theme), Notifications (default hour, global toggle), Data (clear saved birthdays, CSV export), and About sections
-- [x] **Birth Time Support** — Optional time picker alongside the date picker; pass exact `LocalDateTime` to `AstronomicalCalculator` for precise Nakshatra + Rashi; display *Exact* vs *Approximate* label
-- [x] **Milestone Push Notifications UI** — Per-milestone enable/disable toggle in Settings; "next milestone in X days" banner on Calculator screen when within 30 days
-- [x] **Life Timeline Visual** — Scrollable `LazyRow` of past (achieved) and future (upcoming) milestones with badges; tappable to share milestone card
-- [x] **In-app Review Prompt** — Triggered after first share (SHARE_THRESHOLD = 1)
-- [x] **Hindi Translations** — `values-hi/strings.xml` added for locale switching
-- [x] **Settings Screen ViewModel Fix** — Corrected `SettingsScreen` to use `SettingsViewModel` instead of `RemindersViewModel` (BUG-029)
-- [x] **Automated Test Coverage** — Added JUnit 4 unit tests for all domain calculators
+- **Export Functions** — Google Calendar Intent & CSV export via `FileProvider`.
+- **Educational Content** — `AstroInfoDialog` for Western, Vedic, Chinese, and Moon Phases.
+- **Birth Time Support** — Precision calculations for Rashi and Nakshatra with *Exact* vs *Approximate* indicators.
+- **Settings Consolidation** — Unified tab for Appearance, Notifications, Data, and About.
+- **Milestone Timelines & Push UI** — Scrollable life timeline visual and per-milestone notification toggles.
+- **Automated Tests** — JUnit 4 unit tests for all domain calculators.
+- **Astrology Depth** — Nakshatra Pada, Rashi Lord, Western Moon Sign, and Chinese Stem-Branch added.
 
 ---
 
-## Phase 4: Scale & Ecosystem 🌐 (Backlog)
+## Phase 4: Scale & Ecosystem 🌐 (Active 🚧)
 
-- [ ] **Firebase Firestore sync** — Cloud backup for saved birthdays; Google sign-in; conflict resolution by `updatedAt` timestamp
-- [ ] **WhatsApp sticker cards** — 512 × 512 transparent-background PNG following WhatsApp sticker pack format
-- [ ] **Age trivia / quiz** — "Guess who was born closest to you?" game using saved birthdays
-- [ ] **Yearly re-engagement notification** — "You've now lived X days!" notification on the user's own birthday each year
-- [ ] **Days-until-retirement calculator** — Configurable target age; remaining working days + % of working life completed
-- [ ] **Lock screen widget** — API 33+ `AppWidgetProviderInfo.WIDGET_FEATURE_RECONFIGURABLE`
-
----
-
-## Technical Debt Backlog ⚙️
-
-- [x] **No automated tests** — Unit tests added for all domain calculators in v0.9; Room DAO and UI tests (Compose test) still pending
-- [ ] **Room migration test** — Add `MigrationTestHelper` test for explicit `Migration(1, 2)`
-- [ ] **Inter font disabled** — `Type.kt` falls back to system sans-serif; font files not yet included in the repo
-- [x] **Bitmap rendering on main thread** — `ShareCardGenerator` bitmap generation moved to `Dispatchers.IO` in v0.9
-- [x] **CalendarExport no fallback** — `isCalendarAppAvailable()` guard added in v0.5
-- [ ] **SecurityException handling** — Handle `SCHEDULE_EXACT_ALARM` permission not granted on Android 12+; show settings-deep-link prompt
+- **App Store Release Polish** — Replacing test IDs, generating Play Store assets, and final UI sweeps.
+- **Premium Model** — Remove Ads IAP via Play Billing Library.
+- **Cloud Backup** — Firebase Firestore sync for saved profiles.
+- **Social Hooks** — WhatsApp sticker cards & age trivia party mode.
+- **Advanced Astrology** — Lat/Lon location support for exact Ascendant/Lagna, Dasha periods, and Chinese Ba Zi pillars.
 
 ---
 
@@ -95,10 +48,8 @@
 
 | Item | Value |
 |---|---|
-| Version | 0.9.2 |
+| Version | 1.0.0-rc1 |
 | minSdk | 26 (desugaring enables API 21+) |
 | targetSdk | 35 |
 | compileSdk | 36 |
-| Debug APK | `app/build/outputs/apk/debug/app-debug.apk` |
-| Active branch | `feature/astrology-improvements-20260424` |
-| Build Status | ✅ Passing tests, all known bugs resolved |
+| Status | ✅ Release Candidate Prep |
