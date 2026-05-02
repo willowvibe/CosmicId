@@ -57,16 +57,35 @@ appium
 
 ### Project-level `.mcp.json`
 
-The Ollama MCP server is registered in `.mcp.json` at project root:
+Five MCP servers are registered in `.mcp.json` at project root:
 
 ```json
 {
   "mcpServers": {
     "ollama": {
-      "command": "/mnt/data2/git_repos/AgeReveal/tools/mcp/start-ollama-mcp.sh",
+      "command": "./tools/mcp/start-ollama-mcp.sh",
       "env": {
         "OLLAMA_HOST": "http://localhost:11434",
         "OLLAMA_MODEL": "qwen3-coder-next:cloud"
+      }
+    },
+    "appium": {
+      "command": "npx",
+      "args": ["-y", "appium-mcp@latest"]
+    },
+    "filesystem": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-filesystem@latest", "."]
+    },
+    "git": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-git@latest", "."]
+    },
+    "github": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-github@latest"],
+      "env": {
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "<your-token-here>"
       }
     }
   }
@@ -113,24 +132,14 @@ Invoke with: `/appium-mobile-test`, `/ollama-android-dev`, `/ollama-code-review`
 To add another open-source MCP server:
 
 ```bash
-# Example: Filesystem MCP server (Node.js)
-npx -y @modelcontextprotocol/server-filesystem /path/to/allow
+# Example: SQLite MCP server
+npx -y @modelcontextprotocol/server-sqlite /path/to/database
 
-# Example: GitHub MCP server
-npx -y @modelcontextprotocol/server-github
+# Example: Command execution MCP server
+npx -y @modelcontextprotocol/server-command
 ```
 
-Then add to `.mcp.json`:
-```json
-{
-  "mcpServers": {
-    "filesystem": {
-      "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-filesystem", "."]
-    }
-  }
-}
-```
+Then add the corresponding entry to `.mcp.json` under `mcpServers`.
 
 ## Resources
 

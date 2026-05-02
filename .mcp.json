@@ -1,7 +1,7 @@
 {
   "mcpServers": {
     "ollama": {
-      "command": "/mnt/data2/git_repos/AgeReveal/tools/mcp/start-ollama-mcp.sh",
+      "command": "./tools/mcp/start-ollama-mcp.sh",
       "args": [],
       "description": "Ollama local LLM MCP server — chat, generate, code execution, embeddings",
       "env": {
@@ -15,6 +15,24 @@
       "description": "Appium mobile automation MCP server for Android/iOS UI testing",
       "env": {
         "ANDROID_HOME": "/home/harish/Android/Sdk"
+      }
+    },
+    "filesystem": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-filesystem@latest", "."],
+      "description": "File System MCP server for reading and writing project files"
+    },
+    "git": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-git@latest", "."],
+      "description": "Git MCP server for reading history, diffs, and commit assistance"
+    },
+    "github": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-github@latest"],
+      "description": "GitHub MCP server for issues, PRs, and repository operations",
+      "env": {
+        "GITHUB_PERSONAL_ACCESS_TOKEN": ""
       }
     }
   }
