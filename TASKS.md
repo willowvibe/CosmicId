@@ -1,6 +1,6 @@
 # AgeReveal — Tasks & Implementation Checklist
 
-_Last updated: 2026-05-02 — v1.0.3 (BUG-041/042/043 fixed)_
+_Last updated: 2026-05-02 — v1.0.4 (Phase 5 features: Generational Badge, Planet Ages, Moon Phase)_
 
 ---
 
@@ -188,16 +188,17 @@ This section is the "main character energy" roadmap — features built to screen
 - [ ] Also show: "There are ~Z people alive who share your exact birth date."
 - **Data:** 20 rows (0–100 years) with cumulative percentages. ~2KB JSON asset.
 
-#### 6.3.3 Generational Badge (S / ⭐⭐⭐)
-- [ ] Auto-detect generation from birth year:
+#### 6.3.3 Generational Badge (S / ⭐⭐⭐) — ✅ Implemented in v1.0.4
+- [x] Auto-detect generation from birth year:
   - Silent Generation: 1928–1945
   - Baby Boomers: 1946–1964
   - Gen X: 1965–1980
   - Millennials: 1981–1996
   - Gen Z: 1997–2012
   - Gen Alpha: 2013+
-- [ ] Generate a shareable badge card: "Certified Gen Z · 1.2 billion seconds survived · 1997–2012 cohort".
-- [ ] Add generation-typical emoji/icon (Gen Z = 👾, Millennial = 📠, Gen Alpha = 🤖).
+- [x] Generate a shareable badge card: "Certified Gen Z · 1.2 billion seconds survived · 1997–2012 cohort".
+- [x] Add generation-typical emoji/icon (Gen Z = 👾, Millennial = 📠, Gen Alpha = 🤖).
+- **Files:** `domain/GenerationCalculator.kt` — `GenerationBadgeChip()` in `DetailsUnlockScreen.kt`
 
 ---
 
@@ -297,8 +298,8 @@ This section is the "main character energy" roadmap — features built to screen
 
 **Goal:** Give users conversation starters. "Did you know on Mars you'd only be 14?"
 
-#### 6.6.1 Planet Age Converter (M / ⭐⭐⭐⭐⭐)
-- [ ] Create `PlanetAgeCalculator.kt` using orbital periods:
+#### 6.6.1 Planet Age Converter (M / ⭐⭐⭐⭐⭐) — ✅ Implemented in v1.0.4
+- [x] Create `PlanetAgeCalculator.kt` using orbital periods:
   | Planet | Orbital Period (Earth years) |
   |---|---|
   | Mercury | 0.2408 |
@@ -309,16 +310,18 @@ This section is the "main character energy" roadmap — features built to screen
   | Uranus | 84.0205 |
   | Neptune | 164.8 |
   | Pluto | 248.0 |
-- [ ] Add "Planet Ages" card to DetailsUnlockScreen (when unlocked).
-- [ ] Show as a scrollable horizontal row of planet icons with ages.
-- [ ] Highlight the "youngest" and "oldest" planets.
-- [ ] Shareable card: "On Mars, John is only 14 years old. 🚀"
+- [x] Add "Planet Ages" card to DetailsUnlockScreen (when unlocked).
+- [x] Show as a scrollable horizontal row of planet icons with ages.
+- [x] Highlight the "youngest" and "oldest" planets.
+- [x] Shareable card: "On Mars, John is only 14 years old. 🚀"
+- **Files:** `domain/PlanetAgeCalculator.kt`, `PlanetAgesRow()` in `DetailsUnlockScreen.kt`
 
-#### 6.6.2 Birth Moon Phase Visual (S / ⭐⭐⭐⭐)
-- [ ] Add moon-phase renderer using Canvas arcs to `DetailsUnlockScreen`.
-- [ ] Show a visual representation of what the moon looked like on the user's birth date.
-- [ ] Label: "The moon on your birthday was a waxing gibbous."
-- [ ] Also show current moon phase with "Moon tonight: [phase]".
+#### 6.6.2 Birth Moon Phase Visual (S / ⭐⭐⭐⭐) — ✅ Implemented in v1.0.4
+- [x] Add moon-phase renderer using Canvas arcs to `DetailsUnlockScreen`.
+- [x] Show a visual representation of what the moon looked like on the user's birth date.
+- [x] Label: "The moon on your birthday was a waxing gibbous."
+- [x] Also show current moon phase with "Moon tonight: [phase]".
+- **Files:** `domain/MoonPhaseCalculator.kt`, `MoonPhaseCard()` + `MoonPhaseVisual()` in `DetailsUnlockScreen.kt`
 
 #### 6.6.3 Parallel Universe Birth (S / ⭐⭐⭐)
 - [ ] Add "Parallel Universe" card to DetailsUnlockScreen.

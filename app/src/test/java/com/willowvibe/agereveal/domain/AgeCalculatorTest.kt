@@ -18,7 +18,8 @@ class AgeCalculatorTest {
         val nakshatra = NakshatraCalculator(astronomy)
         val dasha = DashaCalculator(astronomy)
         val baZi = BaZiCalculator(zodiac)
-        calculator = AgeCalculator(zodiac, nakshatra, dasha, baZi)
+        val lunar = LunarCalendarConverter()
+        calculator = AgeCalculator(zodiac, nakshatra, dasha, baZi, lunar)
     }
 
     // -------------------------------------------------------------------------
