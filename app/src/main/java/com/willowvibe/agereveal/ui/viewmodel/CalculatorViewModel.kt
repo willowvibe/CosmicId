@@ -212,7 +212,10 @@ class CalculatorViewModel @Inject constructor(
     fun setAdLoading(loading: Boolean) = _uiState.update { it.copy(isAdLoading = loading) }
 
     fun clearError() = _uiState.update { it.copy(error = null) }
-    fun onNameChanged(name: String) = _uiState.update { it.copy(name = name) }
+    fun onNameChanged(name: String) {
+        val sanitized = name.filterNot { it.isISOControl() }.take(50)
+        _uiState.update { it.copy(name = sanitized) }
+    }
 
     /** Set or clear the birth location for exact Lagna calculation. */
     fun onLocationSelected(location: GeoLocation?) {

@@ -35,6 +35,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
@@ -170,6 +173,7 @@ internal fun AstroTile(result: AgeResult, isUnlocked: Boolean, hasLocation: Bool
                 "WESTERN · VEDIC · CHINESE",
                 style = MaterialTheme.typography.labelSmall,
                 color = WarmInkDim,
+                modifier = Modifier.semantics { heading() },
             )
             Spacer(Modifier.height(6.dp))
             if (isUnlocked && result.westernZodiac.isNotEmpty()) {
@@ -301,7 +305,11 @@ private fun AstroGrid(items: List<Pair<String, String>>) {
 
 @Composable
 private fun AstroGridItem(label: String, value: String, modifier: Modifier = Modifier) {
-    Column(modifier = modifier) {
+    Column(
+        modifier = modifier.semantics(mergeDescendants = true) {
+            stateDescription = "$label: $value"
+        },
+    ) {
         Text(
             label.uppercase(),
             style = MaterialTheme.typography.labelSmall,
