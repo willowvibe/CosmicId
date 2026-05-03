@@ -1,6 +1,7 @@
 package com.willowvibe.agereveal.ui.screen
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -34,13 +35,19 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
-import androidx.compose.ui.platform.LocalHapticFeedback
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -48,6 +55,10 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.willowvibe.agereveal.data.model.AgeResult
 import com.willowvibe.agereveal.data.model.Milestone
+import com.willowvibe.agereveal.domain.AstronomicalCalculator
+import com.willowvibe.agereveal.domain.GenerationCalculator
+import com.willowvibe.agereveal.domain.MoonPhaseCalculator
+import com.willowvibe.agereveal.domain.PlanetAgeCalculator
 import com.willowvibe.agereveal.ui.theme.SerifFamily
 import com.willowvibe.agereveal.ui.theme.WarmAmber
 import com.willowvibe.agereveal.ui.theme.WarmBlack
@@ -68,6 +79,30 @@ fun DetailsUnlockScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val result = uiState.result
+
+    // ── Phase 5 Gen Z feature computations ──────────────────────────────────
+    val generationCalculator = remember { GenerationCalculator() }
+    val moonPhaseCalculator = remember { MoonPhaseCalculator() }
+    val planetAgeCalculator = remember { PlanetAgeCalculator() }
+    val astroCalc = remember { AstronomicalCalculator() }
+
+    val generation = remember(result?.birthDate) {
+        result?.birthDate?.year?.let { generationCalculator.getGeneration(it) }
+    }
+    val birthMoonPhase = remember(result?.birthDate) {
+        result?.birthDate?.let { date ->
+            val snap = astroCalc.snapshot(date, result?.birthTime)
+            moonPhaseCalculator.calculate(snap.tropicalSunLongitude, snap.tropicalMoonLongitude)
+        }
+    }
+    val currentMoonPhase = remember {
+        val now = java.time.LocalDate.now()
+        val snap = astroCalc.snapshot(now)
+        moonPhaseCalculator.calculate(snap.tropicalSunLongitude, snap.tropicalMoonLongitude)
+    }
+    val planetAges = remember(result) {
+        result?.let { planetAgeCalculator.calculatePlanetAges(it.years.toDouble()) } ?: emptyList()
+    }
 
     Column(
         modifier = Modifier
@@ -115,9 +150,30 @@ fun DetailsUnlockScreen(
                 // ── Big astro tile ───────────────────────────────────────────
                 AstroTile(result = result, isUnlocked = uiState.isUnlocked, hasLocation = uiState.location != null)
 
+                // ── Generation badge (Gen Z flex) ──────────────────────────
+                if (uiState.isUnlocked && generation != null) {
+                    GenerationBadgeChip(
+                        generation = generation,
+                        totalSeconds = result.totalSeconds,
+                    )
+                }
+
                 // ── Watch-ad gate (only when not unlocked) ───────────────────
                 if (!uiState.isUnlocked) {
                     WatchAdBanner(isLoading = uiState.isAdLoading, onWatch = onWatchAd)
+                }
+
+                // ── Birth moon phase visual ────────────────────────────────
+                if (uiState.isUnlocked && birthMoonPhase != null) {
+                    MoonPhaseCard(
+                        birthPhase = birthMoonPhase,
+                        currentPhase = currentMoonPhase,
+                    )
+                }
+
+                // ── Planet ages (horizontal scroll) ────────────────────────
+                if (uiState.isUnlocked && planetAges.isNotEmpty()) {
+                    PlanetAgesRow(planetAges = planetAges)
                 }
 
                 // ── Milestone timeline ───────────────────────────────────────
@@ -638,6 +694,260 @@ internal fun MilestoneRow(
                     tint = if (notifyEnabled) WarmTeal else WarmInkDim,
                     modifier = Modifier.size(15.dp),
                 )
+            }
+        }
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Generation badge chip (Gen Z flex)
+// ─────────────────────────────────────────────────────────────────────────────
+
+@Composable
+internal fun GenerationBadgeChip(generation: com.willowvibe.agereveal.domain.Generation, totalSeconds: Long) {
+    val secLabel = remember(totalSeconds) {
+        when {
+            totalSeconds >= 1_000_000_000 -> "%.1fB sec".format(totalSeconds / 1_000_000_000.0)
+            totalSeconds >= 1_000_000 -> "%.1fM sec".format(totalSeconds / 1_000_000.0)
+            else -> "%,d sec".format(totalSeconds)
+        }
+    }
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
+            .background(
+                Brush.horizontalGradient(
+                    listOf(WarmSurface, WarmSurfaceSoft.copy(alpha = 0.5f))
+                )
+            )
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            generation.emoji,
+            fontSize = 24.sp,
+        )
+        Spacer(Modifier.width(12.dp))
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                "Certified ${generation.shortName}",
+                style = MaterialTheme.typography.bodySmall,
+                fontWeight = FontWeight.SemiBold,
+                color = WarmInk,
+            )
+            Text(
+                "$secLabel · ${generation.startYear}–${generation.endYear}",
+                style = MaterialTheme.typography.labelSmall,
+                color = WarmInkMute,
+            )
+        }
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Moon phase card (birth + current)
+// ─────────────────────────────────────────────────────────────────────────────
+
+@Composable
+internal fun MoonPhaseCard(
+    birthPhase: com.willowvibe.agereveal.domain.MoonPhase,
+    currentPhase: com.willowvibe.agereveal.domain.MoonPhase,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(16.dp))
+            .background(WarmSurface)
+            .padding(16.dp),
+        horizontalArrangement = Arrangement.SpaceEvenly,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        // Birth moon
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Text(
+                "BIRTH MOON",
+                style = MaterialTheme.typography.labelSmall,
+                color = WarmInkDim,
+            )
+            Spacer(Modifier.height(8.dp))
+            MoonPhaseVisual(
+                illuminationFraction = birthPhase.illuminationFraction.toFloat(),
+                waxing = birthPhase.waxing,
+                modifier = Modifier.size(56.dp),
+            )
+            Spacer(Modifier.height(6.dp))
+            Text(
+                birthPhase.name,
+                style = MaterialTheme.typography.bodySmall,
+                fontWeight = FontWeight.SemiBold,
+                color = WarmInk,
+            )
+        }
+
+        // Divider
+        Box(
+            modifier = Modifier
+                .height(60.dp)
+                .width(1.dp)
+                .background(WarmSurfaceSoft),
+        )
+
+        // Current moon
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Text(
+                "MOON TONIGHT",
+                style = MaterialTheme.typography.labelSmall,
+                color = WarmInkDim,
+            )
+            Spacer(Modifier.height(8.dp))
+            MoonPhaseVisual(
+                illuminationFraction = currentPhase.illuminationFraction.toFloat(),
+                waxing = currentPhase.waxing,
+                modifier = Modifier.size(56.dp),
+            )
+            Spacer(Modifier.height(6.dp))
+            Text(
+                currentPhase.name,
+                style = MaterialTheme.typography.bodySmall,
+                fontWeight = FontWeight.SemiBold,
+                color = WarmInk,
+            )
+        }
+    }
+}
+
+@Composable
+private fun MoonPhaseVisual(
+    illuminationFraction: Float,
+    waxing: Boolean,
+    modifier: Modifier = Modifier,
+) {
+    val lightColor = WarmAmber
+    val darkColor = WarmInkMute.copy(alpha = 0.18f)
+    Box(
+        modifier = modifier
+            .drawWithContent {
+                val radius = size.minDimension / 2
+                val centerX = size.width / 2
+                val centerY = size.height / 2
+
+                // Dark background circle
+                drawCircle(color = darkColor, radius = radius, center = Offset(centerX, centerY))
+
+                when {
+                    illuminationFraction >= 0.99f -> {
+                        drawCircle(color = lightColor, radius = radius, center = Offset(centerX, centerY))
+                    }
+                    illuminationFraction <= 0.01f -> { /* new moon — already dark */ }
+                    else -> {
+                        val lit = illuminationFraction
+                        val term = kotlin.math.abs(1f - 2f * lit) * radius
+                        val outer = androidx.compose.ui.geometry.Rect(
+                            centerX - radius, centerY - radius,
+                            centerX + radius, centerY + radius,
+                        )
+                        if (lit <= 0.5f) {
+                            // Crescent: small sliver of light
+                            val termOval = androidx.compose.ui.geometry.Rect(
+                                centerX - term, centerY - radius,
+                                centerX + term, centerY + radius,
+                            )
+                            if (waxing) {
+                                val path = Path().apply {
+                                    arcTo(outer, -90f, 180f, false)
+                                    arcTo(termOval, 90f, -180f, false)
+                                    close()
+                                }
+                                drawPath(path, lightColor)
+                            } else {
+                                val path = Path().apply {
+                                    arcTo(outer, 90f, 180f, false)
+                                    arcTo(termOval, -90f, -180f, false)
+                                    close()
+                                }
+                                drawPath(path, lightColor)
+                            }
+                        } else {
+                            // Gibbous: mostly lit, small dark sliver
+                            drawCircle(color = lightColor, radius = radius, center = Offset(centerX, centerY))
+                            val termOval = androidx.compose.ui.geometry.Rect(
+                                centerX - term, centerY - radius,
+                                centerX + term, centerY + radius,
+                            )
+                            if (waxing) {
+                                val path = Path().apply {
+                                    arcTo(outer, 90f, 180f, false)
+                                    arcTo(termOval, -90f, -180f, false)
+                                    close()
+                                }
+                                drawPath(path, darkColor)
+                            } else {
+                                val path = Path().apply {
+                                    arcTo(outer, -90f, 180f, false)
+                                    arcTo(termOval, 90f, -180f, false)
+                                    close()
+                                }
+                                drawPath(path, darkColor)
+                            }
+                        }
+                    }
+                }
+            },
+    )
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Planet ages horizontal row
+// ─────────────────────────────────────────────────────────────────────────────
+
+@Composable
+internal fun PlanetAgesRow(planetAges: List<com.willowvibe.agereveal.domain.PlanetAge>) {
+    val calc = remember { PlanetAgeCalculator() }
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(16.dp))
+            .background(WarmSurface)
+            .padding(14.dp),
+    ) {
+        Text(
+            "PLANET AGES",
+            style = MaterialTheme.typography.labelSmall,
+            color = WarmInkDim,
+        )
+        Spacer(Modifier.height(10.dp))
+        Row(
+            modifier = Modifier.horizontalScroll(rememberScrollState()),
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            planetAges.forEach { planetAge ->
+                val formatted = calc.formatPlanetAge(planetAge.ageYears)
+                Column(
+                    modifier = Modifier
+                        .width(72.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(WarmSurfaceSoft)
+                        .padding(vertical = 10.dp, horizontal = 6.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                ) {
+                    Text(
+                        planetAge.planet.emoji,
+                        fontSize = 20.sp,
+                    )
+                    Spacer(Modifier.height(4.dp))
+                    Text(
+                        formatted,
+                        style = MaterialTheme.typography.bodySmall,
+                        fontWeight = FontWeight.SemiBold,
+                        color = WarmInk,
+                    )
+                    Text(
+                        planetAge.planet.displayName,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = WarmInkMute,
+                    )
+                }
             }
         }
     }

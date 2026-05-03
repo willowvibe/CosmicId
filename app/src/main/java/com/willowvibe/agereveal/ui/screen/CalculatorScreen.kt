@@ -8,7 +8,8 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
-import androidx.compose.animation.with
+import androidx.compose.animation.togetherWith
+import androidx.compose.runtime.key
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -519,18 +520,32 @@ internal fun RollingDigits(
 ) {
     val formatted = "%,d".format(number)
     Row {
-        formatted.forEach { char ->
-            if (char.isDigit()) {
-                AnimatedContent(
-                    targetState = char,
-                    transitionSpec = {
-                        slideInVertically { height -> height } + fadeIn() with
-                            slideOutVertically { height -> -height } + fadeOut()
-                    },
-                    label = "rolling_digit",
-                ) { digit ->
+        for (index in formatted.indices) {
+            val char = formatted[index]
+            key(index) {
+                if (char.isDigit()) {
+                    AnimatedContent(
+                        targetState = char,
+                        transitionSpec = {
+                            (slideInVertically { height -> height } + fadeIn())
+                                .togetherWith(
+                                    slideOutVertically { height -> -height } + fadeOut()
+                                )
+                        },
+                        label = "rolling_digit",
+                    ) { digit ->
+                        Text(
+                            text = digit.toString(),
+                            fontFamily = FontFamily.Monospace,
+                            fontWeight = FontWeight.Medium,
+                            fontSize = fontSize,
+                            letterSpacing = (-0.5).sp,
+                            color = color,
+                        )
+                    }
+                } else {
                     Text(
-                        text = digit.toString(),
+                        text = char.toString(),
                         fontFamily = FontFamily.Monospace,
                         fontWeight = FontWeight.Medium,
                         fontSize = fontSize,
@@ -538,15 +553,6 @@ internal fun RollingDigits(
                         color = color,
                     )
                 }
-            } else {
-                Text(
-                    text = char.toString(),
-                    fontFamily = FontFamily.Monospace,
-                    fontWeight = FontWeight.Medium,
-                    fontSize = fontSize,
-                    letterSpacing = (-0.5).sp,
-                    color = color,
-                )
             }
         }
     }

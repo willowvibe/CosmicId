@@ -211,14 +211,17 @@ class ShareCardGenerator @Inject constructor(
                 type = "image/png"
                 putExtra(Intent.EXTRA_STREAM, uri)
                 addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             }
             Handler(Looper.getMainLooper()).post {
                 try {
                     val chooser = Intent.createChooser(intent, "Share milestone")
                     chooser.clipData = ClipData.newRawUri("", uri)
                     chooser.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                    context.startActivity(chooser)
+                    if (context is android.app.Activity) {
+                        context.startActivity(chooser)
+                    } else {
+                        context.startActivity(chooser.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+                    }
                 } catch (e: Exception) {
                     onMilestoneShareError?.invoke(e)
                 } finally {
@@ -244,14 +247,17 @@ class ShareCardGenerator @Inject constructor(
                 type = "image/png"
                 putExtra(Intent.EXTRA_STREAM, uri)
                 addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             }
             Handler(Looper.getMainLooper()).post {
                 try {
                     val chooser = Intent.createChooser(intent, "Share compatibility")
                     chooser.clipData = ClipData.newRawUri("", uri)
                     chooser.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                    context.startActivity(chooser)
+                    if (context is android.app.Activity) {
+                        context.startActivity(chooser)
+                    } else {
+                        context.startActivity(chooser.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+                    }
                 } catch (e: Exception) {
                     onCompatibilityShareError?.invoke(e)
                 } finally {

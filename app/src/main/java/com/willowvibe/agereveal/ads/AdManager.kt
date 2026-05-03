@@ -2,6 +2,8 @@ package com.willowvibe.agereveal.ads
 
 import android.app.Activity
 import android.content.Context
+import android.os.Handler
+import android.os.Looper
 import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.FullScreenContentCallback
 import com.google.android.gms.ads.LoadAdError
@@ -85,8 +87,10 @@ class AdManager @Inject constructor(
 
                 override fun onAdFailedToLoad(error: LoadAdError) {
                     if (rewardedAdRetryCount < MAX_REWARDED_AD_RETRIES) {
+                        val attempt = rewardedAdRetryCount
                         rewardedAdRetryCount++
-                        preloadRewardedAd()
+                        val delayMs = 1000L * (1L shl attempt)
+                        Handler(Looper.getMainLooper()).postDelayed({ preloadRewardedAd() }, delayMs)
                     } else {
                         rewardedAd = null
                         rewardedAdRetryCount = 0
@@ -152,8 +156,10 @@ class AdManager @Inject constructor(
 
                 override fun onAdFailedToLoad(e: LoadAdError) {
                     if (interstitialAdRetryCount < MAX_INTERSTITIAL_AD_RETRIES) {
+                        val attempt = interstitialAdRetryCount
                         interstitialAdRetryCount++
-                        preloadInterstitialAd()
+                        val delayMs = 1000L * (1L shl attempt)
+                        Handler(Looper.getMainLooper()).postDelayed({ preloadInterstitialAd() }, delayMs)
                     } else {
                         interstitialAd = null
                         interstitialAdRetryCount = 0

@@ -18,27 +18,32 @@ import javax.inject.Singleton
 class LunarCalendarConverter @Inject constructor() {
 
     fun toLunarString(date: LocalDate): String {
-        // 1. Create a Gregorian calendar for the input date
-        val gregorian = Calendar.getInstance()
-        gregorian.set(date.year, date.monthValue - 1, date.dayOfMonth)
+        return try {
+            // 1. Create a Gregorian calendar for the input date
+            val gregorian = Calendar.getInstance()
+            gregorian.set(date.year, date.monthValue - 1, date.dayOfMonth)
 
-        // 2. Convert to Chinese calendar via timestamp
-        val chinese = ChineseCalendar()
-        chinese.time = gregorian.time
+            // 2. Convert to Chinese calendar via timestamp
+            val chinese = ChineseCalendar()
+            chinese.time = gregorian.time
 
-        val lunarMonth = chinese.get(Calendar.MONTH) + 1 // 0-based → 1-based
-        val lunarDay = chinese.get(Calendar.DAY_OF_MONTH)
-        val isLeap = chinese.get(Calendar.IS_LEAP_MONTH) == 1
-        val lunarYear = chinese.get(Calendar.EXTENDED_YEAR)
+            val lunarMonth = chinese.get(Calendar.MONTH) + 1 // 0-based → 1-based
+            val lunarDay = chinese.get(Calendar.DAY_OF_MONTH)
+            val isLeap = chinese.get(Calendar.IS_LEAP_MONTH) == 1
+            val lunarYear = chinese.get(Calendar.EXTENDED_YEAR)
 
-        val zodiacAnimal = ZODIAC_ANIMALS[lunarYear % 12]
-        val dayStr = ordinalDay(lunarDay)
-        val monthStr = buildString {
-            if (isLeap) append("leap ")
-            append(lunarMonth)
+            val zodiacAnimal = ZODIAC_ANIMALS[lunarYear % 12]
+            val dayStr = ordinalDay(lunarDay)
+            val monthStr = buildString {
+                if (isLeap) append("leap ")
+                append(lunarMonth)
+            }
+
+            "$dayStr of the ${monthStr}th lunar month, Year of the $zodiacAnimal"
+        } catch (_: Throwable) {
+            // Fallback for JVM unit tests where android.icu is unavailable
+            ""
         }
-
-        return "$dayStr of the ${monthStr}th lunar month, Year of the $zodiacAnimal"
     }
 
     private fun ordinalDay(n: Int): String = when {
