@@ -744,6 +744,123 @@ def test_new_settings_features():
     go_back()
     time.sleep(1)
 
+def test_daily_fortune_card():
+    """Test the Daily Cosmic Fortune card on Calculator screen."""
+    log("=== Testing Daily Cosmic Fortune ===")
+    navigate_to_tab("You")
+    time.sleep(1)
+
+    # Scroll down aggressively to find the fortune card (it appears after birth date is set)
+    for _ in range(5):
+        driver.swipe(540, 1800, 540, 600, 500)
+        time.sleep(0.5)
+        source = driver.page_source
+        if "DAILY COSMIC FORTUNE" in source:
+            log("Found Daily Cosmic Fortune card in page source")
+            interactions_tested.append("Daily Cosmic Fortune card found")
+            safe_screenshot("tab1_calculator_daily_fortune_visible.png")
+            screens_tested.append("Daily Cosmic Fortune (visible)")
+
+            # Try to tap the fortune card
+            try:
+                fortune_el = driver.find_element(AppiumBy.ANDROID_UIAUTOMATOR,
+                    'new UiSelector().textContains("DAILY COSMIC")')
+                fortune_el.click()
+                log("Tapped Daily Cosmic Fortune card")
+                interactions_tested.append("Daily Cosmic Fortune card tap")
+                time.sleep(1)
+                safe_screenshot("tab1_calculator_fortune_share_sheet.png")
+                screens_tested.append("Daily Cosmic Fortune share sheet")
+                go_back()
+                time.sleep(0.5)
+            except Exception as tap_e:
+                log(f"Fortune card tap failed: {tap_e}")
+            return
+
+    log("Daily Cosmic Fortune card not found after scrolling")
+    interactions_tested.append("Daily Cosmic Fortune (not visible)")
+
+def test_share_sheet_formats():
+    """Test the share sheet with new ASCII and Green Screen formats."""
+    log("=== Testing Share Sheet Formats ===")
+    navigate_to_tab("You")
+    time.sleep(1)
+
+    # Scroll to top first to find the share button
+    driver.swipe(540, 800, 540, 1800, 500)
+    time.sleep(0.5)
+
+    # Check if share button is visible in page source
+    source = driver.page_source
+    if "Share your cosmic profile" not in source:
+        log("Share button not visible in current view")
+        interactions_tested.append("Share button (not visible)")
+        return
+
+    # Try to open the share sheet via text search only
+    try:
+        share_btn = driver.find_element(AppiumBy.ANDROID_UIAUTOMATOR,
+            'new UiSelector().textContains("Share your cosmic profile")')
+        share_btn.click()
+        log("Tapped Share button")
+        interactions_tested.append("Share button (calculator)")
+        time.sleep(1)
+        safe_screenshot("tab1_calculator_share_sheet_open.png")
+        screens_tested.append("Share sheet (open)")
+    except Exception as e:
+        log(f"Share button tap failed: {e}")
+        interactions_tested.append("Share button (tap failed)")
+        return
+
+    # Try to select ASCII Art format
+    try:
+        ascii_chip = driver.find_element(AppiumBy.ANDROID_UIAUTOMATOR,
+            'new UiSelector().text("ASCII")')
+        ascii_chip.click()
+        log("Selected ASCII Art format")
+        interactions_tested.append("ASCII Art format selection")
+        time.sleep(0.5)
+        safe_screenshot("tab1_calculator_share_ascii_selected.png")
+        screens_tested.append("Share sheet (ASCII selected)")
+    except Exception as e:
+        log(f"ASCII Art format selection failed: {e}")
+
+    # Try to select Green Screen format
+    try:
+        green_chip = driver.find_element(AppiumBy.ANDROID_UIAUTOMATOR,
+            'new UiSelector().text("Green")')
+        green_chip.click()
+        log("Selected Green Screen format")
+        interactions_tested.append("Green Screen format selection")
+        time.sleep(0.5)
+        safe_screenshot("tab1_calculator_share_green_selected.png")
+        screens_tested.append("Share sheet (Green Screen selected)")
+    except Exception as e:
+        log(f"Green Screen format selection failed: {e}")
+
+    # Dismiss share sheet
+    go_back()
+    time.sleep(0.5)
+
+def test_time_remaining_card():
+    """Test the Time Remaining card on Calculator screen."""
+    log("=== Testing Time Remaining Card ===")
+    navigate_to_tab("You")
+    time.sleep(1)
+
+    # Scroll down to find the Time Remaining card
+    try:
+        tr_card = driver.find_element(AppiumBy.ANDROID_UIAUTOMATOR,
+            'new UiScrollable(new UiSelector().scrollable(true)).scrollIntoView(new UiSelector().textContains("weekends left"))')
+        log("Found Time Remaining card")
+        interactions_tested.append("Time Remaining card found")
+        time.sleep(0.3)
+        safe_screenshot("tab1_calculator_time_remaining_visible.png")
+        screens_tested.append("Time Remaining (visible)")
+    except Exception as e:
+        log(f"Time Remaining card not found: {e}")
+        interactions_tested.append("Time Remaining card (not visible)")
+
 def generate_report():
     """Generate the REPORT.md file."""
     report_path = os.path.join(SCREENSHOTS_DIR, "REPORT.md")
@@ -836,6 +953,9 @@ def main():
     try:
         # Run all test scenarios
         test_calculator_tab()
+        test_time_remaining_card()
+        test_daily_fortune_card()
+        test_share_sheet_formats()
         test_compatibility_tab()
         test_reminders_tab()
         test_timeline_tab()
