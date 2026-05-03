@@ -75,6 +75,8 @@ fun SettingsScreen(
     val notificationsEnabled by settingsViewModel.notificationsEnabled.collectAsState()
     val notificationHour by settingsViewModel.notificationHour.collectAsState()
     val targetAge by settingsViewModel.targetAge.collectAsState()
+    val timeRemainingEnabled by settingsViewModel.timeRemainingEnabled.collectAsState()
+    val accentColor by settingsViewModel.accentColor.collectAsState()
     var showClearDialog by remember { mutableStateOf(false) }
     val context = LocalContext.current
 
@@ -234,6 +236,73 @@ fun SettingsScreen(
                             isSelected = isSelected,
                             onClick = { settingsViewModel.setTheme(mode) },
                         )
+                    }
+
+                    Spacer(Modifier.height(12.dp))
+                    HorizontalDivider(color = WarmSurfaceSoft)
+                    Spacer(Modifier.height(12.dp))
+
+                    SwitchRow(
+                        title = "Time remaining visuals",
+                        subtitle = "Show darkly motivational stats on the calculator screen",
+                        checked = timeRemainingEnabled,
+                        onCheckedChange = settingsViewModel::setTimeRemainingEnabled,
+                    )
+
+                    Spacer(Modifier.height(12.dp))
+                    HorizontalDivider(color = WarmSurfaceSoft)
+                    Spacer(Modifier.height(12.dp))
+
+                    Text(
+                        "Accent color",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = WarmInk,
+                        fontWeight = FontWeight.SemiBold,
+                    )
+                    Text(
+                        "Pick a theme accent for share cards and highlights",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = WarmInkDim,
+                    )
+                    Spacer(Modifier.height(8.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    ) {
+                        val presets = listOf(
+                            0xFF86EFAC.toInt() to "Mint",
+                            0xFFFBBF24.toInt() to "Amber",
+                            0xFFF472B6.toInt() to "Pink",
+                            0xFF60A5FA.toInt() to "Blue",
+                            0xFFA78BFA.toInt() to "Purple",
+                            0xFF34D399.toInt() to "Emerald",
+                        )
+                        presets.forEach { (color, label) ->
+                            val selected = color == accentColor
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                modifier = Modifier.clickable { settingsViewModel.setAccentColor(color) },
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(36.dp)
+                                        .clip(RoundedCornerShape(18.dp))
+                                        .background(Color(color))
+                                        .border(
+                                            width = if (selected) 2.5.dp else 0.dp,
+                                            color = if (selected) WarmInk else Color.Transparent,
+                                            shape = RoundedCornerShape(18.dp),
+                                        ),
+                                )
+                                Spacer(Modifier.height(4.dp))
+                                Text(
+                                    label,
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = if (selected) WarmInk else WarmInkMute,
+                                    fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
+                                )
+                            }
+                        }
                     }
 
                     Spacer(Modifier.height(12.dp))

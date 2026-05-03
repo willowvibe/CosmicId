@@ -1,6 +1,6 @@
 # AgeReveal
 
-AgeReveal is a native Android app (Kotlin + Jetpack Compose) that calculates your exact age in real-time and enriches it with astrological insights, shareable cards, milestone tracking, saved birthday reminders, and home screen widgets. Current version: **1.0.5**.
+AgeReveal is a native Android app (Kotlin + Jetpack Compose) that calculates your exact age in real-time and enriches it with astrological insights, shareable cards, milestone tracking, saved birthday reminders, and home screen widgets. Current version: **1.0.6**.
 
 ## Features
 
@@ -32,6 +32,9 @@ AgeReveal is a native Android app (Kotlin + Jetpack Compose) that calculates you
 - **CSV Export** — Export all saved birthdays as a CSV file via share sheet.
 - **Zodiac Compatibility** — Western (angle-based) + Chinese (trine group) compatibility scoring with a shareable headline card; available on the Compatibility tab and from Saved Birthdays.
 - **Milestone Badges** — 13 unlockable collectible badges (1M Seconds Club, 10K Days Society, Billion Seconds Club, Leap Baby, etc.). Confetti celebration on unlock + shareable badge cards.
+- **Life Stats Dashboard** — Aggregated fun facts: total full moons, Fridays the 13th survived, leap years, heartbeats, breaths, meals, words, steps. All shareable as individual cards.
+- **Time Remaining Visuals** — Darkly motivational stats: "You have X weekends left until you're 80." Toggle in Settings for users who find it depressing.
+- **Custom Accent Color** — Six preset swatches (Mint, Amber, Pink, Blue, Purple, Emerald) in Settings → Appearance. Applied to share card highlights across themes.
 
 ### Reminders & Notifications
 - **Saved Birthdays** — Store family and friends' birthdays with name + emoji; backed by Room DB.
@@ -44,6 +47,7 @@ AgeReveal is a native Android app (Kotlin + Jetpack Compose) that calculates you
 - **4 × 2 Wide Birthday Widget** — Shows the next 3 upcoming birthdays in a horizontal list.
 - **2 × 1 Seconds Counter Widget** — Live total seconds alive in large monospace digits. Dark background with accent mint text.
 - **4 × 1 Lifespan Progress Widget** — Shows lifespan % completed with color-coded text (teal → amber → rose → red). Configurable target age (30–100) in Settings.
+- **2 × 1 Milestone Countdown Widget** — Shows next upcoming milestone (e.g., "10,000 days") with days remaining and progress percentage. Tap opens app.
 - **Widget data refresh** — Immediate update on birthday add/update/delete via `notifyWidget()`.
 
 ### Monetisation (AdMob)

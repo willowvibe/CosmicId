@@ -11,6 +11,7 @@ import com.willowvibe.agereveal.data.preferences.UserPreferencesRepository
 import com.willowvibe.agereveal.data.repository.BadgeRepository
 import com.willowvibe.agereveal.domain.AgeCalculator
 import com.willowvibe.agereveal.domain.ShareCardGenerator
+import com.willowvibe.agereveal.domain.TimeRemainingCalculator
 import com.willowvibe.agereveal.notification.MilestoneNotificationScheduler
 import com.willowvibe.agereveal.util.ReviewHelper
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -43,6 +44,8 @@ data class CalculatorUiState(
     val isUnlocked: Boolean = false,       // True after rewarded ad watched
     val isAdLoading: Boolean = false,
     val error: String? = null,
+    val timeRemaining: TimeRemainingCalculator.TimeRemaining? = null,
+    val timeRemainingEnabled: Boolean = true,
 )
 
 @HiltViewModel
@@ -87,16 +90,22 @@ class CalculatorViewModel @Inject constructor(
             ?.let { runCatching { LocalTime.parse(it) }.getOrNull() }
         val savedLocation = prefs.getString("birth_location", null)
             ?.let { runCatching { parseLocation(it) }.getOrNull() }
-        if (savedDate != null) {
-            _uiState.update {
-                it.copy(
-                    birthDate = savedDate,
-                    birthTime = savedTime,
-                    location = savedLocation,
-                    result = computeResult(savedDate, savedTime, includeUnlocked = false, location = savedLocation),
-                )
-            }
-            viewModelScope.launch {
+        val timeRemainingCalc = TimeRemainingCalculator()
+        viewModelScope.launch {
+            val enabled = userPrefs.timeRemainingEnabled.first()
+            val targetAge = userPrefs.targetAge.first()
+            _uiState.update { it.copy(timeRemainingEnabled = enabled) }
+            if (savedDate != null) {
+                val tr = if (enabled) timeRemainingCalc.calculate(savedDate, targetAge = targetAge) else null
+                _uiState.update {
+                    it.copy(
+                        birthDate = savedDate,
+                        birthTime = savedTime,
+                        location = savedLocation,
+                        result = computeResult(savedDate, savedTime, includeUnlocked = false, location = savedLocation),
+                        timeRemaining = tr,
+                    )
+                }
                 badgeRepository.checkAndUnlock(savedDate, savedTime)
             }
         }
@@ -131,15 +140,20 @@ class CalculatorViewModel @Inject constructor(
             milestoneNotificationScheduler.scheduleUpcomingMilestones(date, enabled)
         }
         prefs.edit().putString("birth_date", date.toString()).apply()
-        _uiState.update { state ->
-            state.copy(
-                birthDate = date,
-                error = null,
-                isUnlocked = false,
-                result = computeResult(date, state.birthTime, includeUnlocked = false, location = state.location),
-            )
-        }
         viewModelScope.launch {
+            val targetAge = userPrefs.targetAge.first()
+            val trEnabled = userPrefs.timeRemainingEnabled.first()
+            val tr = if (trEnabled) TimeRemainingCalculator().calculate(date, targetAge = targetAge) else null
+            _uiState.update { state ->
+                state.copy(
+                    birthDate = date,
+                    error = null,
+                    isUnlocked = false,
+                    result = computeResult(date, state.birthTime, includeUnlocked = false, location = state.location),
+                    timeRemaining = tr,
+                    timeRemainingEnabled = trEnabled,
+                )
+            }
             badgeRepository.checkAndUnlock(date, _uiState.value.birthTime)
         }
     }
@@ -160,8 +174,14 @@ class CalculatorViewModel @Inject constructor(
     fun onTick() {
         val state = _uiState.value
         val birthDate = state.birthDate ?: return
+        val tr = if (state.timeRemainingEnabled) {
+            TimeRemainingCalculator().calculate(birthDate, targetAge = state.timeRemaining?.targetAge ?: 80)
+        } else null
         _uiState.update {
-            it.copy(result = computeResult(birthDate, it.birthTime, it.isUnlocked, location = it.location))
+            it.copy(
+                result = computeResult(birthDate, it.birthTime, it.isUnlocked, location = it.location),
+                timeRemaining = tr,
+            )
         }
     }
 

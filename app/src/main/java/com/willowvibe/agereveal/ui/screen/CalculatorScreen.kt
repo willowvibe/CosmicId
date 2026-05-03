@@ -241,6 +241,11 @@ fun CalculatorScreen(
                         StaggeredEnter(delayMillis = 70) { SecondsStrip(result) }
                         StaggeredEnter(delayMillis = 140) { MiniStatRow(result) }
                         StaggeredEnter(delayMillis = 210) { NextMilestoneChip(result) }
+                        if (uiState.timeRemaining != null && uiState.timeRemainingEnabled) {
+                            StaggeredEnter(delayMillis = 245) {
+                                TimeRemainingCard(uiState.timeRemaining!!)
+                            }
+                        }
                         StaggeredEnter(delayMillis = 280) {
                             Column {
                                 if (!uiState.isUnlocked) {
@@ -983,6 +988,35 @@ private fun NextMilestoneChip(result: AgeResult) {
             fontFamily = SerifFamily,
             fontSize = 22.sp,
             color = WarmAmber,
+        )
+    }
+}
+
+@Composable
+private fun TimeRemainingCard(timeRemaining: com.willowvibe.agereveal.domain.TimeRemainingCalculator.TimeRemaining) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
+            .background(WarmSurface)
+            .padding(14.dp),
+    ) {
+        Text(
+            "TIME REMAINING",
+            style = MaterialTheme.typography.labelSmall,
+            color = WarmInkDim,
+        )
+        Spacer(Modifier.height(6.dp))
+        Text(
+            "You have ${timeRemaining.weekends} weekends left until you're ${timeRemaining.targetAge}",
+            style = MaterialTheme.typography.bodySmall,
+            fontWeight = FontWeight.SemiBold,
+            color = WarmInk,
+        )
+        Text(
+            "That's ${timeRemaining.fridays} Fridays, ${timeRemaining.paychecks} paychecks, ${timeRemaining.fullMoons} full moons",
+            style = MaterialTheme.typography.labelSmall,
+            color = WarmInkMute,
         )
     }
 }

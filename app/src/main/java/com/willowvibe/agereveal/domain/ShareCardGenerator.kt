@@ -114,6 +114,12 @@ class ShareCardGenerator @Inject constructor(
         const val STORY_WIDTH = 1080
         const val STORY_HEIGHT = 1920
         private val MILESTONE_DATE_FMT = DateTimeFormatter.ofPattern("d MMMM yyyy", Locale.ENGLISH)
+
+        /** Read the user-chosen accent color from mirrored SharedPreferences. */
+        fun readAccentColor(context: Context): Int {
+            val prefs = context.getSharedPreferences("calculator_prefs", Context.MODE_PRIVATE)
+            return prefs.getInt("accent_color", 0xFF86EFAC.toInt())
+        }
     }
 
     private val sharingCompatibility = AtomicBoolean(false)
@@ -124,12 +130,13 @@ class ShareCardGenerator @Inject constructor(
 
     /** Generate a square share card from [result] using the given [theme]. */
     fun generateBitmap(result: AgeResult, theme: CardTheme = CardTheme.DARK_COSMOS): Bitmap {
+        val accent = readAccentColor(context)
         // 1. Draw content at native 900×600
         val contentBmp = Bitmap.createBitmap(CARD_WIDTH, CARD_HEIGHT, Bitmap.Config.ARGB_8888)
         val paint = Paint(Paint.ANTI_ALIAS_FLAG)
         when (theme) {
-            CardTheme.DARK_COSMOS -> drawDarkCosmos(Canvas(contentBmp), paint, result)
-            CardTheme.MINIMAL_LIGHT -> drawMinimalLight(Canvas(contentBmp), paint, result)
+            CardTheme.DARK_COSMOS -> drawDarkCosmos(Canvas(contentBmp), paint, result, accent)
+            CardTheme.MINIMAL_LIGHT -> drawMinimalLight(Canvas(contentBmp), paint, result, accent)
             CardTheme.FESTIVE_INDIA -> drawFestiveIndia(Canvas(contentBmp), paint, result)
         }
         // 2. Embed in square with matching background
@@ -138,19 +145,20 @@ class ShareCardGenerator @Inject constructor(
 
     /** Generate a dedicated milestone share card (e.g. "You'll turn 10,000 days old on…"). */
     fun generateMilestoneBitmap(milestone: Milestone, theme: CardTheme = CardTheme.FESTIVE_INDIA): Bitmap {
+        val accent = readAccentColor(context)
         val contentBmp = Bitmap.createBitmap(CARD_WIDTH, CARD_HEIGHT, Bitmap.Config.ARGB_8888)
         val canvas = Canvas(contentBmp)
         val paint = Paint(Paint.ANTI_ALIAS_FLAG)
         when (theme) {
             CardTheme.DARK_COSMOS -> {
                 drawThemeBackground(canvas, paint, CARD_WIDTH.toFloat(), CARD_HEIGHT.toFloat(), theme)
-                drawMilestoneContent(canvas, paint, milestone, Color.WHITE, Color.parseColor("#86efac"))
+                drawMilestoneContent(canvas, paint, milestone, Color.WHITE, accent)
             }
             CardTheme.MINIMAL_LIGHT -> {
                 paint.color = Color.WHITE
                 canvas.drawRect(0f, 0f, CARD_WIDTH.toFloat(), CARD_HEIGHT.toFloat(), paint)
                 drawMilestoneContent(canvas, paint, milestone,
-                    Color.parseColor("#1c1917"), Color.parseColor("#0f6e56"))
+                    Color.parseColor("#1c1917"), accent)
             }
             CardTheme.FESTIVE_INDIA -> {
                 drawThemeBackground(canvas, paint, CARD_WIDTH.toFloat(), CARD_HEIGHT.toFloat(), theme)
@@ -161,19 +169,20 @@ class ShareCardGenerator @Inject constructor(
     }
 
     fun generateCompatibilityBitmap(result: CompatibilityResult, theme: CardTheme = CardTheme.DARK_COSMOS): Bitmap {
+        val accent = readAccentColor(context)
         val contentBmp = Bitmap.createBitmap(CARD_WIDTH, CARD_HEIGHT, Bitmap.Config.ARGB_8888)
         val canvas = Canvas(contentBmp)
         val paint = Paint(Paint.ANTI_ALIAS_FLAG)
         when (theme) {
             CardTheme.DARK_COSMOS -> {
                 drawThemeBackground(canvas, paint, CARD_WIDTH.toFloat(), CARD_HEIGHT.toFloat(), theme)
-                drawCompatibilityContent(canvas, paint, result, Color.WHITE, Color.parseColor("#86efac"))
+                drawCompatibilityContent(canvas, paint, result, Color.WHITE, accent)
             }
             CardTheme.MINIMAL_LIGHT -> {
                 paint.color = Color.WHITE
                 canvas.drawRect(0f, 0f, CARD_WIDTH.toFloat(), CARD_HEIGHT.toFloat(), paint)
                 drawCompatibilityContent(canvas, paint, result,
-                    Color.parseColor("#1c1917"), Color.parseColor("#0f6e56"))
+                    Color.parseColor("#1c1917"), accent)
             }
             CardTheme.FESTIVE_INDIA -> {
                 drawThemeBackground(canvas, paint, CARD_WIDTH.toFloat(), CARD_HEIGHT.toFloat(), theme)
@@ -190,18 +199,19 @@ class ShareCardGenerator @Inject constructor(
         emoji: String,
         theme: CardTheme = CardTheme.DARK_COSMOS,
     ): Bitmap {
+        val accent = readAccentColor(context)
         val contentBmp = Bitmap.createBitmap(CARD_WIDTH, CARD_HEIGHT, Bitmap.Config.ARGB_8888)
         val canvas = Canvas(contentBmp)
         val paint = Paint(Paint.ANTI_ALIAS_FLAG)
         when (theme) {
             CardTheme.DARK_COSMOS -> {
                 drawThemeBackground(canvas, paint, CARD_WIDTH.toFloat(), CARD_HEIGHT.toFloat(), theme)
-                drawLifeStatContent(canvas, paint, label, value, emoji, Color.WHITE, Color.parseColor("#86efac"))
+                drawLifeStatContent(canvas, paint, label, value, emoji, Color.WHITE, accent)
             }
             CardTheme.MINIMAL_LIGHT -> {
                 paint.color = Color.WHITE
                 canvas.drawRect(0f, 0f, CARD_WIDTH.toFloat(), CARD_HEIGHT.toFloat(), paint)
-                drawLifeStatContent(canvas, paint, label, value, emoji, Color.parseColor("#1c1917"), Color.parseColor("#0f6e56"))
+                drawLifeStatContent(canvas, paint, label, value, emoji, Color.parseColor("#1c1917"), accent)
             }
             CardTheme.FESTIVE_INDIA -> {
                 drawThemeBackground(canvas, paint, CARD_WIDTH.toFloat(), CARD_HEIGHT.toFloat(), theme)
@@ -216,12 +226,13 @@ class ShareCardGenerator @Inject constructor(
         result: AgeResult,
         theme: CardTheme = CardTheme.DARK_COSMOS,
     ): Bitmap {
+        val accent = readAccentColor(context)
         val bmp = Bitmap.createBitmap(STORY_WIDTH, STORY_HEIGHT, Bitmap.Config.ARGB_8888)
         val canvas = Canvas(bmp)
         val paint = Paint(Paint.ANTI_ALIAS_FLAG)
         when (theme) {
-            CardTheme.DARK_COSMOS -> drawStoryDarkCosmos(canvas, paint, result)
-            CardTheme.MINIMAL_LIGHT -> drawStoryMinimalLight(canvas, paint, result)
+            CardTheme.DARK_COSMOS -> drawStoryDarkCosmos(canvas, paint, result, accent)
+            CardTheme.MINIMAL_LIGHT -> drawStoryMinimalLight(canvas, paint, result, accent)
             CardTheme.FESTIVE_INDIA -> drawStoryFestiveIndia(canvas, paint, result)
         }
         drawStoryWatermark(canvas, paint)
@@ -234,19 +245,20 @@ class ShareCardGenerator @Inject constructor(
         unlockedAt: Long? = null,
         theme: CardTheme = CardTheme.DARK_COSMOS,
     ): Bitmap {
+        val accent = readAccentColor(context)
         val contentBmp = Bitmap.createBitmap(CARD_WIDTH, CARD_HEIGHT, Bitmap.Config.ARGB_8888)
         val canvas = Canvas(contentBmp)
         val paint = Paint(Paint.ANTI_ALIAS_FLAG)
         when (theme) {
             CardTheme.DARK_COSMOS -> {
                 drawThemeBackground(canvas, paint, CARD_WIDTH.toFloat(), CARD_HEIGHT.toFloat(), theme)
-                drawBadgeContent(canvas, paint, badge, unlockedAt, Color.WHITE, Color.parseColor("#86efac"))
+                drawBadgeContent(canvas, paint, badge, unlockedAt, Color.WHITE, accent)
             }
             CardTheme.MINIMAL_LIGHT -> {
                 paint.color = Color.WHITE
                 canvas.drawRect(0f, 0f, CARD_WIDTH.toFloat(), CARD_HEIGHT.toFloat(), paint)
                 drawBadgeContent(canvas, paint, badge, unlockedAt,
-                    Color.parseColor("#1c1917"), Color.parseColor("#0f6e56"))
+                    Color.parseColor("#1c1917"), accent)
             }
             CardTheme.FESTIVE_INDIA -> {
                 drawThemeBackground(canvas, paint, CARD_WIDTH.toFloat(), CARD_HEIGHT.toFloat(), theme)
@@ -534,16 +546,16 @@ class ShareCardGenerator @Inject constructor(
     // Theme renderers (draw onto 900×600 content canvas)
     // ---------------------------------------------------------------------------
 
-    private fun drawDarkCosmos(canvas: Canvas, paint: Paint, result: AgeResult) {
+    private fun drawDarkCosmos(canvas: Canvas, paint: Paint, result: AgeResult, accent: Int) {
         drawThemeBackground(canvas, paint, CARD_WIDTH.toFloat(), CARD_HEIGHT.toFloat(), CardTheme.DARK_COSMOS)
-        drawContent(canvas, paint, result, textColor = Color.WHITE, accentColor = Color.parseColor("#86efac"))
+        drawContent(canvas, paint, result, textColor = Color.WHITE, accentColor = accent)
     }
 
-    private fun drawMinimalLight(canvas: Canvas, paint: Paint, result: AgeResult) {
+    private fun drawMinimalLight(canvas: Canvas, paint: Paint, result: AgeResult, accent: Int) {
         drawThemeBackground(canvas, paint, CARD_WIDTH.toFloat(), CARD_HEIGHT.toFloat(), CardTheme.MINIMAL_LIGHT)
         drawContent(canvas, paint, result,
             textColor = Color.parseColor("#1c1917"),
-            accentColor = Color.parseColor("#0f6e56"))
+            accentColor = accent)
     }
 
     private fun drawFestiveIndia(canvas: Canvas, paint: Paint, result: AgeResult) {
@@ -757,15 +769,15 @@ class ShareCardGenerator @Inject constructor(
     // Story card renderers (9:16 portrait)
     // ---------------------------------------------------------------------------
 
-    private fun drawStoryDarkCosmos(canvas: Canvas, paint: Paint, result: AgeResult) {
+    private fun drawStoryDarkCosmos(canvas: Canvas, paint: Paint, result: AgeResult, accent: Int) {
         drawThemeBackground(canvas, paint, STORY_WIDTH.toFloat(), STORY_HEIGHT.toFloat(), CardTheme.DARK_COSMOS)
-        drawStoryContent(canvas, paint, result, Color.WHITE, Color.parseColor("#86efac"))
+        drawStoryContent(canvas, paint, result, Color.WHITE, accent)
     }
 
-    private fun drawStoryMinimalLight(canvas: Canvas, paint: Paint, result: AgeResult) {
+    private fun drawStoryMinimalLight(canvas: Canvas, paint: Paint, result: AgeResult, accent: Int) {
         paint.color = Color.WHITE
         canvas.drawRect(0f, 0f, STORY_WIDTH.toFloat(), STORY_HEIGHT.toFloat(), paint)
-        drawStoryContent(canvas, paint, result, Color.parseColor("#1c1917"), Color.parseColor("#0f6e56"))
+        drawStoryContent(canvas, paint, result, Color.parseColor("#1c1917"), accent)
     }
 
     private fun drawStoryFestiveIndia(canvas: Canvas, paint: Paint, result: AgeResult) {

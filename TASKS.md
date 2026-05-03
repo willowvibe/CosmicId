@@ -1,6 +1,6 @@
 # AgeReveal — Tasks & Implementation Checklist
 
-_Last updated: 2026-05-03 — v1.0.5 (Phase 5 features: Milestone Badges, Seconds Counter Widget, Lifespan Widget, Life Stats, 9:16 Story Cards, Generational Badge, Planet Ages, Moon Phase)_
+_Last updated: 2026-05-03 — v1.0.6 (Phase 5 features: Milestone Badges, Seconds Counter Widget, Lifespan Widget, Life Stats, 9:16 Story Cards, Generational Badge, Planet Ages, Moon Phase, Time Remaining, Accent Color Picker, Milestone Ring Widget)_
 
 ---
 
@@ -129,11 +129,11 @@ This section is the "main character energy" roadmap — features built to screen
 - [ ] "Next milestone: X days" footer text.
 - [ ] Lock-screen widget variant for API 33+ (`WIDGET_FEATURE_RECONFIGURABLE`).
 
-#### 6.1.4 Milestone Countdown Ring Widget (S / ⭐⭐⭐)
-- [ ] Create `MilestoneRingGlanceWidget.kt` — 2×2 circular progress ring.
-- [ ] Shows next upcoming milestone (e.g., "10,000 days") with days remaining.
-- [ ] Ring fills as the milestone approaches.
-- [ ] Emoji indicator based on milestone type (🔥 for big ones, ✨ for smaller).
+#### 6.1.4 Milestone Countdown Ring Widget (S / ⭐⭐⭐) — ✅ Implemented in v1.0.6
+- [x] Create `MilestoneRingGlanceWidget.kt` — 2×1 compact widget.
+- [x] Shows next upcoming milestone (e.g., "10,000 days") with days remaining and progress percentage.
+- [x] Tap opens the app directly to the Calculator screen.
+- [x] Updates every 30 minutes via `updatePeriodMillis`.
 
 ---
 
@@ -243,11 +243,11 @@ This section is the "main character energy" roadmap — features built to screen
 - [x] Each stat is individually shareable via `generateLifeStatBitmap()` / `shareLifeStat()`.
 - [x] Show as a 2×4 grid of cards with emoji, large number, and label.
 
-#### 6.4.3 Time Remaining Visuals (S / ⭐⭐⭐)
-- [ ] Add configurable "Target Age" in Settings (default 30, 40, 50, 60, 65, 70, 80, 90, 100).
-- [ ] Show on Calculator screen: "You have X weekends left until you're [target age]."
-- [ ] Also show: "That's X Fridays, X paychecks, X full moons."
-- [ ] Darkly motivational. Toggle in settings for users who find it depressing.
+#### 6.4.3 Time Remaining Visuals (S / ⭐⭐⭐) — ✅ Implemented in v1.0.6
+- [x] Add configurable "Target Age" in Settings (default 30, 40, 50, 60, 65, 70, 80, 90, 100).
+- [x] Show on Calculator screen: "You have X weekends left until you're [target age]."
+- [x] Also show: "That's X Fridays, X paychecks, X full moons."
+- [x] Darkly motivational. Toggle in settings for users who find it depressing.
 
 ---
 
@@ -255,12 +255,11 @@ This section is the "main character energy" roadmap — features built to screen
 
 **Goal:** Let users make the app *theirs*. Aesthetic is identity for Gen Z.
 
-#### 6.5.1 Custom Accent Color Picker (S / ⭐⭐⭐⭐)
-- [ ] Add "Accent Color" section in Settings → Appearance.
-- [ ] Pre-set color swatches: Hot Pink (#FF006E), Electric Blue (#00F5FF), Slime Green (#39FF14), Lavender (#E6A8FF), Sunset Orange (#FF6B35), Midnight Purple (#7B2CBF).
-- [ ] Store selected accent in `UserPreferencesRepository` as DataStore `int` (ARGB).
-- [ ] Replace hardcoded `WarmTeal` references with dynamic accent color where appropriate.
-- [ ] Apply to buttons, progress bars, active nav indicator, widget accents.
+#### 6.5.1 Custom Accent Color Picker (S / ⭐⭐⭐⭐) — ✅ Implemented in v1.0.6
+- [x] Add "Accent Color" section in Settings → Appearance.
+- [x] Pre-set color swatches: Mint, Amber, Pink, Blue, Purple, Emerald.
+- [x] Store selected accent in `UserPreferencesRepository` as DataStore `int` (ARGB), mirrored to SharedPreferences.
+- [x] ShareCardGenerator reads accent color from SharedPreferences and applies it to DARK_COSMOS and MINIMAL_LIGHT themes. FESTIVE_INDIA retains gold accent.
 
 #### 6.5.2 Aesthetic Theme Packs (L / ⭐⭐⭐⭐⭐)
 - [ ] Create `ThemePack` enum / sealed class with custom color tokens:
