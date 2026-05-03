@@ -40,6 +40,7 @@ import androidx.navigation.compose.rememberNavController
 import android.app.Activity
 import com.willowvibe.agereveal.ads.AdManager
 import com.willowvibe.agereveal.domain.ShareCardGenerator
+import com.willowvibe.agereveal.ui.screen.ShareFormat
 import com.willowvibe.agereveal.ui.screen.BadgeScreen
 import com.willowvibe.agereveal.ui.screen.CalculatorScreen
 import com.willowvibe.agereveal.ui.screen.CompatibilityScreen
@@ -142,9 +143,13 @@ fun AppNavGraph(adManager: AdManager) {
                 CalculatorScreen(
                     viewModel = viewModel,
                     adManager = adManager,
-                    onShareCard = { theme, isStory ->
-                        if (isStory) viewModel.shareStoryCard(theme, activity)
-                        else viewModel.shareCard(theme, activity)
+                    onShareCard = { theme, format ->
+                        when (format) {
+                            ShareFormat.SQUARE -> viewModel.shareCard(theme, activity)
+                            ShareFormat.STORY -> viewModel.shareStoryCard(theme, activity)
+                            ShareFormat.GREEN_SCREEN -> viewModel.shareTransparentOverlay(activity)
+                            ShareFormat.ASCII_ART -> viewModel.shareAsciiArt()
+                        }
                     },
                     onUnlockMore = {
                         adManager.showRewardedAd(

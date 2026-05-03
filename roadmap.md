@@ -56,9 +56,9 @@ Designed for the "main character energy" generation — features built to screen
 
 ### 5.2 Shareable Formats (Stories, Reels, TikTok)
 - **9:16 Story Cards** ✅ — Portrait share cards (1080×1920) with Instagram-safe margins. Square / Story format toggle in share sheet. (v1.0.5)
-- **TikTok/Reels Green Screen** — Transparent-background stat cards (PNG with alpha) for users to drop into their own video content as overlays.
+- **TikTok/Reels Green Screen** ✅ — Transparent-background stat cards (PNG with alpha) for users to drop into their own video content as overlays. (v1.0.7)
 - **Animated Shareables** — MP4/GIF export of the seconds counter rolling, milestone fireworks, or compatibility score reveal with particle effects.
-- **Daily Cosmic Fortune Card** — Auto-generated daily "vibe check" card mixing current moon phase + zodiac + a fortune-cookie style message. One-tap share every morning.
+- **Daily Cosmic Fortune Card** ✅ — Auto-generated daily "vibe check" card mixing current moon phase + zodiac + a fortune-cookie style message. One-tap share every morning. (v1.0.7)
 
 ### 5.3 Social Proof & Comparison
 - **Global Age Percentile** — "You're older than 73% of humans alive today" using UN population demographics data. Highly shareable stat.
@@ -73,7 +73,7 @@ Designed for the "main character energy" generation — features built to screen
 ### 5.5 Aesthetic & Vibes
 - **Custom Accent Color Picker** ✅ — Six preset swatches (Mint, Amber, Pink, Blue, Purple, Emerald) in Settings → Appearance. Applied to share cards across DARK_COSMOS and MINIMAL_LIGHT themes. (v1.0.6)
 - **Aesthetic Theme Packs** — Curated visual packs: Vaporwave (sunset gradients + chrome text), Cottagecore (floral + serif), Y2K (bling + bubblegum), Dark Academia (sepia + old maps), Cyberpunk (neon + grid).
-- **Retro ASCII Art Share** — "YOUR AGE IN ASCII" — generate monospace art of your age digits for copy-paste to Discord, Reddit, or terminal screenshots.
+- **Retro ASCII Art Share** ✅ — "YOUR AGE IN ASCII" — generate monospace art of your age digits for copy-paste to Discord, Reddit, or terminal screenshots. (v1.0.7)
 - **Widget Transparency & Shape** — Round-corners, squircle, or pill-shaped widgets to match user home-screen aesthetic (iOS 18 / Samsung One UI style).
 
 ### 5.6 "What If" & Interactive Fun
@@ -88,8 +88,8 @@ Designed for the "main character energy" generation — features built to screen
 
 | Item | Value |
 |---|---|
-| Version | 1.0.6 |
+| Version | 1.0.7 |
 | minSdk | 26 (desugaring enables API 21+) |
 | targetSdk | 35 |
 | compileSdk | 36 |
-| Status | ✅ Phase 5 Active — Badges, Widgets, Life Stats, Story Cards, Time Remaining, Accent Color, Milestone Ring shipped |
+| Status | ✅ Phase 5 Active — Badges, Widgets, Life Stats, Story Cards, Time Remaining, Accent Color, Milestone Ring, Transparent Overlay, Daily Fortune, ASCII Art shipped |

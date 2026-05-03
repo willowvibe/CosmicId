@@ -109,7 +109,7 @@ fun CompatibilityScreen(
                 viewModel.shareCard(theme)
                 showThemePicker = false
             },
-            showStoryOption = false,
+            showFormatOptions = false,
         )
     }
 

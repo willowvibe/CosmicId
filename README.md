@@ -1,6 +1,6 @@
 # AgeReveal
 
-AgeReveal is a native Android app (Kotlin + Jetpack Compose) that calculates your exact age in real-time and enriches it with astrological insights, shareable cards, milestone tracking, saved birthday reminders, and home screen widgets. Current version: **1.0.6**.
+AgeReveal is a native Android app (Kotlin + Jetpack Compose) that calculates your exact age in real-time and enriches it with astrological insights, shareable cards, milestone tracking, saved birthday reminders, and home screen widgets. Current version: **1.0.7**.
 
 ## Features
 
@@ -35,6 +35,9 @@ AgeReveal is a native Android app (Kotlin + Jetpack Compose) that calculates you
 - **Life Stats Dashboard** — Aggregated fun facts: total full moons, Fridays the 13th survived, leap years, heartbeats, breaths, meals, words, steps. All shareable as individual cards.
 - **Time Remaining Visuals** — Darkly motivational stats: "You have X weekends left until you're 80." Toggle in Settings for users who find it depressing.
 - **Custom Accent Color** — Six preset swatches (Mint, Amber, Pink, Blue, Purple, Emerald) in Settings → Appearance. Applied to share card highlights across themes.
+- **Transparent Green-Screen Overlay** — 1080×1920 transparent PNG share for TikTok/Reels/YouTube Shorts. Black-outlined text floats over any background.
+- **Daily Cosmic Fortune** — Deterministic daily "vibe check" based on current moon phase, sun sign, and Chinese stem-branch. 80+ curated messages. Cached until midnight. One-tap share as a fortune card.
+- **Retro ASCII Art Share** — Copy a 5×5 block-art representation of your total seconds alive to clipboard. Perfect for Discord, Reddit, and terminal screenshots.
 
 ### Reminders & Notifications
 - **Saved Birthdays** — Store family and friends' birthdays with name + emoji; backed by Room DB.
@@ -152,6 +155,11 @@ See [BUGS_AND_ISSUES.md](BUGS_AND_ISSUES.md) for the full list of known bugs and
 ---
 
 ## Recent Updates
+
+### v1.0.7 (2026-05-03)
+- **Transparent Green-Screen Overlay** — 1080×1920 transparent PNG with outlined text for TikTok/Reels/Shorts green-screen import.
+- **Daily Cosmic Fortune** — Deterministic daily fortune based on moon phase, sun sign, and Chinese stem-branch. 80+ curated messages. Cached in SharedPreferences with daily TTL.
+- **Retro ASCII Art Share** — 5×5 block-art digits of total seconds alive, copied to clipboard for Discord/Reddit/terminal sharing.
 
 ### v0.9.2 (2026-04-24)
 - **Astrology improvements:**
