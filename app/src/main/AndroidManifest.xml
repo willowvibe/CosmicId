@@ -69,6 +69,45 @@
                 android:resource="@xml/widget_info_wide" />
         </receiver>
 
+        <!-- Home screen widget: live seconds counter -->
+        <receiver
+            android:name=".widget.SecondsCounterGlanceWidgetReceiver"
+            android:exported="true"
+            android:label="Seconds Counter">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/seconds_counter_widget_info" />
+        </receiver>
+
+        <!-- Home screen widget: lifespan progress bar -->
+        <receiver
+            android:name=".widget.LifespanProgressGlanceWidgetReceiver"
+            android:exported="true"
+            android:label="Lifespan Progress">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/lifespan_progress_widget_info" />
+        </receiver>
+
+        <!-- Home screen widget: milestone countdown ring -->
+        <receiver
+            android:name=".widget.MilestoneRingGlanceWidgetReceiver"
+            android:exported="true"
+            android:label="Milestone Countdown">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/milestone_ring_widget_info" />
+        </receiver>
+
         <!-- WorkManager: birthday reminder scheduling -->
         <provider
             android:name="androidx.startup.InitializationProvider"

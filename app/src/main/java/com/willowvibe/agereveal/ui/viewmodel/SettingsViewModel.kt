@@ -48,6 +48,15 @@ class SettingsViewModel @Inject constructor(
     val birthdays: StateFlow<List<SavedBirthday>> = repository.allBirthdays
         .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 
+    val targetAge: StateFlow<Int> = userPrefs.targetAge
+        .stateIn(viewModelScope, SharingStarted.Eagerly, 80)
+
+    val timeRemainingEnabled: StateFlow<Boolean> = userPrefs.timeRemainingEnabled
+        .stateIn(viewModelScope, SharingStarted.Eagerly, true)
+
+    val accentColor: StateFlow<Int> = userPrefs.accentColor
+        .stateIn(viewModelScope, SharingStarted.Eagerly, 0xFF86EFAC.toInt())
+
     fun milestoneEnabled(target: Int): Flow<Boolean> = userPrefs.milestoneEnabled(target)
 
     fun setTheme(mode: Int) = viewModelScope.launch { userPrefs.setThemeMode(mode) }
@@ -85,6 +94,12 @@ class SettingsViewModel @Inject constructor(
             repository.deleteAll()
         }
     }
+
+    fun setTargetAge(age: Int) = viewModelScope.launch { userPrefs.setTargetAge(age) }
+
+    fun setTimeRemainingEnabled(enabled: Boolean) = viewModelScope.launch { userPrefs.setTimeRemainingEnabled(enabled) }
+
+    fun setAccentColor(color: Int) = viewModelScope.launch { userPrefs.setAccentColor(color) }
 
     fun exportCsv() {
         viewModelScope.launch {

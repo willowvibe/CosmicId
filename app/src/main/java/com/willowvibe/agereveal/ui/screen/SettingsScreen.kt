@@ -74,6 +74,9 @@ fun SettingsScreen(
     val languageTag by settingsViewModel.languageTag.collectAsState()
     val notificationsEnabled by settingsViewModel.notificationsEnabled.collectAsState()
     val notificationHour by settingsViewModel.notificationHour.collectAsState()
+    val targetAge by settingsViewModel.targetAge.collectAsState()
+    val timeRemainingEnabled by settingsViewModel.timeRemainingEnabled.collectAsState()
+    val accentColor by settingsViewModel.accentColor.collectAsState()
     var showClearDialog by remember { mutableStateOf(false) }
     val context = LocalContext.current
 
@@ -233,6 +236,113 @@ fun SettingsScreen(
                             isSelected = isSelected,
                             onClick = { settingsViewModel.setTheme(mode) },
                         )
+                    }
+
+                    Spacer(Modifier.height(12.dp))
+                    HorizontalDivider(color = WarmSurfaceSoft)
+                    Spacer(Modifier.height(12.dp))
+
+                    SwitchRow(
+                        title = "Time remaining visuals",
+                        subtitle = "Show darkly motivational stats on the calculator screen",
+                        checked = timeRemainingEnabled,
+                        onCheckedChange = settingsViewModel::setTimeRemainingEnabled,
+                    )
+
+                    Spacer(Modifier.height(12.dp))
+                    HorizontalDivider(color = WarmSurfaceSoft)
+                    Spacer(Modifier.height(12.dp))
+
+                    Text(
+                        "Accent color",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = WarmInk,
+                        fontWeight = FontWeight.SemiBold,
+                    )
+                    Text(
+                        "Pick a theme accent for share cards and highlights",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = WarmInkDim,
+                    )
+                    Spacer(Modifier.height(8.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    ) {
+                        val presets = listOf(
+                            0xFF86EFAC.toInt() to "Mint",
+                            0xFFFBBF24.toInt() to "Amber",
+                            0xFFF472B6.toInt() to "Pink",
+                            0xFF60A5FA.toInt() to "Blue",
+                            0xFFA78BFA.toInt() to "Purple",
+                            0xFF34D399.toInt() to "Emerald",
+                        )
+                        presets.forEach { (color, label) ->
+                            val selected = color == accentColor
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                modifier = Modifier.clickable { settingsViewModel.setAccentColor(color) },
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(36.dp)
+                                        .clip(RoundedCornerShape(18.dp))
+                                        .background(Color(color))
+                                        .border(
+                                            width = if (selected) 2.5.dp else 0.dp,
+                                            color = if (selected) WarmInk else Color.Transparent,
+                                            shape = RoundedCornerShape(18.dp),
+                                        ),
+                                )
+                                Spacer(Modifier.height(4.dp))
+                                Text(
+                                    label,
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = if (selected) WarmInk else WarmInkMute,
+                                    fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
+                                )
+                            }
+                        }
+                    }
+
+                    Spacer(Modifier.height(12.dp))
+                    HorizontalDivider(color = WarmSurfaceSoft)
+                    Spacer(Modifier.height(12.dp))
+
+                    Text(
+                        "Lifespan target",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = WarmInk,
+                        fontWeight = FontWeight.SemiBold,
+                    )
+                    Text(
+                        "Target age for the lifespan progress widget",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = WarmInkDim,
+                    )
+                    Spacer(Modifier.height(8.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        listOf(30, 40, 50, 60, 70, 80, 90, 100).forEach { age ->
+                            val selected = age == targetAge
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .background(if (selected) WarmTeal else WarmSurfaceSoft)
+                                    .clickable { settingsViewModel.setTargetAge(age) }
+                                    .padding(horizontal = 10.dp, vertical = 6.dp),
+                                contentAlignment = Alignment.Center,
+                            ) {
+                                Text(
+                                    "$age",
+                                    style = MaterialTheme.typography.labelMedium,
+                                    color = if (selected) WarmBlack else WarmInk,
+                                    fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
+                                )
+                            }
+                        }
                     }
                 }
             }

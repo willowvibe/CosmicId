@@ -49,13 +49,13 @@
 Designed for the "main character energy" generation — features built to screenshot, share, and flex.
 
 ### 5.1 Live Widgets (Home Screen & Lock Screen)
-- **Live Seconds Counter Widget** — A compact 1×1 or 2×1 home-screen widget that ticks total seconds alive in real-time using `Chronometer` or a `WorkManager` + `Glance` refresh loop. Minimal, brutalist typography. Pure flex.
-- **Lifespan Progress Bar Widget** — A horizontal bar widget showing % of a configurable lifespan (default 90 years) with gradient fills. Updates once per day. Lock-screen widget on API 33+.
+- **Live Seconds Counter Widget** ✅ — A compact 2×1 home-screen widget showing total seconds alive. Minimal, brutalist typography. Pure flex. (v1.0.5)
+- **Lifespan Progress Bar Widget** ✅ — A 4×1 widget showing lifespan % with color-coded text (teal → amber → rose → red). Configurable target age in Settings. Updates once per day. (v1.0.5)
+- **Milestone Countdown Widget** ✅ — "10,000 days · 1,234 days to go · 45%" compact 2×1 widget. Shows next upcoming milestone with progress percentage. Tap opens app. (v1.0.6)
 - **Cosmic Clock Widget** — Digital-clock style widget showing current age in YY:MM:DD format, with a subtle zodiac icon that rotates based on current moon phase.
-- **Milestone Countdown Widget** — "🔥 42 days until 10,000" with a fiery progress ring.
 
 ### 5.2 Shareable Formats (Stories, Reels, TikTok)
-- **9:16 Story Cards** — Vertical share cards optimized for Instagram Stories, WhatsApp Status, and Snapchat. Same themes (Dark Cosmos, Minimal Light, Festive India) but portrait 1080×1920.
+- **9:16 Story Cards** ✅ — Portrait share cards (1080×1920) with Instagram-safe margins. Square / Story format toggle in share sheet. (v1.0.5)
 - **TikTok/Reels Green Screen** — Transparent-background stat cards (PNG with alpha) for users to drop into their own video content as overlays.
 - **Animated Shareables** — MP4/GIF export of the seconds counter rolling, milestone fireworks, or compatibility score reveal with particle effects.
 - **Daily Cosmic Fortune Card** — Auto-generated daily "vibe check" card mixing current moon phase + zodiac + a fortune-cookie style message. One-tap share every morning.
@@ -65,13 +65,13 @@ Designed for the "main character energy" generation — features built to screen
 - **Generational Badge** — Auto-detect Gen Z / Millennial / Gen X / Boomer / Alpha cohort and generate a shareable "Certified Gen Z — 1.2 billion seconds survived" badge.
 
 ### 5.4 Gamification & Achievements
-- **Milestone Badges** — Unlockable collectible badges for reaching milestones: "1M Seconds Club", "10K Days Society", "Quarter-Century Captain", "Silver Jubilee", "Half-Century Hero". Each badge is a shareable unlock card.
+- **Milestone Badges** ✅ — Unlockable collectible badges (13 total): "1M Seconds Club", "10K Days Society", "Billion Seconds Club", "Leap Baby", etc. Each badge is a shareable unlock card with confetti celebration. (v1.0.5)
 - **Streaks** — "You've opened AgeReveal for 7 consecutive days." Small dopamine hit. Can be turned off in settings.
-- **Life Stats Dashboard** — Aggregated fun facts: total full moons witnessed, Fridays the 13th survived, leap years lived through, total heartbeats (~2.5B by age 80), total breaths (~672M). All shareable as individual cards.
-- **Time Remaining Visuals** — "You have 1,247 weekends left until you turn 30." Configurable target age. Morbid motivation.
+- **Life Stats Dashboard** ✅ — Aggregated fun facts: total full moons, Fridays the 13th survived, leap years, heartbeats, breaths, meals, words, steps. All shareable as individual cards. (v1.0.5)
+- **Time Remaining Visuals** ✅ — "You have 1,247 weekends left until you turn 30." Configurable target age with Settings toggle. Morbid motivation. (v1.0.6)
 
 ### 5.5 Aesthetic & Vibes
-- **Custom Accent Color Picker** — Let users set their own brand color beyond the three fixed themes. Hot pink, electric blue, slime green — whatever their vibe is.
+- **Custom Accent Color Picker** ✅ — Six preset swatches (Mint, Amber, Pink, Blue, Purple, Emerald) in Settings → Appearance. Applied to share cards across DARK_COSMOS and MINIMAL_LIGHT themes. (v1.0.6)
 - **Aesthetic Theme Packs** — Curated visual packs: Vaporwave (sunset gradients + chrome text), Cottagecore (floral + serif), Y2K (bling + bubblegum), Dark Academia (sepia + old maps), Cyberpunk (neon + grid).
 - **Retro ASCII Art Share** — "YOUR AGE IN ASCII" — generate monospace art of your age digits for copy-paste to Discord, Reddit, or terminal screenshots.
 - **Widget Transparency & Shape** — Round-corners, squircle, or pill-shaped widgets to match user home-screen aesthetic (iOS 18 / Samsung One UI style).
@@ -88,8 +88,8 @@ Designed for the "main character energy" generation — features built to screen
 
 | Item | Value |
 |---|---|
-| Version | 1.0.2 |
+| Version | 1.0.6 |
 | minSdk | 26 (desugaring enables API 21+) |
 | targetSdk | 35 |
 | compileSdk | 36 |
-| Status | ✅ Release Ready + Phase 5 Planning |
+| Status | ✅ Phase 5 Active — Badges, Widgets, Life Stats, Story Cards, Time Remaining, Accent Color, Milestone Ring shipped |

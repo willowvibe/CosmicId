@@ -8,8 +8,10 @@ import com.willowvibe.agereveal.data.model.AgeResult
 import com.willowvibe.agereveal.data.model.GeoLocation
 import com.willowvibe.agereveal.data.model.Milestone
 import com.willowvibe.agereveal.data.preferences.UserPreferencesRepository
+import com.willowvibe.agereveal.data.repository.BadgeRepository
 import com.willowvibe.agereveal.domain.AgeCalculator
 import com.willowvibe.agereveal.domain.ShareCardGenerator
+import com.willowvibe.agereveal.domain.TimeRemainingCalculator
 import com.willowvibe.agereveal.notification.MilestoneNotificationScheduler
 import com.willowvibe.agereveal.util.ReviewHelper
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -42,6 +44,8 @@ data class CalculatorUiState(
     val isUnlocked: Boolean = false,       // True after rewarded ad watched
     val isAdLoading: Boolean = false,
     val error: String? = null,
+    val timeRemaining: TimeRemainingCalculator.TimeRemaining? = null,
+    val timeRemainingEnabled: Boolean = true,
 )
 
 @HiltViewModel
@@ -51,6 +55,7 @@ class CalculatorViewModel @Inject constructor(
     private val milestoneNotificationScheduler: MilestoneNotificationScheduler,
     private val userPrefs: UserPreferencesRepository,
     private val reviewHelper: ReviewHelper,
+    private val badgeRepository: BadgeRepository,
     @ApplicationContext private val appContext: Context,
 ) : ViewModel() {
 
@@ -70,6 +75,12 @@ class CalculatorViewModel @Inject constructor(
         shareCardGenerator.setCompatibilityShareErrorHandler { error ->
             _uiState.update { it.copy(error = "Failed to share compatibility: ${error.message}") }
         }
+        shareCardGenerator.setLifeStatShareErrorHandler { error ->
+            _uiState.update { it.copy(error = "Failed to share life stat: ${error.message}") }
+        }
+        shareCardGenerator.setStoryShareErrorHandler { error ->
+            _uiState.update { it.copy(error = "Failed to share story: ${error.message}") }
+        }
 
         // Restore previously entered birth date + time + location
         val savedDate = prefs.getString("birth_date", null)
@@ -79,14 +90,23 @@ class CalculatorViewModel @Inject constructor(
             ?.let { runCatching { LocalTime.parse(it) }.getOrNull() }
         val savedLocation = prefs.getString("birth_location", null)
             ?.let { runCatching { parseLocation(it) }.getOrNull() }
-        if (savedDate != null) {
-            _uiState.update {
-                it.copy(
-                    birthDate = savedDate,
-                    birthTime = savedTime,
-                    location = savedLocation,
-                    result = computeResult(savedDate, savedTime, includeUnlocked = false, location = savedLocation),
-                )
+        val timeRemainingCalc = TimeRemainingCalculator()
+        viewModelScope.launch {
+            val enabled = userPrefs.timeRemainingEnabled.first()
+            val targetAge = userPrefs.targetAge.first()
+            _uiState.update { it.copy(timeRemainingEnabled = enabled) }
+            if (savedDate != null) {
+                val tr = if (enabled) timeRemainingCalc.calculate(savedDate, targetAge = targetAge) else null
+                _uiState.update {
+                    it.copy(
+                        birthDate = savedDate,
+                        birthTime = savedTime,
+                        location = savedLocation,
+                        result = computeResult(savedDate, savedTime, includeUnlocked = false, location = savedLocation),
+                        timeRemaining = tr,
+                    )
+                }
+                badgeRepository.checkAndUnlock(savedDate, savedTime)
             }
         }
     }
@@ -120,13 +140,21 @@ class CalculatorViewModel @Inject constructor(
             milestoneNotificationScheduler.scheduleUpcomingMilestones(date, enabled)
         }
         prefs.edit().putString("birth_date", date.toString()).apply()
-        _uiState.update { state ->
-            state.copy(
-                birthDate = date,
-                error = null,
-                isUnlocked = false,
-                result = computeResult(date, state.birthTime, includeUnlocked = false, location = state.location),
-            )
+        viewModelScope.launch {
+            val targetAge = userPrefs.targetAge.first()
+            val trEnabled = userPrefs.timeRemainingEnabled.first()
+            val tr = if (trEnabled) TimeRemainingCalculator().calculate(date, targetAge = targetAge) else null
+            _uiState.update { state ->
+                state.copy(
+                    birthDate = date,
+                    error = null,
+                    isUnlocked = false,
+                    result = computeResult(date, state.birthTime, includeUnlocked = false, location = state.location),
+                    timeRemaining = tr,
+                    timeRemainingEnabled = trEnabled,
+                )
+            }
+            badgeRepository.checkAndUnlock(date, _uiState.value.birthTime)
         }
     }
 
@@ -146,8 +174,14 @@ class CalculatorViewModel @Inject constructor(
     fun onTick() {
         val state = _uiState.value
         val birthDate = state.birthDate ?: return
+        val tr = if (state.timeRemainingEnabled) {
+            TimeRemainingCalculator().calculate(birthDate, targetAge = state.timeRemaining?.targetAge ?: 80)
+        } else null
         _uiState.update {
-            it.copy(result = computeResult(birthDate, it.birthTime, it.isUnlocked, location = it.location))
+            it.copy(
+                result = computeResult(birthDate, it.birthTime, it.isUnlocked, location = it.location),
+                timeRemaining = tr,
+            )
         }
     }
 
@@ -166,6 +200,7 @@ class CalculatorViewModel @Inject constructor(
                 .filter { userPrefs.milestoneEnabled(it).first() }
                 .toSet()
             milestoneNotificationScheduler.scheduleUpcomingMilestones(birthDate, enabled)
+            badgeRepository.checkAndUnlock(birthDate, _uiState.value.birthTime)
         }
     }
 
@@ -205,6 +240,32 @@ class CalculatorViewModel @Inject constructor(
     ) {
         viewModelScope.launch(Dispatchers.IO) {
             shareCardGenerator.shareMilestone(milestone, theme)
+        }
+        reviewHelper.maybePromptAfterShare(activity)
+    }
+
+    /** Share an individual life-stat card. */
+    fun shareLifeStatCard(
+        label: String,
+        value: String,
+        emoji: String,
+        theme: ShareCardGenerator.CardTheme = ShareCardGenerator.CardTheme.DARK_COSMOS,
+        activity: Activity? = null,
+    ) {
+        viewModelScope.launch(Dispatchers.IO) {
+            shareCardGenerator.shareLifeStat(label, value, emoji, theme)
+        }
+        reviewHelper.maybePromptAfterShare(activity)
+    }
+
+    /** Share a 9:16 portrait story card. */
+    fun shareStoryCard(
+        theme: ShareCardGenerator.CardTheme = ShareCardGenerator.CardTheme.DARK_COSMOS,
+        activity: Activity? = null,
+    ) {
+        val result = _uiState.value.result ?: return
+        viewModelScope.launch(Dispatchers.IO) {
+            shareCardGenerator.shareStory(result, theme)
         }
         reviewHelper.maybePromptAfterShare(activity)
     }

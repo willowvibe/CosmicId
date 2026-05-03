@@ -5,6 +5,7 @@
     <string name="app_short_name">AgeReveal</string>
     <string name="widget_description">Birthday countdown widget — shows days until the next saved birthday.</string>
     <string name="widget_description_wide">Wide birthday widget — shows the next 3 upcoming birthdays.</string>
+    <string name="widget_seconds_description">Live seconds counter — shows your total seconds alive.</string>
 
     <!-- Bottom navigation -->
     <string name="nav_age">You</string>

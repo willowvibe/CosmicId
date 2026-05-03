@@ -2,6 +2,7 @@ package com.willowvibe.agereveal.di
 
 import android.content.Context
 import com.willowvibe.agereveal.data.db.AppDatabase
+import com.willowvibe.agereveal.data.db.BadgeDao
 import com.willowvibe.agereveal.data.db.BirthdayDao
 import dagger.Module
 import dagger.Provides
@@ -27,4 +28,7 @@ object DatabaseModule {
 
     @Provides
     fun provideBirthdayDao(db: AppDatabase): BirthdayDao = db.birthdayDao()
+
+    @Provides
+    fun provideBadgeDao(db: AppDatabase): BadgeDao = db.badgeDao()
 }

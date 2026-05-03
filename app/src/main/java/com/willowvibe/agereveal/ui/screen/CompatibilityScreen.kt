@@ -105,10 +105,11 @@ fun CompatibilityScreen(
     if (showThemePicker) {
         ShareThemeSheet(
             onDismiss = { showThemePicker = false },
-            onThemeSelected = { theme ->
+            onThemeSelected = { theme, _ ->
                 viewModel.shareCard(theme)
                 showThemePicker = false
             },
+            showStoryOption = false,
         )
     }
 

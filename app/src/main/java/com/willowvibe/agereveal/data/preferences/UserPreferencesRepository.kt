@@ -40,6 +40,9 @@ class UserPreferencesRepository @Inject constructor(
         private val REVIEW_PROMPTED_KEY = booleanPreferencesKey("review_prompted")
         private val SHARE_COUNT_KEY = intPreferencesKey("share_count")
         private val NOTIFICATIONS_ENABLED_KEY = booleanPreferencesKey("notifications_enabled")
+        private val TARGET_AGE_KEY = intPreferencesKey("target_age")
+        private val TIME_REMAINING_ENABLED_KEY = booleanPreferencesKey("time_remaining_enabled")
+        private val ACCENT_COLOR_KEY = intPreferencesKey("accent_color")
     }
 
     private val dataStore = context.userPrefsDataStore
@@ -82,5 +85,27 @@ class UserPreferencesRepository @Inject constructor(
     suspend fun setMilestoneEnabled(targetDays: Int, enabled: Boolean) {
         val key = booleanPreferencesKey("milestone_$targetDays")
         dataStore.edit { it[key] = enabled }
+    }
+
+    // ── Lifespan target age for progress widget ──────────────────────────
+    val targetAge: Flow<Int> = dataStore.data.map { it[TARGET_AGE_KEY] ?: 80 }
+    suspend fun setTargetAge(age: Int) {
+        dataStore.edit { it[TARGET_AGE_KEY] = age }
+        // Mirror to SharedPreferences so the widget can read synchronously
+        context.getSharedPreferences("calculator_prefs", Context.MODE_PRIVATE)
+            .edit().putInt("target_age", age).apply()
+    }
+
+    // ── Time remaining visuals toggle ────────────────────────────────────
+    val timeRemainingEnabled: Flow<Boolean> = dataStore.data.map { it[TIME_REMAINING_ENABLED_KEY] ?: true }
+    suspend fun setTimeRemainingEnabled(enabled: Boolean) { dataStore.edit { it[TIME_REMAINING_ENABLED_KEY] = enabled } }
+
+    // ── Custom accent color (ARGB) ───────────────────────────────────────
+    val accentColor: Flow<Int> = dataStore.data.map { it[ACCENT_COLOR_KEY] ?: 0xFF86EFAC.toInt() }
+    suspend fun setAccentColor(color: Int) {
+        dataStore.edit { it[ACCENT_COLOR_KEY] = color }
+        // Mirror to SharedPreferences so ShareCardGenerator can read synchronously
+        context.getSharedPreferences("calculator_prefs", Context.MODE_PRIVATE)
+            .edit().putInt("accent_color", color).apply()
     }
 }

@@ -665,6 +665,85 @@ def test_edge_cases():
         safe_screenshot("tab3_reminders_empty_state.png")
         screens_tested.append("Reminders empty state")
 
+def test_badges_tab():
+    """Test the Badges tab."""
+    log("=== Testing Badges Tab ===")
+    navigate_to_tab("Badges")
+    time.sleep(1)
+    safe_screenshot("tab4_badges_default.png")
+    screens_tested.append("Badges (default)")
+
+    # Scroll through badge grid
+    try:
+        driver.swipe(540, 1800, 540, 800, 500)
+        time.sleep(0.5)
+        safe_screenshot("tab4_badges_scrolled.png")
+        screens_tested.append("Badges (scrolled)")
+    except:
+        pass
+
+    # Try to tap a badge (first unlocked or any)
+    try:
+        badges = driver.find_elements(AppiumBy.CLASS_NAME, "android.view.View")
+        if len(badges) > 5:
+            badges[5].click()
+            log("Tapped a badge card")
+            interactions_tested.append("Badge card tap")
+            time.sleep(1)
+            safe_screenshot("tab4_badges_detail_sheet.png")
+            screens_tested.append("Badge detail sheet")
+            go_back()
+            time.sleep(0.5)
+    except Exception as e:
+        log(f"Badge tap failed: {e}")
+
+def test_new_settings_features():
+    """Test Time Remaining toggle and Accent Color picker in Settings."""
+    log("=== Testing New Settings Features ===")
+    navigate_to_tab("You")
+    time.sleep(0.5)
+    safe_tap(AppiumBy.ACCESSIBILITY_ID, "Settings", "Settings button")
+    time.sleep(1)
+
+    # Scroll down to find Time Remaining toggle
+    try:
+        tr_toggle = driver.find_element(AppiumBy.ANDROID_UIAUTOMATOR,
+            'new UiScrollable(new UiSelector().scrollable(true)).scrollIntoView(new UiSelector().textContains("Time remaining"))')
+        log("Found Time remaining visuals toggle")
+        interactions_tested.append("Time remaining toggle found")
+        time.sleep(0.3)
+        safe_screenshot("settings_time_remaining_visible.png")
+        screens_tested.append("Settings (Time remaining visible)")
+    except Exception as e:
+        log(f"Time remaining toggle find failed: {e}")
+
+    # Scroll down to find Accent Color picker
+    try:
+        accent_label = driver.find_element(AppiumBy.ANDROID_UIAUTOMATOR,
+            'new UiScrollable(new UiSelector().scrollable(true)).scrollIntoView(new UiSelector().textContains("Accent color"))')
+        log("Found Accent color picker")
+        interactions_tested.append("Accent color picker found")
+        time.sleep(0.3)
+        safe_screenshot("settings_accent_color_visible.png")
+        screens_tested.append("Settings (Accent color visible)")
+    except Exception as e:
+        log(f"Accent color picker find failed: {e}")
+
+    # Scroll down to find Lifespan target (verify it's still there)
+    try:
+        lifespan_label = driver.find_element(AppiumBy.ANDROID_UIAUTOMATOR,
+            'new UiScrollable(new UiSelector().scrollable(true)).scrollIntoView(new UiSelector().textContains("Lifespan target"))')
+        log("Found Lifespan target section")
+        interactions_tested.append("Lifespan target found")
+        time.sleep(0.3)
+        safe_screenshot("settings_lifespan_target_visible.png")
+        screens_tested.append("Settings (Lifespan target visible)")
+    except Exception as e:
+        log(f"Lifespan target find failed: {e}")
+
+    go_back()
+    time.sleep(1)
+
 def generate_report():
     """Generate the REPORT.md file."""
     report_path = os.path.join(SCREENSHOTS_DIR, "REPORT.md")
@@ -760,7 +839,9 @@ def main():
         test_compatibility_tab()
         test_reminders_tab()
         test_timeline_tab()
+        test_badges_tab()
         test_settings_screen()
+        test_new_settings_features()
         test_edge_cases()
 
         # Generate report
