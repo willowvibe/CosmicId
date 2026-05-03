@@ -55,6 +55,7 @@ class ShareCardGenerator @Inject constructor(
     private val sharingBadge = AtomicBoolean(false)
     private val sharingLifeStat = AtomicBoolean(false)
     private val sharingStory = AtomicBoolean(false)
+    private val sharingTransparent = AtomicBoolean(false)
 
     // Error callback — invoked on main thread when sharing fails
     private var onShareError: ((Throwable) -> Unit)? = null
@@ -63,6 +64,7 @@ class ShareCardGenerator @Inject constructor(
     private var onBadgeShareError: ((Throwable) -> Unit)? = null
     private var onLifeStatShareError: ((Throwable) -> Unit)? = null
     private var onStoryShareError: ((Throwable) -> Unit)? = null
+    private var onTransparentShareError: ((Throwable) -> Unit)? = null
 
     /** Register an error callback for share failures. */
     fun setShareErrorHandler(handler: ((Throwable) -> Unit)?) {
@@ -94,6 +96,11 @@ class ShareCardGenerator @Inject constructor(
         onStoryShareError = handler
     }
 
+    /** Register an error callback for transparent overlay share failures. */
+    fun setTransparentShareErrorHandler(handler: ((Throwable) -> Unit)?) {
+        onTransparentShareError = handler
+    }
+
     companion object {
         /** Logical content width/height — all coordinate maths inside draw* functions uses these. */
         const val CARD_WIDTH = 900
@@ -108,6 +115,8 @@ class ShareCardGenerator @Inject constructor(
         const val BADGE_CACHE_FILE = "badge_card.png"
         const val LIFE_STAT_CACHE_FILE = "life_stat_card.png"
         const val STORY_CACHE_FILE = "story_card.png"
+        const val TRANSPARENT_CACHE_FILE = "transparent_overlay.png"
+        const val FORTUNE_CACHE_FILE = "fortune_card.png"
         const val FILE_AUTHORITY_SUFFIX = ".fileprovider"
 
         /** Story dimensions (9:16 portrait, 1080×1920). */
@@ -459,6 +468,135 @@ class ShareCardGenerator @Inject constructor(
         }
     }
 
+    /** Generate a 9:16 transparent overlay for green-screen use (TikTok/Reels). */
+    fun generateTransparentOverlayBitmap(result: AgeResult): Bitmap {
+        val bmp = Bitmap.createBitmap(STORY_WIDTH, STORY_HEIGHT, Bitmap.Config.ARGB_8888)
+        // Start fully transparent
+        bmp.eraseColor(Color.TRANSPARENT)
+        val canvas = Canvas(bmp)
+        val paint = Paint(Paint.ANTI_ALIAS_FLAG)
+        drawTransparentOverlayContent(canvas, paint, result)
+        return bmp
+    }
+
+    /** Share a transparent green-screen overlay via Android share sheet. */
+    fun shareTransparentOverlay(result: AgeResult) {
+        if (!sharingTransparent.compareAndSet(false, true)) return
+        var bitmap: Bitmap? = null
+        try {
+            bitmap = generateTransparentOverlayBitmap(result)
+            val uri = saveBitmapToCache(bitmap, TRANSPARENT_CACHE_FILE)
+            bitmap.recycle()
+            bitmap = null
+            val intent = Intent(Intent.ACTION_SEND).apply {
+                type = "image/png"
+                putExtra(Intent.EXTRA_STREAM, uri)
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            }
+            Handler(Looper.getMainLooper()).post {
+                try {
+                    val chooser = Intent.createChooser(intent, "Share green-screen overlay")
+                    chooser.clipData = ClipData.newRawUri("", uri)
+                    chooser.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                    if (context is android.app.Activity) {
+                        context.startActivity(chooser)
+                    } else {
+                        context.startActivity(chooser.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+                    }
+                } catch (e: Exception) {
+                    onTransparentShareError?.invoke(e)
+                } finally {
+                    sharingTransparent.set(false)
+                }
+            }
+        } catch (e: Exception) {
+            bitmap?.recycle()
+            sharingTransparent.set(false)
+            onTransparentShareError?.invoke(e)
+        }
+    }
+
+    /** Generate a fortune card bitmap. */
+    fun generateFortuneBitmap(
+        headline: String,
+        body: String,
+        emoji: String,
+        moonPhase: String,
+        sunSign: String,
+        stemBranch: String,
+        luckyNumber: Int,
+        luckyColor: String,
+        theme: CardTheme = CardTheme.DARK_COSMOS,
+    ): Bitmap {
+        val contentBmp = Bitmap.createBitmap(CARD_WIDTH, CARD_HEIGHT, Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(contentBmp)
+        val paint = Paint(Paint.ANTI_ALIAS_FLAG)
+        val accent = readAccentColor(context)
+        when (theme) {
+            CardTheme.DARK_COSMOS -> {
+                drawThemeBackground(canvas, paint, CARD_WIDTH.toFloat(), CARD_HEIGHT.toFloat(), theme)
+                drawFortuneContent(canvas, paint, headline, body, emoji, moonPhase, sunSign, stemBranch, luckyNumber, luckyColor, Color.WHITE, accent)
+            }
+            CardTheme.MINIMAL_LIGHT -> {
+                paint.color = Color.WHITE
+                canvas.drawRect(0f, 0f, CARD_WIDTH.toFloat(), CARD_HEIGHT.toFloat(), paint)
+                drawFortuneContent(canvas, paint, headline, body, emoji, moonPhase, sunSign, stemBranch, luckyNumber, luckyColor, Color.parseColor("#1c1917"), accent)
+            }
+            CardTheme.FESTIVE_INDIA -> {
+                drawThemeBackground(canvas, paint, CARD_WIDTH.toFloat(), CARD_HEIGHT.toFloat(), theme)
+                drawFortuneContent(canvas, paint, headline, body, emoji, moonPhase, sunSign, stemBranch, luckyNumber, luckyColor, Color.WHITE, Color.parseColor("#FFD700"))
+            }
+        }
+        return embedInSquare(contentBmp, theme, paint)
+    }
+
+    /** Share a cosmic fortune card via Android share sheet. */
+    fun shareFortune(
+        headline: String,
+        body: String,
+        emoji: String,
+        moonPhase: String,
+        sunSign: String,
+        stemBranch: String,
+        luckyNumber: Int,
+        luckyColor: String,
+        theme: CardTheme = CardTheme.DARK_COSMOS,
+    ) {
+        if (!sharingCard.compareAndSet(false, true)) return
+        var bitmap: Bitmap? = null
+        try {
+            bitmap = generateFortuneBitmap(headline, body, emoji, moonPhase, sunSign, stemBranch, luckyNumber, luckyColor, theme)
+            val uri = saveBitmapToCache(bitmap, FORTUNE_CACHE_FILE)
+            bitmap.recycle()
+            bitmap = null
+            val intent = Intent(Intent.ACTION_SEND).apply {
+                type = "image/png"
+                putExtra(Intent.EXTRA_STREAM, uri)
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            }
+            Handler(Looper.getMainLooper()).post {
+                try {
+                    val chooser = Intent.createChooser(intent, "Share your fortune")
+                    chooser.clipData = ClipData.newRawUri("", uri)
+                    chooser.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                    if (context is android.app.Activity) {
+                        context.startActivity(chooser)
+                    } else {
+                        context.startActivity(chooser.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+                    }
+                } catch (e: Exception) {
+                    onShareError?.invoke(e)
+                } finally {
+                    sharingCard.set(false)
+                }
+            }
+        } catch (e: Exception) {
+            bitmap?.recycle()
+            sharingCard.set(false)
+            onShareError?.invoke(e)
+        }
+    }
+
     /** Share a badge unlock card via Android share sheet. */
     fun shareBadge(badge: BadgeDefinition, unlockedAt: Long? = null, theme: CardTheme = CardTheme.DARK_COSMOS) {
         if (!sharingBadge.compareAndSet(false, true)) return
@@ -702,6 +840,58 @@ class ShareCardGenerator @Inject constructor(
     }
 
     // ---------------------------------------------------------------------------
+    // Fortune card layout
+    // ---------------------------------------------------------------------------
+
+    private fun drawFortuneContent(
+        canvas: Canvas, paint: Paint,
+        headline: String, body: String, emoji: String,
+        moonPhase: String, sunSign: String, stemBranch: String,
+        luckyNumber: Int, luckyColor: String,
+        textColor: Int, accentColor: Int,
+    ) {
+        paint.color = textColor; paint.alpha = 120; paint.textSize = 28f; paint.typeface = Typeface.DEFAULT
+        canvas.drawText("DAILY COSMIC FORTUNE", 60f, 75f, paint)
+
+        paint.alpha = 255; paint.textSize = 80f; paint.typeface = Typeface.DEFAULT_BOLD
+        val emojiWidth = paint.measureText(emoji)
+        canvas.drawText(emoji, (CARD_WIDTH - emojiWidth) / 2f, 190f, paint)
+
+        paint.color = accentColor; paint.textSize = 40f
+        val headWidth = paint.measureText(headline)
+        val headSize = if (headWidth > CARD_WIDTH - 120f) 40f * (CARD_WIDTH - 120f) / headWidth else 40f
+        paint.textSize = headSize
+        val headW = paint.measureText(headline)
+        canvas.drawText(headline, (CARD_WIDTH - headW) / 2f, 260f, paint)
+
+        paint.color = textColor; paint.alpha = 200; paint.textSize = 24f; paint.typeface = Typeface.DEFAULT
+        val words = body.split(" ")
+        val lines = mutableListOf<String>()
+        var current = ""
+        words.forEach { word ->
+            if ((current + " " + word).length < 48) {
+                current = if (current.isEmpty()) word else "$current $word"
+            } else {
+                lines.add(current)
+                current = word
+            }
+        }
+        if (current.isNotEmpty()) lines.add(current)
+        var y = 310f
+        lines.take(5).forEach { line ->
+            canvas.drawText(line, 60f, y, paint)
+            y += 36f
+        }
+
+        paint.alpha = 255
+        drawStatCard(canvas, paint, 60f, 490f, "Moon", moonPhase, textColor, accentColor)
+        drawStatCard(canvas, paint, 310f, 490f, "Sun Sign", sunSign, textColor, accentColor)
+        drawStatCard(canvas, paint, 560f, 490f, "Stem-Branch", stemBranch, textColor, accentColor)
+        drawStatCard(canvas, paint, 60f, 440f, "Lucky #", luckyNumber.toString(), textColor, accentColor)
+        drawStatCard(canvas, paint, 310f, 440f, "Lucky Color", luckyColor, textColor, accentColor)
+    }
+
+    // ---------------------------------------------------------------------------
     // Badge card layout
     // ---------------------------------------------------------------------------
 
@@ -852,6 +1042,71 @@ class ShareCardGenerator @Inject constructor(
         paint.color = Color.WHITE; paint.alpha = 60; paint.textSize = 28f; paint.typeface = Typeface.DEFAULT
         canvas.drawText("Made with AgeReveal", STORY_WIDTH - 340f, STORY_HEIGHT - 60f, paint)
         paint.alpha = 255
+    }
+
+    // ---------------------------------------------------------------------------
+    // Transparent overlay (green-screen) content
+    // ---------------------------------------------------------------------------
+
+    private fun drawTransparentOverlayContent(canvas: Canvas, paint: Paint, result: AgeResult) {
+        val textColor = Color.WHITE
+        val outlineColor = Color.BLACK
+
+        // Helper to draw text with dark outline for visibility on any background
+        fun drawOutlinedText(text: String, x: Float, y: Float, size: Float, bold: Boolean = false) {
+            paint.textSize = size
+            paint.typeface = if (bold) Typeface.DEFAULT_BOLD else Typeface.DEFAULT
+            // Outline
+            paint.color = outlineColor; paint.alpha = 200
+            for (dx in listOf(-3f, 3f, 0f, 0f)) {
+                for (dy in listOf(0f, 0f, -3f, 3f)) {
+                    canvas.drawText(text, x + dx, y + dy, paint)
+                }
+            }
+            // Fill
+            paint.color = textColor; paint.alpha = 255
+            canvas.drawText(text, x, y, paint)
+        }
+
+        // Label
+        drawOutlinedText("MY AGE TODAY", 80f, 280f, 36f)
+
+        // Primary age line
+        val ageText = "${result.years} yrs  ${result.months} mo  ${result.days} days"
+        paint.textSize = 110f; paint.typeface = Typeface.DEFAULT_BOLD
+        val maxWidth = STORY_WIDTH - 160f
+        val measured = paint.measureText(ageText)
+        val size = if (measured > maxWidth) 110f * maxWidth / measured else 110f
+        drawOutlinedText(ageText, 80f, 420f, size, bold = true)
+
+        // Born on
+        drawOutlinedText(
+            "Born ${result.dayOfWeekBorn.lowercase().replaceFirstChar { it.uppercase() }}, ${result.birthDate}",
+            80f, 490f, 40f,
+        )
+
+        // Stats
+        drawOutlinedText("Total days", 80f, 600f, 28f)
+        drawOutlinedText("%,d".format(result.totalDays), 80f, 660f, 72f, bold = true)
+
+        drawOutlinedText("Zodiac", 570f, 600f, 28f)
+        drawOutlinedText(result.westernZodiac.ifEmpty { "—" }, 570f, 660f, 56f, bold = true)
+
+        drawOutlinedText("Rashi", 80f, 780f, 28f)
+        drawOutlinedText(result.rashi.ifEmpty { "—" }, 80f, 840f, 56f, bold = true)
+
+        drawOutlinedText("To birthday", 570f, 780f, 28f)
+        drawOutlinedText("${result.daysToNextBirthday}d", 570f, 840f, 56f, bold = true)
+
+        // Heartbeats
+        if (result.estimatedHeartbeats > 0) {
+            val hbText = formatShareHeartbeats(result.estimatedHeartbeats)
+            drawOutlinedText(hbText, 80f, 980f, 80f, bold = true)
+            drawOutlinedText("heartbeats and counting", 80f, 1040f, 36f)
+        }
+
+        // Watermark
+        drawOutlinedText("Made with AgeReveal", STORY_WIDTH - 340f, STORY_HEIGHT - 60f, 28f)
     }
 
     // ---------------------------------------------------------------------------

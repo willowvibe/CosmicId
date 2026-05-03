@@ -1,6 +1,6 @@
 # AgeReveal — Bugs & Edge Case Issues
 
-_Last updated: 2026-05-03 — v1.0.6 (Phase 5 features: Milestone Badges, Seconds Counter Widget, Lifespan Widget, Life Stats, 9:16 Story Cards, Time Remaining, Accent Color Picker, Milestone Ring Widget)_
+_Last updated: 2026-05-03 — v1.0.7 (Phase 5 features: Milestone Badges, Seconds Counter Widget, Lifespan Widget, Life Stats, 9:16 Story Cards, Time Remaining, Accent Color Picker, Milestone Ring Widget, Transparent Overlay Cards, Daily Cosmic Fortune, Retro ASCII Art Share)_
 
 This document tracks known bugs, edge cases, and fragile areas in the codebase. Resolved items are kept for historical reference. For planned work see [TASKS.md](TASKS.md).
 
@@ -401,9 +401,9 @@ This document tracks known bugs, edge cases, and fragile areas in the codebase.
 **APK:** `app-release.apk` (current build)  
 **Session:** Appium MCP server with UiAutomator2 instrumentation
 
-### Testing Coverage (v1.0.6 APK Validation)
+### Testing Coverage (v1.0.6 APK Validation — v1.0.7 pending)
 
-All major interactive elements were exercised with the current release APK:
+All major interactive elements were exercised with the v1.0.6 release APK. v1.0.7 (Transparent Overlay, Daily Fortune, ASCII Art) has not yet been covered by Appium walkthrough:
 
 | Feature | Test Result |
 |---------|-------------|

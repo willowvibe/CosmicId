@@ -68,15 +68,17 @@ private fun themeVisualFor(theme: ShareCardGenerator.CardTheme) = when (theme) {
     )
 }
 
+enum class ShareFormat { SQUARE, STORY, GREEN_SCREEN, ASCII_ART }
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ShareThemeSheet(
     sheetState: SheetState = rememberModalBottomSheetState(),
     onDismiss: () -> Unit,
-    onThemeSelected: (ShareCardGenerator.CardTheme, Boolean) -> Unit,
-    showStoryOption: Boolean = true,
+    onThemeSelected: (ShareCardGenerator.CardTheme, ShareFormat) -> Unit,
+    showFormatOptions: Boolean = true,
 ) {
-    var isStoryFormat by remember { mutableStateOf(false) }
+    var selectedFormat by remember { mutableStateOf(ShareFormat.SQUARE) }
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -102,20 +104,22 @@ fun ShareThemeSheet(
                 color = WarmInkDim,
             )
 
-            if (showStoryOption) {
+            if (showFormatOptions) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(10.dp),
                 ) {
-                    FormatChip("Square", selected = !isStoryFormat) { isStoryFormat = false }
-                    FormatChip("Story (9:16)", selected = isStoryFormat) { isStoryFormat = true }
+                    FormatChip("Square", selected = selectedFormat == ShareFormat.SQUARE) { selectedFormat = ShareFormat.SQUARE }
+                    FormatChip("Story", selected = selectedFormat == ShareFormat.STORY) { selectedFormat = ShareFormat.STORY }
+                    FormatChip("Green", selected = selectedFormat == ShareFormat.GREEN_SCREEN) { selectedFormat = ShareFormat.GREEN_SCREEN }
+                    FormatChip("ASCII", selected = selectedFormat == ShareFormat.ASCII_ART) { selectedFormat = ShareFormat.ASCII_ART }
                 }
             }
 
             ShareCardGenerator.CardTheme.entries.forEach { theme ->
                 ThemeOptionRow(
                     theme = theme,
-                    onSelected = { onThemeSelected(theme, isStoryFormat) },
+                    onSelected = { onThemeSelected(theme, selectedFormat) },
                 )
             }
         }

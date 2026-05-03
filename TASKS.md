@@ -1,6 +1,6 @@
 # AgeReveal — Tasks & Implementation Checklist
 
-_Last updated: 2026-05-03 — v1.0.6 (Phase 5 features: Milestone Badges, Seconds Counter Widget, Lifespan Widget, Life Stats, 9:16 Story Cards, Generational Badge, Planet Ages, Moon Phase, Time Remaining, Accent Color Picker, Milestone Ring Widget)_
+_Last updated: 2026-05-03 — v1.0.7 (Phase 5 features: Transparent Overlay Cards, Daily Cosmic Fortune, Retro ASCII Art Share, plus all v1.0.6 features)_
 
 ---
 
@@ -148,11 +148,11 @@ This section is the "main character energy" roadmap — features built to screen
 - [x] Add "Story" option to `ShareThemeSheet.kt` alongside existing square cards.
 - [x] 250px top and 350px bottom content-safe margins (Instagram Stories UI safe zones).
 
-#### 6.2.2 Transparent Overlay Cards for Green Screen (M / ⭐⭐⭐⭐)
-- [ ] Add `generateTransparentOverlayBitmap()` — 1080×1920 with transparent background, only text and icons rendered.
-- [ ] Export as PNG with alpha channel via `FileProvider`.
-- [ ] Users can import into TikTok/Reels/YouTube Shorts as green-screen overlay.
-- [ ] Label in share sheet: "Green Screen Overlay (Transparent BG)".
+#### 6.2.2 Transparent Overlay Cards for Green Screen (M / ⭐⭐⭐⭐) — ✅ Implemented in v1.0.7
+- [x] Add `generateTransparentOverlayBitmap()` — 1080×1920 with transparent background, only text and icons rendered.
+- [x] Export as PNG with alpha channel via `FileProvider`.
+- [x] Users can import into TikTok/Reels/YouTube Shorts as green-screen overlay.
+- [x] Label in share sheet: "Green Screen Overlay (Transparent BG)".
 
 #### 6.2.3 Animated Shareables — MP4/GIF Export (L / ⭐⭐⭐⭐⭐)
 - [ ] Add `MediaEncoder.kt` utility class using `MediaCodec` + `MediaMuxer` to encode Canvas frames to MP4.
@@ -162,15 +162,15 @@ This section is the "main character energy" roadmap — features built to screen
 - [ ] Add to `ShareThemeSheet.kt` as "Video (MP4)" option.
 - **Library alternative:** Evaluate `androidx.media3:media3-transformer` or `Lottie` export.
 
-#### 6.2.4 Daily Cosmic Fortune Card (M / ⭐⭐⭐⭐)
-- [ ] Create `DailyFortuneGenerator.kt` — generates a daily "vibe check" based on:
+#### 6.2.4 Daily Cosmic Fortune Card (M / ⭐⭐⭐⭐) — ✅ Implemented in v1.0.7
+- [x] Create `DailyFortuneGenerator.kt` — generates a daily "vibe check" based on:
   - Current moon phase + sign
   - User's sun sign
   - Chinese day stem/branch for the current date
-  - Random "fortune cookie" message from a curated pool (100+ messages)
-- [ ] Show as a card on the Calculator screen below the zodiac section (only when unlocked).
-- [ ] One-tap share as a story card.
-- [ ] Cache in `SharedPreferences` with daily TTL (regenerates at midnight).
+  - Random "fortune cookie" message from a curated pool (80+ messages)
+- [x] Show as a card on the Calculator screen (always visible after birth date is set).
+- [x] One-tap share as a dedicated fortune card.
+- [x] Cache in `SharedPreferences` with daily TTL (regenerates at midnight).
 - **Sample messages:** "The moon is in your communication sector today — text that person.", "Your Mars energy is high. Start something bold.", "A Wood day favors growth. Plant a seed (metaphorically or literally)."
 
 ---
@@ -274,17 +274,11 @@ This section is the "main character energy" roadmap — features built to screen
 - [ ] Store active theme pack in DataStore.
 - [ ] Apply theme to all screens, not just share cards.
 
-#### 6.5.3 Retro ASCII Art Share (S / ⭐⭐⭐)
-- [ ] Add "ASCII Art" share format to `ShareThemeSheet.kt`.
-- [ ] Generate monospace text art of the user's age in large block digits.
-- [ ] Example:
-  ```
-    ███╗   ███╗ ██████╗
-    ████╗ ████║██╔════╝
-     ...
-  ```
-- [ ] Copy to clipboard as plain text for Discord, Reddit, terminal screenshots.
-- [ ] Simple algorithm: map each digit 0–9 to a 5×5 block-art pattern.
+#### 6.5.3 Retro ASCII Art Share (S / ⭐⭐⭐) — ✅ Implemented in v1.0.7
+- [x] Add "ASCII Art" share format to `ShareThemeSheet.kt`.
+- [x] Generate monospace text art of the user's age in large block digits.
+- [x] Copy to clipboard as plain text for Discord, Reddit, terminal screenshots.
+- [x] Simple algorithm: map each digit 0–9 to a 5×5 block-art pattern.
 
 #### 6.5.4 Widget Transparency & Shape (S / ⭐⭐⭐)
 - [ ] Support rounded corners, squircle, and pill shapes in all Glance widgets.

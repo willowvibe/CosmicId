@@ -10,7 +10,9 @@ import com.willowvibe.agereveal.data.model.Milestone
 import com.willowvibe.agereveal.data.preferences.UserPreferencesRepository
 import com.willowvibe.agereveal.data.repository.BadgeRepository
 import com.willowvibe.agereveal.domain.AgeCalculator
+import com.willowvibe.agereveal.domain.AsciiArtGenerator
 import com.willowvibe.agereveal.domain.ShareCardGenerator
+import com.willowvibe.agereveal.domain.DailyFortuneGenerator
 import com.willowvibe.agereveal.domain.TimeRemainingCalculator
 import com.willowvibe.agereveal.notification.MilestoneNotificationScheduler
 import com.willowvibe.agereveal.util.ReviewHelper
@@ -46,6 +48,8 @@ data class CalculatorUiState(
     val error: String? = null,
     val timeRemaining: TimeRemainingCalculator.TimeRemaining? = null,
     val timeRemainingEnabled: Boolean = true,
+    val dailyFortune: DailyFortuneGenerator.Fortune? = null,
+    val dailyFortuneEnabled: Boolean = true,
 )
 
 @HiltViewModel
@@ -56,6 +60,7 @@ class CalculatorViewModel @Inject constructor(
     private val userPrefs: UserPreferencesRepository,
     private val reviewHelper: ReviewHelper,
     private val badgeRepository: BadgeRepository,
+    private val dailyFortuneGenerator: DailyFortuneGenerator,
     @ApplicationContext private val appContext: Context,
 ) : ViewModel() {
 
@@ -80,6 +85,9 @@ class CalculatorViewModel @Inject constructor(
         }
         shareCardGenerator.setStoryShareErrorHandler { error ->
             _uiState.update { it.copy(error = "Failed to share story: ${error.message}") }
+        }
+        shareCardGenerator.setTransparentShareErrorHandler { error ->
+            _uiState.update { it.copy(error = "Failed to share overlay: ${error.message}") }
         }
 
         // Restore previously entered birth date + time + location
@@ -107,6 +115,8 @@ class CalculatorViewModel @Inject constructor(
                     )
                 }
                 badgeRepository.checkAndUnlock(savedDate, savedTime)
+                val fortune = computeDailyFortune(savedDate)
+                _uiState.update { it.copy(dailyFortune = fortune) }
             }
         }
     }
@@ -155,6 +165,8 @@ class CalculatorViewModel @Inject constructor(
                 )
             }
             badgeRepository.checkAndUnlock(date, _uiState.value.birthTime)
+            val fortune = computeDailyFortune(date)
+            _uiState.update { it.copy(dailyFortune = fortune) }
         }
     }
 
@@ -270,6 +282,43 @@ class CalculatorViewModel @Inject constructor(
         reviewHelper.maybePromptAfterShare(activity)
     }
 
+    /** Share a transparent green-screen overlay (TikTok/Reels). */
+    fun shareTransparentOverlay(activity: Activity? = null) {
+        val result = _uiState.value.result ?: return
+        viewModelScope.launch(Dispatchers.IO) {
+            shareCardGenerator.shareTransparentOverlay(result)
+        }
+        reviewHelper.maybePromptAfterShare(activity)
+    }
+
+    /** Share the daily cosmic fortune card. */
+    fun shareFortuneCard(activity: Activity? = null) {
+        val fortune = _uiState.value.dailyFortune ?: return
+        viewModelScope.launch(Dispatchers.IO) {
+            shareCardGenerator.shareFortune(
+                headline = fortune.headline,
+                body = fortune.body,
+                emoji = fortune.emoji,
+                moonPhase = fortune.moonPhase,
+                sunSign = fortune.sunSign,
+                stemBranch = fortune.stemBranch,
+                luckyNumber = fortune.luckyNumber,
+                luckyColor = fortune.luckyColor,
+            )
+        }
+        reviewHelper.maybePromptAfterShare(activity)
+    }
+
+    /** Generate ASCII art of total seconds and copy to clipboard. */
+    fun shareAsciiArt() {
+        val result = _uiState.value.result ?: return
+        val ascii = AsciiArtGenerator.render(result.totalSeconds)
+        val clipboard = appContext.getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+        val clip = android.content.ClipData.newPlainText("AgeReveal ASCII Art", ascii)
+        clipboard.setPrimaryClip(clip)
+        _uiState.update { it.copy(error = "ASCII art copied to clipboard") }
+    }
+
     fun setAdLoading(loading: Boolean) = _uiState.update { it.copy(isAdLoading = loading) }
 
     fun clearError() = _uiState.update { it.copy(error = null) }
@@ -295,6 +344,49 @@ class CalculatorViewModel @Inject constructor(
     }
 
     // ---------------------------------------------------------------------------
+
+    private fun computeDailyFortune(birthDate: LocalDate): DailyFortuneGenerator.Fortune {
+        val today = LocalDate.now().toString()
+        val cachedDate = prefs.getString("fortune_date", null)
+        val cachedJson = prefs.getString("fortune_json", null)
+        if (cachedDate == today && cachedJson != null) {
+            return runCatching { parseFortune(cachedJson) }.getOrNull()
+                ?: dailyFortuneGenerator.generate(birthDate).also { cacheFortune(it) }
+        }
+        val fortune = dailyFortuneGenerator.generate(birthDate)
+        cacheFortune(fortune)
+        return fortune
+    }
+
+    private fun cacheFortune(fortune: DailyFortuneGenerator.Fortune) {
+        val json = """{"headline":"${fortune.headline}","body":"${fortune.body}","emoji":"${fortune.emoji}","moonPhase":"${fortune.moonPhase}","sunSign":"${fortune.sunSign}","stemBranch":"${fortune.stemBranch}","luckyNumber":${fortune.luckyNumber},"luckyColor":"${fortune.luckyColor}"}"""
+        prefs.edit()
+            .putString("fortune_date", LocalDate.now().toString())
+            .putString("fortune_json", json)
+            .apply()
+    }
+
+    private fun parseFortune(json: String): DailyFortuneGenerator.Fortune {
+        // Minimal JSON parser — enough for our flat structure
+        fun extract(key: String): String {
+            val pattern = """"$key":"([^"]*+)"""".toRegex()
+            return pattern.find(json)?.groupValues?.get(1) ?: ""
+        }
+        fun extractInt(key: String): Int {
+            val pattern = """"$key":(\d+)""".toRegex()
+            return pattern.find(json)?.groupValues?.get(1)?.toIntOrNull() ?: 0
+        }
+        return DailyFortuneGenerator.Fortune(
+            headline = extract("headline"),
+            body = extract("body"),
+            emoji = extract("emoji"),
+            moonPhase = extract("moonPhase"),
+            sunSign = extract("sunSign"),
+            stemBranch = extract("stemBranch"),
+            luckyNumber = extractInt("luckyNumber"),
+            luckyColor = extract("luckyColor"),
+        )
+    }
 
     private fun computeResult(
         birthDate: LocalDate,

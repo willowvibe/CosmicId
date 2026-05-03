@@ -108,7 +108,7 @@ import java.time.format.FormatStyle
 fun CalculatorScreen(
     viewModel: CalculatorViewModel = hiltViewModel(),
     adManager: AdManager,
-    onShareCard: (ShareCardGenerator.CardTheme, Boolean) -> Unit,
+    onShareCard: (ShareCardGenerator.CardTheme, ShareFormat) -> Unit,
     onUnlockMore: () -> Unit,
     onOpenSettings: () -> Unit = {},
 ) {
@@ -126,8 +126,8 @@ fun CalculatorScreen(
     if (showThemePicker) {
         ShareThemeSheet(
             onDismiss = { showThemePicker = false },
-            onThemeSelected = { theme, isStory ->
-                onShareCard(theme, isStory)
+            onThemeSelected = { theme, format ->
+                onShareCard(theme, format)
                 showThemePicker = false
             },
         )
@@ -244,6 +244,13 @@ fun CalculatorScreen(
                         if (uiState.timeRemaining != null && uiState.timeRemainingEnabled) {
                             StaggeredEnter(delayMillis = 245) {
                                 TimeRemainingCard(uiState.timeRemaining!!)
+                            }
+                        }
+                        if (uiState.dailyFortune != null && uiState.dailyFortuneEnabled) {
+                            StaggeredEnter(delayMillis = 260) {
+                                DailyFortuneCard(uiState.dailyFortune!!) {
+                                    viewModel.shareFortuneCard()
+                                }
                             }
                         }
                         StaggeredEnter(delayMillis = 280) {
@@ -1018,6 +1025,73 @@ private fun TimeRemainingCard(timeRemaining: com.willowvibe.agereveal.domain.Tim
             style = MaterialTheme.typography.labelSmall,
             color = WarmInkMute,
         )
+    }
+}
+
+@Composable
+private fun DailyFortuneCard(
+    fortune: com.willowvibe.agereveal.domain.DailyFortuneGenerator.Fortune,
+    onShare: () -> Unit,
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
+            .background(WarmSurface)
+            .clickable { onShare() }
+            .padding(14.dp),
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                "DAILY COSMIC FORTUNE",
+                style = MaterialTheme.typography.labelSmall,
+                color = WarmInkDim,
+            )
+            Text(
+                fortune.emoji,
+                fontSize = 20.sp,
+            )
+        }
+        Spacer(Modifier.height(6.dp))
+        Text(
+            fortune.headline,
+            style = MaterialTheme.typography.bodySmall,
+            fontWeight = FontWeight.SemiBold,
+            color = WarmInk,
+        )
+        Text(
+            fortune.body,
+            style = MaterialTheme.typography.labelSmall,
+            color = WarmInkMute,
+            maxLines = 3,
+        )
+        Spacer(Modifier.height(8.dp))
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            Text(
+                "Lucky #${fortune.luckyNumber}",
+                style = MaterialTheme.typography.labelSmall,
+                color = WarmTeal,
+                fontWeight = FontWeight.SemiBold,
+            )
+            Text(
+                fortune.luckyColor,
+                style = MaterialTheme.typography.labelSmall,
+                color = WarmTeal,
+                fontWeight = FontWeight.SemiBold,
+            )
+            Text(
+                fortune.moonPhase,
+                style = MaterialTheme.typography.labelSmall,
+                color = WarmInkMute,
+            )
+        }
     }
 }
 
