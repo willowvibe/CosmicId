@@ -40,6 +40,7 @@ class UserPreferencesRepository @Inject constructor(
         private val REVIEW_PROMPTED_KEY = booleanPreferencesKey("review_prompted")
         private val SHARE_COUNT_KEY = intPreferencesKey("share_count")
         private val NOTIFICATIONS_ENABLED_KEY = booleanPreferencesKey("notifications_enabled")
+        private val TARGET_AGE_KEY = intPreferencesKey("target_age")
     }
 
     private val dataStore = context.userPrefsDataStore
@@ -82,5 +83,14 @@ class UserPreferencesRepository @Inject constructor(
     suspend fun setMilestoneEnabled(targetDays: Int, enabled: Boolean) {
         val key = booleanPreferencesKey("milestone_$targetDays")
         dataStore.edit { it[key] = enabled }
+    }
+
+    // ── Lifespan target age for progress widget ──────────────────────────
+    val targetAge: Flow<Int> = dataStore.data.map { it[TARGET_AGE_KEY] ?: 80 }
+    suspend fun setTargetAge(age: Int) {
+        dataStore.edit { it[TARGET_AGE_KEY] = age }
+        // Mirror to SharedPreferences so the widget can read synchronously
+        context.getSharedPreferences("calculator_prefs", Context.MODE_PRIVATE)
+            .edit().putInt("target_age", age).apply()
     }
 }

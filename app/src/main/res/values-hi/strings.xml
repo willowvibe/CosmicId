@@ -5,6 +5,7 @@
     <string name="app_short_name">AgeReveal</string>
     <string name="widget_description">जन्मदिन काउंटडाउन विजेट — अगले सहेजे गए जन्मदिन तक बचे दिन दिखाता है।</string>
     <string name="widget_description_wide">वाइड जन्मदिन विजेट — अगले 3 आगामी जन्मदिन दिखाता है।</string>
+    <string name="widget_seconds_description">लाइव सेकंड काउंटर — आपके कुल जीवित सेकंड दिखाता है।</string>
 
     <!-- Bottom navigation -->
     <string name="nav_age">आप</string>

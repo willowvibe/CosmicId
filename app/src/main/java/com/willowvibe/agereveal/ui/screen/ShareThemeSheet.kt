@@ -19,6 +19,10 @@ import androidx.compose.material3.SheetState
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -29,6 +33,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.willowvibe.agereveal.domain.ShareCardGenerator
 import com.willowvibe.agereveal.ui.theme.SerifFamily
+import com.willowvibe.agereveal.ui.theme.WarmBlack
 import com.willowvibe.agereveal.ui.theme.WarmInk
 import com.willowvibe.agereveal.ui.theme.WarmInkDim
 import com.willowvibe.agereveal.ui.theme.WarmSurface
@@ -68,8 +73,11 @@ private fun themeVisualFor(theme: ShareCardGenerator.CardTheme) = when (theme) {
 fun ShareThemeSheet(
     sheetState: SheetState = rememberModalBottomSheetState(),
     onDismiss: () -> Unit,
-    onThemeSelected: (ShareCardGenerator.CardTheme) -> Unit,
+    onThemeSelected: (ShareCardGenerator.CardTheme, Boolean) -> Unit,
+    showStoryOption: Boolean = true,
 ) {
+    var isStoryFormat by remember { mutableStateOf(false) }
+
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
@@ -94,13 +102,42 @@ fun ShareThemeSheet(
                 color = WarmInkDim,
             )
 
+            if (showStoryOption) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                ) {
+                    FormatChip("Square", selected = !isStoryFormat) { isStoryFormat = false }
+                    FormatChip("Story (9:16)", selected = isStoryFormat) { isStoryFormat = true }
+                }
+            }
+
             ShareCardGenerator.CardTheme.entries.forEach { theme ->
                 ThemeOptionRow(
                     theme = theme,
-                    onSelected = { onThemeSelected(theme) },
+                    onSelected = { onThemeSelected(theme, isStoryFormat) },
                 )
             }
         }
+    }
+}
+
+@Composable
+private fun FormatChip(label: String, selected: Boolean, onClick: () -> Unit) {
+    Box(
+        modifier = Modifier
+            .clip(RoundedCornerShape(10.dp))
+            .background(if (selected) WarmTeal else WarmSurfaceSoft)
+            .clickable { onClick() }
+            .padding(horizontal = 14.dp, vertical = 8.dp),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(
+            label,
+            style = MaterialTheme.typography.labelMedium,
+            color = if (selected) WarmBlack else WarmInk,
+            fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
+        )
     }
 }
 

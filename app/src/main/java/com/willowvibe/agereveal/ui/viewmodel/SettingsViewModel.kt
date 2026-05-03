@@ -48,6 +48,9 @@ class SettingsViewModel @Inject constructor(
     val birthdays: StateFlow<List<SavedBirthday>> = repository.allBirthdays
         .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 
+    val targetAge: StateFlow<Int> = userPrefs.targetAge
+        .stateIn(viewModelScope, SharingStarted.Eagerly, 80)
+
     fun milestoneEnabled(target: Int): Flow<Boolean> = userPrefs.milestoneEnabled(target)
 
     fun setTheme(mode: Int) = viewModelScope.launch { userPrefs.setThemeMode(mode) }
@@ -85,6 +88,8 @@ class SettingsViewModel @Inject constructor(
             repository.deleteAll()
         }
     }
+
+    fun setTargetAge(age: Int) = viewModelScope.launch { userPrefs.setTargetAge(age) }
 
     fun exportCsv() {
         viewModelScope.launch {

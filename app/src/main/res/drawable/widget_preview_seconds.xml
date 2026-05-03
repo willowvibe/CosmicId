@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Preview image for the seconds counter widget.
+  Shown in the widget picker and Play Store listing.
+-->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <solid android:color="#1a1a2e" />
+    <corners android:radius="16dp" />
+    <size
+        android:width="180dp"
+        android:height="40dp" />
+</shape>

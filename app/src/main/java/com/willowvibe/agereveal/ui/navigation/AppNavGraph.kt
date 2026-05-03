@@ -40,6 +40,7 @@ import androidx.navigation.compose.rememberNavController
 import android.app.Activity
 import com.willowvibe.agereveal.ads.AdManager
 import com.willowvibe.agereveal.domain.ShareCardGenerator
+import com.willowvibe.agereveal.ui.screen.BadgeScreen
 import com.willowvibe.agereveal.ui.screen.CalculatorScreen
 import com.willowvibe.agereveal.ui.screen.CompatibilityScreen
 // CompareScreen removed — functionality merged into Match tab
@@ -51,6 +52,7 @@ import com.willowvibe.agereveal.ui.theme.WarmBlack
 import com.willowvibe.agereveal.ui.theme.WarmInk
 import com.willowvibe.agereveal.ui.theme.WarmInkDim
 import com.willowvibe.agereveal.ui.theme.WarmSurface
+import com.willowvibe.agereveal.ui.viewmodel.BadgeViewModel
 import com.willowvibe.agereveal.ui.viewmodel.CalculatorViewModel
 import com.willowvibe.agereveal.ui.viewmodel.CompatibilityViewModel
 import com.willowvibe.agereveal.ui.viewmodel.RemindersViewModel
@@ -63,6 +65,7 @@ sealed class Screen(val route: String, val label: String, val icon: ImageVector)
     // data object Compare removed — Match tab now handles all compatibility
     data object Compatibility : Screen("compatibility", "Match", Icons.Default.Favorite)
     data object Reminders : Screen("reminders", "Bdays", Icons.Default.Cake)
+    data object Badges : Screen("badges", "Badges", Icons.Default.Star)
     data object Settings : Screen("settings", "Settings", Icons.Default.Settings)
     data object Timeline : Screen("timeline", "Timeline", Icons.Default.Cake)
 }
@@ -71,6 +74,7 @@ private val bottomNavItems = listOf(
     Screen.Calculator,
     Screen.Compatibility,
     Screen.Reminders,
+    Screen.Badges,
     Screen.Timeline,
 )
 
@@ -138,7 +142,10 @@ fun AppNavGraph(adManager: AdManager) {
                 CalculatorScreen(
                     viewModel = viewModel,
                     adManager = adManager,
-                    onShareCard = { theme -> viewModel.shareCard(theme, activity) },
+                    onShareCard = { theme, isStory ->
+                        if (isStory) viewModel.shareStoryCard(theme, activity)
+                        else viewModel.shareCard(theme, activity)
+                    },
                     onUnlockMore = {
                         adManager.showRewardedAd(
                             onRewarded = {
@@ -196,6 +203,10 @@ fun AppNavGraph(adManager: AdManager) {
                     viewModel = viewModel,
                     onNavigateToSettings = { navController.navigate(Screen.Settings.route) },
                 )
+            }
+            composable(Screen.Badges.route) { backStackEntry ->
+                val viewModel: BadgeViewModel = hiltViewModel(backStackEntry)
+                BadgeScreen(viewModel = viewModel)
             }
             composable(Screen.Settings.route) {
                 val settingsViewModel: SettingsViewModel = hiltViewModel()

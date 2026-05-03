@@ -15,6 +15,7 @@ import com.willowvibe.agereveal.data.preferences.UserPreferencesRepository
 import com.willowvibe.agereveal.ui.navigation.AppNavGraph
 import com.willowvibe.agereveal.ui.theme.AgeRevealTheme
 import com.willowvibe.agereveal.util.LocaleManager
+import com.willowvibe.agereveal.widget.SecondsCounterUpdateWorker
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -46,6 +47,9 @@ class MainActivity : ComponentActivity() {
         }
 
         requestNotificationPermissionIfNeeded()
+
+        // Schedule periodic widget refresh for the seconds counter
+        SecondsCounterUpdateWorker.schedule(this)
 
         setContent {
             AgeRevealTheme {

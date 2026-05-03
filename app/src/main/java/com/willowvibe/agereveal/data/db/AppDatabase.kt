@@ -6,6 +6,7 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import com.willowvibe.agereveal.data.model.SavedBirthday
+import com.willowvibe.agereveal.data.model.UnlockedBadge
 
 /**
  * Room database — single table for [SavedBirthday].
@@ -14,15 +15,17 @@ import com.willowvibe.agereveal.data.model.SavedBirthday
  * Schema history:
  *  v1  — initial
  *  v2  — added SavedBirthday.birthTime (nullable TEXT)
+ *  v3  — added unlocked_badges table for Milestone Badges System
  */
 @Database(
-    entities = [SavedBirthday::class],
-    version = 2,
+    entities = [SavedBirthday::class, UnlockedBadge::class],
+    version = 3,
     exportSchema = true,
 )
 @TypeConverters(RoomConverters::class)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun birthdayDao(): BirthdayDao
+    abstract fun badgeDao(): BadgeDao
 
     companion object {
         const val DATABASE_NAME = "age_reveal.db"

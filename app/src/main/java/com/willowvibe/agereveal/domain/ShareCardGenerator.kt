@@ -13,6 +13,7 @@ import android.graphics.Shader
 import android.graphics.Typeface
 import androidx.core.content.FileProvider
 import com.willowvibe.agereveal.data.model.AgeResult
+import com.willowvibe.agereveal.data.model.BadgeDefinition
 import com.willowvibe.agereveal.data.model.Milestone
 import com.willowvibe.agereveal.domain.CompatibilityResult
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -51,11 +52,17 @@ class ShareCardGenerator @Inject constructor(
 
     private val sharingCard = AtomicBoolean(false)
     private val sharingMilestone = AtomicBoolean(false)
+    private val sharingBadge = AtomicBoolean(false)
+    private val sharingLifeStat = AtomicBoolean(false)
+    private val sharingStory = AtomicBoolean(false)
 
     // Error callback — invoked on main thread when sharing fails
     private var onShareError: ((Throwable) -> Unit)? = null
     private var onMilestoneShareError: ((Throwable) -> Unit)? = null
     private var onCompatibilityShareError: ((Throwable) -> Unit)? = null
+    private var onBadgeShareError: ((Throwable) -> Unit)? = null
+    private var onLifeStatShareError: ((Throwable) -> Unit)? = null
+    private var onStoryShareError: ((Throwable) -> Unit)? = null
 
     /** Register an error callback for share failures. */
     fun setShareErrorHandler(handler: ((Throwable) -> Unit)?) {
@@ -72,6 +79,21 @@ class ShareCardGenerator @Inject constructor(
         onCompatibilityShareError = handler
     }
 
+    /** Register an error callback for badge share failures. */
+    fun setBadgeShareErrorHandler(handler: ((Throwable) -> Unit)?) {
+        onBadgeShareError = handler
+    }
+
+    /** Register an error callback for life-stat share failures. */
+    fun setLifeStatShareErrorHandler(handler: ((Throwable) -> Unit)?) {
+        onLifeStatShareError = handler
+    }
+
+    /** Register an error callback for story share failures. */
+    fun setStoryShareErrorHandler(handler: ((Throwable) -> Unit)?) {
+        onStoryShareError = handler
+    }
+
     companion object {
         /** Logical content width/height — all coordinate maths inside draw* functions uses these. */
         const val CARD_WIDTH = 900
@@ -83,7 +105,14 @@ class ShareCardGenerator @Inject constructor(
         const val CACHE_FILE = "share_card.png"
         const val MILESTONE_CACHE_FILE = "milestone_card.png"
         const val COMPATIBILITY_CACHE_FILE = "compatibility_card.png"
+        const val BADGE_CACHE_FILE = "badge_card.png"
+        const val LIFE_STAT_CACHE_FILE = "life_stat_card.png"
+        const val STORY_CACHE_FILE = "story_card.png"
         const val FILE_AUTHORITY_SUFFIX = ".fileprovider"
+
+        /** Story dimensions (9:16 portrait, 1080×1920). */
+        const val STORY_WIDTH = 1080
+        const val STORY_HEIGHT = 1920
         private val MILESTONE_DATE_FMT = DateTimeFormatter.ofPattern("d MMMM yyyy", Locale.ENGLISH)
     }
 
@@ -149,6 +178,79 @@ class ShareCardGenerator @Inject constructor(
             CardTheme.FESTIVE_INDIA -> {
                 drawThemeBackground(canvas, paint, CARD_WIDTH.toFloat(), CARD_HEIGHT.toFloat(), theme)
                 drawCompatibilityContent(canvas, paint, result, Color.WHITE, Color.parseColor("#FFD700"))
+            }
+        }
+        return embedInSquare(contentBmp, theme, paint)
+    }
+
+    /** Generate a shareable life-stat card. */
+    fun generateLifeStatBitmap(
+        label: String,
+        value: String,
+        emoji: String,
+        theme: CardTheme = CardTheme.DARK_COSMOS,
+    ): Bitmap {
+        val contentBmp = Bitmap.createBitmap(CARD_WIDTH, CARD_HEIGHT, Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(contentBmp)
+        val paint = Paint(Paint.ANTI_ALIAS_FLAG)
+        when (theme) {
+            CardTheme.DARK_COSMOS -> {
+                drawThemeBackground(canvas, paint, CARD_WIDTH.toFloat(), CARD_HEIGHT.toFloat(), theme)
+                drawLifeStatContent(canvas, paint, label, value, emoji, Color.WHITE, Color.parseColor("#86efac"))
+            }
+            CardTheme.MINIMAL_LIGHT -> {
+                paint.color = Color.WHITE
+                canvas.drawRect(0f, 0f, CARD_WIDTH.toFloat(), CARD_HEIGHT.toFloat(), paint)
+                drawLifeStatContent(canvas, paint, label, value, emoji, Color.parseColor("#1c1917"), Color.parseColor("#0f6e56"))
+            }
+            CardTheme.FESTIVE_INDIA -> {
+                drawThemeBackground(canvas, paint, CARD_WIDTH.toFloat(), CARD_HEIGHT.toFloat(), theme)
+                drawLifeStatContent(canvas, paint, label, value, emoji, Color.WHITE, Color.parseColor("#FFD700"))
+            }
+        }
+        return embedInSquare(contentBmp, theme, paint)
+    }
+
+    /** Generate a 9:16 portrait story card (1080×1920). */
+    fun generateStoryBitmap(
+        result: AgeResult,
+        theme: CardTheme = CardTheme.DARK_COSMOS,
+    ): Bitmap {
+        val bmp = Bitmap.createBitmap(STORY_WIDTH, STORY_HEIGHT, Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(bmp)
+        val paint = Paint(Paint.ANTI_ALIAS_FLAG)
+        when (theme) {
+            CardTheme.DARK_COSMOS -> drawStoryDarkCosmos(canvas, paint, result)
+            CardTheme.MINIMAL_LIGHT -> drawStoryMinimalLight(canvas, paint, result)
+            CardTheme.FESTIVE_INDIA -> drawStoryFestiveIndia(canvas, paint, result)
+        }
+        drawStoryWatermark(canvas, paint)
+        return bmp
+    }
+
+    /** Generate a shareable badge unlock card. */
+    fun generateBadgeBitmap(
+        badge: BadgeDefinition,
+        unlockedAt: Long? = null,
+        theme: CardTheme = CardTheme.DARK_COSMOS,
+    ): Bitmap {
+        val contentBmp = Bitmap.createBitmap(CARD_WIDTH, CARD_HEIGHT, Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(contentBmp)
+        val paint = Paint(Paint.ANTI_ALIAS_FLAG)
+        when (theme) {
+            CardTheme.DARK_COSMOS -> {
+                drawThemeBackground(canvas, paint, CARD_WIDTH.toFloat(), CARD_HEIGHT.toFloat(), theme)
+                drawBadgeContent(canvas, paint, badge, unlockedAt, Color.WHITE, Color.parseColor("#86efac"))
+            }
+            CardTheme.MINIMAL_LIGHT -> {
+                paint.color = Color.WHITE
+                canvas.drawRect(0f, 0f, CARD_WIDTH.toFloat(), CARD_HEIGHT.toFloat(), paint)
+                drawBadgeContent(canvas, paint, badge, unlockedAt,
+                    Color.parseColor("#1c1917"), Color.parseColor("#0f6e56"))
+            }
+            CardTheme.FESTIVE_INDIA -> {
+                drawThemeBackground(canvas, paint, CARD_WIDTH.toFloat(), CARD_HEIGHT.toFloat(), theme)
+                drawBadgeContent(canvas, paint, badge, unlockedAt, Color.WHITE, Color.parseColor("#FFD700"))
             }
         }
         return embedInSquare(contentBmp, theme, paint)
@@ -268,6 +370,117 @@ class ShareCardGenerator @Inject constructor(
             bitmap?.recycle()
             sharingCompatibility.set(false)
             onCompatibilityShareError?.invoke(e)
+        }
+    }
+
+    /** Share a life-stat card via Android share sheet. */
+    fun shareLifeStat(label: String, value: String, emoji: String, theme: CardTheme = CardTheme.DARK_COSMOS) {
+        if (!sharingLifeStat.compareAndSet(false, true)) return
+        var bitmap: Bitmap? = null
+        try {
+            bitmap = generateLifeStatBitmap(label, value, emoji, theme)
+            val uri = saveBitmapToCache(bitmap, LIFE_STAT_CACHE_FILE)
+            bitmap.recycle()
+            bitmap = null
+            val intent = Intent(Intent.ACTION_SEND).apply {
+                type = "image/png"
+                putExtra(Intent.EXTRA_STREAM, uri)
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            }
+            Handler(Looper.getMainLooper()).post {
+                try {
+                    val chooser = Intent.createChooser(intent, "Share life stat")
+                    chooser.clipData = ClipData.newRawUri("", uri)
+                    chooser.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                    if (context is android.app.Activity) {
+                        context.startActivity(chooser)
+                    } else {
+                        context.startActivity(chooser.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+                    }
+                } catch (e: Exception) {
+                    onLifeStatShareError?.invoke(e)
+                } finally {
+                    sharingLifeStat.set(false)
+                }
+            }
+        } catch (e: Exception) {
+            bitmap?.recycle()
+            sharingLifeStat.set(false)
+            onLifeStatShareError?.invoke(e)
+        }
+    }
+
+    /** Share a 9:16 portrait story card via Android share sheet. */
+    fun shareStory(result: AgeResult, theme: CardTheme = CardTheme.DARK_COSMOS) {
+        if (!sharingStory.compareAndSet(false, true)) return
+        var bitmap: Bitmap? = null
+        try {
+            bitmap = generateStoryBitmap(result, theme)
+            val uri = saveBitmapToCache(bitmap, STORY_CACHE_FILE)
+            bitmap.recycle()
+            bitmap = null
+            val intent = Intent(Intent.ACTION_SEND).apply {
+                type = "image/png"
+                putExtra(Intent.EXTRA_STREAM, uri)
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            }
+            Handler(Looper.getMainLooper()).post {
+                try {
+                    val chooser = Intent.createChooser(intent, "Share story")
+                    chooser.clipData = ClipData.newRawUri("", uri)
+                    chooser.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                    if (context is android.app.Activity) {
+                        context.startActivity(chooser)
+                    } else {
+                        context.startActivity(chooser.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+                    }
+                } catch (e: Exception) {
+                    onStoryShareError?.invoke(e)
+                } finally {
+                    sharingStory.set(false)
+                }
+            }
+        } catch (e: Exception) {
+            bitmap?.recycle()
+            sharingStory.set(false)
+            onStoryShareError?.invoke(e)
+        }
+    }
+
+    /** Share a badge unlock card via Android share sheet. */
+    fun shareBadge(badge: BadgeDefinition, unlockedAt: Long? = null, theme: CardTheme = CardTheme.DARK_COSMOS) {
+        if (!sharingBadge.compareAndSet(false, true)) return
+        var bitmap: Bitmap? = null
+        try {
+            bitmap = generateBadgeBitmap(badge, unlockedAt, theme)
+            val uri = saveBitmapToCache(bitmap, BADGE_CACHE_FILE)
+            bitmap.recycle()
+            bitmap = null
+            val intent = Intent(Intent.ACTION_SEND).apply {
+                type = "image/png"
+                putExtra(Intent.EXTRA_STREAM, uri)
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            }
+            Handler(Looper.getMainLooper()).post {
+                try {
+                    val chooser = Intent.createChooser(intent, "Share badge")
+                    chooser.clipData = ClipData.newRawUri("", uri)
+                    chooser.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                    if (context is android.app.Activity) {
+                        context.startActivity(chooser)
+                    } else {
+                        context.startActivity(chooser.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+                    }
+                } catch (e: Exception) {
+                    onBadgeShareError?.invoke(e)
+                } finally {
+                    sharingBadge.set(false)
+                }
+            }
+        } catch (e: Exception) {
+            bitmap?.recycle()
+            sharingBadge.set(false)
+            onBadgeShareError?.invoke(e)
         }
     }
 
@@ -474,6 +687,159 @@ class ShareCardGenerator @Inject constructor(
         canvas.drawText(label, x, y, paint)
         paint.alpha = 255; paint.color = accentColor; paint.textSize = 24f; paint.typeface = Typeface.DEFAULT_BOLD
         canvas.drawText("$valueA  ·  $valueB", x + 140f, y, paint)
+    }
+
+    // ---------------------------------------------------------------------------
+    // Badge card layout
+    // ---------------------------------------------------------------------------
+
+    private fun drawBadgeContent(
+        canvas: Canvas, paint: Paint,
+        badge: BadgeDefinition, unlockedAt: Long?,
+        textColor: Int, accentColor: Int,
+    ) {
+        paint.color = textColor; paint.alpha = 120; paint.textSize = 28f; paint.typeface = Typeface.DEFAULT
+        canvas.drawText("BADGE UNLOCKED", 60f, 75f, paint)
+
+        paint.alpha = 255; paint.textSize = 120f; paint.typeface = Typeface.DEFAULT_BOLD
+        val emojiWidth = paint.measureText(badge.iconEmoji)
+        canvas.drawText(badge.iconEmoji, (CARD_WIDTH - emojiWidth) / 2f, 220f, paint)
+
+        paint.color = accentColor; paint.textSize = 52f
+        val titleWidth = paint.measureText(badge.title)
+        canvas.drawText(badge.title, (CARD_WIDTH - titleWidth) / 2f, 300f, paint)
+
+        paint.color = textColor; paint.alpha = 200; paint.textSize = 28f; paint.typeface = Typeface.DEFAULT
+        val descLines = badge.description.chunked(40)
+        var descY = 350f
+        descLines.take(2).forEach { line ->
+            canvas.drawText(line, 60f, descY, paint)
+            descY += 40f
+        }
+
+        paint.alpha = 255
+        drawStatCard(canvas, paint, 60f, 430f, "rarity", badge.rarity.name, textColor, accentColor)
+        if (unlockedAt != null) {
+            val dateStr = java.time.Instant.ofEpochMilli(unlockedAt)
+                .atZone(java.time.ZoneId.systemDefault())
+                .format(java.time.format.DateTimeFormatter.ofPattern("d MMM yyyy"))
+            drawStatCard(canvas, paint, 310f, 430f, "unlocked", dateStr, textColor, accentColor)
+        }
+    }
+
+    // ---------------------------------------------------------------------------
+    // Life-stat card layout
+    // ---------------------------------------------------------------------------
+
+    private fun drawLifeStatContent(
+        canvas: Canvas, paint: Paint,
+        label: String, value: String, emoji: String,
+        textColor: Int, accentColor: Int,
+    ) {
+        paint.color = textColor; paint.alpha = 120; paint.textSize = 28f; paint.typeface = Typeface.DEFAULT
+        canvas.drawText("LIFE STAT", 60f, 75f, paint)
+
+        paint.alpha = 255; paint.textSize = 120f; paint.typeface = Typeface.DEFAULT_BOLD
+        val emojiWidth = paint.measureText(emoji)
+        canvas.drawText(emoji, (CARD_WIDTH - emojiWidth) / 2f, 220f, paint)
+
+        paint.color = accentColor; paint.textSize = 72f
+        val valueWidth = paint.measureText(value)
+        canvas.drawText(value, (CARD_WIDTH - valueWidth) / 2f, 340f, paint)
+
+        paint.color = textColor; paint.alpha = 200; paint.textSize = 32f; paint.typeface = Typeface.DEFAULT
+        val labelWidth = paint.measureText(label)
+        canvas.drawText(label, (CARD_WIDTH - labelWidth) / 2f, 400f, paint)
+        paint.alpha = 255
+    }
+
+    // ---------------------------------------------------------------------------
+    // Story card renderers (9:16 portrait)
+    // ---------------------------------------------------------------------------
+
+    private fun drawStoryDarkCosmos(canvas: Canvas, paint: Paint, result: AgeResult) {
+        drawThemeBackground(canvas, paint, STORY_WIDTH.toFloat(), STORY_HEIGHT.toFloat(), CardTheme.DARK_COSMOS)
+        drawStoryContent(canvas, paint, result, Color.WHITE, Color.parseColor("#86efac"))
+    }
+
+    private fun drawStoryMinimalLight(canvas: Canvas, paint: Paint, result: AgeResult) {
+        paint.color = Color.WHITE
+        canvas.drawRect(0f, 0f, STORY_WIDTH.toFloat(), STORY_HEIGHT.toFloat(), paint)
+        drawStoryContent(canvas, paint, result, Color.parseColor("#1c1917"), Color.parseColor("#0f6e56"))
+    }
+
+    private fun drawStoryFestiveIndia(canvas: Canvas, paint: Paint, result: AgeResult) {
+        drawThemeBackground(canvas, paint, STORY_WIDTH.toFloat(), STORY_HEIGHT.toFloat(), CardTheme.FESTIVE_INDIA)
+        drawStoryContent(canvas, paint, result, Color.WHITE, Color.parseColor("#FFD700"))
+    }
+
+    private fun drawStoryContent(
+        canvas: Canvas, paint: Paint, result: AgeResult,
+        textColor: Int, accentColor: Int,
+    ) {
+        // Label — placed below the 250px Instagram top safe zone
+        paint.color = textColor; paint.alpha = 120; paint.textSize = 36f; paint.typeface = Typeface.DEFAULT
+        canvas.drawText("MY AGE TODAY", 80f, 280f, paint)
+
+        // Primary age line — large and centered
+        val ageText = "${result.years} yrs  ${result.months} mo  ${result.days} days"
+        paint.alpha = 255; paint.textSize = 110f; paint.typeface = Typeface.DEFAULT_BOLD; paint.color = textColor
+        val maxWidth = STORY_WIDTH - 160f
+        val measured = paint.measureText(ageText)
+        if (measured > maxWidth) paint.textSize = 110f * maxWidth / measured
+        canvas.drawText(ageText, 80f, 420f, paint)
+
+        // Born on
+        paint.textSize = 40f; paint.typeface = Typeface.DEFAULT; paint.alpha = 160
+        canvas.drawText(
+            "Born ${result.dayOfWeekBorn.lowercase().replaceFirstChar { it.uppercase() }}, ${result.birthDate}",
+            80f, 490f, paint,
+        )
+
+        paint.alpha = 255
+        // Stat cards — 2×2 grid, scaled for story
+        drawStoryStatCard(canvas, paint, 80f, 560f, "Total days", "${"%,d".format(result.totalDays)}", textColor, accentColor)
+        drawStoryStatCard(canvas, paint, 570f, 560f, "To birthday", "${result.daysToNextBirthday}d", textColor, accentColor)
+        drawStoryStatCard(canvas, paint, 80f, 800f, "Zodiac", result.westernZodiac.ifEmpty { "—" }, textColor, accentColor)
+        drawStoryStatCard(canvas, paint, 570f, 800f, "Rashi", result.rashi.ifEmpty { "—" }, textColor, accentColor)
+
+        // Heartbeats (if unlocked)
+        if (result.estimatedHeartbeats > 0) {
+            paint.color = accentColor; paint.textSize = 72f; paint.typeface = Typeface.DEFAULT_BOLD; paint.alpha = 255
+            val hbText = formatShareHeartbeats(result.estimatedHeartbeats)
+            val hbWidth = paint.measureText(hbText)
+            canvas.drawText(hbText, (STORY_WIDTH - hbWidth) / 2f, 1120f, paint)
+            paint.color = textColor; paint.alpha = 160; paint.textSize = 36f; paint.typeface = Typeface.DEFAULT
+            val sub = "heartbeats and counting"
+            canvas.drawText(sub, (STORY_WIDTH - paint.measureText(sub)) / 2f, 1180f, paint)
+        }
+    }
+
+    private fun drawStoryStatCard(
+        canvas: Canvas, paint: Paint,
+        x: Float, y: Float,
+        label: String, value: String,
+        textColor: Int, accentColor: Int,
+    ) {
+        paint.color = Color.argb(30, 255, 255, 255)
+        canvas.drawRoundRect(RectF(x, y, x + 430f, y + 180f), 20f, 20f, paint)
+        paint.color = accentColor; paint.textSize = 56f; paint.typeface = Typeface.DEFAULT_BOLD
+        canvas.drawText(value, x + 20f, y + 75f, paint)
+        paint.color = textColor; paint.alpha = 140; paint.textSize = 28f; paint.typeface = Typeface.DEFAULT
+        canvas.drawText(label, x + 20f, y + 130f, paint)
+        paint.alpha = 255
+    }
+
+    private fun formatShareHeartbeats(n: Long): String = when {
+        n >= 1_000_000_000 -> "%,.2f B".format(n / 1_000_000_000.0)
+        n >= 1_000_000 -> "%,.1f M".format(n / 1_000_000.0)
+        else -> "%,d".format(n)
+    }
+
+    private fun drawStoryWatermark(canvas: Canvas, paint: Paint) {
+        paint.color = Color.WHITE; paint.alpha = 60; paint.textSize = 28f; paint.typeface = Typeface.DEFAULT
+        canvas.drawText("Made with AgeReveal", STORY_WIDTH - 340f, STORY_HEIGHT - 60f, paint)
+        paint.alpha = 255
     }
 
     // ---------------------------------------------------------------------------

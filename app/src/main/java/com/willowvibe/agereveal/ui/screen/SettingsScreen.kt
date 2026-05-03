@@ -74,6 +74,7 @@ fun SettingsScreen(
     val languageTag by settingsViewModel.languageTag.collectAsState()
     val notificationsEnabled by settingsViewModel.notificationsEnabled.collectAsState()
     val notificationHour by settingsViewModel.notificationHour.collectAsState()
+    val targetAge by settingsViewModel.targetAge.collectAsState()
     var showClearDialog by remember { mutableStateOf(false) }
     val context = LocalContext.current
 
@@ -233,6 +234,46 @@ fun SettingsScreen(
                             isSelected = isSelected,
                             onClick = { settingsViewModel.setTheme(mode) },
                         )
+                    }
+
+                    Spacer(Modifier.height(12.dp))
+                    HorizontalDivider(color = WarmSurfaceSoft)
+                    Spacer(Modifier.height(12.dp))
+
+                    Text(
+                        "Lifespan target",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = WarmInk,
+                        fontWeight = FontWeight.SemiBold,
+                    )
+                    Text(
+                        "Target age for the lifespan progress widget",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = WarmInkDim,
+                    )
+                    Spacer(Modifier.height(8.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        listOf(30, 40, 50, 60, 70, 80, 90, 100).forEach { age ->
+                            val selected = age == targetAge
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .background(if (selected) WarmTeal else WarmSurfaceSoft)
+                                    .clickable { settingsViewModel.setTargetAge(age) }
+                                    .padding(horizontal = 10.dp, vertical = 6.dp),
+                                contentAlignment = Alignment.Center,
+                            ) {
+                                Text(
+                                    "$age",
+                                    style = MaterialTheme.typography.labelMedium,
+                                    color = if (selected) WarmBlack else WarmInk,
+                                    fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
+                                )
+                            }
+                        }
                     }
                 }
             }

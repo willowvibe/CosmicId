@@ -1,6 +1,6 @@
 # AgeReveal — Tasks & Implementation Checklist
 
-_Last updated: 2026-05-02 — v1.0.4 (Phase 5 features: Generational Badge, Planet Ages, Moon Phase)_
+_Last updated: 2026-05-03 — v1.0.5 (Phase 5 features: Milestone Badges, Seconds Counter Widget, Lifespan Widget, Life Stats, 9:16 Story Cards, Generational Badge, Planet Ages, Moon Phase)_
 
 ---
 
@@ -103,24 +103,24 @@ This section is the "main character energy" roadmap — features built to screen
 
 **Goal:** Turn the home screen into a personal flex board. Gen Z curates their home screen like an aesthetic mood board.
 
-#### 6.1.1 Live Seconds Counter Widget (S / ⭐⭐⭐⭐⭐)
-- [ ] Create `SecondsCounterGlanceWidget.kt` — 2×1 or 1×1 size.
-- [ ] Display total seconds alive in large monospace/monospace-alt digits.
-- [ ] Update every second using `updatePeriodMillis="1000"` or a foreground service + `Glance` state refresh.
-- [ ] Brutalist/minimal typography — no labels, just the number. Optionally add a tiny "seconds alive" caption.
-- [ ] Dark background with accent color dot that pulses every second.
-- [ ] Tap opens the app directly to the Calculator screen.
+#### 6.1.1 Live Seconds Counter Widget (S / ⭐⭐⭐⭐⭐) — ✅ Implemented in v1.0.5
+- [x] Create `SecondsCounterGlanceWidget.kt` — 2×1 or 1×1 size.
+- [x] Display total seconds alive in large monospace/monospace-alt digits.
+- [x] Refresh on screen unlock / home swipe / periodic WorkManager (minute-level due to Android widget restrictions).
+- [x] Brutalist/minimal typography — large number with "SECONDS ALIVE" label.
+- [x] Dark background with accent mint text.
+- [x] Tap opens the app directly to the Calculator screen.
 - **Files to create:** `widget/SecondsCounterGlanceWidget.kt`, `widget/SecondsCounterGlanceWidgetReceiver.kt`, XML in `res/xml/seconds_counter_widget_info.xml`
 - **Files to modify:** `AndroidManifest.xml` (add receiver), `ui/theme/Color.kt` (widget accent tokens)
 
-#### 6.1.2 Lifespan Progress Bar Widget (S / ⭐⭐⭐⭐)
-- [ ] Create `LifespanProgressGlanceWidget.kt` — 4×1 horizontal bar widget.
-- [ ] Configurable target lifespan (default 90 years = 32,850 days) via `appwidget-provider` configuration activity.
-- [ ] Gradient fill showing % completed in teal → amber → rose progression.
-- [ ] Shows "XX.X%" text overlaid on the bar.
-- [ ] Updates once per day (no need for per-second refresh).
-- **Files to create:** `widget/LifespanProgressGlanceWidget.kt`, `widget/LifespanProgressWidgetConfigActivity.kt`, receiver
-- **Note:** Store target age in `UserPreferencesRepository` so it's synced between widget and app.
+#### 6.1.2 Lifespan Progress Bar Widget (S / ⭐⭐⭐⭐) — ✅ Implemented in v1.0.5
+- [x] Create `LifespanProgressGlanceWidget.kt` — 4×1 horizontal bar widget.
+- [x] Configurable target lifespan (default 80 years) via Settings chip picker.
+- [x] Color-coded text showing % completed in teal → amber → rose → red progression.
+- [x] Shows "XX%" and total days overlaid.
+- [x] Updates once per day (`updatePeriodMillis="86400000"`).
+- **Files to create:** `widget/LifespanProgressGlanceWidget.kt`, `widget/LifespanProgressGlanceWidgetReceiver.kt`, `res/xml/lifespan_progress_widget_info.xml`
+- **Note:** Target age stored in `UserPreferencesRepository` and mirrored to SharedPreferences for widget sync.
 
 #### 6.1.3 Cosmic Clock Widget (M / ⭐⭐⭐⭐)
 - [ ] Create `CosmicClockGlanceWidget.kt` — 2×2 digital-clock style.
@@ -141,12 +141,12 @@ This section is the "main character energy" roadmap — features built to screen
 
 **Goal:** The app generates content, users distribute it. Every share is organic marketing.
 
-#### 6.2.1 9:16 Story Cards (M / ⭐⭐⭐⭐⭐)
-- [ ] Add `STORY_WIDTH = 1080`, `STORY_HEIGHT = 1920` constants to `ShareCardGenerator.kt`.
-- [ ] Create `generateStoryBitmap()` and `drawStoryDarkCosmos()` / `drawStoryMinimalLight()` / `drawStoryFestiveIndia()` methods.
-- [ ] Portrait layout: large stats centered, watermark at bottom, safe-zone margins for Instagram UI overlays.
-- [ ] Add "Story" option to `ShareThemeSheet.kt` alongside existing square cards.
-- [ ] Ensure 250px top and 350px bottom margins are blank (Instagram Stories UI safe zones).
+#### 6.2.1 9:16 Story Cards (M / ⭐⭐⭐⭐⭐) — ✅ Implemented in v1.0.5
+- [x] Add `STORY_WIDTH = 1080`, `STORY_HEIGHT = 1920` constants to `ShareCardGenerator.kt`.
+- [x] Create `generateStoryBitmap()` and `drawStoryDarkCosmos()` / `drawStoryMinimalLight()` / `drawStoryFestiveIndia()` methods.
+- [x] Portrait layout: large stats centered, watermark at bottom, safe-zone margins for Instagram UI overlays.
+- [x] Add "Story" option to `ShareThemeSheet.kt` alongside existing square cards.
+- [x] 250px top and 350px bottom content-safe margins (Instagram Stories UI safe zones).
 
 #### 6.2.2 Transparent Overlay Cards for Green Screen (M / ⭐⭐⭐⭐)
 - [ ] Add `generateTransparentOverlayBitmap()` — 1080×1920 with transparent background, only text and icons rendered.
@@ -206,9 +206,9 @@ This section is the "main character energy" roadmap — features built to screen
 
 **Goal:** Dopamine loops. Users open the app to see what they unlocked.
 
-#### 6.4.1 Milestone Badges System (M / ⭐⭐⭐⭐⭐)
-- [ ] Create `data/model/AchievementBadge.kt` with `id`, `title`, `description`, `unlockMilestoneDays`, `iconRes`, `rarity`.
-- [ ] Badge definitions:
+#### 6.4.1 Milestone Badges System (M / ⭐⭐⭐⭐⭐) — ✅ Implemented in v1.0.5
+- [x] Create `data/model/Badge.kt` with `BadgeDefinition`, `BadgeRarity`, and `UnlockedBadge` Room entity.
+- [x] Badge definitions (13 badges):
   | ID | Title | Unlock At | Rarity |
   |---|---|---|---|
   | `1M_SEC` | 1 Million Seconds | 1,000,000 sec (~11.5 days) | Common |
@@ -224,13 +224,13 @@ This section is the "main character energy" roadmap — features built to screen
   | `FULL_CENT` | Century Survivor | 100 years | Legendary |
   | `LEAP_BABY` | Leap Baby | Born Feb 29 | Special |
   | `MILLENNIUM` | Millennium Baby | Born in 2000 | Special |
-- [ ] Create `BadgeRepository.kt` backed by Room table `unlocked_badges`.
-- [ ] Check for newly unlocked badges on app launch and show a confetti celebration overlay.
-- [ ] Each badge is shareable as an individual unlock card.
-- [ ] Add "Badges" tab to bottom nav or integrate into a new "Profile" section.
+- [x] Create `BadgeRepository.kt` backed by Room table `unlocked_badges` (DB v3 + migration).
+- [x] Check for newly unlocked badges on birth date change and show confetti celebration overlay.
+- [x] Each badge is shareable as an individual unlock card via `generateBadgeBitmap()`.
+- [x] Add "Badges" tab to bottom nav with `BadgeScreen.kt` (3-column grid + detail bottom sheet).
 
-#### 6.4.2 Life Stats Dashboard (M / ⭐⭐⭐⭐)
-- [ ] Create `LifeStatsCalculator.kt` — compute fun aggregated stats:
+#### 6.4.2 Life Stats Dashboard (M / ⭐⭐⭐⭐) — ✅ Implemented in v1.0.5
+- [x] Create `LifeStatsCalculator.kt` — compute fun aggregated stats:
   - Total full moons witnessed = `daysAlive / 29.53`
   - Total Fridays the 13th survived = count from birth date to today
   - Total leap years lived through
@@ -239,9 +239,9 @@ This section is the "main character energy" roadmap — features built to screen
   - Total meals eaten (assuming 3/day) = `daysAlive × 3`
   - Total words spoken (avg 7,000/day) = `daysAlive × 7000`
   - Total steps walked (avg 5,000/day) = `daysAlive × 5000`
-- [ ] Add "Life Stats" button to DetailsUnlockScreen.
-- [ ] Each stat is individually shareable.
-- [ ] Show as a grid of cards with large numbers.
+- [x] Add "Life Stats" section card to `DetailsUnlockScreen`.
+- [x] Each stat is individually shareable via `generateLifeStatBitmap()` / `shareLifeStat()`.
+- [x] Show as a 2×4 grid of cards with emoji, large number, and label.
 
 #### 6.4.3 Time Remaining Visuals (S / ⭐⭐⭐)
 - [ ] Add configurable "Target Age" in Settings (default 30, 40, 50, 60, 65, 70, 80, 90, 100).

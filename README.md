@@ -1,6 +1,6 @@
 # AgeReveal
 
-AgeReveal is a native Android app (Kotlin + Jetpack Compose) that calculates your exact age in real-time and enriches it with astrological insights, shareable cards, milestone tracking, saved birthday reminders, and a home screen widget. Current version: **1.0**.
+AgeReveal is a native Android app (Kotlin + Jetpack Compose) that calculates your exact age in real-time and enriches it with astrological insights, shareable cards, milestone tracking, saved birthday reminders, and home screen widgets. Current version: **1.0.5**.
 
 ## Features
 
@@ -8,6 +8,7 @@ AgeReveal is a native Android app (Kotlin + Jetpack Compose) that calculates you
 - **Live Age Calculation** — Exact age in years, months, days, hours, minutes, and ticking seconds; updates every second via a StateFlow ticker.
 - **Milestone Days** — Automatically flags special days (500, 1 000, 2 000, 3 000, 5 000, 7 000, 10 000, 12 500, 15 000, 20 000, 25 000, 30 000) with dedicated share cards.
 - **Age Compare** — Two date-picker comparison showing the exact age difference between two people.
+- **Life Stats Dashboard** — Fun aggregated stats: full moons witnessed, Fridays the 13th survived, leap years, heartbeats, breaths, meals, words, steps. All individually shareable.
 
 ### Astrological Insights (Rewarded Ad Unlock)
 - **Western Zodiac** — Tropical sun-sign computed from the Sun's ecliptic longitude with cusp detection (⚠) when near a boundary.
@@ -26,9 +27,11 @@ AgeReveal is a native Android app (Kotlin + Jetpack Compose) that calculates you
   - *Dark Cosmos* (default)
   - *Minimal Light*
   - *Festive India*
+- **9:16 Story Cards** — Portrait 1080 × 1920 cards optimized for Instagram Stories, WhatsApp Status, and Snapchat with UI-safe margins.
 - **Google Calendar Export** — One-tap Intent to add any birthday to Google Calendar with app availability check.
 - **CSV Export** — Export all saved birthdays as a CSV file via share sheet.
 - **Zodiac Compatibility** — Western (angle-based) + Chinese (trine group) compatibility scoring with a shareable headline card; available on the Compatibility tab and from Saved Birthdays.
+- **Milestone Badges** — 13 unlockable collectible badges (1M Seconds Club, 10K Days Society, Billion Seconds Club, Leap Baby, etc.). Confetti celebration on unlock + shareable badge cards.
 
 ### Reminders & Notifications
 - **Saved Birthdays** — Store family and friends' birthdays with name + emoji; backed by Room DB.
@@ -36,8 +39,11 @@ AgeReveal is a native Android app (Kotlin + Jetpack Compose) that calculates you
 - **Milestone Notifications** — WorkManager scheduling for upcoming day-milestone reminders (e.g., "You turn 10 000 days old tomorrow 🎉").
 - **Notification Time Customisation** — Settings gear on the Birthdays tab; change reminder hour and all active jobs reschedule automatically.
 
-### Home Screen Widget
-- **2 × 2 Glance Widget** — Jetpack Glance-powered countdown to the next upcoming birthday from saved birthdays.
+### Home Screen Widgets
+- **2 × 2 Birthday Countdown Widget** — Jetpack Glance-powered countdown to the next upcoming birthday from saved birthdays.
+- **4 × 2 Wide Birthday Widget** — Shows the next 3 upcoming birthdays in a horizontal list.
+- **2 × 1 Seconds Counter Widget** — Live total seconds alive in large monospace digits. Dark background with accent mint text.
+- **4 × 1 Lifespan Progress Widget** — Shows lifespan % completed with color-coded text (teal → amber → rose → red). Configurable target age (30–100) in Settings.
 - **Widget data refresh** — Immediate update on birthday add/update/delete via `notifyWidget()`.
 
 ### Monetisation (AdMob)
@@ -56,7 +62,7 @@ AgeReveal is a native Android app (Kotlin + Jetpack Compose) that calculates you
 | Language | Kotlin |
 | UI | Jetpack Compose + Material 3 |
 | Architecture | MVVM + Clean Architecture (domain / data / ui layers) |
-| Navigation | Compose Navigation (tab-based, 5 tabs) |
+| Navigation | Compose Navigation (tab-based, 5 tabs: You, Match, Bdays, Badges, Timeline) |
 | DI | Dagger Hilt |
 | Database | Room (with core library desugaring for `java.time`) |
 | Date / Time | `java.time` (native API 26+; desugared for API 21–25) |

@@ -1,6 +1,7 @@
 package com.willowvibe.agereveal.ui.screen
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -45,11 +46,13 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -57,6 +60,7 @@ import com.willowvibe.agereveal.data.model.AgeResult
 import com.willowvibe.agereveal.data.model.Milestone
 import com.willowvibe.agereveal.domain.AstronomicalCalculator
 import com.willowvibe.agereveal.domain.GenerationCalculator
+import com.willowvibe.agereveal.domain.LifeStatsCalculator
 import com.willowvibe.agereveal.domain.MoonPhaseCalculator
 import com.willowvibe.agereveal.domain.PlanetAgeCalculator
 import com.willowvibe.agereveal.ui.theme.SerifFamily
@@ -102,6 +106,17 @@ fun DetailsUnlockScreen(
     }
     val planetAges = remember(result) {
         result?.let { planetAgeCalculator.calculatePlanetAges(it.years.toDouble()) } ?: emptyList()
+    }
+    val lifeStatsCalculator = remember { LifeStatsCalculator() }
+    val lifeStats = remember(result) {
+        result?.let { r ->
+            lifeStatsCalculator.calculateAll(
+                birthDate = r.birthDate,
+                today = java.time.LocalDate.now(),
+                totalDays = r.totalDays,
+                totalSeconds = r.totalSeconds,
+            )
+        } ?: emptyList()
     }
 
     Column(
@@ -192,6 +207,16 @@ fun DetailsUnlockScreen(
                 // ── Heartbeat counter ────────────────────────────────────────
                 if (uiState.isUnlocked && result.estimatedHeartbeats > 0) {
                     HeartbeatRow(result.estimatedHeartbeats)
+                }
+
+                // ── Life stats dashboard ─────────────────────────────────────
+                if (uiState.isUnlocked && lifeStats.isNotEmpty()) {
+                    LifeStatsSection(
+                        stats = lifeStats,
+                        onShare = { stat ->
+                            viewModel.shareLifeStatCard(stat.label, stat.value, stat.emoji)
+                        },
+                    )
                 }
 
                 Spacer(Modifier.height(16.dp))
@@ -974,6 +999,87 @@ internal fun HeartbeatRow(heartbeats: Long) {
             "${formatHeartbeatsLong(heartbeats)} heartbeats and counting",
             style = MaterialTheme.typography.bodySmall,
             color = WarmInkDim,
+        )
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Life stats dashboard
+// ─────────────────────────────────────────────────────────────────────────────
+
+@Composable
+internal fun LifeStatsSection(
+    stats: List<LifeStatsCalculator.LifeStat>,
+    onShare: (LifeStatsCalculator.LifeStat) -> Unit,
+) {
+    val haptic = LocalHapticFeedback.current
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(16.dp))
+            .background(WarmSurface)
+            .padding(14.dp),
+    ) {
+        Text(
+            "LIFE STATS",
+            style = MaterialTheme.typography.labelSmall,
+            color = WarmInkDim,
+        )
+        Spacer(Modifier.height(12.dp))
+        stats.chunked(2).forEach { pair ->
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+            ) {
+                pair.forEach { stat ->
+                    LifeStatCard(
+                        stat = stat,
+                        modifier = Modifier.weight(1f),
+                        onClick = {
+                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                            onShare(stat)
+                        },
+                    )
+                }
+                if (pair.size == 1) {
+                    Spacer(Modifier.weight(1f))
+                }
+            }
+            Spacer(Modifier.height(10.dp))
+        }
+    }
+}
+
+@Composable
+private fun LifeStatCard(
+    stat: LifeStatsCalculator.LifeStat,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit,
+) {
+    Column(
+        modifier = modifier
+            .clip(RoundedCornerShape(12.dp))
+            .background(WarmSurfaceSoft)
+            .clickable(
+                role = Role.Button,
+                onClick = onClick,
+            )
+            .padding(12.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Text(stat.emoji, fontSize = 24.sp)
+        Spacer(Modifier.height(4.dp))
+        Text(
+            stat.value,
+            style = MaterialTheme.typography.bodyMedium,
+            fontWeight = FontWeight.Bold,
+            color = WarmInk,
+        )
+        Text(
+            stat.label,
+            style = MaterialTheme.typography.labelSmall,
+            color = WarmInkMute,
+            textAlign = TextAlign.Center,
         )
     }
 }

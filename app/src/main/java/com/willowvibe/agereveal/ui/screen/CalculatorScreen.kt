@@ -108,7 +108,7 @@ import java.time.format.FormatStyle
 fun CalculatorScreen(
     viewModel: CalculatorViewModel = hiltViewModel(),
     adManager: AdManager,
-    onShareCard: (ShareCardGenerator.CardTheme) -> Unit,
+    onShareCard: (ShareCardGenerator.CardTheme, Boolean) -> Unit,
     onUnlockMore: () -> Unit,
     onOpenSettings: () -> Unit = {},
 ) {
@@ -126,8 +126,8 @@ fun CalculatorScreen(
     if (showThemePicker) {
         ShareThemeSheet(
             onDismiss = { showThemePicker = false },
-            onThemeSelected = { theme ->
-                onShareCard(theme)
+            onThemeSelected = { theme, isStory ->
+                onShareCard(theme, isStory)
                 showThemePicker = false
             },
         )

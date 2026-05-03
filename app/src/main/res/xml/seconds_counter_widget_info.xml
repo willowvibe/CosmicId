@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Widget info for the 2×1 seconds counter widget.
+  updatePeriodMillis = 1800000 → update every 30 minutes (system minimum on most OEMs).
+  Actual freshness is improved by SecondsCounterUpdateWorker (15-minute WorkManager refresh).
+-->
+<appwidget-provider
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:minWidth="180dp"
+    android:minHeight="40dp"
+    android:targetCellWidth="4"
+    android:targetCellHeight="1"
+    android:maxResizeWidth="450dp"
+    android:maxResizeHeight="80dp"
+    android:updatePeriodMillis="1800000"
+    android:initialLayout="@layout/widget_layout"
+    android:previewImage="@drawable/widget_preview_seconds"
+    android:resizeMode="horizontal"
+    android:widgetCategory="home_screen"
+    android:description="@string/widget_seconds_description" />
