@@ -203,7 +203,7 @@ fun RemindersScreen(
                 if (later.isNotEmpty()) {
                     item {
                         Text(
-                            "COMING UP",
+                            "LATER",
                             style = MaterialTheme.typography.labelSmall,
                             color = WarmInkDim,
                             modifier = Modifier.padding(bottom = 6.dp),

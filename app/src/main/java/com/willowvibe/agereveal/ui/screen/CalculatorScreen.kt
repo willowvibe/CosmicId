@@ -11,6 +11,7 @@ import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
 import androidx.compose.runtime.key
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -151,11 +152,11 @@ fun CalculatorScreen(
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Box(
                         modifier = Modifier
-                            .size(10.dp)
+                            .size(6.dp)
                             .clip(CircleShape)
                             .background(WarmAmber),
                     )
-                    Spacer(Modifier.width(10.dp))
+                    Spacer(Modifier.width(8.dp))
                     Text(
                         "AgeReveal",
                         style = MaterialTheme.typography.titleMedium,
@@ -1005,13 +1006,14 @@ private fun TimeRemainingCard(timeRemaining: com.willowvibe.agereveal.domain.Tim
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(12.dp))
-            .background(WarmSurface)
+            .background(WarmAmber.copy(alpha = 0.12f))
+            .border(1.dp, WarmAmber.copy(alpha = 0.18f), RoundedCornerShape(12.dp))
             .padding(14.dp),
     ) {
         Text(
             "TIME REMAINING",
             style = MaterialTheme.typography.labelSmall,
-            color = WarmInkDim,
+            color = WarmAmber,
         )
         Spacer(Modifier.height(6.dp))
         Text(

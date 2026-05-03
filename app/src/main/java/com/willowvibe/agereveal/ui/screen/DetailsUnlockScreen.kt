@@ -1,6 +1,7 @@
 package com.willowvibe.agereveal.ui.screen
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -23,7 +24,6 @@ import androidx.compose.material.icons.filled.NotificationsActive
 import androidx.compose.material.icons.filled.NotificationsOff
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -36,6 +36,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Offset
@@ -311,22 +313,28 @@ internal fun AstroTile(result: AgeResult, isUnlocked: Boolean, hasLocation: Bool
                     PlanetPositionTable(result.planetPositions)
                 }
             } else {
-                // Placeholder when not yet unlocked
-                Text(
-                    "Pisces · Meena",
-                    fontFamily = SerifFamily,
-                    fontWeight = FontWeight.Normal,
-                    fontSize = 28.sp,
-                    lineHeight = 32.sp,
-                    letterSpacing = (-0.5).sp,
-                    color = WarmInkDim,
-                    fontStyle = FontStyle.Italic,
-                )
-                Text(
-                    "Watch an ad to reveal your signs",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = WarmInkDim,
-                )
+                // Placeholder when not yet unlocked — blurred teaser
+                Column(
+                    modifier = Modifier
+                        .blur(2.dp)
+                        .alpha(0.7f),
+                ) {
+                    Text(
+                        "Pisces · Meena",
+                        fontFamily = SerifFamily,
+                        fontWeight = FontWeight.Normal,
+                        fontSize = 28.sp,
+                        lineHeight = 32.sp,
+                        letterSpacing = (-0.5).sp,
+                        color = WarmInkDim,
+                        fontStyle = FontStyle.Italic,
+                    )
+                    Text(
+                        "Watch an ad to reveal your signs",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = WarmInkDim,
+                    )
+                }
             }
         }
     }
@@ -506,30 +514,23 @@ internal fun WatchAdBanner(isLoading: Boolean, onWatch: () -> Unit) {
             CircularProgressIndicator(modifier = Modifier.size(24.dp), color = WarmTeal, strokeWidth = 2.dp)
         } else {
             val haptic = LocalHapticFeedback.current
-            val isDark = MaterialTheme.colorScheme.background == WarmBlack
-            Box {
-                if (isDark) {
-                    Box(
-                        modifier = Modifier
-                            .matchParentSize()
-                            .padding(horizontal = 2.dp, vertical = 4.dp)
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(
-                                Brush.radialGradient(
-                                    listOf(
-                                        WarmTeal.copy(alpha = 0.18f),
-                                        WarmTeal.copy(alpha = 0f),
-                                    ),
-                                )
-                            ),
-                    )
-                }
-                FilledTonalButton(onClick = {
-                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                    onWatch()
-                }) {
-                    Text("Watch & Reveal", style = MaterialTheme.typography.labelMedium)
-                }
+            Box(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(99.dp))
+                    .border(1.5.dp, WarmTeal, RoundedCornerShape(99.dp))
+                    .background(WarmTeal.copy(alpha = 0.12f))
+                    .clickable {
+                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                        onWatch()
+                    }
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+            ) {
+                Text(
+                    "Watch & Reveal",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = WarmTeal,
+                    fontWeight = FontWeight.SemiBold,
+                )
             }
         }
     }

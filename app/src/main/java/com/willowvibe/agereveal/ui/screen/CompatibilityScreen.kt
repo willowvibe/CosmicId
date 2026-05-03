@@ -6,6 +6,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -689,35 +690,33 @@ private fun EmptyCompatibilityState(modifier: Modifier = Modifier) {
         modifier = modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(16.dp))
-            .background(WarmSurface)
-            .padding(24.dp),
+            .background(
+                Brush.radialGradient(
+                    colors = listOf(
+                        WarmTeal.copy(alpha = 0.18f),
+                        WarmSurface.copy(alpha = 0.7f),
+                    ),
+                    center = androidx.compose.ui.geometry.Offset(0.5f, 0f),
+                    radius = 1.2f,
+                )
+            )
+            .border(1.dp, WarmSurfaceSoft, RoundedCornerShape(16.dp))
+            .padding(horizontal = 20.dp, vertical = 32.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Box(
-            modifier = Modifier
-                .size(80.dp)
-                .clip(CircleShape)
-                .background(
-                    Brush.radialGradient(
-                        listOf(WarmAmber.copy(alpha = 0.20f), WarmAmber.copy(alpha = 0.05f)),
-                    )
-                ),
-            contentAlignment = Alignment.Center,
-        ) {
-            Text("🌙", fontSize = 40.sp)
-        }
-        Spacer(Modifier.height(16.dp))
+        Text("🌙", fontSize = 32.sp)
+        Spacer(Modifier.height(12.dp))
         Text(
             "Discover your cosmic match",
             fontFamily = SerifFamily,
-            fontSize = 20.sp,
-            color = WarmInkMute,
+            fontSize = 18.sp,
+            color = WarmInk,
         )
-        Spacer(Modifier.height(6.dp))
+        Spacer(Modifier.height(8.dp))
         Text(
-            "Enter two birth dates above to reveal your compatibility score, age comparison, and Chinese zodiac harmony.",
+            "Enter two birth dates above to reveal your compatibility",
             style = MaterialTheme.typography.bodySmall,
-            color = WarmInkDim,
+            color = WarmInkMute,
             textAlign = TextAlign.Center,
         )
     }

@@ -5,13 +5,8 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Cake
-import androidx.compose.material.icons.filled.Calculate
-// Compare tab removed — Match tab handles cosmic compatibility
-import androidx.compose.material.icons.filled.Favorite
-import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.Star
+import androidx.annotation.DrawableRes
+import com.willowvibe.agereveal.R
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -27,8 +22,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavDestination.Companion.hierarchy
@@ -60,15 +55,14 @@ import com.willowvibe.agereveal.ui.viewmodel.RemindersViewModel
 import com.willowvibe.agereveal.ui.viewmodel.SettingsViewModel
 import kotlinx.coroutines.launch
 
-sealed class Screen(val route: String, val label: String, val icon: ImageVector) {
-    data object Calculator : Screen("calculator", "You", Icons.Default.Calculate)
-    data object Details : Screen("details", "Profile", Icons.Default.Star)
-    // data object Compare removed — Match tab now handles all compatibility
-    data object Compatibility : Screen("compatibility", "Match", Icons.Default.Favorite)
-    data object Reminders : Screen("reminders", "Bdays", Icons.Default.Cake)
-    data object Badges : Screen("badges", "Badges", Icons.Default.Star)
-    data object Settings : Screen("settings", "Settings", Icons.Default.Settings)
-    data object Timeline : Screen("timeline", "Timeline", Icons.Default.Cake)
+sealed class Screen(val route: String, val label: String, @DrawableRes val icon: Int) {
+    data object Calculator : Screen("calculator", "You", R.drawable.ic_tab_you)
+    data object Details : Screen("details", "Profile", R.drawable.ic_tab_badges)
+    data object Compatibility : Screen("compatibility", "Match", R.drawable.ic_tab_match)
+    data object Reminders : Screen("reminders", "Bdays", R.drawable.ic_tab_bdays)
+    data object Badges : Screen("badges", "Badges", R.drawable.ic_tab_badges)
+    data object Settings : Screen("settings", "Settings", R.drawable.ic_tab_you)
+    data object Timeline : Screen("timeline", "Timeline", R.drawable.ic_tab_timeline)
 }
 
 private val bottomNavItems = listOf(
@@ -114,7 +108,7 @@ fun AppNavGraph(adManager: AdManager) {
                             },
                             icon = {
                                 Icon(
-                                    screen.icon,
+                                    painter = painterResource(id = screen.icon),
                                     contentDescription = screen.label,
                                     modifier = Modifier.size(22.dp),
                                 )

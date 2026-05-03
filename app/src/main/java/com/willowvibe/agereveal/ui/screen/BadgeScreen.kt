@@ -17,11 +17,14 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Lock
@@ -65,6 +68,9 @@ import com.willowvibe.agereveal.ui.theme.WarmSurface
 import com.willowvibe.agereveal.ui.theme.WarmSurfaceSoft
 import com.willowvibe.agereveal.ui.theme.WarmTeal
 import com.willowvibe.agereveal.ui.viewmodel.BadgeViewModel
+import kotlin.math.roundToInt
+
+private enum class ViewMode { GRID, TIMELINE }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -75,6 +81,7 @@ fun BadgeScreen(
     var selectedBadge by remember { mutableStateOf<BadgeDefinition?>(null) }
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val haptic = LocalHapticFeedback.current
+    var viewMode by remember { mutableStateOf(ViewMode.GRID) }
 
     if (selectedBadge != null) {
         val badge = selectedBadge!!
@@ -120,24 +127,66 @@ fun BadgeScreen(
                     color = WarmInkMute,
                 )
             }
+            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                PillToggle(
+                    label = "Grid",
+                    active = viewMode == ViewMode.GRID,
+                    onClick = { viewMode = ViewMode.GRID },
+                )
+                PillToggle(
+                    label = "Timeline",
+                    active = viewMode == ViewMode.TIMELINE,
+                    onClick = { viewMode = ViewMode.TIMELINE },
+                )
+            }
+        }
+        Spacer(Modifier.height(12.dp))
+
+        // Progress bar
+        val progress = if (uiState.allBadges.isEmpty()) 0f
+        else uiState.unlockedIds.size.toFloat() / uiState.allBadges.size
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(2.dp)
+                .clip(RoundedCornerShape(99.dp))
+                .background(WarmSurfaceSoft),
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth(progress)
+                    .height(2.dp)
+                    .clip(RoundedCornerShape(99.dp))
+                    .background(WarmTeal),
+            )
         }
         Spacer(Modifier.height(16.dp))
 
-        LazyVerticalGrid(
-            columns = GridCells.Fixed(3),
-            contentPadding = PaddingValues(bottom = 24.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            items(uiState.allBadges) { badge ->
-                val isUnlocked = badge.id in uiState.unlockedIds
-                BadgeCard(
-                    badge = badge,
-                    isUnlocked = isUnlocked,
-                    onClick = {
-                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                        selectedBadge = badge
-                    },
+        when (viewMode) {
+            ViewMode.GRID -> {
+                LazyVerticalGrid(
+                    columns = GridCells.Fixed(3),
+                    contentPadding = PaddingValues(bottom = 24.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    items(uiState.allBadges) { badge ->
+                        val isUnlocked = badge.id in uiState.unlockedIds
+                        BadgeCard(
+                            badge = badge,
+                            isUnlocked = isUnlocked,
+                            onClick = {
+                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                selectedBadge = badge
+                            },
+                        )
+                    }
+                }
+            }
+            ViewMode.TIMELINE -> {
+                TimelineView(
+                    badges = uiState.allBadges,
+                    unlockedIds = uiState.unlockedIds,
                 )
             }
         }
@@ -147,6 +196,223 @@ fun BadgeScreen(
         ConfettiOverlay(onComplete = { viewModel.dismissConfetti() })
     }
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Pill toggle
+// ─────────────────────────────────────────────────────────────────────────────
+
+@Composable
+private fun PillToggle(
+    label: String,
+    active: Boolean,
+    onClick: () -> Unit,
+) {
+    Box(
+        modifier = Modifier
+            .clip(RoundedCornerShape(99.dp))
+            .border(
+                width = 1.5.dp,
+                color = if (active) WarmTeal else WarmSurfaceSoft,
+                shape = RoundedCornerShape(99.dp),
+            )
+            .background(if (active) WarmTeal.copy(alpha = 0.12f) else Color.Transparent)
+            .clickable(onClick = onClick)
+            .padding(horizontal = 14.dp, vertical = 6.dp),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(
+            label,
+            style = MaterialTheme.typography.labelMedium,
+            color = if (active) WarmTeal else WarmInkMute,
+            fontWeight = if (active) FontWeight.SemiBold else FontWeight.Medium,
+        )
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Timeline view
+// ─────────────────────────────────────────────────────────────────────────────
+
+@Composable
+private fun TimelineView(
+    badges: List<BadgeDefinition>,
+    unlockedIds: Set<String>,
+) {
+    val scrollState = rememberScrollState()
+
+    // Build events: start node + badge milestones + generic age milestones
+    val events = remember(badges, unlockedIds) {
+        val list = mutableListOf<TimelineEvent>()
+
+        // Start of journey
+        list.add(
+            TimelineEvent(
+                yearLabel = "Start",
+                title = "Your Journey",
+                subtitle = "The adventure begins",
+                dotColor = WarmAmber,
+                isUnlocked = true,
+            )
+        )
+
+        // Badge events sorted by unlock threshold
+        badges.sortedBy { it.unlockSeconds }.forEach { badge ->
+            val isUnlocked = badge.id in unlockedIds
+            val ageYears = if (badge.unlockSeconds > 0) {
+                badge.unlockSeconds / 31_557_600.0
+            } else 0.0
+            val yearLabel = when {
+                badge.unlockSeconds == 0L -> "Birth"
+                ageYears >= 1 -> "~${ageYears.roundToInt()} yrs"
+                else -> "~${(ageYears * 12).roundToInt()} mo"
+            }
+            list.add(
+                TimelineEvent(
+                    yearLabel = yearLabel,
+                    title = badge.title,
+                    subtitle = if (isUnlocked) "Badge unlocked" else "${badge.unlockSeconds.toDayLabel()}",
+                    dotColor = if (isUnlocked) WarmTeal else WarmInkDim,
+                    isUnlocked = isUnlocked,
+                    emoji = badge.iconEmoji,
+                )
+            )
+        }
+
+        // Generic age milestones
+        listOf(1, 10, 18, 21, 30, 40, 50, 60, 70, 80, 90, 100).forEach { years ->
+            // Only add if not already covered by a badge threshold
+            val alreadyCovered = badges.any {
+                val badgeYears = it.unlockSeconds / 31_557_600.0
+                badgeYears > 0 && kotlin.math.abs(badgeYears - years) < 0.5
+            }
+            if (!alreadyCovered) {
+                list.add(
+                    TimelineEvent(
+                        yearLabel = "$years yrs",
+                        title = "$years years old",
+                        subtitle = "${(years * 365.25).roundToInt().toDayLabel()}",
+                        dotColor = WarmInkDim,
+                        isUnlocked = false,
+                    )
+                )
+            }
+        }
+
+        list.sortedWith(compareBy(
+            { it.sortKey },
+            { it.title }
+        ))
+    }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(scrollState)
+            .padding(bottom = 24.dp),
+    ) {
+        events.forEachIndexed { index, event ->
+            val isLast = index == events.lastIndex
+            TimelineRow(
+                event = event,
+                showConnector = !isLast,
+            )
+        }
+    }
+}
+
+private data class TimelineEvent(
+    val yearLabel: String,
+    val title: String,
+    val subtitle: String,
+    val dotColor: Color,
+    val isUnlocked: Boolean,
+    val emoji: String? = null,
+) {
+    val sortKey: Double = when {
+        yearLabel == "Start" -> -1.0
+        yearLabel == "Birth" -> 0.0
+        yearLabel.endsWith(" yrs") -> yearLabel.removeSuffix(" yrs").toDoubleOrNull() ?: 999.0
+        yearLabel.endsWith(" mo") -> (yearLabel.removeSuffix(" mo").toDoubleOrNull() ?: 999.0) / 12.0
+        else -> 999.0
+    }
+}
+
+@Composable
+private fun TimelineRow(
+    event: TimelineEvent,
+    showConnector: Boolean,
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(14.dp),
+    ) {
+        // Dot + connector column
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Box(
+                modifier = Modifier
+                    .size(9.dp)
+                    .clip(CircleShape)
+                    .background(event.dotColor),
+            )
+            if (showConnector) {
+                Box(
+                    modifier = Modifier
+                        .width(1.dp)
+                        .height(40.dp)
+                        .background(WarmSurfaceSoft),
+                )
+            }
+        }
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = if (showConnector) 20.dp else 0.dp),
+        ) {
+            Text(
+                event.yearLabel.uppercase(),
+                style = MaterialTheme.typography.labelSmall,
+                color = WarmInkDim,
+            )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                event.emoji?.let {
+                    Text(it, fontSize = 14.sp, modifier = Modifier.padding(end = 6.dp))
+                }
+                Text(
+                    event.title,
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Medium,
+                    color = if (event.isUnlocked) WarmInk else WarmInkMute,
+                )
+            }
+            Text(
+                event.subtitle,
+                style = MaterialTheme.typography.bodySmall,
+                color = WarmInkDim,
+            )
+        }
+    }
+}
+
+private fun Long.toDayLabel(): String {
+    return when {
+        this >= 1_000_000_000 -> "${this / 1_000_000_000}B seconds"
+        this >= 1_000_000 -> "${this / 1_000_000}M seconds"
+        this >= 1_000 -> "%,d seconds".format(this)
+        else -> "$this seconds"
+    }
+}
+
+private fun Int.toDayLabel(): String {
+    return when {
+        this >= 1_000_000 -> "${this / 1_000_000}M days"
+        this >= 1_000 -> "%,d days".format(this)
+        else -> "$this days"
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Badge card (grid cell)
+// ─────────────────────────────────────────────────────────────────────────────
 
 @Composable
 private fun BadgeCard(
@@ -323,7 +589,6 @@ private fun BadgeDetailSheet(
 
 @Composable
 private fun ConfettiOverlay(onComplete: () -> Unit) {
-    // Simple particle fade-out using Box alpha animation
     val alpha by animateFloatAsState(
         targetValue = 0f,
         animationSpec = tween(durationMillis = 3_000, easing = FastOutSlowInEasing),
