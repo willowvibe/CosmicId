@@ -14,6 +14,7 @@ import com.willowvibe.agereveal.domain.AsciiArtGenerator
 import com.willowvibe.agereveal.domain.ShareCardGenerator
 import com.willowvibe.agereveal.domain.DailyFortuneGenerator
 import com.willowvibe.agereveal.domain.TimeRemainingCalculator
+import com.willowvibe.agereveal.domain.RetirementCalculator
 import com.willowvibe.agereveal.notification.MilestoneNotificationScheduler
 import com.willowvibe.agereveal.util.ReviewHelper
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -50,6 +51,8 @@ data class CalculatorUiState(
     val timeRemainingEnabled: Boolean = true,
     val dailyFortune: DailyFortuneGenerator.Fortune? = null,
     val dailyFortuneEnabled: Boolean = true,
+    val retirement: com.willowvibe.agereveal.domain.RetirementCalculator.RetirementResult? = null,
+    val retirementEnabled: Boolean = true,
 )
 
 @HiltViewModel
@@ -102,12 +105,16 @@ class CalculatorViewModel @Inject constructor(
         val savedLocation = prefs.getString("birth_location", null)
             ?.let { runCatching { parseLocation(it) }.getOrNull() }
         val timeRemainingCalc = TimeRemainingCalculator()
+        val retirementCalc = RetirementCalculator()
         viewModelScope.launch {
-            val enabled = userPrefs.timeRemainingEnabled.first()
+            val trEnabled = userPrefs.timeRemainingEnabled.first()
+            val retEnabled = userPrefs.retirementEnabled.first()
             val targetAge = userPrefs.targetAge.first()
-            _uiState.update { it.copy(timeRemainingEnabled = enabled) }
+            val retirementAge = userPrefs.retirementAge.first()
+            _uiState.update { it.copy(timeRemainingEnabled = trEnabled, retirementEnabled = retEnabled) }
             if (savedDate != null) {
-                val tr = if (enabled) timeRemainingCalc.calculate(savedDate, targetAge = targetAge) else null
+                val tr = if (trEnabled) timeRemainingCalc.calculate(savedDate, targetAge = targetAge) else null
+                val ret = if (retEnabled) retirementCalc.calculate(savedDate, retirementAge = retirementAge) else null
                 _uiState.update {
                     it.copy(
                         birthDate = savedDate,
@@ -115,6 +122,7 @@ class CalculatorViewModel @Inject constructor(
                         location = savedLocation,
                         result = computeResult(savedDate, savedTime, includeUnlocked = false, location = savedLocation),
                         timeRemaining = tr,
+                        retirement = ret,
                     )
                 }
                 badgeRepository.checkAndUnlock(savedDate, savedTime)
@@ -156,7 +164,10 @@ class CalculatorViewModel @Inject constructor(
         viewModelScope.launch {
             val targetAge = userPrefs.targetAge.first()
             val trEnabled = userPrefs.timeRemainingEnabled.first()
+            val retEnabled = userPrefs.retirementEnabled.first()
+            val retirementAge = userPrefs.retirementAge.first()
             val tr = if (trEnabled) TimeRemainingCalculator().calculate(date, targetAge = targetAge) else null
+            val ret = if (retEnabled) RetirementCalculator().calculate(date, retirementAge = retirementAge) else null
             _uiState.update { state ->
                 state.copy(
                     birthDate = date,
@@ -165,6 +176,8 @@ class CalculatorViewModel @Inject constructor(
                     result = computeResult(date, state.birthTime, includeUnlocked = false, location = state.location),
                     timeRemaining = tr,
                     timeRemainingEnabled = trEnabled,
+                    retirement = ret,
+                    retirementEnabled = retEnabled,
                 )
             }
             badgeRepository.checkAndUnlock(date, _uiState.value.birthTime)
