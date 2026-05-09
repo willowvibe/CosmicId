@@ -780,6 +780,43 @@ def test_daily_fortune_card():
     log("Daily Cosmic Fortune card not found after scrolling")
     interactions_tested.append("Daily Cosmic Fortune (not visible)")
 
+def test_percentile_card():
+    """Test the Global Age Percentile card on Calculator screen."""
+    log("=== Testing Global Age Percentile ===")
+    navigate_to_tab("You")
+    time.sleep(1)
+
+    # Scroll down to find the percentile card (appears after birth date is set and unlocked)
+    for _ in range(5):
+        driver.swipe(540, 1800, 540, 600, 500)
+        time.sleep(0.5)
+        source = driver.page_source
+        if "GLOBAL PERCENTILE" in source:
+            log("Found Global Percentile card in page source")
+            interactions_tested.append("Global Percentile card found")
+            safe_screenshot("tab1_calculator_percentile_visible.png")
+            screens_tested.append("Global Percentile (visible)")
+
+            # Try to tap the share button on the percentile card
+            try:
+                share_btn = driver.find_element(AppiumBy.ANDROID_UIAUTOMATOR,
+                    'new UiSelector().textContains("Share stat")')
+                share_btn.click()
+                log("Tapped Global Percentile share button")
+                interactions_tested.append("Global Percentile share tap")
+                time.sleep(1)
+                safe_screenshot("tab1_calculator_percentile_share_sheet.png")
+                screens_tested.append("Global Percentile share sheet")
+                go_back()
+                time.sleep(0.5)
+            except Exception as tap_e:
+                log(f"Percentile share tap failed: {tap_e}")
+            return
+
+    log("Global Percentile card not found after scrolling")
+    interactions_tested.append("Global Percentile (not visible)")
+
+
 def test_share_sheet_formats():
     """Test the share sheet with new ASCII and Green Screen formats."""
     log("=== Testing Share Sheet Formats ===")
@@ -955,6 +992,7 @@ def main():
         test_calculator_tab()
         test_time_remaining_card()
         test_daily_fortune_card()
+        test_percentile_card()
         test_share_sheet_formats()
         test_compatibility_tab()
         test_reminders_tab()
