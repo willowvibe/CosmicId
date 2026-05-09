@@ -1,34 +1,30 @@
-# Screenshots — what to capture
+# Screenshots — Play Store requirements
 
 Play Store requires a minimum of 2 phone screenshots (max 8). Portrait recommended.
 
-Recommended sequence (all portrait, 1080×1920 or 1440×2960):
+## Current set (7 screenshots, 1080×2400)
 
-1. **Calculator — hero shot**
-   - Birth date set to something photogenic (e.g. 1990-06-15).
-   - Name entered.
-   - Scroll so the live SECONDS ALIVE strip is visible.
+| # | File | What's shown | Feature highlights |
+|---|------|--------------|---------------------|
+| 01 | `01_hero.png` | Calculator — hero shot | Live seconds, age in yrs/mo/days, next birthday |
+| 02 | `02_profile.png` | Cosmic profile unlocked | Western + Vedic + Chinese + Nakshatra + Dasha + Ba Zi + Planets |
+| 03 | `03_timeline.png` | Life Timeline | Past/future milestones, progress bar, share buttons |
+| 04 | `04_match.png` | Cosmic Match | Two-person compatibility with Western + Chinese scores |
+| 05 | `05_birthdays.png` | Saved birthdays + widgets | Birthday list + 4×2 widget preview |
+| 06 | `06_settings.png` | Settings | Theme, language (हिन्दी), accent color, milestone toggles |
+| 07 | `07_share.png` | Share card preview | Dark Cosmos square card + story card + transparent overlay |
 
-2. **Your cosmic profile — unlocked**
-   - After "Watch & Reveal".
-   - Western + Vedic + Chinese + Nakshatra all visible.
-   - Highlights Rashi / Nakshatra Approximate warning vs Exact (when birthTime set).
+## Recommended replacements for v1.0.7
 
-3. **Life Timeline**
-   - Mix of past (green check) and future (amber countdown) milestones.
+Replace or add screenshots that showcase the new features:
 
-4. **Compatibility**
-   - Two dates, 85+% score headline.
-
-5. **Birthdays + widget**
-   - Saved birthdays screen with 3+ people.
-   - If possible, composite with the 4×2 home-screen widget showing the top 3.
-
-6. **Settings**
-   - Language picker (हिन्दी selected) + theme selector + milestone toggles visible.
-
-7. **Share card (optional)**
-   - Dark Cosmos theme share preview.
+1. **Global Percentile card** — "You're older than 62% of people alive today"
+2. **Life Stats dashboard** — 2×4 grid of heartbeats, breaths, meals, etc.
+3. **Planet Ages row** — Mercury 145 yrs, Mars 18 yrs, Jupiter 2 yrs
+4. **Daily Cosmic Fortune** — headline, body, lucky number, lucky color
+5. **Badge unlocked** — confetti celebration with shareable badge card
+6. **Parallel Universe Birth** — 3 historical contexts with emoji
+7. **Generation Badge** — "Certified Gen Z · 1.2B seconds survived"
 
 ## How to capture
 
@@ -36,3 +32,4 @@ Recommended sequence (all portrait, 1080×1920 or 1440×2960):
 2. Use Android Studio's built-in screenshot: Logcat → camera icon.
 3. Save as PNG (no JPEG).
 4. Name them `01_hero.png`, `02_profile.png`, etc. so Play Console displays them in order.
+5. Overwrite existing files in this directory.

@@ -1,4 +1,4 @@
-# Play Store Submission Checklist — AgeReveal v1.0
+# Play Store Submission Checklist — AgeReveal v1.0.7
 
 Use this list as you upload the AAB. Everything in `store_listing/` is ready to paste into the Play Console.
 
@@ -71,7 +71,7 @@ Declare:
 Expected rating: **Everyone**.
 - No violence, sexual content, profanity.
 - Shares user-generated content via Android share sheet (not to any server).
-- Contains advertising.
+- Contains advertising (banner, rewarded, interstitial).
 
 ## 7. Target audience
 
@@ -80,12 +80,12 @@ Expected rating: **Everyone**.
 
 ## 8. Release notes
 
-Paste contents of `store_listing/release_notes_v1.0.md`.
+Paste contents of `store_listing/release_notes_v1.0.7.md`.
 
 ## 9. Track: Closed testing → Open testing → Production
 
 Recommended rollout:
 1. **Internal testing** with ≤20 testers — verify real AdMob impressions, Room migration,
-   widget behaviour, notifications.
+   widget behaviour, notifications, yearly re-engagement.
 2. **Open testing** for 1 week — gather reviews, iterate on descriptions.
 3. **Production** release at 20% → 50% → 100% staged rollout.

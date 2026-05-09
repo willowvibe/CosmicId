@@ -1,20 +1,31 @@
-🎂  AgeReveal — Your age, reimagined
+🎂 AgeReveal — Your age, reimagined
 
-How old are you — really? Down to the day, hour, minute, and ticking second. AgeReveal turns your birthday into a living number that grows in front of you, then enriches it with Western zodiac, Vedic Rashi, Nakshatra, Chinese animal, and lifetime heartbeat estimates.
+How old are you — really? Down to the day, hour, minute, and ticking second. AgeReveal turns your birthday into a living number that grows in front of you, then enriches it with Western zodiac, Vedic Rashi, Nakshatra, Chinese animal, lifetime heartbeat estimates, and a whole universe of shareable stats.
 
 ✨ WHAT YOU GET
 
-• Live age — years, months, days, hours, minutes, seconds (updating every second).
+• Live age — years, months, days, hours, minutes, seconds (updates every second).
 • Day-of-week you were born, day-of-week your next birthday falls on.
 • Life milestones — celebrate your 1,000th day, 10,000th day, 25,000th day, and more.
-• Vedic profile — Sidereal Rashi (Lahiri ayanamsa), one of 27 Nakshatras, Chinese zodiac cycle.
+• Vedic profile — Sidereal Rashi (Lahiri ayanamsa), one of 27 Nakshatras with Pada, Chinese zodiac cycle, Stem-Branch, Tithi, Dasha, Ba Zi (Four Pillars), planetary positions.
+• Global age percentile — "You're older than X% of people alive today."
+• Retirement countdown — days, work weeks, and % of work life remaining.
+• Parallel universe birth — see what your age means in Ancient Rome, 1980s Tokyo, and more.
+• Daily cosmic fortune — a new fortune every day based on moon phase, sun sign, and Chinese stem-branch.
 • Cosmic compatibility — enter two birthdays, get an instant Western + Chinese match score.
 • Saved birthdays — family and friends, with 1-day-early reminders at a time you choose.
-• Home screen widgets — 2×2 countdown + 4×2 wide widget for your top 3 upcoming birthdays.
-• Shareable cards — three themes (Dark Cosmos, Minimal Light, Festive India) optimised for WhatsApp, Instagram and X.
-• Optional birth time — unlock exact Nakshatra & Rashi (not approximate).
+• Home screen widgets — 2×2 seconds counter, 4×1 lifespan progress bar, 2×1 milestone ring, 4×2 birthday countdown.
+• Shareable cards — square (900×900), 9:16 story, and transparent green-screen overlays for TikTok/Reels. Three themes (Dark Cosmos, Minimal Light, Festive India).
+• Life stats dashboard — heartbeats, breaths, meals, words spoken, steps walked, Fridays the 13th survived, full moons witnessed.
+• Planet ages — discover how old you'd be on Mercury, Mars, Jupiter, Saturn, and more.
+• Generation badge — Gen Z, Millennial, Gen X, Baby Boomer, or Gen Alpha flex.
+• Birth moon phase — visual of what the moon looked like on your birthday.
+• Badge system — unlock 13 achievement badges as you hit life milestones.
+• Optional birth time — unlock exact Nakshatra, Rashi, Lagna (Ascendant), and planetary positions.
+• Optional birth location — exact Lagna calculation with latitude/longitude.
 • Bilingual — English and हिन्दी (Hindi) supported.
-• Dark / Light / System theme.
+• Dark / Light / System theme with 6 accent color choices.
+• Retro ASCII art share — copy your total seconds as monospace block art.
 
 🛡️ PRIVACY
 
@@ -23,6 +34,6 @@ How old are you — really? Down to the day, hour, minute, and ticking second. A
 • Ads are served by Google AdMob; you can opt out in Google's Ad Settings.
 
 💡 WHY AGEREVEAL?
-Birthdays are easy to forget and easy to under-celebrate. AgeReveal makes every one of your 25,000+ days count — a single tap and you know exactly where you are on your timeline.
+Birthdays are easy to forget and easy to under-celebrate. AgeReveal makes every one of your 25,000+ days count — a single tap and you know exactly where you are on your timeline, how you compare to the world, and what the stars say about you.
 
 🌸 Made in India with ❤. Free. No sign-in required.
