@@ -65,6 +65,9 @@ data class AgeResult(
     val globalPercentile: String = "",
     val sharedBirthDateEstimate: String = "",
 
+    // Parallel universe birth contexts (unlockable)
+    val parallelUniverses: List<com.willowvibe.agereveal.domain.ParallelUniverseGenerator.UniverseContext> = emptyList(),
+
     // Precision indicator
     val isExact: Boolean = birthTime != null,  // True if time of birth is provided
 )

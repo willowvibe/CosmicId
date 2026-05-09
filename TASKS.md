@@ -56,8 +56,8 @@ All four IDs below generate **no real revenue** and must be swapped for producti
 - [ ] **Firebase Firestore sync** — Cloud backup for saved birthdays; login with Google account; conflict resolution by `updatedAt` timestamp
 - [ ] **WhatsApp sticker cards** — 512 × 512 transparent-background PNG export following WhatsApp sticker pack format
 - [ ] **Age trivia / quiz** — "Guess who was born closest to you?" game mode using saved birthdays
-- [ ] **Yearly re-engagement notification** — "You've now lived X days!" notification sent on the user's own birthday each year
-- [ ] **Days-until-retirement calculator** — Configurable target age; remaining working days + % of working life completed
+- [x] **Yearly re-engagement notification** — "You've now lived X days!" notification sent on the user's own birthday each year ✅ Implemented in v1.0.7
+- [x] **Days-until-retirement calculator** — Configurable target age; remaining working days + % of working life completed ✅ Implemented in v1.0.7
 - [ ] **Lock screen widget** — API 33+ `AppWidgetProviderInfo.WIDGET_FEATURE_RECONFIGURABLE`
 
 ---
@@ -316,14 +316,14 @@ This section is the "main character energy" roadmap — features built to screen
 - [x] Also show current moon phase with "Moon tonight: [phase]".
 - **Files:** `domain/MoonPhaseCalculator.kt`, `MoonPhaseCard()` + `MoonPhaseVisual()` in `DetailsUnlockScreen.kt`
 
-#### 6.6.3 Parallel Universe Birth (S / ⭐⭐⭐)
-- [ ] Add "Parallel Universe" card to DetailsUnlockScreen.
-- [ ] Show 3 random historical/cultural contexts:
+#### 6.6.3 Parallel Universe Birth (S / ⭐⭐⭐) — ✅ Implemented in v1.0.7
+- [x] Add "Parallel Universe" card to DetailsUnlockScreen.
+- [x] Show 3 random historical/cultural contexts:
   - "If you were born in 1920s India, you'd be [X] years old in the Independence era."
   - "If you were born in 1980s Tokyo, you'd be [X] years old during the bubble economy."
   - "If you were born in ancient Rome, you'd be [X] years old in [consulship year]."
-- [ ] Curated JSON asset with 20+ historical contexts.
-- [ ] Shareable as a fun fact card.
+- [x] Curated in-code list with 8 historical contexts (deterministic selection by birth year seed).
+- [x] Shareable as a fun fact card via `ShareCardGenerator.shareParallelUniverse()`.
 
 #### 6.6.4 Voice Narration (M / ⭐⭐⭐)
 - [ ] Add "🔊 Read My Profile" floating action button to DetailsUnlockScreen.

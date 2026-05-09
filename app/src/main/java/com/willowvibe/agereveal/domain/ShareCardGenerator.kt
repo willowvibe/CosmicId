@@ -57,6 +57,7 @@ class ShareCardGenerator @Inject constructor(
     private val sharingStory = AtomicBoolean(false)
     private val sharingTransparent = AtomicBoolean(false)
     private val sharingPercentile = AtomicBoolean(false)
+    private val sharingParallelUniverse = AtomicBoolean(false)
 
     // Error callback — invoked on main thread when sharing fails
     private var onShareError: ((Throwable) -> Unit)? = null
@@ -108,6 +109,13 @@ class ShareCardGenerator @Inject constructor(
         onPercentileShareError = handler
     }
 
+    private var onParallelUniverseShareError: ((Throwable) -> Unit)? = null
+
+    /** Register an error callback for parallel universe share failures. */
+    fun setParallelUniverseShareErrorHandler(handler: ((Throwable) -> Unit)?) {
+        onParallelUniverseShareError = handler
+    }
+
     companion object {
         /** Logical content width/height — all coordinate maths inside draw* functions uses these. */
         const val CARD_WIDTH = 900
@@ -124,6 +132,7 @@ class ShareCardGenerator @Inject constructor(
         const val STORY_CACHE_FILE = "story_card.png"
         const val TRANSPARENT_CACHE_FILE = "transparent_overlay.png"
         const val FORTUNE_CACHE_FILE = "fortune_card.png"
+        const val PARALLEL_UNIVERSE_CACHE_FILE = "parallel_universe_card.png"
         const val FILE_AUTHORITY_SUFFIX = ".fileprovider"
 
         /** Story dimensions (9:16 portrait, 1080×1920). */
@@ -710,6 +719,73 @@ class ShareCardGenerator @Inject constructor(
         }
     }
 
+    /** Generate a shareable parallel universe card. */
+    fun generateParallelUniverseBitmap(
+        universes: List<ParallelUniverseGenerator.UniverseContext>,
+        theme: CardTheme = CardTheme.DARK_COSMOS,
+    ): Bitmap {
+        val accent = readAccentColor(context)
+        val contentBmp = Bitmap.createBitmap(CARD_WIDTH, CARD_HEIGHT, Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(contentBmp)
+        val paint = Paint(Paint.ANTI_ALIAS_FLAG)
+        when (theme) {
+            CardTheme.DARK_COSMOS -> {
+                drawThemeBackground(canvas, paint, CARD_WIDTH.toFloat(), CARD_HEIGHT.toFloat(), theme)
+                drawParallelUniverseContent(canvas, paint, universes, Color.WHITE, accent)
+            }
+            CardTheme.MINIMAL_LIGHT -> {
+                paint.color = Color.WHITE
+                canvas.drawRect(0f, 0f, CARD_WIDTH.toFloat(), CARD_HEIGHT.toFloat(), paint)
+                drawParallelUniverseContent(canvas, paint, universes, Color.parseColor("#1c1917"), accent)
+            }
+            CardTheme.FESTIVE_INDIA -> {
+                drawThemeBackground(canvas, paint, CARD_WIDTH.toFloat(), CARD_HEIGHT.toFloat(), theme)
+                drawParallelUniverseContent(canvas, paint, universes, Color.WHITE, Color.parseColor("#FFD700"))
+            }
+        }
+        return embedInSquare(contentBmp, theme, paint)
+    }
+
+    /** Share a parallel universe card via Android share sheet. */
+    fun shareParallelUniverse(
+        universes: List<ParallelUniverseGenerator.UniverseContext>,
+        theme: CardTheme = CardTheme.DARK_COSMOS,
+    ) {
+        if (!sharingParallelUniverse.compareAndSet(false, true)) return
+        var bitmap: Bitmap? = null
+        try {
+            bitmap = generateParallelUniverseBitmap(universes, theme)
+            val uri = saveBitmapToCache(bitmap, PARALLEL_UNIVERSE_CACHE_FILE)
+            bitmap.recycle()
+            bitmap = null
+            val intent = Intent(Intent.ACTION_SEND).apply {
+                type = "image/png"
+                putExtra(Intent.EXTRA_STREAM, uri)
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            }
+            Handler(Looper.getMainLooper()).post {
+                try {
+                    val chooser = Intent.createChooser(intent, "Share parallel universe")
+                    chooser.clipData = ClipData.newRawUri("", uri)
+                    chooser.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                    if (context is android.app.Activity) {
+                        context.startActivity(chooser)
+                    } else {
+                        context.startActivity(chooser.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+                    }
+                } catch (e: Exception) {
+                    onParallelUniverseShareError?.invoke(e)
+                } finally {
+                    sharingParallelUniverse.set(false)
+                }
+            }
+        } catch (e: Exception) {
+            bitmap?.recycle()
+            sharingParallelUniverse.set(false)
+            onParallelUniverseShareError?.invoke(e)
+        }
+    }
+
     // ---------------------------------------------------------------------------
     // Square-output helper (BUG-011)
     // ---------------------------------------------------------------------------
@@ -1058,6 +1134,46 @@ class ShareCardGenerator @Inject constructor(
         paint.alpha = 160; paint.textSize = 26f
         val estWidth = paint.measureText(sharedEstimate)
         canvas.drawText(sharedEstimate, (CARD_WIDTH - estWidth) / 2f, 420f, paint)
+        paint.alpha = 255
+    }
+
+    // ---------------------------------------------------------------------------
+    // Parallel Universe card layout
+    // ---------------------------------------------------------------------------
+
+    private fun drawParallelUniverseContent(
+        canvas: Canvas, paint: Paint,
+        universes: List<ParallelUniverseGenerator.UniverseContext>,
+        textColor: Int, accentColor: Int,
+    ) {
+        paint.color = textColor; paint.alpha = 120; paint.textSize = 28f; paint.typeface = Typeface.DEFAULT
+        canvas.drawText("PARALLEL UNIVERSE BIRTH", 60f, 75f, paint)
+
+        var y = 130f
+        universes.take(3).forEach { universe ->
+            paint.alpha = 255; paint.textSize = 40f; paint.typeface = Typeface.DEFAULT_BOLD; paint.color = accentColor
+            canvas.drawText(universe.emoji + " " + universe.era, 60f, y, paint)
+
+            paint.color = textColor; paint.alpha = 200; paint.textSize = 24f; paint.typeface = Typeface.DEFAULT
+            val words = universe.ageText.split(" ")
+            val lines = mutableListOf<String>()
+            var current = ""
+            words.forEach { word ->
+                if ((current + " " + word).length < 52) {
+                    current = if (current.isEmpty()) word else "$current $word"
+                } else {
+                    lines.add(current)
+                    current = word
+                }
+            }
+            if (current.isNotEmpty()) lines.add(current)
+            y += 40f
+            lines.take(2).forEach { line ->
+                canvas.drawText(line, 60f, y, paint)
+                y += 32f
+            }
+            y += 24f
+        }
         paint.alpha = 255
     }
 

@@ -16,6 +16,7 @@ import com.willowvibe.agereveal.domain.DailyFortuneGenerator
 import com.willowvibe.agereveal.domain.TimeRemainingCalculator
 import com.willowvibe.agereveal.domain.RetirementCalculator
 import com.willowvibe.agereveal.notification.MilestoneNotificationScheduler
+import com.willowvibe.agereveal.notification.YearlyReengagementScheduler
 import com.willowvibe.agereveal.util.ReviewHelper
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -60,6 +61,7 @@ class CalculatorViewModel @Inject constructor(
     private val ageCalculator: AgeCalculator,
     private val shareCardGenerator: ShareCardGenerator,
     private val milestoneNotificationScheduler: MilestoneNotificationScheduler,
+    private val yearlyReengagementScheduler: YearlyReengagementScheduler,
     private val userPrefs: UserPreferencesRepository,
     private val reviewHelper: ReviewHelper,
     private val badgeRepository: BadgeRepository,
@@ -95,6 +97,9 @@ class CalculatorViewModel @Inject constructor(
         shareCardGenerator.setPercentileShareErrorHandler { error ->
             _uiState.update { it.copy(error = "Failed to share percentile: ${error.message}") }
         }
+        shareCardGenerator.setParallelUniverseShareErrorHandler { error ->
+            _uiState.update { it.copy(error = "Failed to share parallel universe: ${error.message}") }
+        }
 
         // Restore previously entered birth date + time + location
         val savedDate = prefs.getString("birth_date", null)
@@ -126,6 +131,7 @@ class CalculatorViewModel @Inject constructor(
                     )
                 }
                 badgeRepository.checkAndUnlock(savedDate, savedTime)
+                yearlyReengagementScheduler.schedule(savedDate)
                 val fortune = computeDailyFortune(savedDate)
                 _uiState.update { it.copy(dailyFortune = fortune) }
             }
@@ -160,6 +166,7 @@ class CalculatorViewModel @Inject constructor(
                 .toSet()
             milestoneNotificationScheduler.scheduleUpcomingMilestones(date, enabled)
         }
+        yearlyReengagementScheduler.schedule(date)
         prefs.edit().putString("birth_date", date.toString()).apply()
         viewModelScope.launch {
             val targetAge = userPrefs.targetAge.first()
@@ -316,6 +323,16 @@ class CalculatorViewModel @Inject constructor(
                 percentileText = percentile,
                 sharedEstimate = result.sharedBirthDateEstimate,
             )
+        }
+        reviewHelper.maybePromptAfterShare(activity)
+    }
+
+    /** Share a parallel universe birth card. */
+    fun shareParallelUniverseCard(activity: Activity? = null) {
+        val result = _uiState.value.result ?: return
+        val universes = result.parallelUniverses.takeIf { it.isNotEmpty() } ?: return
+        viewModelScope.launch(Dispatchers.IO) {
+            shareCardGenerator.shareParallelUniverse(universes)
         }
         reviewHelper.maybePromptAfterShare(activity)
     }

@@ -24,6 +24,7 @@ class AgeCalculator @Inject constructor(
     private val baZiCalculator: BaZiCalculator,
     private val lunarConverter: LunarCalendarConverter,
     private val percentileCalculator: AgePercentileCalculator,
+    private val parallelUniverseGenerator: ParallelUniverseGenerator,
 ) {
 
     /**
@@ -93,6 +94,7 @@ class AgeCalculator @Inject constructor(
             estimatedHeartbeats = if (includeUnlocked) estimateHeartbeats(totalMinutes) else 0L,
             globalPercentile = percentileResult?.percentileText ?: "",
             sharedBirthDateEstimate = percentileResult?.sharedBirthDateEstimate ?: "",
+            parallelUniverses = if (includeUnlocked) parallelUniverseGenerator.generate(birthDate, today) else emptyList(),
             isExact = birthTime != null,
         )
     }
