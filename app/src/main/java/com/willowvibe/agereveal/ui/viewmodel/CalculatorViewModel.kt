@@ -14,7 +14,9 @@ import com.willowvibe.agereveal.domain.AsciiArtGenerator
 import com.willowvibe.agereveal.domain.ShareCardGenerator
 import com.willowvibe.agereveal.domain.DailyFortuneGenerator
 import com.willowvibe.agereveal.domain.TimeRemainingCalculator
+import com.willowvibe.agereveal.domain.RetirementCalculator
 import com.willowvibe.agereveal.notification.MilestoneNotificationScheduler
+import com.willowvibe.agereveal.notification.YearlyReengagementScheduler
 import com.willowvibe.agereveal.util.ReviewHelper
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -50,6 +52,8 @@ data class CalculatorUiState(
     val timeRemainingEnabled: Boolean = true,
     val dailyFortune: DailyFortuneGenerator.Fortune? = null,
     val dailyFortuneEnabled: Boolean = true,
+    val retirement: com.willowvibe.agereveal.domain.RetirementCalculator.RetirementResult? = null,
+    val retirementEnabled: Boolean = true,
 )
 
 @HiltViewModel
@@ -57,6 +61,7 @@ class CalculatorViewModel @Inject constructor(
     private val ageCalculator: AgeCalculator,
     private val shareCardGenerator: ShareCardGenerator,
     private val milestoneNotificationScheduler: MilestoneNotificationScheduler,
+    private val yearlyReengagementScheduler: YearlyReengagementScheduler,
     private val userPrefs: UserPreferencesRepository,
     private val reviewHelper: ReviewHelper,
     private val badgeRepository: BadgeRepository,
@@ -89,6 +94,12 @@ class CalculatorViewModel @Inject constructor(
         shareCardGenerator.setTransparentShareErrorHandler { error ->
             _uiState.update { it.copy(error = "Failed to share overlay: ${error.message}") }
         }
+        shareCardGenerator.setPercentileShareErrorHandler { error ->
+            _uiState.update { it.copy(error = "Failed to share percentile: ${error.message}") }
+        }
+        shareCardGenerator.setParallelUniverseShareErrorHandler { error ->
+            _uiState.update { it.copy(error = "Failed to share parallel universe: ${error.message}") }
+        }
 
         // Restore previously entered birth date + time + location
         val savedDate = prefs.getString("birth_date", null)
@@ -99,12 +110,16 @@ class CalculatorViewModel @Inject constructor(
         val savedLocation = prefs.getString("birth_location", null)
             ?.let { runCatching { parseLocation(it) }.getOrNull() }
         val timeRemainingCalc = TimeRemainingCalculator()
+        val retirementCalc = RetirementCalculator()
         viewModelScope.launch {
-            val enabled = userPrefs.timeRemainingEnabled.first()
+            val trEnabled = userPrefs.timeRemainingEnabled.first()
+            val retEnabled = userPrefs.retirementEnabled.first()
             val targetAge = userPrefs.targetAge.first()
-            _uiState.update { it.copy(timeRemainingEnabled = enabled) }
+            val retirementAge = userPrefs.retirementAge.first()
+            _uiState.update { it.copy(timeRemainingEnabled = trEnabled, retirementEnabled = retEnabled) }
             if (savedDate != null) {
-                val tr = if (enabled) timeRemainingCalc.calculate(savedDate, targetAge = targetAge) else null
+                val tr = if (trEnabled) timeRemainingCalc.calculate(savedDate, targetAge = targetAge) else null
+                val ret = if (retEnabled) retirementCalc.calculate(savedDate, retirementAge = retirementAge) else null
                 _uiState.update {
                     it.copy(
                         birthDate = savedDate,
@@ -112,9 +127,11 @@ class CalculatorViewModel @Inject constructor(
                         location = savedLocation,
                         result = computeResult(savedDate, savedTime, includeUnlocked = false, location = savedLocation),
                         timeRemaining = tr,
+                        retirement = ret,
                     )
                 }
                 badgeRepository.checkAndUnlock(savedDate, savedTime)
+                yearlyReengagementScheduler.schedule(savedDate)
                 val fortune = computeDailyFortune(savedDate)
                 _uiState.update { it.copy(dailyFortune = fortune) }
             }
@@ -149,11 +166,15 @@ class CalculatorViewModel @Inject constructor(
                 .toSet()
             milestoneNotificationScheduler.scheduleUpcomingMilestones(date, enabled)
         }
+        yearlyReengagementScheduler.schedule(date)
         prefs.edit().putString("birth_date", date.toString()).apply()
         viewModelScope.launch {
             val targetAge = userPrefs.targetAge.first()
             val trEnabled = userPrefs.timeRemainingEnabled.first()
+            val retEnabled = userPrefs.retirementEnabled.first()
+            val retirementAge = userPrefs.retirementAge.first()
             val tr = if (trEnabled) TimeRemainingCalculator().calculate(date, targetAge = targetAge) else null
+            val ret = if (retEnabled) RetirementCalculator().calculate(date, retirementAge = retirementAge) else null
             _uiState.update { state ->
                 state.copy(
                     birthDate = date,
@@ -162,6 +183,8 @@ class CalculatorViewModel @Inject constructor(
                     result = computeResult(date, state.birthTime, includeUnlocked = false, location = state.location),
                     timeRemaining = tr,
                     timeRemainingEnabled = trEnabled,
+                    retirement = ret,
+                    retirementEnabled = retEnabled,
                 )
             }
             badgeRepository.checkAndUnlock(date, _uiState.value.birthTime)
@@ -287,6 +310,29 @@ class CalculatorViewModel @Inject constructor(
         val result = _uiState.value.result ?: return
         viewModelScope.launch(Dispatchers.IO) {
             shareCardGenerator.shareTransparentOverlay(result)
+        }
+        reviewHelper.maybePromptAfterShare(activity)
+    }
+
+    /** Share a global age percentile card. */
+    fun sharePercentileCard(activity: Activity? = null) {
+        val result = _uiState.value.result ?: return
+        val percentile = result.globalPercentile.takeIf { it.isNotEmpty() } ?: return
+        viewModelScope.launch(Dispatchers.IO) {
+            shareCardGenerator.sharePercentile(
+                percentileText = percentile,
+                sharedEstimate = result.sharedBirthDateEstimate,
+            )
+        }
+        reviewHelper.maybePromptAfterShare(activity)
+    }
+
+    /** Share a parallel universe birth card. */
+    fun shareParallelUniverseCard(activity: Activity? = null) {
+        val result = _uiState.value.result ?: return
+        val universes = result.parallelUniverses.takeIf { it.isNotEmpty() } ?: return
+        viewModelScope.launch(Dispatchers.IO) {
+            shareCardGenerator.shareParallelUniverse(universes)
         }
         reviewHelper.maybePromptAfterShare(activity)
     }

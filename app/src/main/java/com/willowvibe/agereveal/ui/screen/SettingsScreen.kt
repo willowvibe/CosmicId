@@ -77,6 +77,8 @@ fun SettingsScreen(
     val targetAge by settingsViewModel.targetAge.collectAsState()
     val timeRemainingEnabled by settingsViewModel.timeRemainingEnabled.collectAsState()
     val accentColor by settingsViewModel.accentColor.collectAsState()
+    val retirementAge by settingsViewModel.retirementAge.collectAsState()
+    val retirementEnabled by settingsViewModel.retirementEnabled.collectAsState()
     var showClearDialog by remember { mutableStateOf(false) }
     val context = LocalContext.current
 
@@ -248,6 +250,48 @@ fun SettingsScreen(
                         checked = timeRemainingEnabled,
                         onCheckedChange = settingsViewModel::setTimeRemainingEnabled,
                     )
+
+                    Spacer(Modifier.height(8.dp))
+                    SwitchRow(
+                        title = "Retirement calculator",
+                        subtitle = "Show work-life countdown on the calculator screen",
+                        checked = retirementEnabled,
+                        onCheckedChange = settingsViewModel::setRetirementEnabled,
+                    )
+
+                    if (retirementEnabled) {
+                        Spacer(Modifier.height(8.dp))
+                        Text(
+                            "Retirement age",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = WarmInkDim,
+                        )
+                        Spacer(Modifier.height(4.dp))
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        ) {
+                            listOf(55, 60, 65, 70).forEach { age ->
+                                val selected = age == retirementAge
+                                Box(
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(8.dp))
+                                        .background(if (selected) WarmTeal.copy(alpha = 0.20f) else WarmSurfaceSoft)
+                                        .border(1.dp, if (selected) WarmTeal else WarmSurfaceSoft, RoundedCornerShape(8.dp))
+                                        .clickable { settingsViewModel.setRetirementAge(age) }
+                                        .padding(horizontal = 14.dp, vertical = 8.dp),
+                                    contentAlignment = Alignment.Center,
+                                ) {
+                                    Text(
+                                        "$age",
+                                        style = MaterialTheme.typography.labelMedium,
+                                        color = if (selected) WarmTeal else WarmInkMute,
+                                        fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
+                                    )
+                                }
+                            }
+                        }
+                    }
 
                     Spacer(Modifier.height(12.dp))
                     HorizontalDivider(color = WarmSurfaceSoft)

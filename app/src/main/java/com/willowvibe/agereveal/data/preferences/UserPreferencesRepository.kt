@@ -43,6 +43,8 @@ class UserPreferencesRepository @Inject constructor(
         private val TARGET_AGE_KEY = intPreferencesKey("target_age")
         private val TIME_REMAINING_ENABLED_KEY = booleanPreferencesKey("time_remaining_enabled")
         private val ACCENT_COLOR_KEY = intPreferencesKey("accent_color")
+        private val RETIREMENT_AGE_KEY = intPreferencesKey("retirement_age")
+        private val RETIREMENT_ENABLED_KEY = booleanPreferencesKey("retirement_enabled")
     }
 
     private val dataStore = context.userPrefsDataStore
@@ -107,5 +109,16 @@ class UserPreferencesRepository @Inject constructor(
         // Mirror to SharedPreferences so ShareCardGenerator can read synchronously
         context.getSharedPreferences("calculator_prefs", Context.MODE_PRIVATE)
             .edit().putInt("accent_color", color).apply()
+    }
+
+    // ── Retirement calculator settings ───────────────────────────────────
+    val retirementAge: Flow<Int> = dataStore.data.map { it[RETIREMENT_AGE_KEY] ?: 60 }
+    suspend fun setRetirementAge(age: Int) {
+        dataStore.edit { it[RETIREMENT_AGE_KEY] = age }
+    }
+
+    val retirementEnabled: Flow<Boolean> = dataStore.data.map { it[RETIREMENT_ENABLED_KEY] ?: true }
+    suspend fun setRetirementEnabled(enabled: Boolean) {
+        dataStore.edit { it[RETIREMENT_ENABLED_KEY] = enabled }
     }
 }

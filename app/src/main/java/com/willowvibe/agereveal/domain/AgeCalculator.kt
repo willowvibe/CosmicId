@@ -23,6 +23,8 @@ class AgeCalculator @Inject constructor(
     private val dashaCalculator: DashaCalculator,
     private val baZiCalculator: BaZiCalculator,
     private val lunarConverter: LunarCalendarConverter,
+    private val percentileCalculator: AgePercentileCalculator,
+    private val parallelUniverseGenerator: ParallelUniverseGenerator,
 ) {
 
     /**
@@ -58,6 +60,7 @@ class AgeCalculator @Inject constructor(
         var nextBirthday = yearSafeBirthday(birthDate, today.year)
         if (nextBirthday.isBefore(today)) nextBirthday = yearSafeBirthday(birthDate, today.year + 1)
         val daysToNextBirthday = ChronoUnit.DAYS.between(today, nextBirthday)
+        val percentileResult = if (includeUnlocked) percentileCalculator.calculate(period.years) else null
 
         return AgeResult(
             birthDate = birthDate,
@@ -89,6 +92,9 @@ class AgeCalculator @Inject constructor(
             baZiInfo = if (includeUnlocked) baZiCalculator.getBaZiSummary(birthDate) else "",
             lunarBirthday = if (includeUnlocked) lunarConverter.toLunarString(birthDate) else "",
             estimatedHeartbeats = if (includeUnlocked) estimateHeartbeats(totalMinutes) else 0L,
+            globalPercentile = percentileResult?.percentileText ?: "",
+            sharedBirthDateEstimate = percentileResult?.sharedBirthDateEstimate ?: "",
+            parallelUniverses = if (includeUnlocked) parallelUniverseGenerator.generate(birthDate, today) else emptyList(),
             isExact = birthTime != null,
         )
     }

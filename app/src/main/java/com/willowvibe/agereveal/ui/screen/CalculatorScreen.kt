@@ -247,6 +247,11 @@ fun CalculatorScreen(
                                 TimeRemainingCard(uiState.timeRemaining!!)
                             }
                         }
+                        if (uiState.retirement != null && uiState.retirementEnabled) {
+                            StaggeredEnter(delayMillis = 252) {
+                                RetirementCard(uiState.retirement!!)
+                            }
+                        }
                         if (uiState.dailyFortune != null && uiState.dailyFortuneEnabled) {
                             StaggeredEnter(delayMillis = 260) {
                                 DailyFortuneCard(uiState.dailyFortune!!) {
@@ -1024,6 +1029,36 @@ private fun TimeRemainingCard(timeRemaining: com.willowvibe.agereveal.domain.Tim
         )
         Text(
             "That's ${timeRemaining.fridays} Fridays, ${timeRemaining.paychecks} paychecks, ${timeRemaining.fullMoons} full moons",
+            style = MaterialTheme.typography.labelSmall,
+            color = WarmInkMute,
+        )
+    }
+}
+
+@Composable
+private fun RetirementCard(retirement: com.willowvibe.agereveal.domain.RetirementCalculator.RetirementResult) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
+            .background(WarmTeal.copy(alpha = 0.12f))
+            .border(1.dp, WarmTeal.copy(alpha = 0.18f), RoundedCornerShape(12.dp))
+            .padding(14.dp),
+    ) {
+        Text(
+            "WORK LIFE",
+            style = MaterialTheme.typography.labelSmall,
+            color = WarmTeal,
+        )
+        Spacer(Modifier.height(6.dp))
+        Text(
+            "${retirement.workWeeksLeft} work weeks left until retirement at ${retirement.retirementAge}",
+            style = MaterialTheme.typography.bodySmall,
+            fontWeight = FontWeight.SemiBold,
+            color = WarmInk,
+        )
+        Text(
+            "${retirement.percentOfWorkLifeComplete}% of your work life is complete · ${retirement.daysUntilRetirement} days to go",
             style = MaterialTheme.typography.labelSmall,
             color = WarmInkMute,
         )

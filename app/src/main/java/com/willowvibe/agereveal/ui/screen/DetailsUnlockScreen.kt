@@ -175,6 +175,15 @@ fun DetailsUnlockScreen(
                     )
                 }
 
+                // ── Global age percentile ──────────────────────────────────
+                if (uiState.isUnlocked && result.globalPercentile.isNotEmpty()) {
+                    PercentileCard(
+                        percentileText = result.globalPercentile,
+                        sharedEstimate = result.sharedBirthDateEstimate,
+                        onShare = { viewModel.sharePercentileCard() },
+                    )
+                }
+
                 // ── Watch-ad gate (only when not unlocked) ───────────────────
                 if (!uiState.isUnlocked) {
                     WatchAdBanner(isLoading = uiState.isAdLoading, onWatch = onWatchAd)
@@ -218,6 +227,14 @@ fun DetailsUnlockScreen(
                         onShare = { stat ->
                             viewModel.shareLifeStatCard(stat.label, stat.value, stat.emoji)
                         },
+                    )
+                }
+
+                // ── Parallel Universe Birth ──────────────────────────────────
+                if (uiState.isUnlocked && result.parallelUniverses.isNotEmpty()) {
+                    ParallelUniverseCard(
+                        universes = result.parallelUniverses,
+                        onShare = { viewModel.shareParallelUniverseCard() },
                     )
                 }
 
@@ -1082,6 +1099,177 @@ private fun LifeStatCard(
             color = WarmInkMute,
             textAlign = TextAlign.Center,
         )
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Parallel Universe Birth card
+// ─────────────────────────────────────────────────────────────────────────────
+
+@Composable
+internal fun ParallelUniverseCard(
+    universes: List<com.willowvibe.agereveal.domain.ParallelUniverseGenerator.UniverseContext>,
+    onShare: () -> Unit,
+) {
+    val haptic = LocalHapticFeedback.current
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(16.dp))
+            .background(WarmSurface)
+            .padding(18.dp),
+    ) {
+        Text(
+            "PARALLEL UNIVERSE BIRTH",
+            style = MaterialTheme.typography.labelSmall,
+            color = WarmInkDim,
+        )
+        Spacer(Modifier.height(12.dp))
+        universes.forEachIndexed { index, universe ->
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(universe.emoji, fontSize = 24.sp)
+                Spacer(Modifier.width(12.dp))
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        universe.era,
+                        style = MaterialTheme.typography.bodySmall,
+                        fontWeight = FontWeight.SemiBold,
+                        color = WarmInk,
+                    )
+                    Text(
+                        universe.ageText,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = WarmInkMute,
+                    )
+                }
+            }
+            if (index < universes.size - 1) {
+                Spacer(Modifier.height(8.dp))
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(1.dp)
+                        .background(WarmSurfaceSoft),
+                )
+                Spacer(Modifier.height(8.dp))
+            }
+        }
+        Spacer(Modifier.height(12.dp))
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(10.dp))
+                .background(WarmTeal.copy(alpha = 0.10f))
+                .clickable(role = Role.Button) {
+                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                    onShare()
+                }
+                .padding(vertical = 10.dp),
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Icon(
+                Icons.Default.Share,
+                contentDescription = "Share parallel universe",
+                tint = WarmTeal,
+                modifier = Modifier.size(16.dp),
+            )
+            Spacer(Modifier.width(8.dp))
+            Text(
+                "Share",
+                style = MaterialTheme.typography.labelMedium,
+                color = WarmTeal,
+                fontWeight = FontWeight.SemiBold,
+            )
+        }
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Global age percentile card
+// ─────────────────────────────────────────────────────────────────────────────
+
+@Composable
+internal fun PercentileCard(
+    percentileText: String,
+    sharedEstimate: String,
+    onShare: () -> Unit,
+) {
+    val haptic = LocalHapticFeedback.current
+    val bigNumber = percentileText.substringAfter("Older than ").substringBefore("%")
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(16.dp))
+            .background(WarmSurface)
+            .padding(18.dp),
+    ) {
+        Text(
+            "GLOBAL PERCENTILE",
+            style = MaterialTheme.typography.labelSmall,
+            color = WarmInkDim,
+        )
+        Spacer(Modifier.height(12.dp))
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                "🌍",
+                fontSize = 28.sp,
+            )
+            Spacer(Modifier.width(14.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    "$bigNumber%",
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = WarmInk,
+                )
+                Text(
+                    "of humans alive today are younger than you",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = WarmInkMute,
+                )
+            }
+        }
+        Spacer(Modifier.height(10.dp))
+        Text(
+            sharedEstimate,
+            style = MaterialTheme.typography.labelSmall,
+            color = WarmInkDim,
+        )
+        Spacer(Modifier.height(10.dp))
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(10.dp))
+                .background(WarmTeal.copy(alpha = 0.10f))
+                .clickable(role = Role.Button) {
+                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                    onShare()
+                }
+                .padding(vertical = 10.dp),
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Icon(
+                Icons.Default.Share,
+                contentDescription = "Share percentile",
+                tint = WarmTeal,
+                modifier = Modifier.size(16.dp),
+            )
+            Spacer(Modifier.width(8.dp))
+            Text(
+                "Share stat",
+                style = MaterialTheme.typography.labelMedium,
+                color = WarmTeal,
+                fontWeight = FontWeight.SemiBold,
+            )
+        }
     }
 }
 
