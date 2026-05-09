@@ -180,8 +180,8 @@ This section is the "main character energy" roadmap — features built to screen
 **Goal:** Give users stats that make them feel unique or part of something bigger.
 
 
-#### 6.3.2 Global Age Percentile (M / ⭐⭐⭐⭐)
-- [ ] Create `AgePercentileCalculator.kt` using UN World Population Prospects 2024 data.
+#### 6.3.2 Global Age Percentile (M / ⭐⭐⭐⭐) — ✅ Implemented
+- [x] Create `AgePercentileCalculator.kt` using UN World Population Prospects 2024 data.
 - [ ] Store age-distribution quintiles for each year (male/female combined for simplicity).
 - [ ] Calculate: "At age X, you're older than Y% of the global population."
 - [ ] Add to DetailsUnlockScreen as a shareable stat.

@@ -61,6 +61,10 @@ data class AgeResult(
     // Fun fact (unlockable)
     val estimatedHeartbeats: Long = 0L,
 
+    // Global age percentile (unlockable)
+    val globalPercentile: String = "",
+    val sharedBirthDateEstimate: String = "",
+
     // Precision indicator
     val isExact: Boolean = birthTime != null,  // True if time of birth is provided
 )

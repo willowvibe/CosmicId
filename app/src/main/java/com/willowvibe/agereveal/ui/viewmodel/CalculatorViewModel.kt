@@ -89,6 +89,9 @@ class CalculatorViewModel @Inject constructor(
         shareCardGenerator.setTransparentShareErrorHandler { error ->
             _uiState.update { it.copy(error = "Failed to share overlay: ${error.message}") }
         }
+        shareCardGenerator.setPercentileShareErrorHandler { error ->
+            _uiState.update { it.copy(error = "Failed to share percentile: ${error.message}") }
+        }
 
         // Restore previously entered birth date + time + location
         val savedDate = prefs.getString("birth_date", null)
@@ -287,6 +290,19 @@ class CalculatorViewModel @Inject constructor(
         val result = _uiState.value.result ?: return
         viewModelScope.launch(Dispatchers.IO) {
             shareCardGenerator.shareTransparentOverlay(result)
+        }
+        reviewHelper.maybePromptAfterShare(activity)
+    }
+
+    /** Share a global age percentile card. */
+    fun sharePercentileCard(activity: Activity? = null) {
+        val result = _uiState.value.result ?: return
+        val percentile = result.globalPercentile.takeIf { it.isNotEmpty() } ?: return
+        viewModelScope.launch(Dispatchers.IO) {
+            shareCardGenerator.sharePercentile(
+                percentileText = percentile,
+                sharedEstimate = result.sharedBirthDateEstimate,
+            )
         }
         reviewHelper.maybePromptAfterShare(activity)
     }

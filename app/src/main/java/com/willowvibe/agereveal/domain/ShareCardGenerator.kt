@@ -56,6 +56,7 @@ class ShareCardGenerator @Inject constructor(
     private val sharingLifeStat = AtomicBoolean(false)
     private val sharingStory = AtomicBoolean(false)
     private val sharingTransparent = AtomicBoolean(false)
+    private val sharingPercentile = AtomicBoolean(false)
 
     // Error callback — invoked on main thread when sharing fails
     private var onShareError: ((Throwable) -> Unit)? = null
@@ -65,6 +66,7 @@ class ShareCardGenerator @Inject constructor(
     private var onLifeStatShareError: ((Throwable) -> Unit)? = null
     private var onStoryShareError: ((Throwable) -> Unit)? = null
     private var onTransparentShareError: ((Throwable) -> Unit)? = null
+    private var onPercentileShareError: ((Throwable) -> Unit)? = null
 
     /** Register an error callback for share failures. */
     fun setShareErrorHandler(handler: ((Throwable) -> Unit)?) {
@@ -99,6 +101,11 @@ class ShareCardGenerator @Inject constructor(
     /** Register an error callback for transparent overlay share failures. */
     fun setTransparentShareErrorHandler(handler: ((Throwable) -> Unit)?) {
         onTransparentShareError = handler
+    }
+
+    /** Register an error callback for percentile share failures. */
+    fun setPercentileShareErrorHandler(handler: ((Throwable) -> Unit)?) {
+        onPercentileShareError = handler
     }
 
     companion object {
@@ -634,6 +641,75 @@ class ShareCardGenerator @Inject constructor(
         }
     }
 
+    /** Generate a shareable global percentile card. */
+    fun generatePercentileBitmap(
+        percentileText: String,
+        sharedEstimate: String,
+        theme: CardTheme = CardTheme.DARK_COSMOS,
+    ): Bitmap {
+        val accent = readAccentColor(context)
+        val contentBmp = Bitmap.createBitmap(CARD_WIDTH, CARD_HEIGHT, Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(contentBmp)
+        val paint = Paint(Paint.ANTI_ALIAS_FLAG)
+        when (theme) {
+            CardTheme.DARK_COSMOS -> {
+                drawThemeBackground(canvas, paint, CARD_WIDTH.toFloat(), CARD_HEIGHT.toFloat(), theme)
+                drawPercentileContent(canvas, paint, percentileText, sharedEstimate, Color.WHITE, accent)
+            }
+            CardTheme.MINIMAL_LIGHT -> {
+                paint.color = Color.WHITE
+                canvas.drawRect(0f, 0f, CARD_WIDTH.toFloat(), CARD_HEIGHT.toFloat(), paint)
+                drawPercentileContent(canvas, paint, percentileText, sharedEstimate, Color.parseColor("#1c1917"), accent)
+            }
+            CardTheme.FESTIVE_INDIA -> {
+                drawThemeBackground(canvas, paint, CARD_WIDTH.toFloat(), CARD_HEIGHT.toFloat(), theme)
+                drawPercentileContent(canvas, paint, percentileText, sharedEstimate, Color.WHITE, Color.parseColor("#FFD700"))
+            }
+        }
+        return embedInSquare(contentBmp, theme, paint)
+    }
+
+    /** Share a global percentile card via Android share sheet. */
+    fun sharePercentile(
+        percentileText: String,
+        sharedEstimate: String,
+        theme: CardTheme = CardTheme.DARK_COSMOS,
+    ) {
+        if (!sharingPercentile.compareAndSet(false, true)) return
+        var bitmap: Bitmap? = null
+        try {
+            bitmap = generatePercentileBitmap(percentileText, sharedEstimate, theme)
+            val uri = saveBitmapToCache(bitmap, "percentile_card.png")
+            bitmap.recycle()
+            bitmap = null
+            val intent = Intent(Intent.ACTION_SEND).apply {
+                type = "image/png"
+                putExtra(Intent.EXTRA_STREAM, uri)
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            }
+            Handler(Looper.getMainLooper()).post {
+                try {
+                    val chooser = Intent.createChooser(intent, "Share percentile")
+                    chooser.clipData = ClipData.newRawUri("", uri)
+                    chooser.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                    if (context is android.app.Activity) {
+                        context.startActivity(chooser)
+                    } else {
+                        context.startActivity(chooser.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+                    }
+                } catch (e: Exception) {
+                    onPercentileShareError?.invoke(e)
+                } finally {
+                    sharingPercentile.set(false)
+                }
+            }
+        } catch (e: Exception) {
+            bitmap?.recycle()
+            sharingPercentile.set(false)
+            onPercentileShareError?.invoke(e)
+        }
+    }
+
     // ---------------------------------------------------------------------------
     // Square-output helper (BUG-011)
     // ---------------------------------------------------------------------------
@@ -952,6 +1028,36 @@ class ShareCardGenerator @Inject constructor(
         paint.color = textColor; paint.alpha = 200; paint.textSize = 32f; paint.typeface = Typeface.DEFAULT
         val labelWidth = paint.measureText(label)
         canvas.drawText(label, (CARD_WIDTH - labelWidth) / 2f, 400f, paint)
+        paint.alpha = 255
+    }
+
+    // ---------------------------------------------------------------------------
+    // Percentile card layout
+    // ---------------------------------------------------------------------------
+
+    private fun drawPercentileContent(
+        canvas: Canvas, paint: Paint,
+        percentileText: String, sharedEstimate: String,
+        textColor: Int, accentColor: Int,
+    ) {
+        paint.color = textColor; paint.alpha = 120; paint.textSize = 28f; paint.typeface = Typeface.DEFAULT
+        canvas.drawText("GLOBAL PERCENTILE", 60f, 75f, paint)
+
+        // Extract big number from "Older than X% of the global population"
+        val bigNumber = percentileText.substringAfter("Older than ").substringBefore("%")
+
+        paint.alpha = 255; paint.textSize = 140f; paint.typeface = Typeface.DEFAULT_BOLD; paint.color = accentColor
+        val numWidth = paint.measureText("$bigNumber%")
+        canvas.drawText("$bigNumber%", (CARD_WIDTH - numWidth) / 2f, 280f, paint)
+
+        paint.color = textColor; paint.alpha = 200; paint.textSize = 32f; paint.typeface = Typeface.DEFAULT
+        val subtitle = "of humans alive today are younger than you"
+        val subWidth = paint.measureText(subtitle)
+        canvas.drawText(subtitle, (CARD_WIDTH - subWidth) / 2f, 350f, paint)
+
+        paint.alpha = 160; paint.textSize = 26f
+        val estWidth = paint.measureText(sharedEstimate)
+        canvas.drawText(sharedEstimate, (CARD_WIDTH - estWidth) / 2f, 420f, paint)
         paint.alpha = 255
     }
 
