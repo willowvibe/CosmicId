@@ -48,6 +48,10 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
+import com.willowvibe.agereveal.ui.components.AgeBody
+import com.willowvibe.agereveal.ui.components.AgeCard
+import com.willowvibe.agereveal.ui.components.AgeLabel
+import com.willowvibe.agereveal.ui.components.AgeValue
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
@@ -250,17 +254,12 @@ fun DetailsUnlockScreen(
 
 @Composable
 internal fun AstroTile(result: AgeResult, isUnlocked: Boolean, hasLocation: Boolean = false) {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(16.dp))
-            .background(WarmSurface),
-    ) {
+    AgeCard {
         // Radial glow in the top-right corner
         Box(
             modifier = Modifier
+                .fillMaxWidth()
                 .size(140.dp)
-                .align(Alignment.TopEnd)
                 .background(
                     Brush.radialGradient(
                         colors = listOf(WarmTeal.copy(alpha = 0.20f), WarmTeal.copy(alpha = 0f)),
@@ -268,13 +267,8 @@ internal fun AstroTile(result: AgeResult, isUnlocked: Boolean, hasLocation: Bool
                 ),
         )
 
-        Column(modifier = Modifier.padding(18.dp)) {
-            Text(
-                "WESTERN · VEDIC · CHINESE",
-                style = MaterialTheme.typography.labelSmall,
-                color = WarmInkDim,
-                modifier = Modifier.semantics { heading() },
-            )
+        Column {
+            AgeLabel(text = "WESTERN · VEDIC · CHINESE", modifier = Modifier.semantics { heading() })
             Spacer(Modifier.height(6.dp))
             if (isUnlocked && result.westernZodiac.isNotEmpty()) {
                 // ── Hero: primary signs ────────────────────────────────────
@@ -416,17 +410,11 @@ private fun AstroGridItem(label: String, value: String, modifier: Modifier = Mod
             stateDescription = "$label: $value"
         },
     ) {
-        Text(
-            label.uppercase(),
-            style = MaterialTheme.typography.labelSmall,
-            color = WarmInkDim,
-        )
+        AgeLabel(text = label)
         Spacer(Modifier.height(2.dp))
-        Text(
-            value,
-            style = MaterialTheme.typography.bodySmall,
+        AgeBody(
+            text = value,
             color = WarmInk,
-            fontWeight = FontWeight.SemiBold,
         )
     }
 }
@@ -434,17 +422,11 @@ private fun AstroGridItem(label: String, value: String, modifier: Modifier = Mod
 @Composable
 private fun DashaRow(info: String) {
     Column {
-        Text(
-            "DASHA",
-            style = MaterialTheme.typography.labelSmall,
-            color = WarmInkDim,
-        )
+        AgeLabel(text = "DASHA")
         Spacer(Modifier.height(2.dp))
-        Text(
-            info,
-            style = MaterialTheme.typography.bodySmall,
-            color = WarmAmber,
-            fontWeight = FontWeight.SemiBold,
+        AgeValue(
+            text = info,
+            accentColor = WarmAmber,
         )
     }
 }
@@ -452,17 +434,11 @@ private fun DashaRow(info: String) {
 @Composable
 private fun BaZiRow(info: String) {
     Column {
-        Text(
-            "BA ZI (FOUR PILLARS)",
-            style = MaterialTheme.typography.labelSmall,
-            color = WarmInkDim,
-        )
+        AgeLabel(text = "BA ZI (FOUR PILLARS)")
         Spacer(Modifier.height(2.dp))
-        Text(
-            info,
-            style = MaterialTheme.typography.bodySmall,
+        AgeBody(
+            text = info,
             color = WarmInk,
-            fontWeight = FontWeight.Medium,
         )
     }
 }
@@ -474,11 +450,7 @@ private fun BaZiRow(info: String) {
 @Composable
 private fun PlanetPositionTable(positions: List<Pair<String, String>>) {
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        Text(
-            "PLANETARY POSITIONS",
-            style = MaterialTheme.typography.labelSmall,
-            color = WarmInkDim,
-        )
+        AgeLabel(text = "PLANETARY POSITIONS")
         Spacer(Modifier.height(4.dp))
         positions.forEach { (planet, sign) ->
             Row(
@@ -486,17 +458,10 @@ private fun PlanetPositionTable(positions: List<Pair<String, String>>) {
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Text(
-                    planet,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = WarmInkMute,
-                    fontWeight = FontWeight.Medium,
-                )
-                Text(
-                    sign,
-                    style = MaterialTheme.typography.bodySmall,
+                AgeBody(text = planet)
+                AgeBody(
+                    text = sign,
                     color = WarmInk,
-                    fontWeight = FontWeight.SemiBold,
                 )
             }
         }
@@ -512,20 +477,32 @@ internal fun WatchAdBanner(isLoading: Boolean, onWatch: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(14.dp))
+            .clip(RoundedCornerShape(12.dp))
             .background(WarmSurface)
-            .padding(horizontal = 16.dp, vertical = 14.dp),
+            .border(
+                width = 1.dp,
+                color = Color.White.copy(alpha = 0.08f),
+                shape = RoundedCornerShape(12.dp),
+            )
+            .padding(start = 12.dp, top = 14.dp, end = 16.dp, bottom = 14.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween,
     ) {
-        Column {
-            Text(
-                "Unlock full profile",
-                style = MaterialTheme.typography.bodyMedium,
+        // Left accent strip
+        Box(
+            modifier = Modifier
+                .width(4.dp)
+                .height(36.dp)
+                .clip(RoundedCornerShape(99.dp))
+                .background(WarmTeal),
+        )
+        Spacer(Modifier.width(12.dp))
+        Column(modifier = Modifier.weight(1f)) {
+            AgeBody(
+                text = "Unlock full profile",
                 color = WarmInk,
-                fontWeight = FontWeight.SemiBold
             )
-            Text("Watch a 15s ad", style = MaterialTheme.typography.bodySmall, color = WarmInkMute)
+            AgeBody(text = "Watch a 15s ad")
         }
         if (isLoading) {
             CircularProgressIndicator(modifier = Modifier.size(24.dp), color = WarmTeal, strokeWidth = 2.dp)
@@ -540,7 +517,7 @@ internal fun WatchAdBanner(isLoading: Boolean, onWatch: () -> Unit) {
                         haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                         onWatch()
                     }
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                    .padding(horizontal = 14.dp, vertical = 6.dp),
             ) {
                 Text(
                     "Watch & Reveal",
@@ -565,18 +542,8 @@ private fun MilestoneTimeline(
     onShare: (Milestone) -> Unit,
     onToggleNotification: (Int, Boolean) -> Unit = { _, _ -> },
 ) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(16.dp))
-            .background(WarmSurface)
-            .padding(14.dp),
-    ) {
-        Text(
-            "LIFE TIMELINE",
-            style = MaterialTheme.typography.labelSmall,
-            color = WarmInkDim,
-        )
+    AgeCard {
+        AgeLabel(text = "LIFE TIMELINE")
         Spacer(Modifier.height(10.dp))
 
         // Life progress bar
@@ -623,16 +590,8 @@ internal fun LifeProgressBar(totalDays: Long) {
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text(
-                "LIFE LIVED",
-                style = MaterialTheme.typography.labelSmall,
-                color = WarmInkDim,
-            )
-            Text(
-                "${(progress * 100).toInt()}% · ~$years yrs of 80",
-                style = MaterialTheme.typography.labelSmall,
-                color = WarmInkMute,
-            )
+            AgeLabel(text = "LIFE LIVED")
+            AgeLabel(text = "${(progress * 100).toInt()}% · ~$years yrs of 80")
         }
         Box(
             modifier = Modifier
@@ -694,10 +653,8 @@ internal fun MilestoneRow(
         )
         Spacer(Modifier.width(12.dp))
         Column(modifier = Modifier.weight(1f)) {
-            Text(
-                "%,dth day".format(milestone.targetDays),
-                style = MaterialTheme.typography.bodySmall,
-                fontWeight = if (milestone.isPast || isToday) FontWeight.SemiBold else FontWeight.Normal,
+            AgeBody(
+                text = "%,dth day".format(milestone.targetDays),
                 color = if (milestone.isPast || isToday) WarmInk else WarmInkMute,
             )
             Text(
@@ -706,11 +663,9 @@ internal fun MilestoneRow(
                 color = WarmInkDim,
             )
         }
-        Text(
-            statusLabel,
-            style = MaterialTheme.typography.labelSmall,
-            color = statusColor,
-            fontWeight = if (milestone.isPast || isToday) FontWeight.SemiBold else FontWeight.Normal,
+        AgeLabel(
+            text = statusLabel,
+            accentColor = statusColor,
         )
         if (isUnlocked && milestone.isPast) {
             IconButton(onClick = onShare, modifier = Modifier.size(32.dp)) {
@@ -755,35 +710,22 @@ internal fun GenerationBadgeChip(generation: com.willowvibe.agereveal.domain.Gen
             else -> "%,d sec".format(totalSeconds)
         }
     }
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
-            .background(
-                Brush.horizontalGradient(
-                    listOf(WarmSurface, WarmSurfaceSoft.copy(alpha = 0.5f))
+    AgeCard {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                generation.emoji,
+                fontSize = 24.sp,
+            )
+            Spacer(Modifier.width(12.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                AgeBody(
+                    text = "Certified ${generation.shortName}",
+                    color = WarmInk,
                 )
-            )
-            .padding(horizontal = 16.dp, vertical = 12.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Text(
-            generation.emoji,
-            fontSize = 24.sp,
-        )
-        Spacer(Modifier.width(12.dp))
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                "Certified ${generation.shortName}",
-                style = MaterialTheme.typography.bodySmall,
-                fontWeight = FontWeight.SemiBold,
-                color = WarmInk,
-            )
-            Text(
-                "$secLabel · ${generation.startYear}–${generation.endYear}",
-                style = MaterialTheme.typography.labelSmall,
-                color = WarmInkMute,
-            )
+                AgeLabel(text = "$secLabel · ${generation.startYear}–${generation.endYear}")
+            }
         }
     }
 }
@@ -797,65 +739,51 @@ internal fun MoonPhaseCard(
     birthPhase: com.willowvibe.agereveal.domain.MoonPhase,
     currentPhase: com.willowvibe.agereveal.domain.MoonPhase,
 ) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(16.dp))
-            .background(WarmSurface)
-            .padding(16.dp),
-        horizontalArrangement = Arrangement.SpaceEvenly,
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        // Birth moon
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(
-                "BIRTH MOON",
-                style = MaterialTheme.typography.labelSmall,
-                color = WarmInkDim,
-            )
-            Spacer(Modifier.height(8.dp))
-            MoonPhaseVisual(
-                illuminationFraction = birthPhase.illuminationFraction.toFloat(),
-                waxing = birthPhase.waxing,
-                modifier = Modifier.size(56.dp),
-            )
-            Spacer(Modifier.height(6.dp))
-            Text(
-                birthPhase.name,
-                style = MaterialTheme.typography.bodySmall,
-                fontWeight = FontWeight.SemiBold,
-                color = WarmInk,
-            )
-        }
+    AgeCard {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceEvenly,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            // Birth moon
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                AgeLabel(text = "BIRTH MOON")
+                Spacer(Modifier.height(8.dp))
+                MoonPhaseVisual(
+                    illuminationFraction = birthPhase.illuminationFraction.toFloat(),
+                    waxing = birthPhase.waxing,
+                    modifier = Modifier.size(56.dp),
+                )
+                Spacer(Modifier.height(6.dp))
+                AgeBody(
+                    text = birthPhase.name,
+                    color = WarmInk,
+                )
+            }
 
-        // Divider
-        Box(
-            modifier = Modifier
-                .height(60.dp)
-                .width(1.dp)
-                .background(WarmSurfaceSoft),
-        )
+            // Divider
+            Box(
+                modifier = Modifier
+                    .height(60.dp)
+                    .width(1.dp)
+                    .background(WarmSurfaceSoft),
+            )
 
-        // Current moon
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(
-                "MOON TONIGHT",
-                style = MaterialTheme.typography.labelSmall,
-                color = WarmInkDim,
-            )
-            Spacer(Modifier.height(8.dp))
-            MoonPhaseVisual(
-                illuminationFraction = currentPhase.illuminationFraction.toFloat(),
-                waxing = currentPhase.waxing,
-                modifier = Modifier.size(56.dp),
-            )
-            Spacer(Modifier.height(6.dp))
-            Text(
-                currentPhase.name,
-                style = MaterialTheme.typography.bodySmall,
-                fontWeight = FontWeight.SemiBold,
-                color = WarmInk,
-            )
+            // Current moon
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                AgeLabel(text = "MOON TONIGHT")
+                Spacer(Modifier.height(8.dp))
+                MoonPhaseVisual(
+                    illuminationFraction = currentPhase.illuminationFraction.toFloat(),
+                    waxing = currentPhase.waxing,
+                    modifier = Modifier.size(56.dp),
+                )
+                Spacer(Modifier.height(6.dp))
+                AgeBody(
+                    text = currentPhase.name,
+                    color = WarmInk,
+                )
+            }
         }
     }
 }
@@ -947,18 +875,8 @@ private fun MoonPhaseVisual(
 @Composable
 internal fun PlanetAgesRow(planetAges: List<com.willowvibe.agereveal.domain.PlanetAge>) {
     val calc = remember { PlanetAgeCalculator() }
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(16.dp))
-            .background(WarmSurface)
-            .padding(14.dp),
-    ) {
-        Text(
-            "PLANET AGES",
-            style = MaterialTheme.typography.labelSmall,
-            color = WarmInkDim,
-        )
+    AgeCard {
+        AgeLabel(text = "PLANET AGES")
         Spacer(Modifier.height(10.dp))
         Row(
             modifier = Modifier.horizontalScroll(rememberScrollState()),
@@ -979,17 +897,11 @@ internal fun PlanetAgesRow(planetAges: List<com.willowvibe.agereveal.domain.Plan
                         fontSize = 20.sp,
                     )
                     Spacer(Modifier.height(4.dp))
-                    Text(
-                        formatted,
-                        style = MaterialTheme.typography.bodySmall,
-                        fontWeight = FontWeight.SemiBold,
+                    AgeBody(
+                        text = formatted,
                         color = WarmInk,
                     )
-                    Text(
-                        planetAge.planet.displayName,
-                        style = MaterialTheme.typography.labelSmall,
-                        color = WarmInkMute,
-                    )
+                    AgeLabel(text = planetAge.planet.displayName)
                 }
             }
         }
@@ -1002,22 +914,18 @@ internal fun PlanetAgesRow(planetAges: List<com.willowvibe.agereveal.domain.Plan
 
 @Composable
 internal fun HeartbeatRow(heartbeats: Long) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
-            .background(WarmSurface)
-            .padding(horizontal = 16.dp, vertical = 12.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.Center,
-    ) {
-        Text("♥", color = WarmAmber, fontSize = 16.sp)
-        Spacer(Modifier.width(8.dp))
-        Text(
-            "${formatHeartbeatsLong(heartbeats)} heartbeats and counting",
-            style = MaterialTheme.typography.bodySmall,
-            color = WarmInkDim,
-        )
+    AgeCard {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center,
+        ) {
+            Text("♥", color = WarmAmber, fontSize = 16.sp)
+            Spacer(Modifier.width(8.dp))
+            AgeBody(
+                text = "${formatHeartbeatsLong(heartbeats)} heartbeats and counting",
+            )
+        }
     }
 }
 
@@ -1031,18 +939,8 @@ internal fun LifeStatsSection(
     onShare: (LifeStatsCalculator.LifeStat) -> Unit,
 ) {
     val haptic = LocalHapticFeedback.current
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(16.dp))
-            .background(WarmSurface)
-            .padding(14.dp),
-    ) {
-        Text(
-            "LIFE STATS",
-            style = MaterialTheme.typography.labelSmall,
-            color = WarmInkDim,
-        )
+    AgeCard {
+        AgeLabel(text = "LIFE STATS")
         Spacer(Modifier.height(12.dp))
         stats.chunked(2).forEach { pair ->
             Row(
@@ -1087,18 +985,8 @@ private fun LifeStatCard(
     ) {
         Text(stat.emoji, fontSize = 24.sp)
         Spacer(Modifier.height(4.dp))
-        Text(
-            stat.value,
-            style = MaterialTheme.typography.bodyMedium,
-            fontWeight = FontWeight.Bold,
-            color = WarmInk,
-        )
-        Text(
-            stat.label,
-            style = MaterialTheme.typography.labelSmall,
-            color = WarmInkMute,
-            textAlign = TextAlign.Center,
-        )
+        AgeValue(text = stat.value)
+        AgeLabel(text = stat.label)
     }
 }
 
@@ -1112,18 +1000,8 @@ internal fun ParallelUniverseCard(
     onShare: () -> Unit,
 ) {
     val haptic = LocalHapticFeedback.current
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(16.dp))
-            .background(WarmSurface)
-            .padding(18.dp),
-    ) {
-        Text(
-            "PARALLEL UNIVERSE BIRTH",
-            style = MaterialTheme.typography.labelSmall,
-            color = WarmInkDim,
-        )
+    AgeCard {
+        AgeLabel(text = "PARALLEL UNIVERSE BIRTH")
         Spacer(Modifier.height(12.dp))
         universes.forEachIndexed { index, universe ->
             Row(
@@ -1133,17 +1011,11 @@ internal fun ParallelUniverseCard(
                 Text(universe.emoji, fontSize = 24.sp)
                 Spacer(Modifier.width(12.dp))
                 Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        universe.era,
-                        style = MaterialTheme.typography.bodySmall,
-                        fontWeight = FontWeight.SemiBold,
+                    AgeBody(
+                        text = universe.era,
                         color = WarmInk,
                     )
-                    Text(
-                        universe.ageText,
-                        style = MaterialTheme.typography.labelSmall,
-                        color = WarmInkMute,
-                    )
+                    AgeLabel(text = universe.ageText)
                 }
             }
             if (index < universes.size - 1) {
@@ -1200,18 +1072,8 @@ internal fun PercentileCard(
 ) {
     val haptic = LocalHapticFeedback.current
     val bigNumber = percentileText.substringAfter("Older than ").substringBefore("%")
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(16.dp))
-            .background(WarmSurface)
-            .padding(18.dp),
-    ) {
-        Text(
-            "GLOBAL PERCENTILE",
-            style = MaterialTheme.typography.labelSmall,
-            color = WarmInkDim,
-        )
+    AgeCard {
+        AgeLabel(text = "GLOBAL PERCENTILE")
         Spacer(Modifier.height(12.dp))
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -1223,25 +1085,14 @@ internal fun PercentileCard(
             )
             Spacer(Modifier.width(14.dp))
             Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    "$bigNumber%",
-                    style = MaterialTheme.typography.headlineMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = WarmInk,
-                )
-                Text(
-                    "of humans alive today are younger than you",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = WarmInkMute,
+                AgeValue(text = "$bigNumber%")
+                AgeBody(
+                    text = "of humans alive today are younger than you",
                 )
             }
         }
         Spacer(Modifier.height(10.dp))
-        Text(
-            sharedEstimate,
-            style = MaterialTheme.typography.labelSmall,
-            color = WarmInkDim,
-        )
+        AgeLabel(text = sharedEstimate)
         Spacer(Modifier.height(10.dp))
         Row(
             modifier = Modifier

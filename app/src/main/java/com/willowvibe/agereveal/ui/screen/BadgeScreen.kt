@@ -58,6 +58,10 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.willowvibe.agereveal.data.model.BadgeDefinition
 import com.willowvibe.agereveal.domain.BadgeDefinitions
 import com.willowvibe.agereveal.domain.ShareCardGenerator
+import com.willowvibe.agereveal.ui.components.AgeBody
+import com.willowvibe.agereveal.ui.components.AgeCard
+import com.willowvibe.agereveal.ui.components.AgeLabel
+import com.willowvibe.agereveal.ui.components.AgeValue
 import com.willowvibe.agereveal.ui.theme.SerifFamily
 import com.willowvibe.agereveal.ui.theme.WarmAmber
 import com.willowvibe.agereveal.ui.theme.WarmBlack
@@ -368,11 +372,7 @@ private fun TimelineRow(
                 .fillMaxWidth()
                 .padding(bottom = if (showConnector) 20.dp else 0.dp),
         ) {
-            Text(
-                event.yearLabel.uppercase(),
-                style = MaterialTheme.typography.labelSmall,
-                color = WarmInkDim,
-            )
+            AgeLabel(text = event.yearLabel)
             Row(verticalAlignment = Alignment.CenterVertically) {
                 event.emoji?.let {
                     Text(it, fontSize = 14.sp, modifier = Modifier.padding(end = 6.dp))
@@ -384,9 +384,8 @@ private fun TimelineRow(
                     color = if (event.isUnlocked) WarmInk else WarmInkMute,
                 )
             }
-            Text(
-                event.subtitle,
-                style = MaterialTheme.typography.bodySmall,
+            AgeBody(
+                text = event.subtitle,
                 color = WarmInkDim,
             )
         }

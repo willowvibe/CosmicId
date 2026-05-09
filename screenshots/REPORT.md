@@ -1,12 +1,12 @@
 # AgeReveal UI Walkthrough Report
 
-**Date:** 2026-05-09 16:45:35
+**Date:** 2026-05-09 20:46:25
 
 ## Summary
 
 - **Total screens tested:** 21
-- **Total interactions tested:** 34
-- **Total screenshots captured:** 33
+- **Total interactions tested:** 30
+- **Total screenshots captured:** 32
 - **Bugs found:** 0
 
 ## Screens Tested
@@ -49,11 +49,7 @@
 - Daily Cosmic Fortune card tap
 - Global Percentile (not visible)
 - Share button (not visible)
-- Relationship type: Romantic
 - Person A name input
-- Person A date picker
-- Person A date selection
-- Person B name input
 - Add birthday FAB
 - Birthday name input
 - Emoji selection
@@ -85,7 +81,6 @@
 - `tab1_calculator_daily_fortune_visible.png`
 - `tab1_calculator_fortune_share_sheet.png`
 - `tab2_compatibility_default.png`
-- `tab2_compatibility_romantic_selected.png`
 - `tab2_compatibility_person_a_filled.png`
 - `tab2_compatibility_person_b_filled.png`
 - `tab2_compatibility_results_scrolled.png`

@@ -66,6 +66,10 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.willowvibe.agereveal.data.model.SavedBirthday
 import com.willowvibe.agereveal.domain.CompatibilityResult
+import com.willowvibe.agereveal.ui.components.AgeBody
+import com.willowvibe.agereveal.ui.components.AgeCard
+import com.willowvibe.agereveal.ui.components.AgeLabel
+import com.willowvibe.agereveal.ui.components.AgeValue
 import com.willowvibe.agereveal.ui.theme.SerifFamily
 import com.willowvibe.agereveal.ui.theme.WarmAmber
 import com.willowvibe.agereveal.ui.theme.WarmAmberDeep
@@ -134,14 +138,12 @@ fun RemindersScreen(
                     val daysUntilNext = nextUp?.let {
                         ChronoUnit.DAYS.between(today, LocalDate.ofEpochDay(it.nextBirthdayEpochDay))
                     }
-                    Text(
+                    AgeBody(
                         text = when {
                             daysUntilNext == null -> ""
                             daysUntilNext == 0L -> "${birthdays.size} saved · birthday today!"
                             else -> "${birthdays.size} saved · next in ${daysUntilNext}d"
                         },
-                        style = MaterialTheme.typography.bodySmall,
-                        color = WarmInkMute,
                     )
                 }
             }
@@ -202,10 +204,8 @@ fun RemindersScreen(
                 // ── Coming up ────────────────────────────────────────────────
                 if (later.isNotEmpty()) {
                     item {
-                        Text(
-                            "LATER",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = WarmInkDim,
+                        AgeLabel(
+                            text = "LATER",
                             modifier = Modifier.padding(bottom = 6.dp),
                         )
                     }
@@ -303,9 +303,8 @@ private fun NextUpHeroCard(birthday: SavedBirthday, daysUntil: Long) {
             val today = LocalDate.now()
             val turningAge = today.year - birthday.birthDate.year +
                     if (nextDate.year > today.year) 1 else 0
-            Text(
-                "${nextDate.format(DateTimeFormatter.ofPattern("EEE, d MMMM"))} · turning $turningAge",
-                style = MaterialTheme.typography.bodySmall,
+            AgeBody(
+                text = "${nextDate.format(DateTimeFormatter.ofPattern("EEE, d MMMM"))} · turning $turningAge",
                 color = WarmInk.copy(alpha = 0.9f),
             )
         }
@@ -384,19 +383,12 @@ private fun BirthdayTimelineRow(
 
 @Composable
 private fun CompatibilityResultRow(result: CompatibilityResult) {
-    Column(
+    AgeCard(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(top = 8.dp, start = 20.dp, end = 20.dp, bottom = 16.dp)
-            .clip(RoundedCornerShape(12.dp))
-            .background(WarmSurface)
-            .padding(16.dp),
+            .padding(top = 8.dp, start = 20.dp, end = 20.dp, bottom = 16.dp),
     ) {
-        Text(
-            "COMPATIBILITY",
-            style = MaterialTheme.typography.labelSmall,
-            color = WarmInkDim,
-        )
+        AgeLabel(text = "COMPATIBILITY")
         Spacer(Modifier.height(8.dp))
 
         Row(
@@ -594,10 +586,8 @@ private fun AddBirthdaySheet(
             )
 
             Column {
-                Text(
-                    "PICK AN EMOJI",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = WarmInkDim,
+                AgeLabel(
+                    text = "PICK AN EMOJI",
                     modifier = Modifier.padding(bottom = 8.dp),
                 )
                 LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -637,10 +627,9 @@ private fun AddBirthdaySheet(
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Column {
-                        Text(
-                            "DATE OF BIRTH",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = if (dateError) MaterialTheme.colorScheme.error else WarmInkDim,
+                        AgeLabel(
+                            text = "DATE OF BIRTH",
+                            accentColor = if (dateError) MaterialTheme.colorScheme.error else null,
                         )
                         Spacer(Modifier.height(4.dp))
                         Text(

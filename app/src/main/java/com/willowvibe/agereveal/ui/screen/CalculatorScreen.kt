@@ -51,6 +51,8 @@ import androidx.compose.material3.TimePicker
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -62,6 +64,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontFamily
@@ -87,6 +90,10 @@ import com.google.android.gms.ads.AdView
 import com.willowvibe.agereveal.ads.AdManager
 import com.willowvibe.agereveal.data.model.AgeResult
 import com.willowvibe.agereveal.domain.ShareCardGenerator
+import com.willowvibe.agereveal.ui.components.AgeBody
+import com.willowvibe.agereveal.ui.components.AgeCard
+import com.willowvibe.agereveal.ui.components.AgeLabel
+import com.willowvibe.agereveal.ui.components.AgeValue
 import com.willowvibe.agereveal.ui.theme.SerifFamily
 import com.willowvibe.agereveal.ui.theme.WarmAmber
 import com.willowvibe.agereveal.ui.theme.WarmBlack
@@ -145,18 +152,11 @@ fun CalculatorScreen(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 20.dp, vertical = 14.dp),
+                    .padding(horizontal = 16.dp, vertical = 10.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Box(
-                        modifier = Modifier
-                            .size(6.dp)
-                            .clip(CircleShape)
-                            .background(WarmAmber),
-                    )
-                    Spacer(Modifier.width(8.dp))
                     Text(
                         "AgeReveal",
                         style = MaterialTheme.typography.titleMedium,
@@ -165,13 +165,29 @@ fun CalculatorScreen(
                 }
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
                 ) {
-                    Text(
-                        "LIVE",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = WarmInkDim,
-                    )
+                    // LIVE chip
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier
+                            .clip(CircleShape)
+                            .background(WarmSurface)
+                            .padding(horizontal = 8.dp, vertical = 4.dp),
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(6.dp)
+                                .clip(CircleShape)
+                                .background(WarmAmber),
+                        )
+                        Spacer(Modifier.width(6.dp))
+                        Text(
+                            "LIVE",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = WarmInkDim,
+                        )
+                    }
                     IconButton(
                         onClick = onOpenSettings,
                         modifier = Modifier
@@ -183,7 +199,7 @@ fun CalculatorScreen(
                             Icons.Default.Settings,
                             contentDescription = "Settings",
                             tint = WarmInkDim,
-                            modifier = Modifier.size(16.dp),
+                            modifier = Modifier.size(14.dp),
                         )
                     }
                 }
@@ -193,8 +209,8 @@ fun CalculatorScreen(
                 modifier = Modifier
                     .weight(1f)
                     .verticalScroll(rememberScrollState())
-                    .padding(horizontal = 20.dp),
-                verticalArrangement = Arrangement.spacedBy(18.dp),
+                    .padding(horizontal = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp),
             ) {
                 // ── Person name input ─────────────────────────────────────────
                 OutlinedTextField(
@@ -236,7 +252,7 @@ fun CalculatorScreen(
                 )
 
                 uiState.result?.let { result ->
-                    Column(verticalArrangement = Arrangement.spacedBy(18.dp)) {
+                    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                         // Hero stagger entrance — each block fades in with a slight delay
                         StaggeredEnter(delayMillis = 0) { ClockFaceHero(result) }
                         StaggeredEnter(delayMillis = 70) { SecondsStrip(result) }
@@ -266,7 +282,6 @@ fun CalculatorScreen(
                                         isLoading = uiState.isAdLoading,
                                         onWatch = onUnlockMore,
                                     )
-                                    Spacer(Modifier.height(14.dp))
                                 }
                                 AstroTile(result = result, isUnlocked = uiState.isUnlocked, hasLocation = uiState.location != null)
                             }
@@ -274,34 +289,33 @@ fun CalculatorScreen(
                         if (uiState.isUnlocked) {
                             StaggeredEnter(delayMillis = 350) {
                                 val shareHaptic = LocalHapticFeedback.current
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .clip(RoundedCornerShape(14.dp))
-                                        .background(WarmSurface)
-                                        .clickable(
-                                            role = Role.Button,
-                                            onClick = {
-                                                shareHaptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                                showThemePicker = true
-                                            },
-                                        )
-                                        .semantics { contentDescription = "Share your cosmic profile" }
-                                        .padding(16.dp),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically,
+                                AgeCard(modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable(
+                                        role = Role.Button,
+                                        onClick = {
+                                            shareHaptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                            showThemePicker = true
+                                        },
+                                    )
+                                    .semantics { contentDescription = "Share your cosmic profile" }
                                 ) {
-                                    Text(
-                                        "Share your cosmic profile",
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        color = WarmInk,
-                                    )
-                                    Icon(
-                                        imageVector = Icons.Default.Share,
-                                        contentDescription = "Share",
-                                        tint = WarmTeal,
-                                        modifier = Modifier.size(20.dp),
-                                    )
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically,
+                                    ) {
+                                        AgeBody(
+                                            text = "Share your cosmic profile",
+                                            color = WarmInk,
+                                        )
+                                        Icon(
+                                            imageVector = Icons.Default.Share,
+                                            contentDescription = "Share",
+                                            tint = WarmTeal,
+                                            modifier = Modifier.size(20.dp),
+                                        )
+                                    }
                                 }
                             }
                         }
@@ -323,10 +337,11 @@ fun CalculatorScreen(
                     }
                 }
 
-                Spacer(Modifier.height(8.dp))
             }
 
             // ── Banner ad ────────────────────────────────────────────────────
+            HorizontalDivider(thickness = 1.dp, color = WarmSurfaceSoft)
+            Spacer(Modifier.height(4.dp))
             BannerAdView(adUnitId = AdManager.BANNER_AD_UNIT_ID)
         }
 
@@ -391,11 +406,7 @@ private fun BirthAnchorRow(
             Column(
                 modifier = Modifier.weight(1f),
             ) {
-                Text(
-                    "BORN",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = WarmInkDim,
-                )
+                AgeLabel(text = "BORN")
                 Spacer(Modifier.height(4.dp))
                 Text(
                     text = selectedDate
@@ -489,39 +500,32 @@ private fun AgeNumeral(
 
 @Composable
 internal fun SecondsStrip(result: AgeResult) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(14.dp))
-            .background(WarmSurface)
-            .padding(horizontal = 14.dp, vertical = 12.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Box(
-            modifier = Modifier
-                .size(6.dp)
-                .clip(CircleShape)
-                .background(WarmAmber),
-        )
-        Spacer(Modifier.width(12.dp))
-        Column(modifier = Modifier.weight(1f)) {
+    AgeCard {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(6.dp)
+                    .clip(CircleShape)
+                    .background(WarmAmber),
+            )
+            Spacer(Modifier.width(12.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                AgeLabel(text = "SECONDS ALIVE")
+                RollingDigits(
+                    number = result.totalSeconds,
+                    fontSize = 20.sp,
+                    color = WarmAmber,
+                )
+            }
             Text(
-                "SECONDS ALIVE",
+                "+1 per\nsecond",
                 style = MaterialTheme.typography.labelSmall,
                 color = WarmInkDim,
-            )
-            RollingDigits(
-                number = result.totalSeconds,
-                fontSize = 20.sp,
-                color = WarmAmber,
+                textAlign = TextAlign.End,
             )
         }
-        Text(
-            "+1 per\nsecond",
-            style = MaterialTheme.typography.labelSmall,
-            color = WarmInkDim,
-            textAlign = TextAlign.End,
-        )
     }
 }
 
@@ -604,19 +608,24 @@ private fun MiniStatChip(
     accent: Boolean = false,
     modifier: Modifier = Modifier,
 ) {
-    Column(
+    Row(
         modifier = modifier
-            .clip(RoundedCornerShape(10.dp))
+            .clip(RoundedCornerShape(99.dp))
             .background(WarmSurface)
-            .padding(horizontal = 12.dp, vertical = 10.dp),
+            .border(
+                width = 1.dp,
+                color = Color.White.copy(alpha = 0.08f),
+                shape = RoundedCornerShape(99.dp),
+            )
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween,
     ) {
-        Text(label, style = MaterialTheme.typography.labelSmall, color = WarmInkDim)
-        Spacer(Modifier.height(2.dp))
-        Text(
-            value,
-            fontWeight = FontWeight.SemiBold,
-            fontSize = 15.sp,
-            color = if (accent) WarmAmber else WarmInk,
+        AgeLabel(text = label)
+        Spacer(Modifier.width(6.dp))
+        AgeValue(
+            text = value,
+            accentColor = if (accent) WarmAmber else null,
         )
     }
 }
@@ -808,70 +817,129 @@ private fun PrecisionRow(
     }
 
     if (showLocationDialog) {
-        AlertDialog(
+        val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+        ModalBottomSheet(
             onDismissRequest = { showLocationDialog = false },
+            sheetState = sheetState,
             containerColor = WarmSurface,
-            titleContentColor = WarmInk,
-            title = { Text("Birth location (optional)", color = WarmInk) },
-            text = {
-                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Text(
-                        "Enter latitude and longitude for exact Lagna (Ascendant).",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = WarmInkDim,
-                    )
-                    OutlinedTextField(
-                        value = latText,
-                        onValueChange = { latText = it.filter { c -> c.isDigit() || c == '.' || c == '-' } },
-                        label = { Text("Latitude (-90 to 90)", color = WarmInkDim) },
-                        singleLine = true,
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = WarmTeal,
-                            unfocusedBorderColor = WarmInkDim,
-                            focusedTextColor = WarmInk,
-                            unfocusedTextColor = WarmInk,
-                        ),
-                    )
-                    OutlinedTextField(
-                        value = lonText,
-                        onValueChange = { lonText = it.filter { c -> c.isDigit() || c == '.' || c == '-' } },
-                        label = { Text("Longitude (-180 to 180)", color = WarmInkDim) },
-                        singleLine = true,
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = WarmTeal,
-                            unfocusedBorderColor = WarmInkDim,
-                            focusedTextColor = WarmInk,
-                            unfocusedTextColor = WarmInk,
-                        ),
+            tonalElevation = 0.dp,
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp)
+                    .padding(bottom = 24.dp),
+            ) {
+                // Drag handle
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 8.dp, bottom = 16.dp),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .width(36.dp)
+                            .height(4.dp)
+                            .clip(RoundedCornerShape(99.dp))
+                            .background(WarmInkDim),
                     )
                 }
-            },
-            confirmButton = {
-                TextButton(onClick = {
-                    val lat = latText.toDoubleOrNull()
-                    val lon = lonText.toDoubleOrNull()
-                    if (lat != null && lon != null && lat in -90.0..90.0 && lon in -180.0..180.0) {
-                        onLocationSelected(
-                            com.willowvibe.agereveal.data.model.GeoLocation(latitude = lat, longitude = lon)
+                // Title
+                Text(
+                    "Birth location (optional)",
+                    style = MaterialTheme.typography.titleLarge,
+                    color = WarmInk,
+                )
+                Spacer(Modifier.height(8.dp))
+                HorizontalDivider(color = WarmSurfaceSoft, thickness = 1.dp)
+                Spacer(Modifier.height(16.dp))
+                // Body text
+                AgeBody(
+                    text = "Enter latitude and longitude for exact Lagna (Ascendant).",
+                )
+                Spacer(Modifier.height(16.dp))
+                // Latitude field with clear icon
+                OutlinedTextField(
+                    value = latText,
+                    onValueChange = { latText = it.filter { c -> c.isDigit() || c == '.' || c == '-' } },
+                    label = { Text("Latitude (-90 to 90)", color = WarmInkDim) },
+                    singleLine = true,
+                    trailingIcon = {
+                        if (latText.isNotEmpty()) {
+                            IconButton(
+                                onClick = { latText = "" },
+                                modifier = Modifier.size(20.dp),
+                            ) {
+                                Text("✕", color = WarmInkDim, fontSize = 12.sp)
+                            }
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = WarmTeal,
+                        unfocusedBorderColor = WarmInkDim,
+                        focusedTextColor = WarmInk,
+                        unfocusedTextColor = WarmInk,
+                    ),
+                )
+                Spacer(Modifier.height(12.dp))
+                // Longitude field
+                OutlinedTextField(
+                    value = lonText,
+                    onValueChange = { lonText = it.filter { c -> c.isDigit() || c == '.' || c == '-' } },
+                    label = { Text("Longitude (-180 to 180)", color = WarmInkDim) },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = WarmTeal,
+                        unfocusedBorderColor = WarmInkDim,
+                        focusedTextColor = WarmInk,
+                        unfocusedTextColor = WarmInk,
+                    ),
+                )
+                Spacer(Modifier.height(24.dp))
+                // Button row
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    TextButton(
+                        onClick = { showLocationDialog = false },
+                        modifier = Modifier.weight(1f),
+                    ) {
+                        Text("Cancel", color = WarmInkMute)
+                    }
+                    val haptic = LocalHapticFeedback.current
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .clip(RoundedCornerShape(99.dp))
+                            .background(WarmTeal)
+                            .clickable {
+                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                val lat = latText.toDoubleOrNull()
+                                val lon = lonText.toDoubleOrNull()
+                                if (lat != null && lon != null && lat in -90.0..90.0 && lon in -180.0..180.0) {
+                                    onLocationSelected(
+                                        com.willowvibe.agereveal.data.model.GeoLocation(latitude = lat, longitude = lon)
+                                    )
+                                }
+                                showLocationDialog = false
+                            }
+                            .padding(vertical = 12.dp),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Text(
+                            "Set",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = WarmBlack,
+                            fontWeight = FontWeight.SemiBold,
                         )
                     }
-                    showLocationDialog = false
-                }) { Text("Set") }
-            },
-            dismissButton = {
-                Row {
-                    if (location != null) {
-                        TextButton(onClick = {
-                            onLocationSelected(null)
-                            latText = ""
-                            lonText = ""
-                            showLocationDialog = false
-                        }) { Text("Clear") }
-                    }
-                    TextButton(onClick = { showLocationDialog = false }) { Text("Cancel") }
                 }
-            },
-        )
+            }
+        }
     }
 
     Column {
@@ -916,6 +984,11 @@ internal fun PrecisionChip(
         modifier = modifier
             .clip(RoundedCornerShape(10.dp))
             .background(WarmSurface)
+            .border(
+                width = 1.dp,
+                color = Color.White.copy(alpha = 0.08f),
+                shape = RoundedCornerShape(10.dp),
+            )
             .clickable(
                 role = Role.Button,
                 onClick = onClick,
@@ -926,11 +999,7 @@ internal fun PrecisionChip(
         horizontalArrangement = Arrangement.SpaceBetween,
     ) {
         Column {
-            Text(
-                label,
-                style = MaterialTheme.typography.labelSmall,
-                color = WarmInkDim,
-            )
+            AgeLabel(text = label)
             Spacer(Modifier.height(2.dp))
             Text(
                 value,
@@ -973,94 +1042,53 @@ private fun NextMilestoneChip(result: AgeResult) {
     if (daysAway > 30) return
 
     val formattedTarget = "%,d".format(nextTarget)
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
-            .background(WarmAmber.copy(alpha = 0.12f))
-            .padding(horizontal = 14.dp, vertical = 12.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Text("✦", color = WarmAmber, fontSize = 18.sp)
-        Spacer(Modifier.width(10.dp))
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                "NEXT MILESTONE",
-                style = MaterialTheme.typography.labelSmall,
-                color = WarmAmber,
-            )
-            Text(
-                "$formattedTarget days alive — in $daysAway day${if (daysAway == 1L) "" else "s"}",
-                style = MaterialTheme.typography.bodySmall,
-                fontWeight = FontWeight.SemiBold,
-                color = WarmInk,
+    AgeCard {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text("✦", color = WarmAmber, fontSize = 18.sp)
+            Spacer(Modifier.width(10.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                AgeLabel(text = "NEXT MILESTONE", accentColor = WarmAmber)
+                AgeBody(
+                    text = "$formattedTarget days alive — in $daysAway day${if (daysAway == 1L) "" else "s"}",
+                    color = WarmInk,
+                )
+            }
+            AgeValue(
+                text = "$daysAway",
+                accentColor = WarmAmber,
             )
         }
-        Text(
-            "$daysAway",
-            fontFamily = SerifFamily,
-            fontSize = 22.sp,
-            color = WarmAmber,
-        )
     }
 }
 
 @Composable
 private fun TimeRemainingCard(timeRemaining: com.willowvibe.agereveal.domain.TimeRemainingCalculator.TimeRemaining) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
-            .background(WarmAmber.copy(alpha = 0.12f))
-            .border(1.dp, WarmAmber.copy(alpha = 0.18f), RoundedCornerShape(12.dp))
-            .padding(14.dp),
-    ) {
-        Text(
-            "TIME REMAINING",
-            style = MaterialTheme.typography.labelSmall,
-            color = WarmAmber,
-        )
+    AgeCard {
+        AgeLabel(text = "TIME REMAINING", accentColor = WarmAmber)
         Spacer(Modifier.height(6.dp))
-        Text(
-            "You have ${timeRemaining.weekends} weekends left until you're ${timeRemaining.targetAge}",
-            style = MaterialTheme.typography.bodySmall,
-            fontWeight = FontWeight.SemiBold,
+        AgeBody(
+            text = "You have ${timeRemaining.weekends} weekends left until you're ${timeRemaining.targetAge}",
             color = WarmInk,
         )
-        Text(
-            "That's ${timeRemaining.fridays} Fridays, ${timeRemaining.paychecks} paychecks, ${timeRemaining.fullMoons} full moons",
-            style = MaterialTheme.typography.labelSmall,
-            color = WarmInkMute,
+        AgeBody(
+            text = "That's ${timeRemaining.fridays} Fridays, ${timeRemaining.paychecks} paychecks, ${timeRemaining.fullMoons} full moons",
         )
     }
 }
 
 @Composable
 private fun RetirementCard(retirement: com.willowvibe.agereveal.domain.RetirementCalculator.RetirementResult) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
-            .background(WarmTeal.copy(alpha = 0.12f))
-            .border(1.dp, WarmTeal.copy(alpha = 0.18f), RoundedCornerShape(12.dp))
-            .padding(14.dp),
-    ) {
-        Text(
-            "WORK LIFE",
-            style = MaterialTheme.typography.labelSmall,
-            color = WarmTeal,
-        )
+    AgeCard {
+        AgeLabel(text = "WORK LIFE", accentColor = WarmTeal)
         Spacer(Modifier.height(6.dp))
-        Text(
-            "${retirement.workWeeksLeft} work weeks left until retirement at ${retirement.retirementAge}",
-            style = MaterialTheme.typography.bodySmall,
-            fontWeight = FontWeight.SemiBold,
+        AgeBody(
+            text = "${retirement.workWeeksLeft} work weeks left until retirement at ${retirement.retirementAge}",
             color = WarmInk,
         )
-        Text(
-            "${retirement.percentOfWorkLifeComplete}% of your work life is complete · ${retirement.daysUntilRetirement} days to go",
-            style = MaterialTheme.typography.labelSmall,
-            color = WarmInkMute,
+        AgeBody(
+            text = "${retirement.percentOfWorkLifeComplete}% of your work life is complete · ${retirement.daysUntilRetirement} days to go",
         )
     }
 }
@@ -1070,64 +1098,40 @@ private fun DailyFortuneCard(
     fortune: com.willowvibe.agereveal.domain.DailyFortuneGenerator.Fortune,
     onShare: () -> Unit,
 ) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
-            .background(WarmSurface)
-            .clickable { onShare() }
-            .padding(14.dp),
-    ) {
+    AgeCard(modifier = Modifier.clickable { onShare() }) {
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text(
-                "DAILY COSMIC FORTUNE",
-                style = MaterialTheme.typography.labelSmall,
-                color = WarmInkDim,
-            )
+            AgeLabel(text = "DAILY COSMIC FORTUNE")
             Text(
                 fortune.emoji,
                 fontSize = 20.sp,
             )
         }
         Spacer(Modifier.height(6.dp))
-        Text(
-            fortune.headline,
-            style = MaterialTheme.typography.bodySmall,
-            fontWeight = FontWeight.SemiBold,
+        AgeBody(
+            text = fortune.headline,
             color = WarmInk,
         )
-        Text(
-            fortune.body,
-            style = MaterialTheme.typography.labelSmall,
-            color = WarmInkMute,
-            maxLines = 3,
+        AgeBody(
+            text = fortune.body,
         )
         Spacer(Modifier.height(8.dp))
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            Text(
-                "Lucky #${fortune.luckyNumber}",
-                style = MaterialTheme.typography.labelSmall,
-                color = WarmTeal,
-                fontWeight = FontWeight.SemiBold,
+            AgeValue(
+                text = "Lucky #${fortune.luckyNumber}",
+                accentColor = WarmTeal,
             )
-            Text(
-                fortune.luckyColor,
-                style = MaterialTheme.typography.labelSmall,
-                color = WarmTeal,
-                fontWeight = FontWeight.SemiBold,
+            AgeValue(
+                text = fortune.luckyColor,
+                accentColor = WarmTeal,
             )
-            Text(
-                fortune.moonPhase,
-                style = MaterialTheme.typography.labelSmall,
-                color = WarmInkMute,
-            )
+            AgeBody(text = fortune.moonPhase)
         }
     }
 }
