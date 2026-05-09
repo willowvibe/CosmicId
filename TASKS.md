@@ -1,10 +1,10 @@
 # AgeReveal — Tasks & Implementation Checklist
 
-_Last updated: 2026-05-03 — v1.0.7 (Phase 5 features: Transparent Overlay Cards, Daily Cosmic Fortune, Retro ASCII Art Share, plus all v1.0.6 features)_
+_Last updated: 2026-05-09 — v1.0.7 (Feature-complete for Play Store beta. Remaining work: AdMob ID swap + Play Store listing assets.)_
 
 ---
 
-## 1. Pre-Release Blockers (Must Fix Before Play Store)
+## 1. Beta Release Checklist (Ship to Play Store — Internal Testing Track)
 
 ### 1a. AdMob IDs — Replace All Four Test Values
 
@@ -26,9 +26,42 @@ All four IDs below generate **no real revenue** and must be swapped for producti
 - [ ] Full description — max 4 000 characters
 - [ ] Content rating questionnaire completed in Play Console
 
+### 1c. Beta-Release Code Freeze — v1.0.x
+
+| Status | Item | Why |
+|--------|------|-----|
+| ✅ Done | Core age calculation | Exact real-time age + birthday countdown |
+| ✅ Done | Astrology (Western/Vedic/Chinese) | Zodiac, Rashi, Nakshatra, Lagna, Dasha, Ba Zi, Tithi |
+| ✅ Done | Share cards (square + story + transparent) | Dark Cosmos, Minimal Light, Festive India themes |
+| ✅ Done | Milestone timeline + notifications | 12 milestone targets, WorkManager scheduling |
+| ✅ Done | Saved birthdays + reminders | Room DB, CRUD, CSV export |
+| ✅ Done | Compatibility screen | Romantic/Sibling/Friendship/Regular scoring |
+| ✅ Done | Widgets (2×2 + 4×1 + milestone ring) | Jetpack Glance, live seconds counter, lifespan progress |
+| ✅ Done | Badge system | 13 badges, confetti unlock, shareable cards |
+| ✅ Done | Life stats dashboard | Heartbeats, breaths, meals, words, steps, Fridays the 13th |
+| ✅ Done | Time remaining + retirement calculators | Configurable target/retirement age |
+| ✅ Done | Global age percentile | UN WPP 2024 data, shareable stat |
+| ✅ Done | Daily cosmic fortune | Cached daily TTL, shareable fortune card |
+| ✅ Done | Parallel universe birth | 8 historical contexts, deterministic by birth year |
+| ✅ Done | Yearly re-engagement notification | Birthday "You've lived X days!" message, auto-reschedule |
+| ✅ Done | Accent color picker | 6 swatches, applies to share cards |
+| ✅ Done | Settings (theme, language, notifications, data) | Dark mode, Hindi toggle, notification time, clear/export |
+| ✅ Done | Retro ASCII art share | Clipboard copy |
+| ⬜ Pending | Remove Ads IAP (₹99) | **Post-beta**: requires Google Play Billing Library setup |
+| ⬜ Pending | Firebase Firestore sync | **Post-beta**: cloud backup + Google login |
+
 ---
 
-## 2. UI/UX & Design Polish (Clutter-Free Enhancements) ✨
+## Post-Beta / v1.1+ Backlog
+
+The items below are **not required for beta release** and are scheduled for v1.1 or later.
+
+
+---
+
+## 2. UI/UX & Design Polish (Post-Beta / v1.1+) ✨
+
+_Note: The app is fully usable in its current state. These are quality-of-life improvements for a future update._
 
 ### 2a. Typography & Hierarchy
 - [x] **Activate Inter Font:** Download Inter TTF files, place in `app/src/main/res/font/`, and uncomment `InterFamily` block in `Type.kt`. Replace all generic system fonts.
@@ -50,7 +83,9 @@ All four IDs below generate **no real revenue** and must be swapped for producti
 
 ---
 
-## 3. Phase 4 — Scale & Ecosystem (Active)
+## 3. Phase 4 — Scale & Ecosystem (Post-Beta / v1.1+)
+
+_Note: The items below require external service setup (Google Play Billing, Firebase, AdMob account) and are not blockers for beta release._
 
 - [ ] **Remove Ads IAP (₹99)** — One-time purchase via Google Play Billing Library 6+; on successful purchase set a flag in `SharedPreferences` that `AdManager` checks before loading any ads
 - [ ] **Firebase Firestore sync** — Cloud backup for saved birthdays; login with Google account; conflict resolution by `updatedAt` timestamp
@@ -122,7 +157,7 @@ This section is the "main character energy" roadmap — features built to screen
 - **Files to create:** `widget/LifespanProgressGlanceWidget.kt`, `widget/LifespanProgressGlanceWidgetReceiver.kt`, `res/xml/lifespan_progress_widget_info.xml`
 - **Note:** Target age stored in `UserPreferencesRepository` and mirrored to SharedPreferences for widget sync.
 
-#### 6.1.3 Cosmic Clock Widget (M / ⭐⭐⭐⭐)
+#### 6.1.3 Cosmic Clock Widget (M / ⭐⭐⭐⭐) — Post-Beta / v1.1+
 - [ ] Create `CosmicClockGlanceWidget.kt` — 2×2 digital-clock style.
 - [ ] Display age as `YY:MM:DD` in a digital-clock 7-seg style (or modern sans).
 - [ ] Subtle zodiac icon in the corner that changes with current moon phase.
@@ -154,7 +189,7 @@ This section is the "main character energy" roadmap — features built to screen
 - [x] Users can import into TikTok/Reels/YouTube Shorts as green-screen overlay.
 - [x] Label in share sheet: "Green Screen Overlay (Transparent BG)".
 
-#### 6.2.3 Animated Shareables — MP4/GIF Export (L / ⭐⭐⭐⭐⭐)
+#### 6.2.3 Animated Shareables — MP4/GIF Export (L / ⭐⭐⭐⭐⭐) — Post-Beta / v1.1+
 - [ ] Add `MediaEncoder.kt` utility class using `MediaCodec` + `MediaMuxer` to encode Canvas frames to MP4.
 - [ ] **Milestone Celebration:** 3-second clip of the seconds counter rolling to the milestone number with confetti particle effects drawn on Canvas.
 - [ ] **Compatibility Reveal:** 2-second clip of the compatibility score animating from 0 to final value with a glow pulse.
@@ -180,13 +215,13 @@ This section is the "main character energy" roadmap — features built to screen
 **Goal:** Give users stats that make them feel unique or part of something bigger.
 
 
-#### 6.3.2 Global Age Percentile (M / ⭐⭐⭐⭐) — ✅ Implemented
+#### 6.3.1 / 6.3.2 Global Age Percentile (M / ⭐⭐⭐⭐) — ✅ Implemented in v1.0.7
 - [x] Create `AgePercentileCalculator.kt` using UN World Population Prospects 2024 data.
-- [ ] Store age-distribution quintiles for each year (male/female combined for simplicity).
-- [ ] Calculate: "At age X, you're older than Y% of the global population."
-- [ ] Add to DetailsUnlockScreen as a shareable stat.
-- [ ] Also show: "There are ~Z people alive who share your exact birth date."
-- **Data:** 20 rows (0–100 years) with cumulative percentages. ~2KB JSON asset.
+- [x] Store age-distribution quintiles for each year (male/female combined for simplicity).
+- [x] Calculate: "At age X, you're older than Y% of the global population."
+- [x] Add to DetailsUnlockScreen as a shareable stat.
+- [x] Also show: "There are ~Z people alive who share your exact birth date."
+- **Data:** 22 age points with cumulative percentages. Linear interpolation for ages between data points.
 
 #### 6.3.3 Generational Badge (S / ⭐⭐⭐) — ✅ Implemented in v1.0.4
 - [x] Auto-detect generation from birth year:
@@ -261,7 +296,7 @@ This section is the "main character energy" roadmap — features built to screen
 - [x] Store selected accent in `UserPreferencesRepository` as DataStore `int` (ARGB), mirrored to SharedPreferences.
 - [x] ShareCardGenerator reads accent color from SharedPreferences and applies it to DARK_COSMOS and MINIMAL_LIGHT themes. FESTIVE_INDIA retains gold accent.
 
-#### 6.5.2 Aesthetic Theme Packs (L / ⭐⭐⭐⭐⭐)
+#### 6.5.2 Aesthetic Theme Packs (L / ⭐⭐⭐⭐⭐) — Post-Beta / v1.1+
 - [ ] Create `ThemePack` enum / sealed class with custom color tokens:
   | Theme | Background | Surface | Accent | Text | Vibe |
   |---|---|---|---|---|---|
@@ -280,7 +315,7 @@ This section is the "main character energy" roadmap — features built to screen
 - [x] Copy to clipboard as plain text for Discord, Reddit, terminal screenshots.
 - [x] Simple algorithm: map each digit 0–9 to a 5×5 block-art pattern.
 
-#### 6.5.4 Widget Transparency & Shape (S / ⭐⭐⭐)
+#### 6.5.4 Widget Transparency & Shape (S / ⭐⭐⭐) — Post-Beta / v1.1+
 - [ ] Support rounded corners, squircle, and pill shapes in all Glance widgets.
 - [ ] Support transparent background (show wallpaper behind widget).
 - [ ] Support semi-transparent blur background (`android:background="@drawable/widget_bg_rounded_blur"`).
@@ -325,7 +360,7 @@ This section is the "main character energy" roadmap — features built to screen
 - [x] Curated in-code list with 8 historical contexts (deterministic selection by birth year seed).
 - [x] Shareable as a fun fact card via `ShareCardGenerator.shareParallelUniverse()`.
 
-#### 6.6.4 Voice Narration (M / ⭐⭐⭐)
+#### 6.6.4 Voice Narration (M / ⭐⭐⭐) — Post-Beta / v1.1+
 - [ ] Add "🔊 Read My Profile" floating action button to DetailsUnlockScreen.
 - [ ] Use Android `TextToSpeech` with pitch/speed adjustments.
 - [ ] Pre-scripted dramatic narration: "John Doe... born under the sign of Taurus... [astrology details]..."

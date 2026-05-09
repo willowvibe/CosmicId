@@ -31,6 +31,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.willowvibe.agereveal.data.model.Milestone
+import com.willowvibe.agereveal.ui.components.AgeBody
+import com.willowvibe.agereveal.ui.components.AgeCard
+import com.willowvibe.agereveal.ui.components.AgeLabel
+import com.willowvibe.agereveal.ui.components.AgeValue
 import com.willowvibe.agereveal.ui.theme.WarmBlack
 import com.willowvibe.agereveal.ui.theme.WarmInk
 import com.willowvibe.agereveal.ui.theme.WarmInkDim
@@ -153,17 +157,15 @@ private fun MilestoneRow(milestone: Milestone, onShare: () -> Unit = {}) {
                 color = WarmInk,
                 fontWeight = if (isToday) FontWeight.SemiBold else FontWeight.Normal,
             )
-            Text(
-                milestone.date.toString(),
-                style = MaterialTheme.typography.bodySmall,
+            AgeBody(
+                text = milestone.date.toString(),
                 color = WarmInkDim,
             )
         }
 
         if (!isPast) {
-            Text(
-                "${milestone.daysAway} days",
-                style = MaterialTheme.typography.bodySmall,
+            AgeBody(
+                text = "${milestone.daysAway} days",
                 color = if (isToday) Color(0xFFFFD700) else WarmInkDim,
             )
         }

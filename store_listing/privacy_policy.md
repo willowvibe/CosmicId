@@ -1,8 +1,8 @@
 # Privacy Policy — AgeReveal
 
-_Last updated: 2026-01-15_
+_Last updated: 2026-05-09_
 
-AgeReveal (“the app”) is published by Willowvibe. This privacy policy explains what information the app handles and why.
+AgeReveal ("the app") is published by Willowvibe. This privacy policy explains what information the app handles and why.
 
 ## TL;DR
 
@@ -16,7 +16,8 @@ AgeReveal (“the app”) is published by Willowvibe. This privacy policy explai
 |------|-------|---------|
 | Your own birth date (and optional time) | On-device SharedPreferences | Live age calculation |
 | Saved birthdays (name, date, optional time, emoji) | On-device Room database | Reminders & widget |
-| App preferences (theme, language, milestone toggles) | On-device DataStore | App settings |
+| App preferences (theme, language, milestone toggles, accent color) | On-device DataStore | App settings |
+| Badge unlock timestamps | On-device Room database | Achievement tracking |
 
 Nothing on the list above leaves your device. Uninstalling the app removes everything.
 
@@ -40,7 +41,6 @@ Google's privacy policy: https://policies.google.com/privacy
 | Permission | Why we ask |
 |---|---|
 | `POST_NOTIFICATIONS` (Android 13+) | To deliver birthday & milestone reminders. |
-| `SCHEDULE_EXACT_ALARM` / `USE_EXACT_ALARM` | To fire reminders at your chosen hour. |
 | `INTERNET` / `ACCESS_NETWORK_STATE` | Required by AdMob to load ads. |
 
 ## Children

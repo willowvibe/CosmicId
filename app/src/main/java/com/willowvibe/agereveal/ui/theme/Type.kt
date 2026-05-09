@@ -60,8 +60,8 @@ val AppTypography = Typography(
     titleMedium = TextStyle(
         fontFamily = SerifFamily,
         fontWeight = FontWeight.Normal,
-        fontSize = 20.sp,
-        lineHeight = 26.sp,
+        fontSize = 18.sp,
+        lineHeight = 24.sp,
         letterSpacing = (-0.2).sp,
     ),
     // Card stat value / person age

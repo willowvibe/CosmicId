@@ -52,6 +52,10 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.willowvibe.agereveal.R
 import com.willowvibe.agereveal.data.preferences.UserPreferencesRepository
 import com.willowvibe.agereveal.notification.MilestoneNotificationScheduler
+import com.willowvibe.agereveal.ui.components.AgeBody
+import com.willowvibe.agereveal.ui.components.AgeCard
+import com.willowvibe.agereveal.ui.components.AgeLabel
+import com.willowvibe.agereveal.ui.components.AgeValue
 import com.willowvibe.agereveal.ui.theme.SerifFamily
 import com.willowvibe.agereveal.ui.theme.WarmAmber
 import com.willowvibe.agereveal.ui.theme.WarmBlack
@@ -183,10 +187,8 @@ fun SettingsScreen(
                         color = WarmInk,
                         fontWeight = FontWeight.SemiBold,
                     )
-                    Text(
-                        stringResource(R.string.reminder_time_desc),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = WarmInkDim,
+                    AgeBody(
+                        text = stringResource(R.string.reminder_time_desc),
                     )
                     NotificationHourGrid(
                         currentHour = notificationHour,
@@ -198,10 +200,8 @@ fun SettingsScreen(
             // ── Milestone toggles ────────────────────────────────────────────
             SettingsSection(title = stringResource(R.string.section_milestones)) {
                 Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Text(
-                        stringResource(R.string.milestones_desc),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = WarmInkDim,
+                    AgeBody(
+                        text = stringResource(R.string.milestones_desc),
                     )
                     MilestoneToggleGrid(
                         settingsViewModel = settingsViewModel,
@@ -218,10 +218,8 @@ fun SettingsScreen(
                         color = WarmInk,
                         fontWeight = FontWeight.SemiBold,
                     )
-                    Text(
-                        stringResource(R.string.choose_theme_desc),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = WarmInkDim,
+                    AgeBody(
+                        text = stringResource(R.string.choose_theme_desc),
                     )
                     Spacer(Modifier.height(4.dp))
 
@@ -261,11 +259,7 @@ fun SettingsScreen(
 
                     if (retirementEnabled) {
                         Spacer(Modifier.height(8.dp))
-                        Text(
-                            "Retirement age",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = WarmInkDim,
-                        )
+                        AgeBody(text = "Retirement age")
                         Spacer(Modifier.height(4.dp))
                         Row(
                             modifier = Modifier.fillMaxWidth(),
@@ -303,10 +297,8 @@ fun SettingsScreen(
                         color = WarmInk,
                         fontWeight = FontWeight.SemiBold,
                     )
-                    Text(
-                        "Pick a theme accent for share cards and highlights",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = WarmInkDim,
+                    AgeBody(
+                        text = "Pick a theme accent for share cards and highlights",
                     )
                     Spacer(Modifier.height(8.dp))
                     Row(
@@ -359,10 +351,8 @@ fun SettingsScreen(
                         color = WarmInk,
                         fontWeight = FontWeight.SemiBold,
                     )
-                    Text(
-                        "Target age for the lifespan progress widget",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = WarmInkDim,
+                    AgeBody(
+                        text = "Target age for the lifespan progress widget",
                     )
                     Spacer(Modifier.height(8.dp))
                     Row(
@@ -400,10 +390,8 @@ fun SettingsScreen(
                         color = WarmInk,
                         fontWeight = FontWeight.SemiBold,
                     )
-                    Text(
-                        stringResource(R.string.language_desc),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = WarmInkDim,
+                    AgeBody(
+                        text = stringResource(R.string.language_desc),
                     )
                     Spacer(Modifier.height(4.dp))
 
@@ -470,10 +458,8 @@ fun SettingsScreen(
                     }
                     HorizontalDivider(color = WarmSurfaceSoft, modifier = Modifier.padding(vertical = 10.dp))
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
-                        Text(
-                            stringResource(R.string.made_with_love),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = WarmInkMute,
+                        AgeBody(
+                            text = stringResource(R.string.made_with_love),
                         )
                     }
                 }
@@ -554,14 +540,9 @@ private fun SettingsSection(title: String, content: @Composable ColumnScope.() -
             style = MaterialTheme.typography.labelSmall,
             color = WarmInkDim,
         )
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(14.dp))
-                .background(WarmSurface)
-                .padding(16.dp),
-            content = content,
-        )
+        AgeCard(modifier = Modifier.fillMaxWidth()) {
+            content()
+        }
     }
 }
 
@@ -580,7 +561,7 @@ private fun SwitchRow(
         Column(modifier = Modifier.weight(1f)) {
             Text(title, style = MaterialTheme.typography.bodyMedium, color = WarmInk, fontWeight = FontWeight.SemiBold)
             Spacer(Modifier.height(2.dp))
-            Text(subtitle, style = MaterialTheme.typography.bodySmall, color = WarmInkDim)
+            AgeBody(text = subtitle)
         }
         Switch(
             checked = checked,
@@ -647,7 +628,7 @@ private fun ActionRow(
                 fontWeight = FontWeight.Medium,
             )
             Spacer(Modifier.height(2.dp))
-            Text(subtitle, style = MaterialTheme.typography.bodySmall, color = WarmInkDim)
+            AgeBody(text = subtitle)
         }
         Icon(icon, contentDescription = null, tint = tint, modifier = Modifier.size(20.dp))
     }

@@ -62,6 +62,10 @@ import com.willowvibe.agereveal.R
 import com.willowvibe.agereveal.domain.AgeInfo
 import com.willowvibe.agereveal.domain.CompatibilityResult
 import com.willowvibe.agereveal.domain.RelationshipType
+import com.willowvibe.agereveal.ui.components.AgeBody
+import com.willowvibe.agereveal.ui.components.AgeCard
+import com.willowvibe.agereveal.ui.components.AgeLabel
+import com.willowvibe.agereveal.ui.components.AgeValue
 import com.willowvibe.agereveal.ui.theme.SerifFamily
 import com.willowvibe.agereveal.ui.theme.WarmAmber
 import com.willowvibe.agereveal.ui.theme.WarmBlack
@@ -138,11 +142,7 @@ fun CompatibilityScreen(
                     style = MaterialTheme.typography.titleLarge,
                     color = WarmInk,
                 )
-                Text(
-                    "COSMIC MATCH",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = WarmInkDim,
-                )
+                AgeLabel(text = "COSMIC MATCH")
             }
 
             Column(
@@ -214,14 +214,7 @@ fun CompatibilityScreen(
                 }
 
                 if (uiState.isSameDate) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(14.dp))
-                            .background(WarmSurface)
-                            .padding(20.dp),
-                        contentAlignment = Alignment.Center,
-                    ) {
+                    AgeCard(modifier = Modifier.fillMaxWidth()) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             Text("✨", style = MaterialTheme.typography.titleLarge)
                             Spacer(Modifier.height(6.dp))
@@ -351,13 +344,7 @@ internal fun PersonDateCard(
         ) { DatePicker(state = datePickerState) }
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(14.dp))
-            .background(WarmSurface)
-            .padding(horizontal = 16.dp, vertical = 14.dp),
-    ) {
+    AgeCard(modifier = Modifier.fillMaxWidth()) {
         OutlinedTextField(
             value = name,
             onValueChange = onNameChanged,
@@ -418,41 +405,32 @@ internal fun AgeComparisonCard(result: CompatibilityResult) {
     val ageB = result.personBAge
     if (ageA == null || ageB == null) return
 
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(14.dp))
-            .background(WarmSurface)
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(10.dp),
-    ) {
-        Text(
-            stringResource(R.string.age_comparison),
-            style = MaterialTheme.typography.labelSmall,
-            color = WarmInkDim,
-        )
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(10.dp),
-        ) {
-            AgeChip(
-                name = result.nameA.ifEmpty { "Person A" },
-                age = ageA,
-                modifier = Modifier.weight(1f),
-            )
-            AgeChip(
-                name = result.nameB.ifEmpty { "Person B" },
-                age = ageB,
-                modifier = Modifier.weight(1f),
+    AgeCard(modifier = Modifier.fillMaxWidth()) {
+        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            AgeLabel(text = stringResource(R.string.age_comparison))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+            ) {
+                AgeChip(
+                    name = result.nameA.ifEmpty { "Person A" },
+                    age = ageA,
+                    modifier = Modifier.weight(1f),
+                )
+                AgeChip(
+                    name = result.nameB.ifEmpty { "Person B" },
+                    age = ageB,
+                    modifier = Modifier.weight(1f),
+                )
+            }
+            Text(
+                result.ageGapLabel,
+                style = MaterialTheme.typography.bodyMedium,
+                color = WarmAmber,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth(),
             )
         }
-        Text(
-            result.ageGapLabel,
-            style = MaterialTheme.typography.bodyMedium,
-            color = WarmAmber,
-            textAlign = TextAlign.Center,
-            modifier = Modifier.fillMaxWidth(),
-        )
     }
 }
 
@@ -491,35 +469,30 @@ internal fun CompatibilityResultCard(result: CompatibilityResult) {
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         // ── Score hero ────────────────────────────────────────────────────────
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(16.dp))
-                .background(WarmSurface)
-                .padding(20.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            Text(
-                text = "${result.overallScore}%",
-                fontFamily = SerifFamily,
-                fontSize = 64.sp,
-                letterSpacing = (-2).sp,
-                color = scoreColor(result.overallScore),
-            )
-            Text(
-                result.headline,
-                style = MaterialTheme.typography.titleMedium,
-                color = WarmInk,
-                textAlign = TextAlign.Center,
-            )
-            Spacer(Modifier.height(6.dp))
-            ScoreBar(
-                score = result.overallScore,
-                modifier = Modifier
-                    .fillMaxWidth(0.8f)
-                    .height(6.dp)
-                    .clip(RoundedCornerShape(3.dp)),
-            )
+        AgeCard(modifier = Modifier.fillMaxWidth()) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(
+                    text = "${result.overallScore}%",
+                    fontFamily = SerifFamily,
+                    fontSize = 64.sp,
+                    letterSpacing = (-2).sp,
+                    color = scoreColor(result.overallScore),
+                )
+                Text(
+                    result.headline,
+                    style = MaterialTheme.typography.titleMedium,
+                    color = WarmInk,
+                    textAlign = TextAlign.Center,
+                )
+                Spacer(Modifier.height(6.dp))
+                ScoreBar(
+                    score = result.overallScore,
+                    modifier = Modifier
+                        .fillMaxWidth(0.8f)
+                        .height(6.dp)
+                        .clip(RoundedCornerShape(3.dp)),
+                )
+            }
         }
 
         // ── Breakdown ─────────────────────────────────────────────────────────
@@ -540,66 +513,47 @@ internal fun CompatibilityResultCard(result: CompatibilityResult) {
         }
 
         // ── Zodiac pairing detail ─────────────────────────────────────────────
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(14.dp))
-                .background(WarmSurface)
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp),
-        ) {
-            Text(
-                "ZODIAC PAIRING",
-                style = MaterialTheme.typography.labelSmall,
-                color = WarmInkDim,
-            )
-            ZodiacPairingRow("Western", result.personAWestern, result.personBWestern)
-            HorizontalDivider(color = WarmSurfaceSoft)
-            ZodiacPairingRow("Element", result.personAElement, result.personBElement)
-            HorizontalDivider(color = WarmSurfaceSoft)
-            ZodiacPairingRow("Chinese", result.personAChinese, result.personBChinese)
-            if (result.chineseRelationshipLabel.isNotEmpty()) {
+        AgeCard(modifier = Modifier.fillMaxWidth()) {
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                AgeLabel(text = "ZODIAC PAIRING")
+                ZodiacPairingRow("Western", result.personAWestern, result.personBWestern)
                 HorizontalDivider(color = WarmSurfaceSoft)
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Text(
-                        "Relation",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = WarmInkMute,
-                        modifier = Modifier.width(64.dp),
-                    )
-                    Text(
-                        result.chineseRelationshipLabel,
-                        style = MaterialTheme.typography.bodySmall,
-                        fontWeight = FontWeight.SemiBold,
-                        color = WarmAmber,
-                    )
+                ZodiacPairingRow("Element", result.personAElement, result.personBElement)
+                HorizontalDivider(color = WarmSurfaceSoft)
+                ZodiacPairingRow("Chinese", result.personAChinese, result.personBChinese)
+                if (result.chineseRelationshipLabel.isNotEmpty()) {
+                    HorizontalDivider(color = WarmSurfaceSoft)
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        AgeBody(
+                            text = "Relation",
+                            modifier = Modifier.width(64.dp),
+                        )
+                        Text(
+                            result.chineseRelationshipLabel,
+                            style = MaterialTheme.typography.bodySmall,
+                            fontWeight = FontWeight.SemiBold,
+                            color = WarmAmber,
+                        )
+                    }
                 }
             }
         }
 
         // ── Description ───────────────────────────────────────────────────────
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(14.dp))
-                .background(WarmSurface)
-                .padding(16.dp),
-        ) {
-            Text(
-                "ELEMENT READING",
-                style = MaterialTheme.typography.labelSmall,
-                color = WarmInkDim,
-            )
-            Spacer(Modifier.height(8.dp))
-            Text(
-                result.description,
-                style = MaterialTheme.typography.bodyMedium,
-                color = WarmInk,
-                lineHeight = 22.sp,
-            )
+        AgeCard(modifier = Modifier.fillMaxWidth()) {
+            Column {
+                AgeLabel(text = "ELEMENT READING")
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    result.description,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = WarmInk,
+                    lineHeight = 22.sp,
+                )
+            }
         }
     }
 }
@@ -610,10 +564,8 @@ private fun ZodiacPairingRow(label: String, valueA: String, valueB: String) {
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(
-            label,
-            style = MaterialTheme.typography.bodySmall,
-            color = WarmInkMute,
+        AgeBody(
+            text = label,
             modifier = Modifier.width(64.dp),
         )
         Text(
@@ -642,22 +594,18 @@ private fun ZodiacPairingRow(label: String, valueA: String, valueB: String) {
 
 @Composable
 private fun ScoreChip(label: String, score: Int, modifier: Modifier = Modifier) {
-    Column(
-        modifier = modifier
-            .clip(RoundedCornerShape(12.dp))
-            .background(WarmSurface)
-            .padding(horizontal = 14.dp, vertical = 12.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        Text(label, style = MaterialTheme.typography.labelSmall, color = WarmInkDim)
-        Spacer(Modifier.height(4.dp))
-        Text(
-            "$score%",
-            fontFamily = SerifFamily,
-            fontSize = 28.sp,
-            letterSpacing = (-1).sp,
-            color = scoreColor(score),
-        )
+    AgeCard(modifier = modifier) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            AgeLabel(text = label)
+            Spacer(Modifier.height(4.dp))
+            Text(
+                "$score%",
+                fontFamily = SerifFamily,
+                fontSize = 28.sp,
+                letterSpacing = (-1).sp,
+                color = scoreColor(score),
+            )
+        }
     }
 }
 
