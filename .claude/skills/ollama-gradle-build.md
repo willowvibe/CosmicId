@@ -1,6 +1,6 @@
 # Ollama Gradle Build Skill
 
-Use this skill when you need to run Gradle tasks, debug build errors, or check test results for the AgeReveal Android project.
+Use this skill when you need to run Gradle tasks, debug build errors, or check test results for the Cosmic ID Android project.
 
 ## Trigger
 Invoke with: `/ollama-gradle-build`
