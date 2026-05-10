@@ -57,6 +57,10 @@
     <string name="reminder_time_desc">Notifications fire 1 day before each birthday at the selected time.</string>
     <string name="enable_birthday_notifications">Birthday reminders</string>
     <string name="enable_birthday_notifications_desc">Enable or disable all birthday notifications</string>
+    <string name="enable_fortune_notifications">Daily cosmic fortune</string>
+    <string name="enable_fortune_notifications_desc">Receive a daily push notification with your cosmic fortune</string>
+    <string name="fortune_time_title">Fortune delivery time</string>
+    <string name="fortune_time_desc">Your daily cosmic fortune will arrive at the selected time.</string>
     <string name="milestones_desc">Pick which life-day milestones will notify you.</string>
     <string name="milestone_count_days">%1$s days</string>
     <string name="clear_all_title">Clear all birthdays</string>

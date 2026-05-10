@@ -58,6 +58,7 @@ class ShareCardGenerator @Inject constructor(
     private val sharingTransparent = AtomicBoolean(false)
     private val sharingPercentile = AtomicBoolean(false)
     private val sharingParallelUniverse = AtomicBoolean(false)
+    private val sharingCelebrity = AtomicBoolean(false)
 
     // Error callback — invoked on main thread when sharing fails
     private var onShareError: ((Throwable) -> Unit)? = null
@@ -132,6 +133,7 @@ class ShareCardGenerator @Inject constructor(
         const val STORY_CACHE_FILE = "story_card.png"
         const val TRANSPARENT_CACHE_FILE = "transparent_overlay.png"
         const val FORTUNE_CACHE_FILE = "fortune_card.png"
+        const val CELEBRITY_CACHE_FILE = "celebrity_card.png"
         const val PARALLEL_UNIVERSE_CACHE_FILE = "parallel_universe_card.png"
         const val FILE_AUTHORITY_SUFFIX = ".fileprovider"
 
@@ -613,6 +615,80 @@ class ShareCardGenerator @Inject constructor(
         }
     }
 
+    // ---------------------------------------------------------------------------
+    // Celebrity match card
+    // ---------------------------------------------------------------------------
+
+    fun generateCelebrityBitmap(
+        userName: String,
+        userBirthDate: java.time.LocalDate,
+        celebrity: com.willowvibe.agereveal.data.model.CelebrityMatch,
+        theme: CardTheme = CardTheme.DARK_COSMOS,
+    ): Bitmap {
+        val contentBmp = Bitmap.createBitmap(CARD_WIDTH, CARD_HEIGHT, Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(contentBmp)
+        val paint = Paint(Paint.ANTI_ALIAS_FLAG)
+        val accent = readAccentColor(context)
+        when (theme) {
+            CardTheme.DARK_COSMOS -> {
+                drawThemeBackground(canvas, paint, CARD_WIDTH.toFloat(), CARD_HEIGHT.toFloat(), theme)
+                drawCelebrityContent(canvas, paint, userName, userBirthDate, celebrity, Color.WHITE, accent)
+            }
+            CardTheme.MINIMAL_LIGHT -> {
+                paint.color = Color.WHITE
+                canvas.drawRect(0f, 0f, CARD_WIDTH.toFloat(), CARD_HEIGHT.toFloat(), paint)
+                drawCelebrityContent(canvas, paint, userName, userBirthDate, celebrity, Color.parseColor("#1c1917"), accent)
+            }
+            CardTheme.FESTIVE_INDIA -> {
+                drawThemeBackground(canvas, paint, CARD_WIDTH.toFloat(), CARD_HEIGHT.toFloat(), theme)
+                drawCelebrityContent(canvas, paint, userName, userBirthDate, celebrity, Color.WHITE, Color.parseColor("#FFD700"))
+            }
+        }
+        return embedInSquare(contentBmp, theme, paint)
+    }
+
+    /** Share a celebrity birthday match card via Android share sheet. */
+    fun shareCelebrity(
+        userName: String,
+        userBirthDate: java.time.LocalDate,
+        celebrity: com.willowvibe.agereveal.data.model.CelebrityMatch,
+        theme: CardTheme = CardTheme.DARK_COSMOS,
+    ) {
+        if (!sharingCelebrity.compareAndSet(false, true)) return
+        var bitmap: Bitmap? = null
+        try {
+            bitmap = generateCelebrityBitmap(userName, userBirthDate, celebrity, theme)
+            val uri = saveBitmapToCache(bitmap, CELEBRITY_CACHE_FILE)
+            bitmap.recycle()
+            bitmap = null
+            val intent = Intent(Intent.ACTION_SEND).apply {
+                type = "image/png"
+                putExtra(Intent.EXTRA_STREAM, uri)
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            }
+            Handler(Looper.getMainLooper()).post {
+                try {
+                    val chooser = Intent.createChooser(intent, "Share your celebrity match")
+                    chooser.clipData = ClipData.newRawUri("", uri)
+                    chooser.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                    if (context is android.app.Activity) {
+                        context.startActivity(chooser)
+                    } else {
+                        context.startActivity(chooser.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+                    }
+                } catch (e: Exception) {
+                    onShareError?.invoke(e)
+                } finally {
+                    sharingCelebrity.set(false)
+                }
+            }
+        } catch (e: Exception) {
+            bitmap?.recycle()
+            sharingCelebrity.set(false)
+            onShareError?.invoke(e)
+        }
+    }
+
     /** Share a badge unlock card via Android share sheet. */
     fun shareBadge(badge: BadgeDefinition, unlockedAt: Long? = null, theme: CardTheme = CardTheme.DARK_COSMOS) {
         if (!sharingBadge.compareAndSet(false, true)) return
@@ -1041,6 +1117,49 @@ class ShareCardGenerator @Inject constructor(
         drawStatCard(canvas, paint, 560f, 490f, "Stem-Branch", stemBranch, textColor, accentColor)
         drawStatCard(canvas, paint, 60f, 440f, "Lucky #", luckyNumber.toString(), textColor, accentColor)
         drawStatCard(canvas, paint, 310f, 440f, "Lucky Color", luckyColor, textColor, accentColor)
+    }
+
+    // ---------------------------------------------------------------------------
+    // Celebrity match card layout
+    // ---------------------------------------------------------------------------
+
+    private fun drawCelebrityContent(
+        canvas: Canvas, paint: Paint,
+        userName: String,
+        userBirthDate: java.time.LocalDate,
+        celebrity: com.willowvibe.agereveal.data.model.CelebrityMatch,
+        textColor: Int, accentColor: Int,
+    ) {
+        val displayName = userName.takeIf { it.isNotBlank() } ?: "You"
+        val dateFmt = DateTimeFormatter.ofPattern("d MMMM", java.util.Locale.ENGLISH)
+        val birthStr = userBirthDate.format(dateFmt)
+
+        paint.color = textColor; paint.alpha = 120; paint.textSize = 28f; paint.typeface = Typeface.DEFAULT
+        canvas.drawText("CELEBRITY BIRTHDAY MATCH", 60f, 75f, paint)
+
+        paint.color = textColor; paint.alpha = 200; paint.textSize = 24f; paint.typeface = Typeface.DEFAULT
+        canvas.drawText("$displayName · $birthStr", 60f, 120f, paint)
+
+        paint.color = textColor; paint.alpha = 160; paint.textSize = 26f
+        canvas.drawText("shares a birthday with", 60f, 180f, paint)
+
+        paint.alpha = 255; paint.textSize = 52f; paint.typeface = Typeface.DEFAULT_BOLD
+        val nameWidth = paint.measureText(celebrity.name)
+        val nameSize = if (nameWidth > CARD_WIDTH - 120f) 52f * (CARD_WIDTH - 120f) / nameWidth else 52f
+        paint.textSize = nameSize
+        val nameW = paint.measureText(celebrity.name)
+        canvas.drawText(celebrity.name, (CARD_WIDTH - nameW) / 2f, 270f, paint)
+
+        paint.color = accentColor; paint.textSize = 22f; paint.typeface = Typeface.DEFAULT
+        val catWidth = paint.measureText(celebrity.category)
+        canvas.drawText(celebrity.category.uppercase(), (CARD_WIDTH - catWidth) / 2f, 315f, paint)
+
+        paint.color = textColor; paint.alpha = 40; paint.strokeWidth = 1.5f
+        canvas.drawLine(60f, 350f, CARD_WIDTH - 60f, 350f, paint)
+
+        paint.alpha = 255
+        drawStatCard(canvas, paint, 60f, 490f, "Born", celebrity.birthDate.year.toString(), textColor, accentColor)
+        drawStatCard(canvas, paint, 310f, 490f, "Category", celebrity.category, textColor, accentColor)
     }
 
     // ---------------------------------------------------------------------------

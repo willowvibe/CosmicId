@@ -49,6 +49,7 @@ class UserPreferencesRepository @Inject constructor(
         private val IS_PREMIUM_KEY = booleanPreferencesKey("is_premium")
         private val PREMIUM_PURCHASE_TIME_KEY = longPreferencesKey("premium_purchase_time")
         private val TRIAL_DURATION_DAYS_KEY = intPreferencesKey("trial_duration_days")
+        private val GRACE_PERIOD_START_KEY = longPreferencesKey("grace_period_start")
         private val ONBOARDING_COMPLETED_KEY = booleanPreferencesKey("onboarding_completed")
     }
 
@@ -141,6 +142,13 @@ class UserPreferencesRepository @Inject constructor(
     val trialDurationDays: Flow<Int> = dataStore.data.map { it[TRIAL_DURATION_DAYS_KEY] ?: 0 }
     suspend fun setTrialDurationDays(days: Int) {
         dataStore.edit { it[TRIAL_DURATION_DAYS_KEY] = days }
+    }
+
+    // ── Grace period start (v2.0) ──────────────────────────────────────────
+    /** Timestamp (epoch millis) when the grace period began; 0L = not in grace period. */
+    val gracePeriodStart: Flow<Long> = dataStore.data.map { it[GRACE_PERIOD_START_KEY] ?: 0L }
+    suspend fun setGracePeriodStart(timeMillis: Long) {
+        dataStore.edit { it[GRACE_PERIOD_START_KEY] = timeMillis }
     }
 
     // ── Onboarding completed (v2.0) ────────────────────────────────────────

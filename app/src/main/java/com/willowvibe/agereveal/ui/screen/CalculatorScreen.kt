@@ -214,6 +214,22 @@ fun CalculatorScreen(
                             )
                         }
                     }
+                    // Grace period chip — subscription lapsed but still within grace
+                    uiState.graceDaysRemaining?.let { days ->
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier
+                                .clip(CircleShape)
+                                .background(WarmAmber.copy(alpha = 0.18f))
+                                .padding(horizontal = 8.dp, vertical = 4.dp),
+                        ) {
+                            Text(
+                                "Renew to keep premium · $days day${if (days == 1) "" else "s"} left",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = WarmAmber,
+                            )
+                        }
+                    }
                     IconButton(
                         onClick = onOpenSettings,
                         modifier = Modifier
@@ -1331,6 +1347,7 @@ private fun PlanetAgeHighlight(result: AgeResult, name: String) {
 @Composable
 private fun CelebrityHighlight(
     matches: List<com.willowvibe.agereveal.data.model.CelebrityMatch>,
+    viewModel: CalculatorViewModel = hiltViewModel(),
 ) {
     if (matches.isEmpty()) {
         CelebrityHighlightPlaceholder()
@@ -1351,6 +1368,14 @@ private fun CelebrityHighlight(
                 AgeBody(
                     text = "Born ${match.birthDate.year}",
                     color = WarmInkMute,
+                )
+            }
+            IconButton(onClick = { viewModel.shareCelebrityCard() }) {
+                Icon(
+                    imageVector = Icons.Default.Share,
+                    contentDescription = "Share celebrity match",
+                    tint = WarmTeal,
+                    modifier = Modifier.size(20.dp),
                 )
             }
         }
