@@ -415,15 +415,16 @@ class CalculatorViewModel @Inject constructor(
     }
 
     private fun serializeLocation(location: GeoLocation): String {
-        return "${location.latitude},${location.longitude},${location.label}"
+        return "${location.latitude},${location.longitude},${location.label},${location.isApproximate}"
     }
 
     private fun parseLocation(serialized: String): GeoLocation {
-        val parts = serialized.split(",", limit = 3)
+        val parts = serialized.split(",", limit = 4)
         return GeoLocation(
             latitude = parts[0].toDouble(),
             longitude = parts[1].toDouble(),
             label = parts.getOrElse(2) { "" },
+            isApproximate = parts.getOrElse(3) { "false" }.toBooleanStrictOrNull() ?: false,
         )
     }
 }
