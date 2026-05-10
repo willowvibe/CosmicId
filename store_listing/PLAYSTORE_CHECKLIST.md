@@ -1,4 +1,4 @@
-# Play Store Submission Checklist — AgeReveal v2.0.0
+# Play Store Submission Checklist — Cosmic ID v2.0.0
 
 Use this list as you upload the AAB. Everything in `store_listing/` is ready to paste into the Play Console.
 
@@ -33,7 +33,7 @@ cp keystore.properties.example keystore.properties
 
 | Field | Value |
 |---|---|
-| App name | AgeReveal (or new name: Nakshatra / CosmAge / BornAt) |
+| App name | Cosmic ID (final name: Cosmic ID) |
 | Default language | English (United States) |
 | App category | Lifestyle |
 | Free / Paid | Free with in-app purchases (subscriptions) |

@@ -1,5 +1,5 @@
 ---
-name: AgeReveal
+name: Cosmic ID
 
 colors:
   # Core warm-dark palette

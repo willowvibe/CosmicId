@@ -1,6 +1,6 @@
-# Contributing to AgeReveal
+# Contributing to Cosmic ID
 
-Thank you for considering contributing to AgeReveal! Whether you're reporting a bug, suggesting an enhancement, or submitting code, your involvement helps make the project better.
+Thank you for considering contributing to Cosmic ID! Whether you're reporting a bug, suggesting an enhancement, or submitting code, your involvement helps make the project better.
 
 ---
 

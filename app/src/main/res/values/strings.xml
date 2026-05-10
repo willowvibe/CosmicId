@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- App -->
-    <string name="app_name">AgeReveal</string>
-    <string name="app_short_name">AgeReveal</string>
+    <string name="app_name">Cosmic ID</string>
+    <string name="app_short_name">Cosmic ID</string>
     <string name="widget_description">Birthday countdown widget — shows days until the next saved birthday.</string>
     <string name="widget_description_wide">Wide birthday widget — shows the next 3 upcoming birthdays.</string>
     <string name="widget_seconds_description">Live seconds counter — shows your total seconds alive.</string>
@@ -113,6 +113,6 @@
     <string name="err_same_date">Both dates are the same — compatibility requires two different birth dates</string>
 
     <!-- Share / review -->
-    <string name="rate_us_title">Enjoying AgeReveal?</string>
+    <string name="rate_us_title">Enjoying Cosmic ID?</string>
     <string name="rate_us_body">Tap a star to rate us on the Play Store.</string>
 </resources>

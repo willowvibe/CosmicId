@@ -1,4 +1,4 @@
-# AgeReveal — PRD
+# Cosmic ID — PRD
 
 _Last updated: 2026-05-10 — v2.0 Revamp (in progress)_
 

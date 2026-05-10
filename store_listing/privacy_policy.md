@@ -1,12 +1,12 @@
-# Privacy Policy — AgeReveal
+# Privacy Policy — Cosmic ID
 
 _Last updated: 2026-05-10_
 
-AgeReveal ("the app") is published by Willowvibe. This privacy policy explains what information the app handles and why.
+Cosmic ID ("the app") is published by Willowvibe. This privacy policy explains what information the app handles and why.
 
 ## TL;DR
 
-* AgeReveal stores your birthdays **only on your device**.
+* Cosmic ID stores your birthdays **only on your device**.
 * We do **not** collect, sell, or share personal information.
 * Ads are served by **Google AdMob** (banner only on free tier), which may process device identifiers per its own policies.
 * Subscription billing is handled by **Google Play Billing**; we do not receive or store payment details.
@@ -31,7 +31,7 @@ Nothing on the list above leaves your device. Uninstalling the app removes every
 
 ## Advertising (AdMob)
 
-AgeReveal displays a **banner ad only** on the free tier, served by **Google AdMob**. Google may use an advertising ID to serve relevant ads. You can:
+Cosmic ID displays a **banner ad only** on the free tier, served by **Google AdMob**. Google may use an advertising ID to serve relevant ads. You can:
 
 * Reset your advertising ID via Android Settings → Privacy → Ads.
 * Opt out of personalised ads via Android Settings → Google → Ads.

@@ -69,8 +69,8 @@ import java.time.ZoneId
 /**
  * 3-step onboarding flow shown on first launch.
  *
- * Step 1 — Birth date (required)
- * Step 2 — Name + optional birth time
+ * Step 1 — Name + Birth date (required)
+ * Step 2 — Optional birth time + location
  * Step 3 — Accent colour picker + "Enter My Cosmos"
  */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -119,32 +119,34 @@ fun OnboardingScreen(
             modifier = Modifier.weight(1f),
         ) { currentStep ->
             when (currentStep) {
-                0 -> StepBirthDate(
+                0 -> StepNameAndBirthDate(
+                    onNameChanged = viewModel::onNameChanged,
                     onDateSelected = { date ->
                         viewModel.onBirthDateSelected(date)
                         step = 1
                     },
                 )
-                1 -> StepNameAndTime(
-                    onNameChanged = viewModel::onNameChanged,
+                1 -> StepTimeAndLocation(
                     onTimeSelected = viewModel::onBirthTimeSelected,
                     onNext = { step = 2 },
                 )
-                2 -> StepCosmicVibe(
-                    onEnter = onComplete,
-                )
+                2 -> StepCosmicVibe(onEnter = onComplete)
             }
         }
     }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Step 1 — Birth date
+// Step 1 — Name + Birth date
 // ─────────────────────────────────────────────────────────────────────────────
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun StepBirthDate(onDateSelected: (LocalDate) -> Unit) {
+private fun StepNameAndBirthDate(
+    onNameChanged: (String) -> Unit,
+    onDateSelected: (LocalDate) -> Unit,
+) {
+    var name by remember { mutableStateOf("") }
     var showDialog by remember { mutableStateOf(false) }
     var selectedDate by remember { mutableStateOf<LocalDate?>(null) }
     val todayMillis = LocalDate.now()
@@ -179,7 +181,7 @@ private fun StepBirthDate(onDateSelected: (LocalDate) -> Unit) {
         verticalArrangement = Arrangement.spacedBy(20.dp),
     ) {
         Text(
-            "When were you born?",
+            "Let's build your Cosmic ID",
             fontFamily = SerifFamily,
             fontSize = 28.sp,
             lineHeight = 34.sp,
@@ -187,13 +189,30 @@ private fun StepBirthDate(onDateSelected: (LocalDate) -> Unit) {
             textAlign = TextAlign.Center,
         )
         Text(
-            "Your birth date unlocks your entire cosmic profile.",
+            "Your name and birth date unlock your entire cosmic profile.",
             style = MaterialTheme.typography.bodyMedium,
             color = WarmInkDim,
             textAlign = TextAlign.Center,
         )
 
-        Spacer(Modifier.height(16.dp))
+        Spacer(Modifier.height(8.dp))
+
+        OutlinedTextField(
+            value = name,
+            onValueChange = {
+                name = it
+                onNameChanged(it)
+            },
+            placeholder = { Text("Your name", color = WarmInkDim) },
+            singleLine = true,
+            modifier = Modifier.fillMaxWidth(),
+            textStyle = MaterialTheme.typography.bodyLarge.copy(color = WarmInk),
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = WarmTeal,
+                unfocusedBorderColor = WarmSurfaceSoft,
+                cursorColor = WarmTeal,
+            ),
+        )
 
         Box(
             modifier = Modifier
@@ -215,17 +234,15 @@ private fun StepBirthDate(onDateSelected: (LocalDate) -> Unit) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Step 2 — Name + optional birth time
+// Step 2 — Optional birth time + location
 // ─────────────────────────────────────────────────────────────────────────────
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun StepNameAndTime(
-    onNameChanged: (String) -> Unit,
+private fun StepTimeAndLocation(
     onTimeSelected: (LocalTime?) -> Unit,
     onNext: () -> Unit,
 ) {
-    var name by remember { mutableStateOf("") }
     var showTimeDialog by remember { mutableStateOf(false) }
     var selectedTime by remember { mutableStateOf<LocalTime?>(null) }
     val timePickerState = rememberTimePickerState()
@@ -257,39 +274,21 @@ private fun StepNameAndTime(
         verticalArrangement = Arrangement.spacedBy(20.dp),
     ) {
         Text(
-            "What should we call you?",
+            "Fine-tune your chart",
             fontFamily = SerifFamily,
             fontSize = 28.sp,
             lineHeight = 34.sp,
             color = WarmInk,
             textAlign = TextAlign.Center,
         )
-
-        OutlinedTextField(
-            value = name,
-            onValueChange = {
-                name = it
-                onNameChanged(it)
-            },
-            placeholder = { Text("Your name", color = WarmInkDim) },
-            singleLine = true,
-            modifier = Modifier.fillMaxWidth(),
-            textStyle = MaterialTheme.typography.bodyLarge.copy(color = WarmInk),
-            colors = OutlinedTextFieldDefaults.colors(
-                focusedBorderColor = WarmTeal,
-                unfocusedBorderColor = WarmSurfaceSoft,
-                cursorColor = WarmTeal,
-            ),
-        )
-
-        Spacer(Modifier.height(8.dp))
-
         Text(
-            "Optional: add your birth time for exact Lagna calculation.",
-            style = MaterialTheme.typography.bodySmall,
+            "Add your birth time for exact Lagna and Nakshatra.\nSkip if you don't know it.",
+            style = MaterialTheme.typography.bodyMedium,
             color = WarmInkDim,
             textAlign = TextAlign.Center,
         )
+
+        Spacer(Modifier.height(8.dp))
 
         Box(
             modifier = Modifier
@@ -301,14 +300,26 @@ private fun StepNameAndTime(
             contentAlignment = Alignment.Center,
         ) {
             Text(
-                text = selectedTime?.toString() ?: "Tap to add birth time",
+                text = selectedTime?.toString() ?: "Tap to add birth time (optional)",
                 fontFamily = SerifFamily,
                 fontSize = if (selectedTime != null) 18.sp else 14.sp,
                 color = if (selectedTime != null) WarmTeal else WarmInkDim,
             )
         }
 
-        Spacer(Modifier.height(16.dp))
+        Spacer(Modifier.height(8.dp))
+
+        TextButton(
+            onClick = {
+                onTimeSelected(null)
+                onNext()
+            },
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Text("I don't know my birth time", color = WarmInkDim)
+        }
+
+        Spacer(Modifier.height(8.dp))
 
         Button(
             onClick = onNext,
