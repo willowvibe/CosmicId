@@ -82,7 +82,7 @@ Current version: **2.0.0** (Revamp).
 | Background Work | WorkManager |
 | Home Widget | Jetpack Glance |
 | Ads | Google AdMob (Banner only on free tier) |
-| Billing | Google Play Billing Library 6+ |
+| Billing | Google Play Billing Library 7+ |
 | Astro Maths | Meeus low-precision ephemeris + Lahiri ayanamsa |
 
 ---
@@ -92,46 +92,42 @@ Current version: **2.0.0** (Revamp).
 ```
 app/src/main/java/com/willowvibe/agereveal/
 ├── AgeRevealApp.kt            # Application class (Hilt + AdMob init)
-├── MainActivity.kt            # Single-activity host + notification permission + deep-link receiver
+├── MainActivity.kt            # Single-activity host + notification permission + deep-link receiver + BillingManager lifecycle
 ├── billing/
-│   └── BillingManager.kt      # Google Play Billing 6+ (SUBS only)
+│   └── BillingManager.kt      # Google Play Billing 7+ (SUBS only); trial parsing + error handling
 ├── ads/
-│   └── AdManager.kt           # Centralised AdMob lifecycle (Banner only)
+│   └── AdManager.kt           # Centralised AdMob lifecycle (Banner only on free tier)
 ├── data/
-│   ├── db/                    # Room database, DAO, type converters
-│   ├── model/                 # AgeResult, SavedBirthday, Milestone data classes
-│   └── repository/            # BirthdayRepository, UserPreferencesRepository (single source of truth)
+│   ├── db/                    # Room database, DAO, type converters, migrations
+│   ├── model/                 # AgeResult, SavedBirthday, Milestone, GeoLocation, CelebrityMatch data classes
+│   └── repository/            # BirthdayRepository, BadgeRepository, UserPreferencesRepository (single source of truth)
 ├── di/
 │   └── DatabaseModule.kt      # Hilt module for Room singleton
 ├── domain/
 │   ├── AgeCalculator.kt       # Core age + milestone logic (java.time)
 │   ├── AstronomicalCalculator.kt  # Ephemeris: sidereal Sun/Moon positions
-│   ├── EphemerisSnapshot.kt       # Immutable cached ephemeris per birth moment
 │   ├── ZodiacCalculator.kt        # Western, Vedic Rashi, Chinese Zodiac + Stem-Branch
 │   ├── NakshatraCalculator.kt     # 27 lunar mansions + Pada (quarters)
 │   ├── ZodiacCompatibilityCalculator.kt  # Compatibility scoring
 │   ├── ShareCardGenerator.kt      # Bitmap card renderer + share Intent
-│   ├── CalendarExport.kt          # Google Calendar add-event Intent
-│   ├── ProfileDeepLinkGenerator.kt # Base64-encoded profile URL builder
-│   └── CelebrityMatchCalculator.kt # Birthday-to-celebrity matcher
+│   ├── DailyFortuneGenerator.kt     # Deterministic daily fortune based on birth date
+│   ├── ProfileDeepLinkGenerator.kt  # Base64-encoded profile URL builder
+│   ├── CelebrityMatchCalculator.kt  # Birthday-to-celebrity matcher from JSON assets
+│   └── PlanetAgeCalculator.kt       # Age on Mercury, Venus, Mars, Jupiter, Saturn, etc.
 ├── notification/
 │   ├── BirthdayNotificationScheduler.kt
 │   ├── BirthdayReminderWorker.kt
 │   ├── MilestoneNotificationScheduler.kt
-│   ├── DailyFortuneWorker.kt      # PeriodicWorkRequest for daily fortune push
-│   └── CosmicYearReportWorker.kt  # One-shot birthday report notification
+│   ├── MilestoneReminderWorker.kt
+│   └── YearlyReengagementScheduler.kt
 ├── ui/
-│   ├── navigation/AppNavGraph.kt
-│   ├── screen/               # 10+ Compose screens (including Onboarding, Paywall, CosmicTwins)
-│   ├── theme/                # Color, Theme, Type
-│   └── viewmodel/            # CalculatorViewModel, CompareViewModel, CompatibilityViewModel, RemindersViewModel, OnboardingViewModel, PaywallViewModel
-├── onboarding/
-│   └── OnboardingScreen.kt   # 3-step first-launch flow
-├── paywall/
-│   └── PaywallScreen.kt      # Subscription upsell UI
+│   ├── navigation/AppNavGraph.kt    # NavHost + bottom nav (4 tabs); onboarding gate; deep-link auto-populate
+│   ├── screen/                      # Compose screens (Calculator, Compatibility, Reminders, Timeline, Details, Settings, Onboarding, Paywall)
+│   ├── theme/                       # Color, Theme, Type
+│   └── viewmodel/                   # CalculatorViewModel, CompatibilityViewModel, RemindersViewModel, SettingsViewModel, MainViewModel, PaywallViewModel
 └── widget/
-    ├── BirthdayGlanceWidget.kt
-    └── BirthdayWideGlanceWidget.kt
+    ├── SecondsCounterUpdateWorker.kt  # Periodic widget refresh (15 min)
+    └── BirthdayGlanceWidget.kt
 ```
 
 ---
@@ -176,15 +172,16 @@ See [BUGS_AND_ISSUES.md](BUGS_AND_ISSUES.md) for the full list of known bugs and
 
 ### v2.0.0 (Revamp)
 - **3-Step Onboarding** — Animated first-launch flow with date picker, instant zodiac reveal, and optional birth time.
-- **Freemium Subscription Model** — Premium tier (₹49/mo or ₹299/yr) replaces ad-gated astrology. 7-day free trial.
-- **Deep-Link Profile Sharing** — Share cosmic profiles as URLs; auto-populate compatibility on receive.
-- **Celebrity Birthday Matching** — "You share a birthday with [Name]" from curated celebrity data.
+- **Freemium Subscription Model** — Premium tier (₹49/mo or ₹299/yr) replaces ad-gated astrology. 7-day free trial with "N days left" chip.
+- **Deep-Link Profile Sharing** — Share cosmic profiles as URLs (`agereveal://profile/[data]`); auto-populate compatibility on receive.
+- **Celebrity Birthday Matching** — "You share a birthday with [Name]" from 375 curated celebrity entries (8 categories); shown in rotating highlight.
 - **Animated MP4 Export** — 5-second ticking-seconds video for Reels/TikTok.
 - **WhatsApp Sticker Pack Export** — Direct import of cosmic stickers into WhatsApp.
 - **Daily Cosmic Fortune Push** — Delivered as a push notification instead of a silent card.
 - **Cosmic Year Report Notification** — Rich birthday notification with Mahadasha + fortune summary.
 - **Cosmic Twins Discovery** — Offline match users with identical Rashi + Nakshatra.
-- **Progressive Disclosure** — Main screen reduced to hero counter + one rotating highlight + CTA.
+- **Progressive Disclosure** — Main screen: hero counter + rotating highlight (milestone / fortune / planet age / celebrity) + CTA.
+- **Indian State Dropdown** — Searchable bottom-sheet location picker using state centroids; `isApproximate` flag for UI labelling.
 - **Removed:** Rewarded/interstitial ads, Parallel Universe Birth, ASCII Art share, Work-weeks-on-main-screen, custom Hindi toggle, Badges as bottom-nav tab.
 - **Renamed tab:** "You" → "My Cosmos".
 

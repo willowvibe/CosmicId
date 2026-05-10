@@ -29,11 +29,11 @@ _Last updated: 2026-05-10 — v2.0.0 Revamp (in progress)_
 | 5 | Create `PaywallScreen.kt` | ✅ | Shows subscription tiers with "BEST VALUE" yearly badge |
 | 6 | Add `isPremium` flag to `UserPreferencesRepository` | ✅ | DataStore boolean; synced from BillingManager purchase state |
 | 7 | Swap AdMob test IDs for production | ⬜ | Replace banner ID only (rewarded + interstitial IDs deleted) |
-| 8 | **Restore purchases flow** | ⬜ | Mandatory for Play Store review; add "Restore" button in Settings → Premium |
-| 9 | **Billing error handling UI** | ⬜ | Play Store unreachable → show "Can't reach Play Store" with retry CTA |
+| 8 | **Restore purchases flow** | ✅ | "Restore purchases" button in PaywallScreen + Settings; delegates to `BillingManager.restorePurchases()` |
+| 9 | **Billing error handling UI** | ✅ | `BillingManager` exposes `error: StateFlow<String?>` with human-readable messages; PaywallScreen shows error banner with retry CTA |
 | 10 | **Grace period for lapsed subscriptions** | ⬜ | 3-day grace; show "Renew to keep premium" banner instead of hard lockout |
-| 11 | **Free trial UX** | ⬜ | During trial: show "Premium expires in N days" chip; day-6 conversion push |
-| 12 | **Acknowledge purchases + setPremium sync** | ✅ | `BillingManager.handlePurchases()` mirrors to DataStore |
+| 11 | **Free trial UX** | ✅ | `BillingManager` parses free pricing phase → `trialDaysRemaining: StateFlow<Int?>`. CalculatorScreen header shows "N days left" chip |
+| 12 | **Acknowledge purchases + setPremium sync** | ✅ | `BillingManager.handlePurchases()` mirrors to DataStore; stores purchase timestamp for trial calculation |
 
 ### 1b. Onboarding 🔴
 
@@ -55,16 +55,16 @@ _Last updated: 2026-05-10 — v2.0.0 Revamp (in progress)_
 | 3 | Decode on receive in `MainActivity` | ✅ | `ProfileDeepLinkGenerator.parse(intent?.data)` passed to `AppNavGraph` |
 | 4 | Auto-populate CalculatorScreen | ✅ | `LaunchedEffect(deepLinkProfile)` → `onBirthDateSelected`, `onNameChanged`, `onBirthTimeSelected` |
 | 5 | **Fallback for non-installed users** | ⬜ | Register `https://` App Link OR Firebase Dynamic Link → Play Store fallback |
-| 6 | Share button generates deep-link | ⬜ | "Share your Cosmic ID" button copies `ProfileDeepLinkGenerator.generate()` URL |
+| 6 | Share button generates deep-link | ✅ | "Copy link" button in CalculatorScreen copies `ProfileDeepLinkGenerator.generate()` URL to clipboard with Snackbar confirmation |
 
 ### 1d. Progressive Disclosure on Main Screen 🟡
 
 | # | Task | Status | Notes |
 |---|------|--------|-------|
-| 1 | Refactor `CalculatorScreen.kt` | ⬜ | Hero counter + rotating highlight + "Explore full profile →" CTA |
+| 1 | Refactor `CalculatorScreen.kt` | ✅ | Hero counter + rotating highlight + "Explore full profile →" CTA; share card + copy link side-by-side |
 | 2 | Move all other cards to `DetailsUnlockScreen` tabs | ⬜ | Overview / Western / Vedic / Chinese tabbed layout |
-| 3 | Remove "Work weeks until retirement" from main screen | ⬜ | Move to Life Stats in Details |
-| 4 | Rotating highlight logic | ⬜ | Cycle through fortune / next milestone / planet age / celebrity match |
+| 3 | Remove "Work weeks until retirement" from main screen | ✅ | Retirement card removed from main screen (now only in Details if enabled) |
+| 4 | Rotating highlight logic | ✅ | 4-second auto-rotate through Milestone / Fortune / Planet Age / Celebrity Match; `remember(fortune != null)` to prevent timer restart |
 
 ### 1e. Feature Removals 🔴
 
@@ -80,11 +80,11 @@ _Last updated: 2026-05-10 — v2.0.0 Revamp (in progress)_
 
 | # | Task | Status | Notes |
 |---|------|--------|-------|
-| 1 | Create `assets/indian_states_coords.json` | ⬜ | 36 states/UTs with centroid lat/lon |
-| 2 | Replace lat/lon free-text input with State dropdown | ⬜ | Show state name; persist centroid coordinates internally |
-| 3 | Add "(Approximate — state centroid)" label | ⬜ | When state is used vs exact city coords |
+| 1 | Create `assets/indian_states_coords.json` | ✅ | 36 states/UTs with centroid lat/lon |
+| 2 | Replace lat/lon free-text input with State dropdown | ✅ | Searchable bottom-sheet picker with state names; persists centroid coordinates |
+| 3 | Add "(Approximate — state centroid)" label | ✅ | `PrecisionChip` shows state name + "*" when `isApproximate = true` |
 | 4 | Optional "Add exact city" secondary input | ⬜ | Collapsible section below state picker for power users |
-| 5 | Update `GeoLocation` model | ⬜ | Add `isApproximate: Boolean` flag for UI labelling |
+| 5 | Update `GeoLocation` model | ✅ | `isApproximate: Boolean = false`; serialized as 4th segment in prefs |
 
 ---
 
@@ -94,10 +94,10 @@ _Last updated: 2026-05-10 — v2.0.0 Revamp (in progress)_
 
 | # | Task | Status | Notes |
 |---|------|--------|-------|
-| 1 | Create `assets/celebrities.json` (~500 entries) | ⬜ | `[{name, dob, category}]` — **India-first curation** |
-| 2 | **Data source & curation strategy** | ⬜ | Bollywood (150), Cricket (100), Politics (50), Global (200); static JSON baked into APK |
-| 3 | Create `CelebrityMatchCalculator.kt` | ⬜ | Match by month+day; return top 3 matches |
-| 4 | Add celebrity card to `CalculatorScreen` | ⬜ | Show in rotating highlight or Details |
+| 1 | Create `assets/celebrities.json` (~375 entries) | ✅ | `[{name, dob, category}]` — 8 categories: Bollywood, Cricket, Sports, Global, Politics, South Indian, Music, Business |
+| 2 | **Data source & curation strategy** | ✅ | Curated static JSON baked into APK; sorted by exact-year-first, then year, then name |
+| 3 | Create `CelebrityMatchCalculator.kt` | ✅ | Singleton with `findMatches(birthDate, limit = 3)`; parses JSON from assets; matches month+day |
+| 4 | Add celebrity card to `CalculatorScreen` | ✅ | Shows in `RotatingHighlightCard` when matches exist; auto-hides when empty |
 | 5 | Generate shareable celebrity card | ⬜ | Via `ShareCardGenerator` — "You share a birthday with [Name]" |
 
 ### 2b. Daily Fortune Push Notification 🟢

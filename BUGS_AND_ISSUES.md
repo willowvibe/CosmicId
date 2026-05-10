@@ -19,19 +19,19 @@ This document tracks known bugs, edge cases, and fragile areas in the codebase. 
 
 ## Revamp v2.0 — Open Issues
 
-### 🔴 BUG-044 — Rewarded/Interstitial Ad Code Still Present After Removal Plan
-**Status:** 🔴 Open — pending removal in v2.0
+### 🟢 BUG-044 — Rewarded/Interstitial Ad Code Still Present After Removal Plan
+**Status:** 🟢 Fixed in v2.0
 **Severity:** Medium (code debt, confusing for new devs)
 **Files:** `ads/AdManager.kt`, `ui/screen/DetailsUnlockScreen.kt`, `ui/viewmodel/CalculatorViewModel.kt`
 **Description:** The revamp plan removes rewarded and interstitial ads in favor of a freemium subscription. The old ad code paths are still present and referenced. Leaving them in place creates confusion and increases APK size.
-**Planned fix:** Delete `RewardedAd` and `InterstitialAd` fields from `AdManager.kt`. Remove `maybeShowInterstitial()` call sites. Remove "Watch & Reveal" UI from `DetailsUnlockScreen`. Replace with `isPremium` flag check.
+**Fix applied:** `AdManager.kt` now banner-only. `DetailsUnlockScreen` uses `isPremium` flag check instead of "Watch & Reveal" UI. All interstitial call sites removed.
 
-### 🔴 BUG-045 — No `isPremium` Flag in UserPreferencesRepository
-**Status:** 🔴 Open — required for v2.0 paywall
+### 🟢 BUG-045 — No `isPremium` Flag in UserPreferencesRepository
+**Status:** 🟢 Fixed in v2.0
 **Severity:** High (feature blocker)
-**File:** `data/repository/UserPreferencesRepository.kt`
-**Description:** The subscription paywall requires a persistent `isPremium` boolean. There is no DataStore key for this yet.
-**Planned fix:** Add `IS_PREMIUM_KEY` (boolean, default false) to `UserPreferencesRepository`. Expose as `Flow<Boolean>`. Clear on app reinstall (expected).
+**File:** `data/preferences/UserPreferencesRepository.kt`
+**Description:** The subscription paywall requires a persistent `isPremium` boolean. There was no DataStore key for this yet.
+**Fix applied:** Added `IS_PREMIUM_KEY` (boolean, default false) to `UserPreferencesRepository`. Exposed as `Flow<Boolean>`. Synced from `BillingManager.handlePurchases()`.
 
 ### 🟡 BUG-046 — Hindi Locale Toggle Removed But strings-hi Still Maintained
 **Status:** 🟡 Open — design gap
@@ -39,6 +39,41 @@ This document tracks known bugs, edge cases, and fragile areas in the codebase. 
 **File:** `res/values-hi/strings.xml`
 **Description:** The custom in-app Hindi toggle is being removed (Android system locale handles this natively since API 33). The `values-hi` strings must still be maintained for users whose system language is Hindi.
 **Planned fix:** Keep `values-hi` resources. Remove `LocaleManager` and `AppCompatDelegate.setApplicationLocales` call from Settings. Document that Hindi is system-locale only.
+
+### 🟢 BUG-047 — BillingManager Uses `GlobalScope` and Lacks Error Handling
+**Status:** 🟢 Fixed in v2.0
+**Severity:** High (memory leak + silent failures)
+**File:** `billing/BillingManager.kt`
+**Description:** `BillingManager` used `GlobalScope` for coroutines, which never cancels and leaks after `Activity`/`Fragment` destruction. Billing errors were silently swallowed — users saw infinite loading spinners with no feedback.
+**Fix applied:** Replaced `GlobalScope` with `CoroutineScope(SupervisorJob())`. Added `scope.cancel()` in `endConnection()`. Added `_error: MutableStateFlow<String?>` with human-readable `billingErrorMessage()` mapping for all `BillingResponseCode` values. `PaywallScreen` now shows error banner with retry CTA.
+
+### 🟢 BUG-048 — RotatingHighlightCard Timer Restarts Every Second
+**Status:** 🟢 Fixed in v2.0
+**Severity:** Medium (UX — highlight never advances)
+**File:** `ui/screen/CalculatorScreen.kt`
+**Description:** The 4-second rotating highlight used `remember(result, fortune)` to build the highlight list. Since `result` is recomputed every second (totalSeconds changes), `LaunchedEffect(highlights)` restarted the 4-second delay coroutine every second, effectively freezing the rotation.
+**Fix applied:** Changed to `remember(fortune != null)` so the highlight list is stable. Added index clamping `if (index >= highlights.size) index = 0` for safety.
+
+### 🟢 BUG-049 — Stale UI References and Dead Code in AppNavGraph
+**Status:** 🟢 Fixed in v2.0
+**Severity:** Low (compiler warnings, minor confusion)
+**File:** `ui/navigation/AppNavGraph.kt`
+**Description:** `Screen.Badges` route, `BadgeScreen` composable, `BadgeViewModel` import, and `onOpenBadges` callback were removed from the nav graph but stale references remained in some comments. `AppNavGraph` also had an unused `scope` variable.
+**Fix applied:** Removed all dead references. `snackbarHostState` and `rememberCoroutineScope` also removed from `AppNavGraph` (handled per-screen). `LifeTimelineScreen` now uses reactive `collectAsState()` instead of direct `.value` read.
+
+### 🟢 BUG-050 — AdView Leak in CalculatorScreen Banner
+**Status:** 🟢 Fixed in v2.0
+**Severity:** Medium (memory leak)
+**File:** `ui/screen/CalculatorScreen.kt`
+**Description:** The `BannerAdView` composable used `AndroidView(factory = { ... })` without an `onRelease` callback. When the composable leaves composition, the underlying `AdView` is never destroyed, leaking WebView resources and ad listeners.
+**Fix applied:** Added `onRelease = { it.destroy() }` to the `AndroidView` factory.
+
+### 🟢 BUG-051 — No Free Trial UX Indicator
+**Status:** 🟢 Fixed in v2.0
+**Severity:** Low (conversion optimization)
+**File:** `billing/BillingManager.kt`, `ui/screen/CalculatorScreen.kt`
+**Description:** Users in a free trial had no visible indication of how many days remained, making it easy to forget and lapse.
+**Fix applied:** `BillingManager` parses free-trial pricing phase duration and computes `trialDaysRemaining`. CalculatorScreen header shows a teal "N days left" chip when active.
 
 ---
 

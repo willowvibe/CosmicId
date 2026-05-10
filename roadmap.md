@@ -46,16 +46,19 @@
 
 ### 5.1 Monetisation Overhaul
 - **Freemium Subscription** ✅ — Premium tier (₹49/mo or ₹299/yr) replaces ad-gated astrology. 7-day free trial.
+- **Billing error handling** ✅ — Human-readable error messages for all BillingResponseCode values; retry CTA in PaywallScreen.
+- **Restore purchases** ✅ — Mandatory "Restore purchases" button in PaywallScreen and Settings.
+- **Free trial UX chip** ✅ — "N days left" chip in CalculatorScreen header during trial period.
 - **Remove Ads IAP** ⬜ — One-time purchase option (₹199) as an alternative to subscription.
-- **Paywall Screen** ⬜ — Beautiful upsell shown when tapping locked features or on 3rd open.
+- **Paywall Screen** ✅ — Subscription tiers with "BEST VALUE" yearly badge; error banner + retry + restore CTA.
 
 ### 5.2 Onboarding & Activation
-- **3-Step Animated Onboarding** ⬜ — Date picker → instant zodiac reveal → optional birth time. Critical for <10% install-to-active conversion.
-- **Progressive Disclosure** ⬜ — Main screen reduced to hero counter + rotating highlight + CTA. All other cards moved to tabbed Details screen.
+- **3-Step Animated Onboarding** ✅ — Name + birth date → optional birth time + location → accent picker. Conditional start destination via `MainViewModel.hasCompletedOnboarding`.
+- **Progressive Disclosure** ✅ — Main screen: hero counter + rotating highlight + "Explore full profile →" CTA. All other content in DetailsUnlockScreen.
 
 ### 5.3 Social & Viral Loops
-- **Deep-Link Profile Sharing** ⬜ — `agereveal://profile/[data]` enables organic viral loops; auto-populates compatibility.
-- **Celebrity Birthday Matching** ⬜ — "You share a birthday with [Name]" — most retweetable stat.
+- **Deep-Link Profile Sharing** ✅ — `agereveal://profile/[data]` enables organic viral loops; auto-populates compatibility. "Copy link" button in CalculatorScreen.
+- **Celebrity Birthday Matching** ✅ — 375 curated celebrities across 8 categories; matched by month+day; shown in rotating highlight card.
 - **Animated MP4 Export** ⬜ — 5-second ticking-seconds video for Reels/TikTok.
 - **WhatsApp Sticker Pack** ⬜ — Direct import into WhatsApp; India's primary sharing surface.
 - **Cosmic Twins Discovery** ⬜ — Offline match by Rashi + Nakshatra; dual share card.

@@ -107,6 +107,7 @@ Cosmic ID is a native Android app (Kotlin + Jetpack Compose) that calculates you
 - `ZodiacCompatibilityCalculator.kt` — Western compatibility scoring
 - `ShareCardGenerator.kt` — Bitmap card renderer
 - `ProfileDeepLinkGenerator.kt` — `agereveal://profile/[data]` encode/decode
+- `CelebrityMatchCalculator.kt` — Load `celebrities.json`, match by month+day, return top N matches
 
 ### Billing
 - `BillingManager.kt` — Google Play Billing 7+ wrapper; SKU `premium_monthly` (₹49) + `premium_yearly` (₹299); 7-day free trial; purchase acknowledge + DataStore sync
@@ -195,8 +196,8 @@ Onboarding is the start destination on first launch.
 
 ## Current Session Context
 
-- Branch: `feat/cosmic-id-polish` (ahead of `origin/main`)
-- Recently added: v2.0 revamp — freemium model, onboarding, paywall, deep-links, 8-language localization
+- Branch: `feat/progressive-disclosure-and-sharing` (ahead of `origin/main`)
+- Recently added: Celebrity birthday matching (375 curated entries), free trial UX chip, Indian state dropdown, billing error handling, restore purchases flow, progressive disclosure UI
 - Package ID: `com.willowvibe.cosmicid` (applicationId changed; namespace kept for source compatibility)
 - Display name: Cosmic ID
 - Build compiles and all unit tests pass

@@ -3,10 +3,10 @@
 ## v2.0.0 (versionCode 8) — Major Revamp
 
 ### New Features
-- 🚀 **3-Step Animated Onboarding** — First-launch flow with date picker, instant zodiac reveal, and optional birth time. Sets the tone and maximises activation.
-- 💎 **Freemium Subscription Model** — Premium tier (₹49/month or ₹299/year) unlocks full astrology depth, removes ads, enables MP4 exports, and grants exclusive theme packs. 7-day free trial.
-- 🔗 **Deep-Link Profile Sharing** — Share your cosmic profile as a URL. Friends tap to view your profile or auto-populate compatibility comparison.
-- 🌟 **Celebrity Birthday Matching** — "You share a birthday with [Name]" matched from a curated celebrity database.
+- 🚀 **3-Step Animated Onboarding** — First-launch flow: name + birth date → optional birth time/location → accent picker. Sets the tone and maximises activation.
+- 💎 **Freemium Subscription Model** — Premium tier (₹49/month or ₹299/year) unlocks full astrology depth, removes ads, enables MP4 exports, and grants exclusive theme packs. 7-day free trial with visible "N days left" chip.
+- 🔗 **Deep-Link Profile Sharing** — Share your cosmic profile as a URL (`agereveal://profile/[data]`). Friends tap to view your profile or auto-populate compatibility comparison.
+- 🌟 **Celebrity Birthday Matching** — "You share a birthday with [Name]" matched from 375 curated celebrities across 8 categories (Bollywood, Cricket, Sports, Global, Politics, South Indian, Music, Business).
 - 🎬 **Animated MP4 Export** — 5-second ticking-seconds video rendered with MediaCodec for Reels/TikTok.
 - 💬 **WhatsApp Sticker Pack Export** — Direct import of cosmic stickers into WhatsApp.
 - 🔮 **Daily Cosmic Fortune Push Notification** — Delivered at your chosen time (default 8AM) instead of a silent card.
@@ -15,9 +15,10 @@
 - 🪐 **Planet Age Hero CTA** — "On Mars, you're only 14" as a prominent shareable card on your profile.
 
 ### Redesigns
-- 📐 **Progressive Disclosure** — Main screen now shows only hero counter + one rotating highlight card + "Explore full profile →" CTA. All other cards moved to a tabbed Details screen.
+- 📐 **Progressive Disclosure** — Main screen now shows only hero counter + one rotating highlight card (cycles through milestone / fortune / planet age / celebrity match) + "Explore full profile →" CTA. All other cards moved to DetailsUnlockScreen.
 - 🏠 **"My Cosmos" Tab** — Formerly "You"; renamed to signal the astrology identity.
 - 🎖️ **Badges Moved** — Badge collection now lives inside "My Cosmos" instead of a bottom-nav tab.
+- 🗺️ **Indian State Dropdown** — Replaced lat/lon free-text with searchable bottom-sheet picker using state centroids. Shows approximate label (`*`) for transparency.
 
 ### Removed Features
 - 🗑️ **Rewarded & Interstitial Ads** — Replaced by the freemium subscription. Only banner ads remain on the free tier.
