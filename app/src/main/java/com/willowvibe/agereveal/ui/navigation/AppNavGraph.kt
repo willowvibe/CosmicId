@@ -16,8 +16,6 @@ import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -25,7 +23,6 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -86,8 +83,6 @@ fun AppNavGraph(
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDest = navBackStackEntry?.destination
-    val snackbarHostState = remember { SnackbarHostState() }
-    val scope = rememberCoroutineScope()
     val context = LocalContext.current
     val mainViewModel: MainViewModel = hiltViewModel()
     val onboardingCompleted by mainViewModel.hasCompletedOnboarding.collectAsState()
@@ -99,7 +94,6 @@ fun AppNavGraph(
     val showBottomBar = currentDest?.route != Screen.Onboarding.route
 
     Scaffold(
-        snackbarHost = { SnackbarHost(snackbarHostState) },
         containerColor = WarmBlack,
         bottomBar = {
             if (showBottomBar) {
@@ -236,7 +230,8 @@ fun AppNavGraph(
                 } else {
                     hiltViewModel()
                 }
-                val milestones = viewModel.uiState.value.result?.milestones ?: emptyList()
+                val uiState by viewModel.uiState.collectAsState()
+                val milestones = uiState.result?.milestones ?: emptyList()
                 LifeTimelineScreen(
                     milestones = milestones,
                     onDismiss = { navController.popBackStack() },

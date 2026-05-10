@@ -58,3 +58,4 @@ credentials.json
 *.key
 .credentials
 tools/mcp/venv/
+/anbox-modules/

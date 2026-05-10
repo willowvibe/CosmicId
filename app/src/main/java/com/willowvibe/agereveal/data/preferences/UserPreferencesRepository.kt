@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
+import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -46,6 +47,8 @@ class UserPreferencesRepository @Inject constructor(
         private val RETIREMENT_AGE_KEY = intPreferencesKey("retirement_age")
         private val RETIREMENT_ENABLED_KEY = booleanPreferencesKey("retirement_enabled")
         private val IS_PREMIUM_KEY = booleanPreferencesKey("is_premium")
+        private val PREMIUM_PURCHASE_TIME_KEY = longPreferencesKey("premium_purchase_time")
+        private val TRIAL_DURATION_DAYS_KEY = intPreferencesKey("trial_duration_days")
         private val ONBOARDING_COMPLETED_KEY = booleanPreferencesKey("onboarding_completed")
     }
 
@@ -128,6 +131,16 @@ class UserPreferencesRepository @Inject constructor(
     val isPremium: Flow<Boolean> = dataStore.data.map { it[IS_PREMIUM_KEY] ?: false }
     suspend fun setPremium(premium: Boolean) {
         dataStore.edit { it[IS_PREMIUM_KEY] = premium }
+    }
+
+    val premiumPurchaseTime: Flow<Long> = dataStore.data.map { it[PREMIUM_PURCHASE_TIME_KEY] ?: 0L }
+    suspend fun setPremiumPurchaseTime(timeMillis: Long) {
+        dataStore.edit { it[PREMIUM_PURCHASE_TIME_KEY] = timeMillis }
+    }
+
+    val trialDurationDays: Flow<Int> = dataStore.data.map { it[TRIAL_DURATION_DAYS_KEY] ?: 0 }
+    suspend fun setTrialDurationDays(days: Int) {
+        dataStore.edit { it[TRIAL_DURATION_DAYS_KEY] = days }
     }
 
     // ── Onboarding completed (v2.0) ────────────────────────────────────────

@@ -198,6 +198,22 @@ fun CalculatorScreen(
                             color = WarmInkDim,
                         )
                     }
+                    // Free trial chip
+                    uiState.trialDaysRemaining?.let { days ->
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier
+                                .clip(CircleShape)
+                                .background(WarmTeal.copy(alpha = 0.15f))
+                                .padding(horizontal = 8.dp, vertical = 4.dp),
+                        ) {
+                            Text(
+                                "$days day${if (days == 1) "" else "s"} left",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = WarmTeal,
+                            )
+                        }
+                    }
                     IconButton(
                         onClick = onOpenSettings,
                         modifier = Modifier
@@ -274,6 +290,7 @@ fun CalculatorScreen(
                                 result = result,
                                 fortune = uiState.dailyFortune,
                                 name = uiState.name,
+                                celebrityMatches = uiState.celebrityMatches,
                             )
                         }
 
@@ -1199,14 +1216,16 @@ private fun RotatingHighlightCard(
     result: AgeResult,
     fortune: com.willowvibe.agereveal.domain.DailyFortuneGenerator.Fortune?,
     name: String,
+    celebrityMatches: List<com.willowvibe.agereveal.data.model.CelebrityMatch>,
 ) {
     val hasFortune = fortune != null
-    val highlights = remember(hasFortune) {
+    val hasCelebrities = celebrityMatches.isNotEmpty()
+    val highlights = remember(hasFortune, hasCelebrities) {
         buildList {
             add(HighlightType.MILESTONE)
             if (hasFortune) add(HighlightType.FORTUNE)
             add(HighlightType.PLANET_AGE)
-            add(HighlightType.CELEBRITY)
+            if (hasCelebrities) add(HighlightType.CELEBRITY)
         }
     }
     var index by remember { mutableIntStateOf(0) }
@@ -1233,7 +1252,7 @@ private fun RotatingHighlightCard(
             HighlightType.MILESTONE -> MilestoneHighlight(result)
             HighlightType.FORTUNE -> FortuneHighlight(fortune)
             HighlightType.PLANET_AGE -> PlanetAgeHighlight(result, name)
-            HighlightType.CELEBRITY -> CelebrityHighlightPlaceholder()
+            HighlightType.CELEBRITY -> CelebrityHighlight(celebrityMatches)
         }
     }
 }
@@ -1310,6 +1329,35 @@ private fun PlanetAgeHighlight(result: AgeResult, name: String) {
 }
 
 @Composable
+private fun CelebrityHighlight(
+    matches: List<com.willowvibe.agereveal.data.model.CelebrityMatch>,
+) {
+    if (matches.isEmpty()) {
+        CelebrityHighlightPlaceholder()
+        return
+    }
+    val match = matches.first()
+    val categoryLabel = match.category.lowercase().replaceFirstChar { it.uppercase() }
+    AgeCard {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text("⭐", fontSize = 20.sp)
+            Spacer(Modifier.width(10.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                AgeLabel(text = "CELEBRITY MATCH")
+                AgeBody(
+                    text = "${match.name} · $categoryLabel",
+                    color = WarmInk,
+                )
+                AgeBody(
+                    text = "Born ${match.birthDate.year}",
+                    color = WarmInkMute,
+                )
+            }
+        }
+    }
+}
+
+@Composable
 private fun CelebrityHighlightPlaceholder() {
     AgeCard {
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -1347,6 +1395,7 @@ private fun BannerAdView(adUnitId: String) {
                 }
             },
             modifier = Modifier.fillMaxWidth(),
+            onRelease = { it.destroy() },
         )
     }
 }
