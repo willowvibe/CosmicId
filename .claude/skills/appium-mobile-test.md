@@ -47,22 +47,27 @@ adb devices
 
 ## Example Test Flows
 
+### Onboarding Flow
+
+```
+Use appium_start_session to launch the Cosmic ID debug APK on the emulator.
+Use appium_find_element with text "Get Started" and click it.
+Enter name in the name field.
+Tap the date picker, select a birth date, confirm.
+Tap "Next" to proceed to birth time step.
+Tap "I don't know" to skip birth time.
+Select an accent color swatch.
+Tap "Start My Cosmos" to complete onboarding.
+Use appium_get_screenshot to verify the CalculatorScreen is displayed.
+```
+
 ### Basic Age Calculator Flow
 
 ```
-Use appium_start_session to launch the AgeReveal debug APK on the emulator.
+Use appium_start_session to launch the Cosmic ID debug APK on the emulator.
 Use appium_find_element with content-desc "Pick date" and click it.
 Use appium_find_element with text "OK" and click it.
 Use appium_get_screenshot to verify the age result is displayed.
-```
-
-### Unlock Profile Flow
-
-```
-Use appium_start_session with the APK.
-Tap the date picker, select a birth date, confirm.
-Tap "Watch & Reveal" to trigger the ad unlock flow.
-Take a screenshot to verify the astro tile appears.
 ```
 
 ### Compatibility Screen Flow
@@ -74,25 +79,31 @@ Enter names and dates for both persons.
 Verify the compatibility score card is displayed.
 ```
 
-## Testing Strategy for AgeReveal
+## Testing Strategy for Cosmic ID
 
 ### Critical Paths to Automate
 
-1. **CalculatorScreen**
+1. **OnboardingScreen**
+   - Enter name + birth date → proceed to Step 2
+   - Skip birth time → proceed to Step 3
+   - Select accent color → complete onboarding
+   - Verify CalculatorScreen appears after completion
+
+2. **CalculatorScreen (My Cosmos)**
    - Enter birth date → age displayed
    - Add birth time → precision chip shows time
    - Add location → precision chip shows coordinates
-   - Tap share → share sheet opens
-
-2. **DetailsUnlockScreen**
-   - Locked state → placeholder visible
-   - Unlock → astro tile renders with signs
-   - Milestone timeline → scroll and verify
+   - Tap share → share sheet opens with deep-link profile
 
 3. **CompatibilityScreen**
    - Enter two birth dates → result appears
    - Switch relationship type → score recalculates
-   - Share match card → share sheet opens
+   - Share match card → deep-link invite opens
+
+4. **PaywallScreen**
+   - Tap premium feature → paywall opens
+   - Verify subscription tiers are displayed
+   - Tap back → returns to previous screen
 
 ### Element Locator Strategy
 
@@ -100,10 +111,12 @@ Use these Compose test tags in your Kotlin code to make Appium testing reliable:
 
 ```kotlin
 // Add test tags to key composables
+Modifier.testTag("onboarding_name_field")
 Modifier.testTag("birth_date_picker")
-Modifier.testTag("watch_ad_button")
 Modifier.testTag("share_button")
 Modifier.testTag("compatibility_result")
+Modifier.testTag("paywall_monthly_card")
+Modifier.testTag("paywall_yearly_card")
 ```
 
 Appium can find elements by:
@@ -119,3 +132,4 @@ Appium can find elements by:
 - Enable `AI_VISION_ENABLED=true` for elements without proper accessibility labels
 - Run tests on the same APK built by `./gradlew :app:assembleDebug`
 - Clean up sessions with `appium_terminate_app` after tests
+- Onboarding only appears on first launch; use `pm clear` to reset app state between test runs
