@@ -60,6 +60,9 @@ class BillingManager @Inject constructor(
     private val _trialDaysRemaining = MutableStateFlow<Int?>(null)
     val trialDaysRemaining: StateFlow<Int?> = _trialDaysRemaining.asStateFlow()
 
+    private val _graceDaysRemaining = MutableStateFlow<Int?>(null)
+    val graceDaysRemaining: StateFlow<Int?> = _graceDaysRemaining.asStateFlow()
+
     private var billingClient: BillingClient? = null
 
     private val productIds = listOf("premium_monthly", "premium_yearly")
@@ -204,15 +207,47 @@ class BillingManager @Inject constructor(
                 }
             }
         }
-        _isPremium.value = hasActive
+
         scope.launch {
-            userPrefs.setPremium(hasActive)
-            if (hasActive && latestPurchaseTime > 0) {
+            if (hasActive) {
+                // Active purchase found — clear any grace period and restore premium
+                userPrefs.setGracePeriodStart(0L)
+                _graceDaysRemaining.value = null
+                _isPremium.value = true
+                userPrefs.setPremium(true)
                 val storedTime = userPrefs.premiumPurchaseTime.first()
                 if (storedTime == 0L) {
                     userPrefs.setPremiumPurchaseTime(latestPurchaseTime)
                 }
                 updateTrialDaysRemaining()
+            } else {
+                // No active purchase — check grace period
+                val wasPremium = userPrefs.isPremium.first()
+                if (wasPremium) {
+                    // Subscription lapsed — start or continue grace period
+                    var graceStart = userPrefs.gracePeriodStart.first()
+                    if (graceStart == 0L) {
+                        graceStart = System.currentTimeMillis()
+                        userPrefs.setGracePeriodStart(graceStart)
+                    }
+                    val elapsedDays = ((System.currentTimeMillis() - graceStart) / 86_400_000).toInt()
+                    val remaining = 3 - elapsedDays
+                    if (remaining > 0) {
+                        _isPremium.value = true
+                        _graceDaysRemaining.value = remaining
+                    } else {
+                        // Grace period expired — hard lockout
+                        _isPremium.value = false
+                        userPrefs.setPremium(false)
+                        _graceDaysRemaining.value = null
+                        userPrefs.setGracePeriodStart(0L)
+                    }
+                } else {
+                    // Never premium — no grace period
+                    _isPremium.value = false
+                    _graceDaysRemaining.value = null
+                }
+                _trialDaysRemaining.value = null
             }
         }
     }

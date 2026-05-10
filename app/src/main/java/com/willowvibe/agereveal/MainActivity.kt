@@ -11,6 +11,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import com.willowvibe.agereveal.billing.BillingManager
 import com.willowvibe.agereveal.domain.ProfileDeepLinkGenerator
+import com.willowvibe.agereveal.notification.DailyFortuneScheduler
 import com.willowvibe.agereveal.ui.navigation.AppNavGraph
 import com.willowvibe.agereveal.ui.theme.AgeRevealTheme
 import com.willowvibe.agereveal.widget.SecondsCounterUpdateWorker
@@ -25,6 +26,7 @@ import javax.inject.Inject
 class MainActivity : ComponentActivity() {
 
     @Inject lateinit var billingManager: BillingManager
+    @Inject lateinit var dailyFortuneScheduler: DailyFortuneScheduler
 
     private val notificationPermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { /* granted or denied — notifications work accordingly */ }
@@ -38,6 +40,9 @@ class MainActivity : ComponentActivity() {
 
         // Schedule periodic widget refresh for the seconds counter
         SecondsCounterUpdateWorker.schedule(this)
+
+        // Ensure daily fortune push is scheduled if the user has set a birth date
+        dailyFortuneScheduler.schedule()
 
         val deepLinkProfile = intent?.data?.let { ProfileDeepLinkGenerator.parse(it) }
 

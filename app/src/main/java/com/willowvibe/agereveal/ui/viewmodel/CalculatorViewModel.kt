@@ -16,6 +16,7 @@ import com.willowvibe.agereveal.domain.ShareCardGenerator
 import com.willowvibe.agereveal.domain.DailyFortuneGenerator
 import com.willowvibe.agereveal.domain.TimeRemainingCalculator
 import com.willowvibe.agereveal.domain.RetirementCalculator
+import com.willowvibe.agereveal.notification.DailyFortuneScheduler
 import com.willowvibe.agereveal.notification.MilestoneNotificationScheduler
 import com.willowvibe.agereveal.notification.YearlyReengagementScheduler
 import com.willowvibe.agereveal.util.ReviewHelper
@@ -56,6 +57,7 @@ data class CalculatorUiState(
     val retirementEnabled: Boolean = true,
     val celebrityMatches: List<CelebrityMatch> = emptyList(),
     val trialDaysRemaining: Int? = null,
+    val graceDaysRemaining: Int? = null,
 )
 
 @HiltViewModel
@@ -64,6 +66,7 @@ class CalculatorViewModel @Inject constructor(
     private val shareCardGenerator: ShareCardGenerator,
     private val milestoneNotificationScheduler: MilestoneNotificationScheduler,
     private val yearlyReengagementScheduler: YearlyReengagementScheduler,
+    private val dailyFortuneScheduler: DailyFortuneScheduler,
     private val userPrefs: UserPreferencesRepository,
     private val reviewHelper: ReviewHelper,
     private val badgeRepository: BadgeRepository,
@@ -146,6 +149,9 @@ class CalculatorViewModel @Inject constructor(
             billingManager.trialDaysRemaining.collect { days ->
                 _uiState.update { it.copy(trialDaysRemaining = days) }
             }
+            billingManager.graceDaysRemaining.collect { days ->
+                _uiState.update { it.copy(graceDaysRemaining = days) }
+            }
         }
     }
 
@@ -178,6 +184,7 @@ class CalculatorViewModel @Inject constructor(
             milestoneNotificationScheduler.scheduleUpcomingMilestones(date, enabled)
         }
         yearlyReengagementScheduler.schedule(date)
+        dailyFortuneScheduler.schedule(date)
         prefs.edit().putString("birth_date", date.toString()).apply()
         viewModelScope.launch {
             val targetAge = userPrefs.targetAge.first()
@@ -335,6 +342,21 @@ class CalculatorViewModel @Inject constructor(
                 stemBranch = fortune.stemBranch,
                 luckyNumber = fortune.luckyNumber,
                 luckyColor = fortune.luckyColor,
+            )
+        }
+        reviewHelper.maybePromptAfterShare(activity)
+    }
+
+    /** Share a celebrity birthday match card. */
+    fun shareCelebrityCard(activity: Activity? = null) {
+        val state = _uiState.value
+        val celebrity = state.celebrityMatches.firstOrNull() ?: return
+        val birthDate = state.birthDate ?: return
+        viewModelScope.launch(Dispatchers.IO) {
+            shareCardGenerator.shareCelebrity(
+                userName = state.name,
+                userBirthDate = birthDate,
+                celebrity = celebrity,
             )
         }
         reviewHelper.maybePromptAfterShare(activity)

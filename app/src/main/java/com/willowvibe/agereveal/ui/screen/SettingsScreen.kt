@@ -194,6 +194,36 @@ fun SettingsScreen(
                         currentHour = notificationHour,
                         onHourSelected = settingsViewModel::setNotificationHour,
                     )
+
+                    HorizontalDivider(color = WarmSurfaceSoft)
+
+                    // Daily cosmic fortune toggle
+                    val fortuneEnabled by settingsViewModel.fortuneEnabled.collectAsState()
+                    val fortuneHour by settingsViewModel.fortuneHour.collectAsState()
+
+                    SwitchRow(
+                        title = stringResource(R.string.enable_fortune_notifications),
+                        subtitle = stringResource(R.string.enable_fortune_notifications_desc),
+                        checked = fortuneEnabled,
+                        onCheckedChange = settingsViewModel::setFortuneEnabled,
+                    )
+
+                    if (fortuneEnabled) {
+                        Spacer(Modifier.height(8.dp))
+                        Text(
+                            stringResource(R.string.fortune_time_title),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = WarmInk,
+                            fontWeight = FontWeight.SemiBold,
+                        )
+                        AgeBody(
+                            text = stringResource(R.string.fortune_time_desc),
+                        )
+                        NotificationHourGrid(
+                            currentHour = fortuneHour,
+                            onHourSelected = settingsViewModel::setFortuneHour,
+                        )
+                    }
                 }
             }
 

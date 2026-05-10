@@ -7,6 +7,7 @@ import com.willowvibe.agereveal.data.model.SavedBirthday
 import com.willowvibe.agereveal.data.preferences.UserPreferencesRepository
 import com.willowvibe.agereveal.data.repository.BirthdayRepository
 import com.willowvibe.agereveal.notification.BirthdayNotificationScheduler
+import com.willowvibe.agereveal.notification.DailyFortuneScheduler
 import com.willowvibe.agereveal.notification.MilestoneNotificationScheduler
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -30,6 +31,7 @@ class SettingsViewModel @Inject constructor(
     private val repository: BirthdayRepository,
     private val birthdayScheduler: BirthdayNotificationScheduler,
     private val milestoneScheduler: MilestoneNotificationScheduler,
+    private val dailyFortuneScheduler: DailyFortuneScheduler,
     private val csvExporter: BirthdayCsvExporter,
     private val billingManager: BillingManager,
 ) : ViewModel() {
@@ -45,6 +47,10 @@ class SettingsViewModel @Inject constructor(
 
     // Expose notification hour from BirthdayNotificationScheduler
     val notificationHour: StateFlow<Int> = birthdayScheduler.notificationHour
+
+    // Daily fortune push notification settings
+    val fortuneEnabled: StateFlow<Boolean> = dailyFortuneScheduler.fortuneEnabled
+    val fortuneHour: StateFlow<Int> = dailyFortuneScheduler.fortuneHour
 
     val birthdays: StateFlow<List<SavedBirthday>> = repository.allBirthdays
         .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
@@ -88,6 +94,17 @@ class SettingsViewModel @Inject constructor(
 
     fun setNotificationHour(hour: Int) {
         birthdayScheduler.setNotificationHour(hour)
+    }
+
+    fun setFortuneEnabled(enabled: Boolean) {
+        dailyFortuneScheduler.setFortuneEnabled(enabled)
+        // Reschedule or cancel based on the new state
+        dailyFortuneScheduler.schedule()
+    }
+
+    fun setFortuneHour(hour: Int) {
+        dailyFortuneScheduler.setFortuneHour(hour)
+        dailyFortuneScheduler.schedule()
     }
 
     fun setMilestoneEnabled(target: Int, enabled: Boolean) {
