@@ -1381,7 +1381,7 @@ class ShareCardGenerator @Inject constructor(
 
     private fun drawStoryWatermark(canvas: Canvas, paint: Paint) {
         paint.color = Color.WHITE; paint.alpha = 60; paint.textSize = 28f; paint.typeface = Typeface.DEFAULT
-        canvas.drawText("Made with AgeReveal", STORY_WIDTH - 340f, STORY_HEIGHT - 60f, paint)
+        canvas.drawText("Made with Cosmic ID", STORY_WIDTH - 340f, STORY_HEIGHT - 60f, paint)
         paint.alpha = 255
     }
 
@@ -1447,7 +1447,7 @@ class ShareCardGenerator @Inject constructor(
         }
 
         // Watermark
-        drawOutlinedText("Made with AgeReveal", STORY_WIDTH - 340f, STORY_HEIGHT - 60f, 28f)
+        drawOutlinedText("Made with Cosmic ID", STORY_WIDTH - 340f, STORY_HEIGHT - 60f, 28f)
     }
 
     // ---------------------------------------------------------------------------
@@ -1457,7 +1457,7 @@ class ShareCardGenerator @Inject constructor(
     private fun drawWatermark(canvas: Canvas, paint: Paint) {
         // Position relative to the square output bottom edge
         paint.color = Color.WHITE; paint.alpha = 60; paint.textSize = 22f; paint.typeface = Typeface.DEFAULT
-        canvas.drawText("Made with AgeReveal", SQUARE_SIZE - 280f, SQUARE_SIZE - 25f, paint)
+        canvas.drawText("Made with Cosmic ID", SQUARE_SIZE - 280f, SQUARE_SIZE - 25f, paint)
         paint.alpha = 255
     }
 

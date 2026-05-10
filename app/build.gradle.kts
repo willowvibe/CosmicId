@@ -7,6 +7,7 @@ plugins {
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.ksp)
     alias(libs.plugins.hilt)
+    alias(libs.plugins.google.services)
 }
 
 // ── Release signing ─────────────────────────────────────────────────────────
@@ -176,6 +177,10 @@ dependencies {
 
     // Google Play Billing (v2.0 subscriptions)
     implementation(libs.billing.ktx)
+
+    // Firebase Analytics (minimum viable analytics for beta)
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.analytics)
 
     // DataStore for theme / user preferences
     implementation(libs.androidx.datastore.preferences)

@@ -59,6 +59,7 @@ import com.willowvibe.agereveal.ui.theme.WarmInk
 import com.willowvibe.agereveal.ui.theme.WarmInkDim
 import com.willowvibe.agereveal.ui.theme.WarmSurface
 import com.willowvibe.agereveal.ui.theme.WarmSurfaceSoft
+import com.willowvibe.agereveal.analytics.AnalyticsManager
 import com.willowvibe.agereveal.ui.theme.WarmTeal
 import com.willowvibe.agereveal.ui.viewmodel.CalculatorViewModel
 import java.time.Instant
@@ -123,14 +124,21 @@ fun OnboardingScreen(
                     onNameChanged = viewModel::onNameChanged,
                     onDateSelected = { date ->
                         viewModel.onBirthDateSelected(date)
+                        viewModel.logOnboardingStep1()
                         step = 1
                     },
                 )
                 1 -> StepTimeAndLocation(
                     onTimeSelected = viewModel::onBirthTimeSelected,
-                    onNext = { step = 2 },
+                    onNext = {
+                        viewModel.logOnboardingStep2()
+                        step = 2
+                    },
                 )
-                2 -> StepCosmicVibe(onEnter = onComplete)
+                2 -> StepCosmicVibe(onEnter = {
+                    viewModel.logOnboardingStep3()
+                    onComplete()
+                })
             }
         }
     }

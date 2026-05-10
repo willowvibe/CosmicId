@@ -133,7 +133,7 @@ private fun WidgetBody(context: Context, milestone: MilestoneRingGlanceWidget.Ne
             )
             Spacer(modifier = GlanceModifier.height(2.dp))
             Text(
-                text = "Set your birth date in AgeReveal",
+                text = "Set your birth date in Cosmic ID",
                 style = TextStyle(
                     color = ColorProvider(WhiteFaint),
                     fontSize = 11.sp,

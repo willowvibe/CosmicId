@@ -73,6 +73,7 @@ class CalculatorViewModel @Inject constructor(
     private val dailyFortuneGenerator: DailyFortuneGenerator,
     private val celebrityMatchCalculator: CelebrityMatchCalculator,
     private val billingManager: com.willowvibe.agereveal.billing.BillingManager,
+    private val analytics: com.willowvibe.agereveal.analytics.AnalyticsManager,
     @ApplicationContext private val appContext: Context,
 ) : ViewModel() {
 
@@ -176,6 +177,7 @@ class CalculatorViewModel @Inject constructor(
             _uiState.update { it.copy(error = "Birth date cannot be in the future") }
             return
         }
+        analytics.logCalculatorResult()
         // Cancel stale milestone notifications from any previously saved birth date
         milestoneNotificationScheduler.cancelAll()
         // Schedule milestone notifications for the new birth date, respecting user prefs
@@ -265,6 +267,7 @@ class CalculatorViewModel @Inject constructor(
         activity: Activity? = null,
     ) {
         val result = _uiState.value.result ?: return
+        analytics.logShareInitiated("square")
         viewModelScope.launch(Dispatchers.IO) {
             shareCardGenerator.share(result, theme)
         }
@@ -277,6 +280,7 @@ class CalculatorViewModel @Inject constructor(
         theme: ShareCardGenerator.CardTheme = ShareCardGenerator.CardTheme.FESTIVE_INDIA,
         activity: Activity? = null,
     ) {
+        analytics.logShareInitiated("milestone")
         viewModelScope.launch(Dispatchers.IO) {
             shareCardGenerator.shareMilestone(milestone, theme)
         }
@@ -291,6 +295,7 @@ class CalculatorViewModel @Inject constructor(
         theme: ShareCardGenerator.CardTheme = ShareCardGenerator.CardTheme.DARK_COSMOS,
         activity: Activity? = null,
     ) {
+        analytics.logShareInitiated("life_stat")
         viewModelScope.launch(Dispatchers.IO) {
             shareCardGenerator.shareLifeStat(label, value, emoji, theme)
         }
@@ -303,6 +308,7 @@ class CalculatorViewModel @Inject constructor(
         activity: Activity? = null,
     ) {
         val result = _uiState.value.result ?: return
+        analytics.logShareInitiated("story")
         viewModelScope.launch(Dispatchers.IO) {
             shareCardGenerator.shareStory(result, theme)
         }
@@ -312,6 +318,7 @@ class CalculatorViewModel @Inject constructor(
     /** Share a transparent green-screen overlay (TikTok/Reels). */
     fun shareTransparentOverlay(activity: Activity? = null) {
         val result = _uiState.value.result ?: return
+        analytics.logShareInitiated("transparent")
         viewModelScope.launch(Dispatchers.IO) {
             shareCardGenerator.shareTransparentOverlay(result)
         }
@@ -322,6 +329,7 @@ class CalculatorViewModel @Inject constructor(
     fun sharePercentileCard(activity: Activity? = null) {
         val result = _uiState.value.result ?: return
         val percentile = result.globalPercentile.takeIf { it.isNotEmpty() } ?: return
+        analytics.logShareInitiated("percentile")
         viewModelScope.launch(Dispatchers.IO) {
             shareCardGenerator.sharePercentile(
                 percentileText = percentile,
@@ -334,6 +342,7 @@ class CalculatorViewModel @Inject constructor(
     /** Share the daily cosmic fortune card. */
     fun shareFortuneCard(activity: Activity? = null) {
         val fortune = _uiState.value.dailyFortune ?: return
+        analytics.logShareInitiated("fortune")
         viewModelScope.launch(Dispatchers.IO) {
             shareCardGenerator.shareFortune(
                 headline = fortune.headline,
@@ -354,6 +363,7 @@ class CalculatorViewModel @Inject constructor(
         val state = _uiState.value
         val celebrity = state.celebrityMatches.firstOrNull() ?: return
         val birthDate = state.birthDate ?: return
+        analytics.logShareInitiated("celebrity")
         viewModelScope.launch(Dispatchers.IO) {
             shareCardGenerator.shareCelebrity(
                 userName = state.name,
@@ -451,6 +461,10 @@ class CalculatorViewModel @Inject constructor(
             location = location,
         ).copy(name = name)
     }
+
+    fun logOnboardingStep1() = analytics.logOnboardingStep1Complete()
+    fun logOnboardingStep2() = analytics.logOnboardingStep2Complete()
+    fun logOnboardingStep3() = analytics.logOnboardingStep3Complete()
 
     private fun serializeLocation(location: GeoLocation): String {
         return "${location.latitude},${location.longitude},${location.label},${location.isApproximate}"

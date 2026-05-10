@@ -113,6 +113,6 @@
     <string name="err_same_date">दोनों तिथियाँ समान हैं — मिलान के लिए दो अलग तिथियाँ चाहिए</string>
 
     <!-- Share / review -->
-    <string name="rate_us_title">AgeReveal पसंद आया?</string>
+    <string name="rate_us_title">Cosmic ID पसंद आया?</string>
     <string name="rate_us_body">प्ले स्टोर पर हमें रेट करने के लिए स्टार पर टैप करें।</string>
 </resources>
