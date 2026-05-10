@@ -15,6 +15,7 @@ import com.android.billingclient.api.QueryPurchasesParams
 import com.android.billingclient.api.acknowledgePurchase
 import com.android.billingclient.api.queryProductDetails
 import com.android.billingclient.api.queryPurchasesAsync
+import com.willowvibe.agereveal.analytics.AnalyticsManager
 import com.willowvibe.agereveal.data.preferences.UserPreferencesRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
@@ -41,6 +42,7 @@ import javax.inject.Singleton
 class BillingManager @Inject constructor(
     @ApplicationContext private val context: Context,
     private val userPrefs: UserPreferencesRepository,
+    private val analytics: AnalyticsManager,
 ) : PurchasesUpdatedListener {
 
     private val scope = CoroutineScope(SupervisorJob())
@@ -218,6 +220,11 @@ class BillingManager @Inject constructor(
                 val storedTime = userPrefs.premiumPurchaseTime.first()
                 if (storedTime == 0L) {
                     userPrefs.setPremiumPurchaseTime(latestPurchaseTime)
+                }
+                analytics.logPurchaseComplete("premium_subscription")
+                val trialDays = userPrefs.trialDurationDays.first()
+                if (trialDays > 0) {
+                    analytics.logTrialStarted("premium_subscription")
                 }
                 updateTrialDaysRemaining()
             } else {

@@ -25,6 +25,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -61,6 +62,11 @@ fun PaywallScreen(
     val isConnected by viewModel.isConnected.collectAsState()
     val error by viewModel.error.collectAsState()
     val context = LocalContext.current
+
+    DisposableEffect(Unit) {
+        viewModel.onPaywallShown()
+        onDispose { viewModel.onPaywallDismiss() }
+    }
 
     Column(
         modifier = Modifier

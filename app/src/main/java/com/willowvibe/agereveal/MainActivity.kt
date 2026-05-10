@@ -9,6 +9,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
+import com.willowvibe.agereveal.analytics.AnalyticsManager
 import com.willowvibe.agereveal.billing.BillingManager
 import com.willowvibe.agereveal.domain.ProfileDeepLinkGenerator
 import com.willowvibe.agereveal.notification.DailyFortuneScheduler
@@ -27,6 +28,7 @@ class MainActivity : ComponentActivity() {
 
     @Inject lateinit var billingManager: BillingManager
     @Inject lateinit var dailyFortuneScheduler: DailyFortuneScheduler
+    @Inject lateinit var analytics: AnalyticsManager
 
     private val notificationPermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { /* granted or denied — notifications work accordingly */ }
@@ -45,6 +47,9 @@ class MainActivity : ComponentActivity() {
         dailyFortuneScheduler.schedule()
 
         val deepLinkProfile = intent?.data?.let { ProfileDeepLinkGenerator.parse(it) }
+        if (deepLinkProfile != null) {
+            analytics.logDeepLinkReceived()
+        }
 
         setContent {
             AgeRevealTheme {

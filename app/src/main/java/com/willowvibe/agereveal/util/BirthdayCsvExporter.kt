@@ -32,7 +32,7 @@ class BirthdayCsvExporter @Inject constructor(
             }
         }
         val cacheDir = File(context.cacheDir, "exports").also { it.mkdirs() }
-        val file = File(cacheDir, "agereveal_birthdays.csv")
+        val file = File(cacheDir, "cosmicid_birthdays.csv")
         file.writeText(csv)
         val uri = FileProvider.getUriForFile(
             context, "${context.packageName}.fileprovider", file,
@@ -40,7 +40,7 @@ class BirthdayCsvExporter @Inject constructor(
         val intent = Intent(Intent.ACTION_SEND).apply {
             type = "text/csv"
             putExtra(Intent.EXTRA_STREAM, uri)
-            putExtra(Intent.EXTRA_SUBJECT, "AgeReveal birthdays")
+            putExtra(Intent.EXTRA_SUBJECT, "Cosmic ID birthdays")
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         }
