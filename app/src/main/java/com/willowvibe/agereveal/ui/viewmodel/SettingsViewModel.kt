@@ -2,6 +2,7 @@ package com.willowvibe.agereveal.ui.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.willowvibe.agereveal.billing.BillingManager
 import com.willowvibe.agereveal.data.model.SavedBirthday
 import com.willowvibe.agereveal.data.preferences.UserPreferencesRepository
 import com.willowvibe.agereveal.data.repository.BirthdayRepository
@@ -30,6 +31,7 @@ class SettingsViewModel @Inject constructor(
     private val birthdayScheduler: BirthdayNotificationScheduler,
     private val milestoneScheduler: MilestoneNotificationScheduler,
     private val csvExporter: BirthdayCsvExporter,
+    private val billingManager: BillingManager,
 ) : ViewModel() {
 
     val themeMode: StateFlow<Int> = userPrefs.themeMode
@@ -113,6 +115,10 @@ class SettingsViewModel @Inject constructor(
             val list = birthdays.first()
             csvExporter.export(list)
         }
+    }
+
+    fun restorePurchases() {
+        billingManager.restorePurchases()
     }
 
     val combinedState: Flow<Triple<Int, String, Boolean>> = combine(

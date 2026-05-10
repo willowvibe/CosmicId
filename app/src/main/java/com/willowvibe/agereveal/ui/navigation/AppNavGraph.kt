@@ -16,8 +16,6 @@ import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -25,7 +23,6 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -45,7 +42,6 @@ import androidx.navigation.compose.rememberNavController
 import com.willowvibe.agereveal.domain.ProfileDeepLinkGenerator
 import com.willowvibe.agereveal.domain.ShareCardGenerator
 import com.willowvibe.agereveal.ui.screen.ShareFormat
-import com.willowvibe.agereveal.ui.screen.BadgeScreen
 import com.willowvibe.agereveal.ui.screen.CalculatorScreen
 import com.willowvibe.agereveal.ui.screen.CompatibilityScreen
 import com.willowvibe.agereveal.ui.screen.DetailsUnlockScreen
@@ -57,7 +53,6 @@ import com.willowvibe.agereveal.ui.theme.WarmBlack
 import com.willowvibe.agereveal.ui.theme.WarmInk
 import com.willowvibe.agereveal.ui.theme.WarmInkDim
 import com.willowvibe.agereveal.ui.theme.WarmSurface
-import com.willowvibe.agereveal.ui.viewmodel.BadgeViewModel
 import com.willowvibe.agereveal.ui.viewmodel.CalculatorViewModel
 import com.willowvibe.agereveal.ui.viewmodel.CompatibilityViewModel
 import com.willowvibe.agereveal.ui.viewmodel.MainViewModel
@@ -70,7 +65,6 @@ sealed class Screen(val route: String, val label: String, @DrawableRes val icon:
     data object Details : Screen("details", "Profile", R.drawable.ic_tab_badges)
     data object Compatibility : Screen("compatibility", "Match", R.drawable.ic_tab_match)
     data object Reminders : Screen("reminders", "Bdays", R.drawable.ic_tab_bdays)
-    data object Badges : Screen("badges", "Badges", R.drawable.ic_tab_badges)
     data object Settings : Screen("settings", "Settings", R.drawable.ic_tab_you)
     data object Timeline : Screen("timeline", "Timeline", R.drawable.ic_tab_timeline)
 }
@@ -89,8 +83,6 @@ fun AppNavGraph(
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDest = navBackStackEntry?.destination
-    val snackbarHostState = remember { SnackbarHostState() }
-    val scope = rememberCoroutineScope()
     val context = LocalContext.current
     val mainViewModel: MainViewModel = hiltViewModel()
     val onboardingCompleted by mainViewModel.hasCompletedOnboarding.collectAsState()
@@ -102,7 +94,6 @@ fun AppNavGraph(
     val showBottomBar = currentDest?.route != Screen.Onboarding.route
 
     Scaffold(
-        snackbarHost = { SnackbarHost(snackbarHostState) },
         containerColor = WarmBlack,
         bottomBar = {
             if (showBottomBar) {
@@ -189,7 +180,6 @@ fun AppNavGraph(
                         }
                     },
                     onOpenDetails = { navController.navigate(Screen.Details.route) },
-                    onOpenBadges = { navController.navigate(Screen.Badges.route) },
                     onOpenSettings = { navController.navigate(Screen.Settings.route) },
                 )
             }
@@ -226,10 +216,6 @@ fun AppNavGraph(
                     onNavigateToSettings = { navController.navigate(Screen.Settings.route) },
                 )
             }
-            composable(Screen.Badges.route) { backStackEntry ->
-                val viewModel: BadgeViewModel = hiltViewModel(backStackEntry)
-                BadgeScreen(viewModel = viewModel)
-            }
             composable(Screen.Settings.route) {
                 val settingsViewModel: SettingsViewModel = hiltViewModel()
                 SettingsScreen(
@@ -244,7 +230,8 @@ fun AppNavGraph(
                 } else {
                     hiltViewModel()
                 }
-                val milestones = viewModel.uiState.value.result?.milestones ?: emptyList()
+                val uiState by viewModel.uiState.collectAsState()
+                val milestones = uiState.result?.milestones ?: emptyList()
                 LifeTimelineScreen(
                     milestones = milestones,
                     onDismiss = { navController.popBackStack() },

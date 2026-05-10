@@ -5,11 +5,13 @@ import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.willowvibe.agereveal.data.model.AgeResult
+import com.willowvibe.agereveal.data.model.CelebrityMatch
 import com.willowvibe.agereveal.data.model.GeoLocation
 import com.willowvibe.agereveal.data.model.Milestone
 import com.willowvibe.agereveal.data.preferences.UserPreferencesRepository
 import com.willowvibe.agereveal.data.repository.BadgeRepository
 import com.willowvibe.agereveal.domain.AgeCalculator
+import com.willowvibe.agereveal.domain.CelebrityMatchCalculator
 import com.willowvibe.agereveal.domain.ShareCardGenerator
 import com.willowvibe.agereveal.domain.DailyFortuneGenerator
 import com.willowvibe.agereveal.domain.TimeRemainingCalculator
@@ -40,11 +42,11 @@ import javax.inject.Inject
 
 data class CalculatorUiState(
     val birthDate: LocalDate? = null,
-    val birthTime: LocalTime? = null,    // Optional time of birth for precise astrology
-    val location: GeoLocation? = null,   // Optional birth location for exact Lagna
-    val name: String = "",                // Optional name for display purposes
+    val birthTime: LocalTime? = null,
+    val location: GeoLocation? = null,
+    val name: String = "",
     val result: AgeResult? = null,
-    val isPremium: Boolean = false,      // v2.0: Premium subscription status
+    val isPremium: Boolean = false,
     val error: String? = null,
     val timeRemaining: TimeRemainingCalculator.TimeRemaining? = null,
     val timeRemainingEnabled: Boolean = true,
@@ -52,6 +54,8 @@ data class CalculatorUiState(
     val dailyFortuneEnabled: Boolean = true,
     val retirement: com.willowvibe.agereveal.domain.RetirementCalculator.RetirementResult? = null,
     val retirementEnabled: Boolean = true,
+    val celebrityMatches: List<CelebrityMatch> = emptyList(),
+    val trialDaysRemaining: Int? = null,
 )
 
 @HiltViewModel
@@ -64,6 +68,8 @@ class CalculatorViewModel @Inject constructor(
     private val reviewHelper: ReviewHelper,
     private val badgeRepository: BadgeRepository,
     private val dailyFortuneGenerator: DailyFortuneGenerator,
+    private val celebrityMatchCalculator: CelebrityMatchCalculator,
+    private val billingManager: com.willowvibe.agereveal.billing.BillingManager,
     @ApplicationContext private val appContext: Context,
 ) : ViewModel() {
 
@@ -119,6 +125,7 @@ class CalculatorViewModel @Inject constructor(
             if (savedDate != null) {
                 val tr = if (trEnabled) timeRemainingCalc.calculate(savedDate, targetAge = targetAge) else null
                 val ret = if (retEnabled) retirementCalc.calculate(savedDate, retirementAge = retirementAge) else null
+                val celebrities = celebrityMatchCalculator.findMatches(savedDate)
                 _uiState.update {
                     it.copy(
                         birthDate = savedDate,
@@ -127,12 +134,17 @@ class CalculatorViewModel @Inject constructor(
                         result = computeResult(savedDate, savedTime, includeUnlocked = true, location = savedLocation),
                         timeRemaining = tr,
                         retirement = ret,
+                        celebrityMatches = celebrities,
                     )
                 }
                 badgeRepository.checkAndUnlock(savedDate, savedTime)
                 yearlyReengagementScheduler.schedule(savedDate)
                 val fortune = computeDailyFortune(savedDate)
                 _uiState.update { it.copy(dailyFortune = fortune) }
+            }
+            // Collect trial days remaining from BillingManager
+            billingManager.trialDaysRemaining.collect { days ->
+                _uiState.update { it.copy(trialDaysRemaining = days) }
             }
         }
     }
@@ -175,6 +187,7 @@ class CalculatorViewModel @Inject constructor(
             val isPremium = userPrefs.isPremium.first()
             val tr = if (trEnabled) TimeRemainingCalculator().calculate(date, targetAge = targetAge) else null
             val ret = if (retEnabled) RetirementCalculator().calculate(date, retirementAge = retirementAge) else null
+            val celebrities = celebrityMatchCalculator.findMatches(date)
             _uiState.update { state ->
                 state.copy(
                     birthDate = date,
@@ -185,6 +198,7 @@ class CalculatorViewModel @Inject constructor(
                     timeRemainingEnabled = trEnabled,
                     retirement = ret,
                     retirementEnabled = retEnabled,
+                    celebrityMatches = celebrities,
                 )
             }
             badgeRepository.checkAndUnlock(date, _uiState.value.birthTime)
@@ -415,15 +429,16 @@ class CalculatorViewModel @Inject constructor(
     }
 
     private fun serializeLocation(location: GeoLocation): String {
-        return "${location.latitude},${location.longitude},${location.label}"
+        return "${location.latitude},${location.longitude},${location.label},${location.isApproximate}"
     }
 
     private fun parseLocation(serialized: String): GeoLocation {
-        val parts = serialized.split(",", limit = 3)
+        val parts = serialized.split(",", limit = 4)
         return GeoLocation(
             latitude = parts[0].toDouble(),
             longitude = parts[1].toDouble(),
             label = parts.getOrElse(2) { "" },
+            isApproximate = parts.getOrElse(3) { "false" }.toBooleanStrictOrNull() ?: false,
         )
     }
 }

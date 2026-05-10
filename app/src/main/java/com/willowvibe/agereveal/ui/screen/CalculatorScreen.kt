@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -57,8 +58,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -66,7 +69,10 @@ import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.ClipboardManager
+import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -102,7 +108,11 @@ import com.willowvibe.agereveal.ui.theme.WarmInkMute
 import com.willowvibe.agereveal.ui.theme.WarmSurface
 import com.willowvibe.agereveal.ui.theme.WarmSurfaceSoft
 import com.willowvibe.agereveal.ui.theme.WarmTeal
+import com.willowvibe.agereveal.domain.PlanetAgeCalculator
+import com.willowvibe.agereveal.domain.ProfileDeepLinkGenerator
 import com.willowvibe.agereveal.ui.viewmodel.CalculatorViewModel
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalTime
@@ -116,7 +126,6 @@ fun CalculatorScreen(
     viewModel: CalculatorViewModel = hiltViewModel(),
     onShareCard: (ShareCardGenerator.CardTheme, ShareFormat) -> Unit,
     onOpenDetails: () -> Unit = {},
-    onOpenBadges: () -> Unit = {},
     onOpenSettings: () -> Unit = {},
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -124,6 +133,8 @@ fun CalculatorScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     val focusManager = LocalFocusManager.current
     var showThemePicker by remember { mutableStateOf(false) }
+    val clipboard = LocalClipboardManager.current
+    val scope = rememberCoroutineScope()
 
     LaunchedEffect(ticker) { viewModel.onTick() }
     LaunchedEffect(uiState.error) {
@@ -157,7 +168,7 @@ fun CalculatorScreen(
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
-                        "AgeReveal",
+                        "Cosmic ID",
                         style = MaterialTheme.typography.titleMedium,
                         color = WarmInk,
                     )
@@ -186,6 +197,22 @@ fun CalculatorScreen(
                             style = MaterialTheme.typography.labelSmall,
                             color = WarmInkDim,
                         )
+                    }
+                    // Free trial chip
+                    uiState.trialDaysRemaining?.let { days ->
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier
+                                .clip(CircleShape)
+                                .background(WarmTeal.copy(alpha = 0.15f))
+                                .padding(horizontal = 8.dp, vertical = 4.dp),
+                        ) {
+                            Text(
+                                "$days day${if (days == 1) "" else "s"} left",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = WarmTeal,
+                            )
+                        }
                     }
                     IconButton(
                         onClick = onOpenSettings,
@@ -256,18 +283,18 @@ fun CalculatorScreen(
                         StaggeredEnter(delayMillis = 0) { ClockFaceHero(result) }
                         StaggeredEnter(delayMillis = 70) { SecondsStrip(result) }
                         StaggeredEnter(delayMillis = 140) { MiniStatRow(result) }
-                        StaggeredEnter(delayMillis = 210) { NextMilestoneChip(result) }
 
-                        // v2.0: Progressive disclosure — one rotating highlight + explore CTA
-                        StaggeredEnter(delayMillis = 280) {
-                            AstroTile(
+                        // v2.0: Progressive disclosure — rotating highlight cycles through insights
+                        StaggeredEnter(delayMillis = 210) {
+                            RotatingHighlightCard(
                                 result = result,
-                                isUnlocked = true, // Basic astrology is free in v2.0
-                                hasLocation = uiState.location != null,
+                                fortune = uiState.dailyFortune,
+                                name = uiState.name,
+                                celebrityMatches = uiState.celebrityMatches,
                             )
                         }
 
-                        StaggeredEnter(delayMillis = 300) {
+                        StaggeredEnter(delayMillis = 280) {
                             val exploreHaptic = LocalHapticFeedback.current
                             AgeCard(
                                 modifier = Modifier
@@ -300,35 +327,78 @@ fun CalculatorScreen(
                             }
                         }
 
-                        StaggeredEnter(delayMillis = 320) {
+                        StaggeredEnter(delayMillis = 300) {
                             val shareHaptic = LocalHapticFeedback.current
-                            AgeCard(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clickable(
-                                        role = Role.Button,
-                                        onClick = {
-                                            shareHaptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                            showThemePicker = true
-                                        },
-                                    )
-                                    .semantics { contentDescription = "Share your cosmic profile" },
+                            val copyHaptic = LocalHapticFeedback.current
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(10.dp),
                             ) {
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically,
+                                AgeCard(
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .clickable(
+                                            role = Role.Button,
+                                            onClick = {
+                                                shareHaptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                                showThemePicker = true
+                                            },
+                                        )
+                                        .semantics { contentDescription = "Share card image" },
                                 ) {
-                                    AgeBody(
-                                        text = "Share your cosmic profile",
-                                        color = WarmInk,
-                                    )
-                                    Icon(
-                                        imageVector = Icons.Default.Share,
-                                        contentDescription = "Share",
-                                        tint = WarmTeal,
-                                        modifier = Modifier.size(20.dp),
-                                    )
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically,
+                                    ) {
+                                        AgeBody(
+                                            text = "Share card",
+                                            color = WarmInk,
+                                        )
+                                        Icon(
+                                            imageVector = Icons.Default.Share,
+                                            contentDescription = "Share",
+                                            tint = WarmTeal,
+                                            modifier = Modifier.size(20.dp),
+                                        )
+                                    }
+                                }
+                                AgeCard(
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .clickable(
+                                            role = Role.Button,
+                                            onClick = {
+                                                copyHaptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                                val link = ProfileDeepLinkGenerator.generate(
+                                                    birthDate = result.birthDate,
+                                                    name = uiState.name,
+                                                    birthTime = uiState.birthTime,
+                                                )
+                                                clipboard.setText(androidx.compose.ui.text.AnnotatedString(link))
+                                                scope.launch {
+                                                    snackbarHostState.showSnackbar("Profile link copied to clipboard")
+                                                }
+                                            },
+                                        )
+                                        .semantics { contentDescription = "Copy profile link" },
+                                ) {
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically,
+                                    ) {
+                                        AgeBody(
+                                            text = "Copy link",
+                                            color = WarmInk,
+                                        )
+                                        Icon(
+                                            imageVector = Icons.Default.Share,
+                                            contentDescription = "Copy link",
+                                            tint = WarmTeal,
+                                            modifier = Modifier.size(20.dp),
+                                        )
+                                    }
                                 }
                             }
                         }
@@ -787,9 +857,6 @@ private fun PrecisionRow(
         initialMinute = birthTime?.minute ?: 0,
         is24Hour = false,
     )
-    var latText by remember { mutableStateOf(location?.latitude?.toString() ?: "") }
-    var lonText by remember { mutableStateOf(location?.longitude?.toString() ?: "") }
-
     if (showTimeDialog) {
         AlertDialog(
             onDismissRequest = { showTimeDialog = false },
@@ -831,6 +898,29 @@ private fun PrecisionRow(
 
     if (showLocationDialog) {
         val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+        val context = androidx.compose.ui.platform.LocalContext.current
+        val states = remember {
+            runCatching {
+                context.assets.open("indian_states_coords.json")
+                    .bufferedReader()
+                    .use { org.json.JSONArray(it.readText()) }
+                    .let { array ->
+                        List(array.length()) { i ->
+                            val obj = array.getJSONObject(i)
+                            IndianState(
+                                name = obj.getString("name"),
+                                lat = obj.getDouble("lat"),
+                                lon = obj.getDouble("lon"),
+                            )
+                        }
+                    }
+            }.getOrElse { emptyList() }
+        }
+        var query by remember { mutableStateOf("") }
+        val filtered = remember(query, states) {
+            if (query.isBlank()) states else states.filter { it.name.contains(query, ignoreCase = true) }
+        }
+
         ModalBottomSheet(
             onDismissRequest = { showLocationDialog = false },
             sheetState = sheetState,
@@ -858,7 +948,6 @@ private fun PrecisionRow(
                             .background(WarmInkDim),
                     )
                 }
-                // Title
                 Text(
                     "Birth location (optional)",
                     style = MaterialTheme.typography.titleLarge,
@@ -866,28 +955,16 @@ private fun PrecisionRow(
                 )
                 Spacer(Modifier.height(8.dp))
                 HorizontalDivider(color = WarmSurfaceSoft, thickness = 1.dp)
-                Spacer(Modifier.height(16.dp))
-                // Body text
+                Spacer(Modifier.height(12.dp))
                 AgeBody(
-                    text = "Enter latitude and longitude for exact Lagna (Ascendant).",
+                    text = "Select your Indian state for approximate Lagna. State centroids are used for calculation.",
                 )
-                Spacer(Modifier.height(16.dp))
-                // Latitude field with clear icon
+                Spacer(Modifier.height(12.dp))
                 OutlinedTextField(
-                    value = latText,
-                    onValueChange = { latText = it.filter { c -> c.isDigit() || c == '.' || c == '-' } },
-                    label = { Text("Latitude (-90 to 90)", color = WarmInkDim) },
+                    value = query,
+                    onValueChange = { query = it },
+                    label = { Text("Search state", color = WarmInkDim) },
                     singleLine = true,
-                    trailingIcon = {
-                        if (latText.isNotEmpty()) {
-                            IconButton(
-                                onClick = { latText = "" },
-                                modifier = Modifier.size(20.dp),
-                            ) {
-                                Text("✕", color = WarmInkDim, fontSize = 12.sp)
-                            }
-                        }
-                    },
                     modifier = Modifier.fillMaxWidth(),
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = WarmTeal,
@@ -897,58 +974,60 @@ private fun PrecisionRow(
                     ),
                 )
                 Spacer(Modifier.height(12.dp))
-                // Longitude field
-                OutlinedTextField(
-                    value = lonText,
-                    onValueChange = { lonText = it.filter { c -> c.isDigit() || c == '.' || c == '-' } },
-                    label = { Text("Longitude (-180 to 180)", color = WarmInkDim) },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = WarmTeal,
-                        unfocusedBorderColor = WarmInkDim,
-                        focusedTextColor = WarmInk,
-                        unfocusedTextColor = WarmInk,
-                    ),
-                )
-                Spacer(Modifier.height(24.dp))
-                // Button row
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                val listState = rememberScrollState()
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(max = 320.dp)
+                        .verticalScroll(listState),
+                    verticalArrangement = Arrangement.spacedBy(4.dp),
                 ) {
-                    TextButton(
-                        onClick = { showLocationDialog = false },
-                        modifier = Modifier.weight(1f),
-                    ) {
-                        Text("Cancel", color = WarmInkMute)
-                    }
-                    val haptic = LocalHapticFeedback.current
-                    Box(
-                        modifier = Modifier
-                            .weight(1f)
-                            .clip(RoundedCornerShape(99.dp))
-                            .background(WarmTeal)
-                            .clickable {
-                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                val lat = latText.toDoubleOrNull()
-                                val lon = lonText.toDoubleOrNull()
-                                if (lat != null && lon != null && lat in -90.0..90.0 && lon in -180.0..180.0) {
+                    filtered.forEach { state ->
+                        val haptic = LocalHapticFeedback.current
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(WarmSurfaceSoft)
+                                .clickable {
+                                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                                     onLocationSelected(
-                                        com.willowvibe.agereveal.data.model.GeoLocation(latitude = lat, longitude = lon)
+                                        com.willowvibe.agereveal.data.model.GeoLocation(
+                                            latitude = state.lat,
+                                            longitude = state.lon,
+                                            label = state.name,
+                                            isApproximate = true,
+                                        )
                                     )
+                                    showLocationDialog = false
                                 }
-                                showLocationDialog = false
-                            }
-                            .padding(vertical = 12.dp),
-                        contentAlignment = Alignment.Center,
+                                .padding(horizontal = 14.dp, vertical = 12.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Text(
+                                state.name,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = WarmInk,
+                            )
+                            Text(
+                                "${"%.1f".format(state.lat)}°, ${"%.1f".format(state.lon)}°",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = WarmInkDim,
+                            )
+                        }
+                    }
+                }
+                Spacer(Modifier.height(12.dp))
+                if (location != null) {
+                    TextButton(
+                        onClick = {
+                            onLocationSelected(null)
+                            showLocationDialog = false
+                        },
+                        modifier = Modifier.align(Alignment.CenterHorizontally),
                     ) {
-                        Text(
-                            "Set",
-                            style = MaterialTheme.typography.labelMedium,
-                            color = WarmBlack,
-                            fontWeight = FontWeight.SemiBold,
-                        )
+                        Text("Clear location", color = WarmInkMute)
                     }
                 }
             }
@@ -975,7 +1054,10 @@ private fun PrecisionRow(
             // ── Location chip ──────────────────────────────────────────
             PrecisionChip(
                 label = "LOCATION",
-                value = location?.let { "%.1f°, %.1f°".format(it.latitude, it.longitude) } ?: "Add",
+                value = location?.let {
+                    val base = it.label.ifEmpty { "%.1f°, %.1f°".format(it.latitude, it.longitude) }
+                    if (it.isApproximate) "$base *" else base
+                } ?: "Add",
                 isSet = location != null,
                 onClick = { showLocationDialog = true },
                 modifier = Modifier.weight(1f),
@@ -1046,35 +1128,6 @@ private val MILESTONE_TARGETS_CALC = listOf(
     500, 1_000, 2_000, 3_000, 5_000, 7_000, 10_000, 12_500,
     15_000, 20_000, 25_000, 30_000,
 )
-
-@Composable
-private fun NextMilestoneChip(result: AgeResult) {
-    val days = result.totalDays
-    val nextTarget = MILESTONE_TARGETS_CALC.firstOrNull { it > days } ?: return
-    val daysAway = nextTarget - days
-    if (daysAway > 30) return
-
-    val formattedTarget = "%,d".format(nextTarget)
-    AgeCard {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text("✦", color = WarmAmber, fontSize = 18.sp)
-            Spacer(Modifier.width(10.dp))
-            Column(modifier = Modifier.weight(1f)) {
-                AgeLabel(text = "NEXT MILESTONE", accentColor = WarmAmber)
-                AgeBody(
-                    text = "$formattedTarget days alive — in $daysAway day${if (daysAway == 1L) "" else "s"}",
-                    color = WarmInk,
-                )
-            }
-            AgeValue(
-                text = "$daysAway",
-                accentColor = WarmAmber,
-            )
-        }
-    }
-}
 
 @Composable
 private fun TimeRemainingCard(timeRemaining: com.willowvibe.agereveal.domain.TimeRemainingCalculator.TimeRemaining) {
@@ -1149,6 +1202,178 @@ private fun DailyFortuneCard(
     }
 }
 
+private data class IndianState(val name: String, val lat: Double, val lon: Double)
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Rotating highlight card — cycles through fortune / milestone / planet age / celebrity
+// ─────────────────────────────────────────────────────────────────────────────
+
+private enum class HighlightType { MILESTONE, FORTUNE, PLANET_AGE, CELEBRITY }
+
+@OptIn(androidx.compose.animation.ExperimentalAnimationApi::class)
+@Composable
+private fun RotatingHighlightCard(
+    result: AgeResult,
+    fortune: com.willowvibe.agereveal.domain.DailyFortuneGenerator.Fortune?,
+    name: String,
+    celebrityMatches: List<com.willowvibe.agereveal.data.model.CelebrityMatch>,
+) {
+    val hasFortune = fortune != null
+    val hasCelebrities = celebrityMatches.isNotEmpty()
+    val highlights = remember(hasFortune, hasCelebrities) {
+        buildList {
+            add(HighlightType.MILESTONE)
+            if (hasFortune) add(HighlightType.FORTUNE)
+            add(HighlightType.PLANET_AGE)
+            if (hasCelebrities) add(HighlightType.CELEBRITY)
+        }
+    }
+    var index by remember { mutableIntStateOf(0) }
+    // Clamp index when list shrinks (e.g. fortune goes null)
+    if (index >= highlights.size) index = 0
+    val current = highlights[index]
+
+    LaunchedEffect(highlights.size) {
+        while (true) {
+            delay(4_000L)
+            index = (index + 1) % highlights.size
+        }
+    }
+
+    AnimatedContent(
+        targetState = current,
+        transitionSpec = {
+            (fadeIn(tween(400)) + slideInVertically(tween(400)) { it / 4 })
+                .togetherWith(fadeOut(tween(300)) + slideOutVertically(tween(300)) { -it / 4 })
+        },
+        label = "rotating_highlight",
+    ) { highlight ->
+        when (highlight) {
+            HighlightType.MILESTONE -> MilestoneHighlight(result)
+            HighlightType.FORTUNE -> FortuneHighlight(fortune)
+            HighlightType.PLANET_AGE -> PlanetAgeHighlight(result, name)
+            HighlightType.CELEBRITY -> CelebrityHighlight(celebrityMatches)
+        }
+    }
+}
+
+@Composable
+private fun MilestoneHighlight(result: AgeResult) {
+    val days = result.totalDays
+    val nextTarget = MILESTONE_TARGETS_CALC.firstOrNull { it > days } ?: return
+    val daysAway = nextTarget - days
+    val formattedTarget = "%,d".format(nextTarget)
+    AgeCard {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text("✦", color = WarmAmber, fontSize = 18.sp)
+            Spacer(Modifier.width(10.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                AgeLabel(text = "NEXT MILESTONE", accentColor = WarmAmber)
+                AgeBody(
+                    text = "$formattedTarget days alive — in $daysAway day${if (daysAway == 1L) "" else "s"}",
+                    color = WarmInk,
+                )
+            }
+            AgeValue(text = "$daysAway", accentColor = WarmAmber)
+        }
+    }
+}
+
+@Composable
+private fun FortuneHighlight(
+    fortune: com.willowvibe.agereveal.domain.DailyFortuneGenerator.Fortune?,
+) {
+    if (fortune == null) return
+    AgeCard {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            AgeLabel(text = "DAILY COSMIC FORTUNE")
+            Text(fortune.emoji, fontSize = 20.sp)
+        }
+        Spacer(Modifier.height(6.dp))
+        AgeBody(text = fortune.headline, color = WarmInk)
+        Spacer(Modifier.height(8.dp))
+        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            AgeValue(text = "Lucky #${fortune.luckyNumber}", accentColor = WarmTeal)
+            AgeValue(text = fortune.luckyColor, accentColor = WarmTeal)
+        }
+    }
+}
+
+@Composable
+private fun PlanetAgeHighlight(result: AgeResult, name: String) {
+    val calculator = remember { PlanetAgeCalculator() }
+    val planetAge = remember(result.totalSeconds) {
+        calculator.calculatePlanetAges(result.years + result.months / 12.0)
+            .firstOrNull { it.planet == com.willowvibe.agereveal.domain.Planet.MARS }
+    }
+    if (planetAge == null) return
+    val displayName = name.ifEmpty { "You" }
+    val formatted = calculator.formatPlanetAge(planetAge.ageYears)
+    AgeCard {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(com.willowvibe.agereveal.domain.Planet.MARS.emoji, fontSize = 22.sp)
+            Spacer(Modifier.width(10.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                AgeLabel(text = "PLANET AGE")
+                AgeBody(
+                    text = "On Mars, $displayName is only $formatted ${if (planetAge.ageYears > 1.0) "years" else "year"} old",
+                    color = WarmInk,
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun CelebrityHighlight(
+    matches: List<com.willowvibe.agereveal.data.model.CelebrityMatch>,
+) {
+    if (matches.isEmpty()) {
+        CelebrityHighlightPlaceholder()
+        return
+    }
+    val match = matches.first()
+    val categoryLabel = match.category.lowercase().replaceFirstChar { it.uppercase() }
+    AgeCard {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text("⭐", fontSize = 20.sp)
+            Spacer(Modifier.width(10.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                AgeLabel(text = "CELEBRITY MATCH")
+                AgeBody(
+                    text = "${match.name} · $categoryLabel",
+                    color = WarmInk,
+                )
+                AgeBody(
+                    text = "Born ${match.birthDate.year}",
+                    color = WarmInkMute,
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun CelebrityHighlightPlaceholder() {
+    AgeCard {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text("⭐", fontSize = 20.sp)
+            Spacer(Modifier.width(10.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                AgeLabel(text = "CELEBRITY MATCH")
+                AgeBody(
+                    text = "Coming soon — discover who shares your birthday",
+                    color = WarmInkMute,
+                )
+            }
+        }
+    }
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Banner ad view
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1170,6 +1395,7 @@ private fun BannerAdView(adUnitId: String) {
                 }
             },
             modifier = Modifier.fillMaxWidth(),
+            onRelease = { it.destroy() },
         )
     }
 }

@@ -5,12 +5,14 @@ package com.willowvibe.agereveal.data.model
  *
  * @param latitude Degrees north of the equator (-90 to 90)
  * @param longitude Degrees east of the prime meridian (-180 to 180)
- * @param label Optional human-readable label (e.g. "Mumbai, India")
+ * @param label Optional human-readable label (e.g. "Mumbai, India" or "Maharashtra")
+ * @param isApproximate True when the location is a state centroid rather than exact city coordinates
  */
 data class GeoLocation(
     val latitude: Double,
     val longitude: Double,
     val label: String = "",
+    val isApproximate: Boolean = false,
 ) {
     init {
         require(latitude in -90.0..90.0) { "Latitude must be in [-90, 90]" }
