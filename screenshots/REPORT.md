@@ -110,3 +110,38 @@ No bugs were detected during this walkthrough.
 - This report was generated automatically via Appium UI testing.
 - Some interactions may depend on network state (ads) or system permissions.
 - Screens with dynamic content (ads, live timers) may vary between runs.
+
+---
+
+## v2.0 Revamp — Expected Report Changes
+
+The following changes are anticipated once v2.0 UI stabilises and the Appium walkthrough is re-run:
+
+### New screens to test
+- `onboarding_step1_datepicker.png`
+- `onboarding_step2_zodiac_reveal.png`
+- `onboarding_step3_birthtime.png`
+- `paywall_astrology_locked.png`
+- `paywall_third_open.png`
+- `details_tabbed_overview.png`
+- `details_tabbed_western.png`
+- `details_tabbed_vedic.png`
+- `details_tabbed_chinese.png`
+- `celebrity_match_card.png`
+- `mp4_export_share_sheet.png`
+- `whatsapp_sticker_preview.png`
+- `cosmic_twins_match.png`
+- `deep_link_profile_received.png`
+
+### Removed screens (no longer applicable)
+- `tab4_badges_default.png` — Badges tab removed from bottom nav
+- `tab4_badges_scrolled.png`
+- `tab4_badges_detail_sheet.png`
+- `tab1_calculator_time_remaining_visible.png` — Moved to Details
+- `tab1_calculator_daily_fortune_visible.png` — Now a push notification
+
+### Updated selectors
+- Tab label "You" → "My Cosmos"
+- 4 tabs instead of 5
+- Settings: Hindi toggle removed; Premium section added
+- Fortune share sheet no longer tested (notification instead)

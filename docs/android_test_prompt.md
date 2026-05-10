@@ -14,15 +14,16 @@ Use this guide when running Appium UI walkthroughs on AgeReveal. It documents th
 
 ---
 
-## Bottom Navigation (5 tabs)
+## Bottom Navigation (4 tabs)
 
 | Tab | Label | Route | Icon Description |
 |-----|-------|-------|-----------------|
-| 1 | You | `calculator` | Profile icon |
+| 1 | My Cosmos | `calculator` | Profile icon |
 | 2 | Match | `compatibility` | Heart icon |
 | 3 | Bdays | `reminders` | Cake icon |
-| 4 | Badges | `badges` | Trophy icon |
-| 5 | Timeline | `timeline` | Clock icon |
+| 4 | Timeline | `timeline` | Clock icon |
+
+**v2.0 change:** The "Badges" tab has been removed from bottom nav. Badges now live as a section inside the "My Cosmos" tab. The "You" tab is renamed to "My Cosmos".
 
 **Selection indicator:** A small teal pill (3dp tall, 16dp wide) appears **above** the active icon. There is no full background fill on the selected item.
 
@@ -32,7 +33,32 @@ Use this guide when running Appium UI walkthroughs on AgeReveal. It documents th
 
 ---
 
-## Tab 1 — You (CalculatorScreen)
+## Onboarding (First Launch)
+
+**v2.0 new flow:** If `hasCompletedOnboarding` is false, the app shows `OnboardingScreen` instead of the main calculator.
+
+### Step 1 — Birth Date
+- Title: "When were you born?"
+- Large DatePicker (spinner or calendar mode depending on API)
+- "Continue" button (filled pill, teal)
+
+### Step 2 — Zodiac Reveal
+- Animated zodiac icon (fade + scale in)
+- Headline: "You're a [Sign]"
+- Live counter starts ticking immediately
+- "Add birth time for exact Nakshatra (optional)" — secondary pill button
+- "Skip" — ghost button
+
+### Step 3 — Optional Birth Time
+- TimePicker dialog
+- "Set" / "Skip" buttons
+- Completing or skipping both save to prefs and dismiss onboarding
+
+**Testing note:** To re-test onboarding, clear app data (`pm clear com.willowvibe.agereveal`) or manually set `hasCompletedOnboarding = false` in SharedPreferences.
+
+---
+
+## Tab 1 — My Cosmos (CalculatorScreen)
 
 ### Header
 - Title: "AgeReveal" (18sp, left-aligned)
@@ -57,16 +83,14 @@ Use this guide when running Appium UI walkthroughs on AgeReveal. It documents th
 - **Padding:** 16dp horizontal, 14dp vertical
 - **Gap between cards:** 10dp
 
-### Card types on this screen
+### Card types on this screen (v2.0 progressive disclosure)
 | Card | Label text | How to identify |
 |------|-----------|-----------------|
 | Seconds alive | "SECONDS ALIVE" | Amber dot + rolling digits |
-| Next milestone | "NEXT MILESTONE" | Amber label, countdown text |
-| Time remaining | "TIME REMAINING" | Amber accent label |
-| Work life | "WORK LIFE" | Teal accent label |
-| Daily cosmic fortune | "DAILY COSMIC FORTUNE" | Emoji + headline + body |
-| Unlock banner | "Unlock full profile" | Teal 4dp left accent strip |
-| Share profile row | "Share your cosmic profile" | Share icon, right-aligned |
+| Rotating highlight | Varies | One card only: fortune / milestone / planet age / celebrity match |
+| Explore CTA | "Explore full profile →" | Teal arrow, right-aligned |
+
+**Removed from main screen in v2.0:** Time remaining, work life, daily cosmic fortune (now a push notification). These are all inside the Details screen.
 
 ### Birth location bottom sheet
 - Triggered by tapping LOCATION precision chip
@@ -80,6 +104,7 @@ Use this guide when running Appium UI walkthroughs on AgeReveal. It documents th
 ### Banner ad
 - Separated from content by a 1dp `HorizontalDivider` + 4dp spacer
 - 52dp height, full width
+- **v2.0:** Only shown on free tier. Hidden for premium subscribers.
 
 ---
 
@@ -103,6 +128,10 @@ Use this guide when running Appium UI walkthroughs on AgeReveal. It documents th
 - Zodiac pairing cards: AgeCard style
 - Element reading: AgeCard style
 
+### Deep-link auto-populate (v2.0)
+- When receiving a profile deep-link (`agereveal://profile/...`), the second person slot auto-fills.
+- Score appears immediately without manual input.
+
 ---
 
 ## Tab 3 — Bdays (RemindersScreen)
@@ -123,26 +152,7 @@ Use this guide when running Appium UI walkthroughs on AgeReveal. It documents th
 
 ---
 
-## Tab 4 — Badges (BadgeScreen)
-
-### Toggle pills
-- "Grid" / "Timeline" — 99dp radius, bordered
-- Active: teal border + teal tint
-
-### Badge cards (grid)
-- 16dp radius (slightly larger than AgeCard for grid density)
-- WarmSurface bg
-- Border only when unlocked: 1.5dp teal
-- Rarity chip: 4dp radius, colored bg at 15% opacity
-
-### Badge detail bottom sheet
-- Triggered by tapping any badge card
-- Share button: 16dp radius, teal bg
-- Locked placeholder: WarmSurfaceSoft bg
-
----
-
-## Tab 5 — Timeline (LifeTimelineScreen)
+## Tab 4 — Timeline (LifeTimelineScreen)
 
 ### Milestone rows
 - AgeCard wrapper (12dp radius, subtle border)
@@ -166,7 +176,30 @@ Use this guide when running Appium UI walkthroughs on AgeReveal. It documents th
 - Action rows: WarmSurfaceSoft bg, 10dp radius, clickable
 
 ### Scroll requirement
-- Settings options (Dark, Hindi, Export CSV, Clear All) may be below the fold — use `UiScrollable.scrollIntoView()`
+- Settings options may be below the fold — use `UiScrollable.scrollIntoView()`
+
+**v2.0 changes:**
+- Removed: Hindi language toggle (system locale only), Time remaining toggle (moved to Details)
+- Added: Premium status section (manage subscription), Fortune notification time picker
+- Notification section expanded: birthday reminders, milestone reminders, daily fortune time, cosmic year toggle
+
+---
+
+## Paywall Screen (v2.0)
+
+### Trigger conditions
+- Tapping locked astrology section in Details
+- 3rd app open if no subscription
+
+### UI elements
+- Backdrop scrim: 60% black, tap-to-dismiss
+- Sheet title: "Unlock Your Full Cosmic Profile"
+- Feature bullet list with check icons
+- Pricing: "₹49/month" primary + "₹299/year — Save 49%" secondary
+- CTA: "Start 7-Day Free Trial" (gradient gold pill)
+- Terms text: "Cancel anytime. Billed via Google Play."
+
+**Testing note:** Use Google Play test SKU `android.test.purchased` for automated purchase flow validation.
 
 ---
 
@@ -176,8 +209,10 @@ Always overwrite on re-run:
 
 | Pattern | Example |
 |---------|---------|
+| `onboarding_{step}_{action}.png` | `onboarding_step2_zodiac_reveal.png` |
 | `tab{N}_{screen_name}_default.png` | `tab1_calculator_default.png` |
 | `tab{N}_{screen_name}_{action}.png` | `tab1_calculator_datepicker_open.png` |
+| `paywall_{variant}.png` | `paywall_astrology_locked.png` |
 | `BUG_{tab_or_feature}_{description}.png` | `BUG_tab2_submit_crash.png` |
 
 ---
@@ -189,9 +224,12 @@ Always overwrite on re-run:
 3. **Dynamic `contentDescription`** strings change with app state. Use `descriptionContains()` with partial matches.
 4. **Settings screen** scrolls — use `UiScrollable.scrollIntoView()` for items below the fold.
 5. **Export CSV** opens a system share chooser that blocks automation. Scroll-to and screenshot only; do not tap.
-6. **Hindi locale selection** changes app locale and breaks subsequent selectors. Test this last.
+6. **Hindi locale selection** is now handled via Android system settings, not in-app. Test by changing emulator locale.
 7. **Notification shade** can appear on launch after `pm clear` — detect via `com.android.systemui` in page source and press Back.
 8. **Birth location** is now a bottom sheet, not a dialog. Dismiss by tapping outside or swiping down.
+9. **Onboarding gate** blocks access to main UI on first launch. Clear app data to re-trigger.
+10. **Paywall** may appear unexpectedly on 3rd open. Handle with back-press or tap scrim to dismiss.
+11. **Ad banner** only visible on free tier. Premium test accounts won't show it.
 
 ---
 

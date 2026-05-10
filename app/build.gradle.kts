@@ -174,6 +174,9 @@ dependencies {
     implementation(libs.play.review)
     implementation(libs.play.review.ktx)
 
+    // Google Play Billing (v2.0 subscriptions)
+    implementation(libs.billing.ktx)
+
     // DataStore for theme / user preferences
     implementation(libs.androidx.datastore.preferences)
 

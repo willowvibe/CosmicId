@@ -84,7 +84,6 @@ import java.time.format.DateTimeFormatter
 @Composable
 fun DetailsUnlockScreen(
     viewModel: CalculatorViewModel,
-    onWatchAd: () -> Unit,
     onShareMilestone: (Milestone) -> Unit = {},
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -169,10 +168,10 @@ fun DetailsUnlockScreen(
                 verticalArrangement = Arrangement.spacedBy(14.dp),
             ) {
                 // ── Big astro tile ───────────────────────────────────────────
-                AstroTile(result = result, isUnlocked = uiState.isUnlocked, hasLocation = uiState.location != null)
+                AstroTile(result = result, isUnlocked = true, hasLocation = uiState.location != null)
 
                 // ── Generation badge (Gen Z flex) ──────────────────────────
-                if (uiState.isUnlocked && generation != null) {
+                if (true && generation != null) {
                     GenerationBadgeChip(
                         generation = generation,
                         totalSeconds = result.totalSeconds,
@@ -180,7 +179,7 @@ fun DetailsUnlockScreen(
                 }
 
                 // ── Global age percentile ──────────────────────────────────
-                if (uiState.isUnlocked && result.globalPercentile.isNotEmpty()) {
+                if (true && result.globalPercentile.isNotEmpty()) {
                     PercentileCard(
                         percentileText = result.globalPercentile,
                         sharedEstimate = result.sharedBirthDateEstimate,
@@ -188,13 +187,10 @@ fun DetailsUnlockScreen(
                     )
                 }
 
-                // ── Watch-ad gate (only when not unlocked) ───────────────────
-                if (!uiState.isUnlocked) {
-                    WatchAdBanner(isLoading = uiState.isAdLoading, onWatch = onWatchAd)
-                }
+                // v2.0: Basic astrology is free. Premium depth gated via paywall.
 
                 // ── Birth moon phase visual ────────────────────────────────
-                if (uiState.isUnlocked && birthMoonPhase != null) {
+                if (true && birthMoonPhase != null) {
                     MoonPhaseCard(
                         birthPhase = birthMoonPhase,
                         currentPhase = currentMoonPhase,
@@ -202,7 +198,7 @@ fun DetailsUnlockScreen(
                 }
 
                 // ── Planet ages (horizontal scroll) ────────────────────────
-                if (uiState.isUnlocked && planetAges.isNotEmpty()) {
+                if (true && planetAges.isNotEmpty()) {
                     PlanetAgesRow(planetAges = planetAges)
                 }
 
@@ -211,7 +207,7 @@ fun DetailsUnlockScreen(
                     MilestoneTimeline(
                         milestones = result.milestones,
                         totalDays = result.totalDays,
-                        isUnlocked = uiState.isUnlocked,
+                        isUnlocked = true,
                         onShare = onShareMilestone,
                         onToggleNotification = { target, enabled ->
                             viewModel.setMilestoneEnabled(target, enabled)
@@ -220,12 +216,12 @@ fun DetailsUnlockScreen(
                 }
 
                 // ── Heartbeat counter ────────────────────────────────────────
-                if (uiState.isUnlocked && result.estimatedHeartbeats > 0) {
+                if (true && result.estimatedHeartbeats > 0) {
                     HeartbeatRow(result.estimatedHeartbeats)
                 }
 
                 // ── Life stats dashboard ─────────────────────────────────────
-                if (uiState.isUnlocked && lifeStats.isNotEmpty()) {
+                if (true && lifeStats.isNotEmpty()) {
                     LifeStatsSection(
                         stats = lifeStats,
                         onShare = { stat ->
@@ -234,13 +230,8 @@ fun DetailsUnlockScreen(
                     )
                 }
 
-                // ── Parallel Universe Birth ──────────────────────────────────
-                if (uiState.isUnlocked && result.parallelUniverses.isNotEmpty()) {
-                    ParallelUniverseCard(
-                        universes = result.parallelUniverses,
-                        onShare = { viewModel.shareParallelUniverseCard() },
-                    )
-                }
+                // ── Parallel Universe Birth (removed in v2.0) ────────────────
+                // intentionally left empty
 
                 Spacer(Modifier.height(16.dp))
             }
@@ -462,68 +453,6 @@ private fun PlanetPositionTable(positions: List<Pair<String, String>>) {
                 AgeBody(
                     text = sign,
                     color = WarmInk,
-                )
-            }
-        }
-    }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Watch-ad inline banner
-// ─────────────────────────────────────────────────────────────────────────────
-
-@Composable
-internal fun WatchAdBanner(isLoading: Boolean, onWatch: () -> Unit) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
-            .background(WarmSurface)
-            .border(
-                width = 1.dp,
-                color = Color.White.copy(alpha = 0.08f),
-                shape = RoundedCornerShape(12.dp),
-            )
-            .padding(start = 12.dp, top = 14.dp, end = 16.dp, bottom = 14.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween,
-    ) {
-        // Left accent strip
-        Box(
-            modifier = Modifier
-                .width(4.dp)
-                .height(36.dp)
-                .clip(RoundedCornerShape(99.dp))
-                .background(WarmTeal),
-        )
-        Spacer(Modifier.width(12.dp))
-        Column(modifier = Modifier.weight(1f)) {
-            AgeBody(
-                text = "Unlock full profile",
-                color = WarmInk,
-            )
-            AgeBody(text = "Watch a 15s ad")
-        }
-        if (isLoading) {
-            CircularProgressIndicator(modifier = Modifier.size(24.dp), color = WarmTeal, strokeWidth = 2.dp)
-        } else {
-            val haptic = LocalHapticFeedback.current
-            Box(
-                modifier = Modifier
-                    .clip(RoundedCornerShape(99.dp))
-                    .border(1.5.dp, WarmTeal, RoundedCornerShape(99.dp))
-                    .background(WarmTeal.copy(alpha = 0.12f))
-                    .clickable {
-                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                        onWatch()
-                    }
-                    .padding(horizontal = 14.dp, vertical = 6.dp),
-            ) {
-                Text(
-                    "Watch & Reveal",
-                    style = MaterialTheme.typography.labelMedium,
-                    color = WarmTeal,
-                    fontWeight = FontWeight.SemiBold,
                 )
             }
         }

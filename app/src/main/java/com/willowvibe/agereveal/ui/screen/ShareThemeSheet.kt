@@ -68,7 +68,7 @@ private fun themeVisualFor(theme: ShareCardGenerator.CardTheme) = when (theme) {
     )
 }
 
-enum class ShareFormat { SQUARE, STORY, GREEN_SCREEN, ASCII_ART }
+enum class ShareFormat { SQUARE, STORY, GREEN_SCREEN }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -112,7 +112,6 @@ fun ShareThemeSheet(
                     FormatChip("Square", selected = selectedFormat == ShareFormat.SQUARE) { selectedFormat = ShareFormat.SQUARE }
                     FormatChip("Story", selected = selectedFormat == ShareFormat.STORY) { selectedFormat = ShareFormat.STORY }
                     FormatChip("Green", selected = selectedFormat == ShareFormat.GREEN_SCREEN) { selectedFormat = ShareFormat.GREEN_SCREEN }
-                    FormatChip("ASCII", selected = selectedFormat == ShareFormat.ASCII_ART) { selectedFormat = ShareFormat.ASCII_ART }
                 }
             }
 

@@ -11,7 +11,6 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
 import com.willowvibe.agereveal.util.BirthdayCsvExporter
-import com.willowvibe.agereveal.util.LocaleManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
@@ -67,10 +66,8 @@ class SettingsViewModel @Inject constructor(
 
     fun setTheme(mode: Int) = viewModelScope.launch { userPrefs.setThemeMode(mode) }
 
-    fun setLanguage(tag: String) {
-        viewModelScope.launch { userPrefs.setLanguageTag(tag) }
-        LocaleManager.apply(tag)
-    }
+    // v2.0: Language is controlled by Android system settings (API 33+). No-op.
+    fun setLanguage(tag: String) { /* no-op */ }
 
     fun setNotificationsEnabled(enabled: Boolean) {
         viewModelScope.launch {

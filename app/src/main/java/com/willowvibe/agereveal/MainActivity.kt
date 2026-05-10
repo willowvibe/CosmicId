@@ -9,30 +9,22 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
-import androidx.lifecycle.lifecycleScope
-import com.willowvibe.agereveal.ads.AdManager
-import com.willowvibe.agereveal.data.preferences.UserPreferencesRepository
+import com.willowvibe.agereveal.billing.BillingManager
+import com.willowvibe.agereveal.domain.ProfileDeepLinkGenerator
 import com.willowvibe.agereveal.ui.navigation.AppNavGraph
 import com.willowvibe.agereveal.ui.theme.AgeRevealTheme
-import com.willowvibe.agereveal.util.LocaleManager
 import com.willowvibe.agereveal.widget.SecondsCounterUpdateWorker
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 /**
  * Single-activity entry point.
  * Hosts the full Compose NavGraph — all screens are composable destinations.
- *
- * Extends [ComponentActivity] (sufficient for Compose) — per-app locales work via
- * AppCompatDelegate's static application-level API; the activity type does not matter.
  */
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
 
-    @Inject lateinit var adManager: AdManager
-    @Inject lateinit var userPrefs: UserPreferencesRepository
+    @Inject lateinit var billingManager: BillingManager
 
     private val notificationPermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { /* granted or denied — notifications work accordingly */ }
@@ -41,31 +33,24 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
-        // Apply persisted locale before any Compose content inflates
-        lifecycleScope.launch {
-            runCatching { LocaleManager.apply(userPrefs.languageTag.first()) }
-        }
-
+        billingManager.startConnection()
         requestNotificationPermissionIfNeeded()
 
         // Schedule periodic widget refresh for the seconds counter
         SecondsCounterUpdateWorker.schedule(this)
 
+        val deepLinkProfile = intent?.data?.let { ProfileDeepLinkGenerator.parse(it) }
+
         setContent {
             AgeRevealTheme {
-                AppNavGraph(adManager = adManager)
+                AppNavGraph(deepLinkProfile = deepLinkProfile)
             }
         }
     }
 
-    override fun onStart() {
-        super.onStart()
-        adManager.attachActivity(this)
-    }
-
-    override fun onStop() {
-        super.onStop()
-        adManager.detachActivity()
+    override fun onDestroy() {
+        super.onDestroy()
+        billingManager.endConnection()
     }
 
     private fun requestNotificationPermissionIfNeeded() {

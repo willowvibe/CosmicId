@@ -382,6 +382,7 @@ fun SettingsScreen(
             }
 
             // ── Language ───────────────────────────────────────────────
+            // v2.0: Custom in-app language toggle removed. Hindi is available via Android system settings (API 33+).
             SettingsSection(title = stringResource(R.string.section_language)) {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(
@@ -393,20 +394,6 @@ fun SettingsScreen(
                     AgeBody(
                         text = stringResource(R.string.language_desc),
                     )
-                    Spacer(Modifier.height(4.dp))
-
-                    val languageOptions = listOf(
-                        "system" to stringResource(R.string.theme_system),
-                        "en" to stringResource(R.string.language_english),
-                        "hi" to stringResource(R.string.language_hindi),
-                    )
-                    languageOptions.forEach { (tag, label) ->
-                        OptionRow(
-                            label = label,
-                            isSelected = tag == languageTag,
-                            onClick = { settingsViewModel.setLanguage(tag) },
-                        )
-                    }
                 }
             }
 

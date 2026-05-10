@@ -1,9 +1,6 @@
 package com.willowvibe.agereveal.ui.viewmodel
 
 import androidx.lifecycle.ViewModel
-import com.willowvibe.agereveal.ads.AdManager
-import com.willowvibe.agereveal.data.model.AgeResult
-import com.willowvibe.agereveal.domain.AgeCalculator
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -24,13 +21,11 @@ data class CompareUiState(
     val differenceYears: Int = 0,
     val differenceMonths: Int = 0,
     val differenceDays: Int = 0,
-    val comparisonCount: Int = 0,   // used to trigger interstitial after 2nd compare
     val error: String? = null,
 )
 
 @HiltViewModel
 class CompareViewModel @Inject constructor(
-    private val adManager: AdManager,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(CompareUiState())
@@ -77,8 +72,7 @@ class CompareViewModel @Inject constructor(
                     differenceYears = 0,
                     differenceMonths = 0,
                     differenceDays = 0,
-                    comparisonCount = it.comparisonCount + 1,
-                )
+                    )
             }
             return
         }
@@ -98,16 +92,8 @@ class CompareViewModel @Inject constructor(
                 differenceYears = period.years,
                 differenceMonths = period.months,
                 differenceDays = period.days,
-                comparisonCount = it.comparisonCount + 1,
             )
         }
     }
 
-    fun showInterstitialIfReady() {
-        adManager.maybeShowInterstitial()
-    }
-
-    fun clearComparisonCount() {
-        _uiState.update { it.copy(comparisonCount = 0) }
-    }
 }

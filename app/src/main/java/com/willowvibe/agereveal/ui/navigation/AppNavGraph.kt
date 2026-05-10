@@ -20,8 +20,10 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
@@ -40,17 +42,16 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import android.app.Activity
-import com.willowvibe.agereveal.ads.AdManager
+import com.willowvibe.agereveal.domain.ProfileDeepLinkGenerator
 import com.willowvibe.agereveal.domain.ShareCardGenerator
 import com.willowvibe.agereveal.ui.screen.ShareFormat
 import com.willowvibe.agereveal.ui.screen.BadgeScreen
 import com.willowvibe.agereveal.ui.screen.CalculatorScreen
 import com.willowvibe.agereveal.ui.screen.CompatibilityScreen
-// CompareScreen removed — functionality merged into Match tab
 import com.willowvibe.agereveal.ui.screen.DetailsUnlockScreen
 import com.willowvibe.agereveal.ui.screen.LifeTimelineScreen
 import com.willowvibe.agereveal.ui.screen.RemindersScreen
+import com.willowvibe.agereveal.ui.screen.OnboardingScreen
 import com.willowvibe.agereveal.ui.screen.SettingsScreen
 import com.willowvibe.agereveal.ui.theme.WarmBlack
 import com.willowvibe.agereveal.ui.theme.WarmInk
@@ -59,12 +60,13 @@ import com.willowvibe.agereveal.ui.theme.WarmSurface
 import com.willowvibe.agereveal.ui.viewmodel.BadgeViewModel
 import com.willowvibe.agereveal.ui.viewmodel.CalculatorViewModel
 import com.willowvibe.agereveal.ui.viewmodel.CompatibilityViewModel
+import com.willowvibe.agereveal.ui.viewmodel.MainViewModel
 import com.willowvibe.agereveal.ui.viewmodel.RemindersViewModel
 import com.willowvibe.agereveal.ui.viewmodel.SettingsViewModel
-import kotlinx.coroutines.launch
 
 sealed class Screen(val route: String, val label: String, @DrawableRes val icon: Int) {
-    data object Calculator : Screen("calculator", "You", R.drawable.ic_tab_you)
+    data object Onboarding : Screen("onboarding", "", R.drawable.ic_tab_you)
+    data object Calculator : Screen("calculator", "My Cosmos", R.drawable.ic_tab_you)
     data object Details : Screen("details", "Profile", R.drawable.ic_tab_badges)
     data object Compatibility : Screen("compatibility", "Match", R.drawable.ic_tab_match)
     data object Reminders : Screen("reminders", "Bdays", R.drawable.ic_tab_bdays)
@@ -77,22 +79,27 @@ private val bottomNavItems = listOf(
     Screen.Calculator,
     Screen.Compatibility,
     Screen.Reminders,
-    Screen.Badges,
     Screen.Timeline,
 )
 
 @Composable
-fun AppNavGraph(adManager: AdManager) {
+fun AppNavGraph(
+    deepLinkProfile: ProfileDeepLinkGenerator.ParsedProfile? = null,
+) {
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDest = navBackStackEntry?.destination
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
-    val activity = context as? Activity
+    val mainViewModel: MainViewModel = hiltViewModel()
+    val onboardingCompleted by mainViewModel.hasCompletedOnboarding.collectAsState()
+    val startDestination = remember(onboardingCompleted) {
+        if (onboardingCompleted) Screen.Calculator.route else Screen.Onboarding.route
+    }
 
-    // Show bottom bar on all screens
-    val showBottomBar = true
+    // Hide bottom bar on onboarding
+    val showBottomBar = currentDest?.route != Screen.Onboarding.route
 
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
@@ -149,34 +156,40 @@ fun AppNavGraph(adManager: AdManager) {
     ) { innerPadding ->
         NavHost(
             navController = navController,
-            startDestination = Screen.Calculator.route,
+            startDestination = startDestination,
             modifier = Modifier.padding(innerPadding),
         ) {
-            composable(Screen.Calculator.route) { backStackEntry ->
-                val viewModel: CalculatorViewModel = hiltViewModel(backStackEntry)
-                CalculatorScreen(
-                    viewModel = viewModel,
-                    adManager = adManager,
-                    onShareCard = { theme, format ->
-                        when (format) {
-                            ShareFormat.SQUARE -> viewModel.shareCard(theme, activity)
-                            ShareFormat.STORY -> viewModel.shareStoryCard(theme, activity)
-                            ShareFormat.GREEN_SCREEN -> viewModel.shareTransparentOverlay(activity)
-                            ShareFormat.ASCII_ART -> viewModel.shareAsciiArt()
+            composable(Screen.Onboarding.route) {
+                OnboardingScreen(
+                    onComplete = {
+                        mainViewModel.completeOnboarding()
+                        navController.navigate(Screen.Calculator.route) {
+                            popUpTo(Screen.Onboarding.route) { inclusive = true }
+                            launchSingleTop = true
                         }
                     },
-                    onUnlockMore = {
-                        adManager.showRewardedAd(
-                            onRewarded = {
-                                viewModel.onRewardedAdEarned()
-                            },
-                            onNotReady = {
-                                scope.launch {
-                                    snackbarHostState.showSnackbar("Ad not ready yet — try again in a moment")
-                                }
-                            },
-                        )
+                )
+            }
+            composable(Screen.Calculator.route) { backStackEntry ->
+                val viewModel: CalculatorViewModel = hiltViewModel(backStackEntry)
+                LaunchedEffect(deepLinkProfile) {
+                    deepLinkProfile?.let { profile ->
+                        viewModel.onBirthDateSelected(profile.birthDate)
+                        viewModel.onNameChanged(profile.name)
+                        profile.birthTime?.let { viewModel.onBirthTimeSelected(it) }
+                    }
+                }
+                CalculatorScreen(
+                    viewModel = viewModel,
+                    onShareCard = { theme, format ->
+                        when (format) {
+                            ShareFormat.SQUARE -> viewModel.shareCard(theme, context as? android.app.Activity)
+                            ShareFormat.STORY -> viewModel.shareStoryCard(theme, context as? android.app.Activity)
+                            ShareFormat.GREEN_SCREEN -> viewModel.shareTransparentOverlay(context as? android.app.Activity)
+                        }
                     },
+                    onOpenDetails = { navController.navigate(Screen.Details.route) },
+                    onOpenBadges = { navController.navigate(Screen.Badges.route) },
                     onOpenSettings = { navController.navigate(Screen.Settings.route) },
                 )
             }
@@ -189,17 +202,7 @@ fun AppNavGraph(adManager: AdManager) {
                 val viewModel: CalculatorViewModel = hiltViewModel(calcEntry)
                 DetailsUnlockScreen(
                     viewModel = viewModel,
-                    onWatchAd = {
-                        adManager.showRewardedAd(
-                            onRewarded = { viewModel.onRewardedAdEarned() },
-                            onNotReady = {
-                                scope.launch {
-                                    snackbarHostState.showSnackbar("Ad not ready yet — try again in a moment")
-                                }
-                            },
-                        )
-                    },
-                    onShareMilestone = { milestone -> viewModel.shareMilestoneCard(milestone, activity = activity) },
+                    onShareMilestone = { milestone -> viewModel.shareMilestoneCard(milestone, activity = context as? android.app.Activity) },
                 )
             }
             composable(Screen.Compatibility.route) { backStackEntry ->
@@ -245,7 +248,7 @@ fun AppNavGraph(adManager: AdManager) {
                 LifeTimelineScreen(
                     milestones = milestones,
                     onDismiss = { navController.popBackStack() },
-                    onShare = { milestone -> viewModel.shareMilestoneCard(milestone, activity = activity) },
+                    onShare = { milestone -> viewModel.shareMilestoneCard(milestone, activity = context as? android.app.Activity) },
                 )
             }
         }

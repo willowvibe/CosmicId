@@ -87,7 +87,6 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.AdSize
 import com.google.android.gms.ads.AdView
-import com.willowvibe.agereveal.ads.AdManager
 import com.willowvibe.agereveal.data.model.AgeResult
 import com.willowvibe.agereveal.domain.ShareCardGenerator
 import com.willowvibe.agereveal.ui.components.AgeBody
@@ -115,9 +114,9 @@ import java.time.format.FormatStyle
 @Composable
 fun CalculatorScreen(
     viewModel: CalculatorViewModel = hiltViewModel(),
-    adManager: AdManager,
     onShareCard: (ShareCardGenerator.CardTheme, ShareFormat) -> Unit,
-    onUnlockMore: () -> Unit,
+    onOpenDetails: () -> Unit = {},
+    onOpenBadges: () -> Unit = {},
     onOpenSettings: () -> Unit = {},
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -258,38 +257,53 @@ fun CalculatorScreen(
                         StaggeredEnter(delayMillis = 70) { SecondsStrip(result) }
                         StaggeredEnter(delayMillis = 140) { MiniStatRow(result) }
                         StaggeredEnter(delayMillis = 210) { NextMilestoneChip(result) }
-                        if (uiState.timeRemaining != null && uiState.timeRemainingEnabled) {
-                            StaggeredEnter(delayMillis = 245) {
-                                TimeRemainingCard(uiState.timeRemaining!!)
-                            }
-                        }
-                        if (uiState.retirement != null && uiState.retirementEnabled) {
-                            StaggeredEnter(delayMillis = 252) {
-                                RetirementCard(uiState.retirement!!)
-                            }
-                        }
-                        if (uiState.dailyFortune != null && uiState.dailyFortuneEnabled) {
-                            StaggeredEnter(delayMillis = 260) {
-                                DailyFortuneCard(uiState.dailyFortune!!) {
-                                    viewModel.shareFortuneCard()
-                                }
-                            }
-                        }
+
+                        // v2.0: Progressive disclosure — one rotating highlight + explore CTA
                         StaggeredEnter(delayMillis = 280) {
-                            Column {
-                                if (!uiState.isUnlocked) {
-                                    WatchAdBanner(
-                                        isLoading = uiState.isAdLoading,
-                                        onWatch = onUnlockMore,
+                            AstroTile(
+                                result = result,
+                                isUnlocked = true, // Basic astrology is free in v2.0
+                                hasLocation = uiState.location != null,
+                            )
+                        }
+
+                        StaggeredEnter(delayMillis = 300) {
+                            val exploreHaptic = LocalHapticFeedback.current
+                            AgeCard(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable(
+                                        role = Role.Button,
+                                        onClick = {
+                                            exploreHaptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                            onOpenDetails()
+                                        },
+                                    )
+                                    .semantics { contentDescription = "Explore full cosmic profile" },
+                            ) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically,
+                                ) {
+                                    AgeBody(
+                                        text = "Explore full profile →",
+                                        color = WarmTeal,
+                                    )
+                                    Icon(
+                                        imageVector = Icons.Default.Star,
+                                        contentDescription = "Explore",
+                                        tint = WarmTeal,
+                                        modifier = Modifier.size(20.dp),
                                     )
                                 }
-                                AstroTile(result = result, isUnlocked = uiState.isUnlocked, hasLocation = uiState.location != null)
                             }
                         }
-                        if (uiState.isUnlocked) {
-                            StaggeredEnter(delayMillis = 350) {
-                                val shareHaptic = LocalHapticFeedback.current
-                                AgeCard(modifier = Modifier
+
+                        StaggeredEnter(delayMillis = 320) {
+                            val shareHaptic = LocalHapticFeedback.current
+                            AgeCard(
+                                modifier = Modifier
                                     .fillMaxWidth()
                                     .clickable(
                                         role = Role.Button,
@@ -298,24 +312,23 @@ fun CalculatorScreen(
                                             showThemePicker = true
                                         },
                                     )
-                                    .semantics { contentDescription = "Share your cosmic profile" }
+                                    .semantics { contentDescription = "Share your cosmic profile" },
+                            ) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically,
                                 ) {
-                                    Row(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        horizontalArrangement = Arrangement.SpaceBetween,
-                                        verticalAlignment = Alignment.CenterVertically,
-                                    ) {
-                                        AgeBody(
-                                            text = "Share your cosmic profile",
-                                            color = WarmInk,
-                                        )
-                                        Icon(
-                                            imageVector = Icons.Default.Share,
-                                            contentDescription = "Share",
-                                            tint = WarmTeal,
-                                            modifier = Modifier.size(20.dp),
-                                        )
-                                    }
+                                    AgeBody(
+                                        text = "Share your cosmic profile",
+                                        color = WarmInk,
+                                    )
+                                    Icon(
+                                        imageVector = Icons.Default.Share,
+                                        contentDescription = "Share",
+                                        tint = WarmTeal,
+                                        modifier = Modifier.size(20.dp),
+                                    )
                                 }
                             }
                         }
@@ -342,7 +355,7 @@ fun CalculatorScreen(
             // ── Banner ad ────────────────────────────────────────────────────
             HorizontalDivider(thickness = 1.dp, color = WarmSurfaceSoft)
             Spacer(Modifier.height(4.dp))
-            BannerAdView(adUnitId = AdManager.BANNER_AD_UNIT_ID)
+            BannerAdView(adUnitId = com.willowvibe.agereveal.ads.AdManager.BANNER_AD_UNIT_ID)
         }
 
         // Snackbar overlay

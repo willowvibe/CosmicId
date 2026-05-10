@@ -10,7 +10,6 @@ import com.willowvibe.agereveal.data.model.Milestone
 import com.willowvibe.agereveal.data.preferences.UserPreferencesRepository
 import com.willowvibe.agereveal.data.repository.BadgeRepository
 import com.willowvibe.agereveal.domain.AgeCalculator
-import com.willowvibe.agereveal.domain.AsciiArtGenerator
 import com.willowvibe.agereveal.domain.ShareCardGenerator
 import com.willowvibe.agereveal.domain.DailyFortuneGenerator
 import com.willowvibe.agereveal.domain.TimeRemainingCalculator
@@ -45,8 +44,7 @@ data class CalculatorUiState(
     val location: GeoLocation? = null,   // Optional birth location for exact Lagna
     val name: String = "",                // Optional name for display purposes
     val result: AgeResult? = null,
-    val isUnlocked: Boolean = false,       // True after rewarded ad watched
-    val isAdLoading: Boolean = false,
+    val isPremium: Boolean = false,      // v2.0: Premium subscription status
     val error: String? = null,
     val timeRemaining: TimeRemainingCalculator.TimeRemaining? = null,
     val timeRemainingEnabled: Boolean = true,
@@ -116,7 +114,8 @@ class CalculatorViewModel @Inject constructor(
             val retEnabled = userPrefs.retirementEnabled.first()
             val targetAge = userPrefs.targetAge.first()
             val retirementAge = userPrefs.retirementAge.first()
-            _uiState.update { it.copy(timeRemainingEnabled = trEnabled, retirementEnabled = retEnabled) }
+            val isPremium = userPrefs.isPremium.first()
+            _uiState.update { it.copy(timeRemainingEnabled = trEnabled, retirementEnabled = retEnabled, isPremium = isPremium) }
             if (savedDate != null) {
                 val tr = if (trEnabled) timeRemainingCalc.calculate(savedDate, targetAge = targetAge) else null
                 val ret = if (retEnabled) retirementCalc.calculate(savedDate, retirementAge = retirementAge) else null
@@ -125,7 +124,7 @@ class CalculatorViewModel @Inject constructor(
                         birthDate = savedDate,
                         birthTime = savedTime,
                         location = savedLocation,
-                        result = computeResult(savedDate, savedTime, includeUnlocked = false, location = savedLocation),
+                        result = computeResult(savedDate, savedTime, includeUnlocked = true, location = savedLocation),
                         timeRemaining = tr,
                         retirement = ret,
                     )
@@ -173,14 +172,15 @@ class CalculatorViewModel @Inject constructor(
             val trEnabled = userPrefs.timeRemainingEnabled.first()
             val retEnabled = userPrefs.retirementEnabled.first()
             val retirementAge = userPrefs.retirementAge.first()
+            val isPremium = userPrefs.isPremium.first()
             val tr = if (trEnabled) TimeRemainingCalculator().calculate(date, targetAge = targetAge) else null
             val ret = if (retEnabled) RetirementCalculator().calculate(date, retirementAge = retirementAge) else null
             _uiState.update { state ->
                 state.copy(
                     birthDate = date,
                     error = null,
-                    isUnlocked = false,
-                    result = computeResult(date, state.birthTime, includeUnlocked = false, location = state.location),
+                    isPremium = isPremium,
+                    result = computeResult(date, state.birthTime, includeUnlocked = true, location = state.location),
                     timeRemaining = tr,
                     timeRemainingEnabled = trEnabled,
                     retirement = ret,
@@ -200,7 +200,7 @@ class CalculatorViewModel @Inject constructor(
             val date = state.birthDate ?: return@update state.copy(birthTime = time)
             state.copy(
                 birthTime = time,
-                result = computeResult(date, time, state.isUnlocked, location = state.location),
+                result = computeResult(date, time, includeUnlocked = true, location = state.location),
             )
         }
     }
@@ -214,28 +214,9 @@ class CalculatorViewModel @Inject constructor(
         } else null
         _uiState.update {
             it.copy(
-                result = computeResult(birthDate, it.birthTime, it.isUnlocked, location = it.location),
+                result = computeResult(birthDate, it.birthTime, includeUnlocked = true, location = it.location),
                 timeRemaining = tr,
             )
-        }
-    }
-
-    /** Called by [CalculatorScreen] when the user watches the rewarded ad successfully. */
-    fun onRewardedAdEarned() {
-        val state = _uiState.value
-        val birthDate = state.birthDate ?: return
-        _uiState.update {
-            it.copy(
-                isUnlocked = true,
-                result = computeResult(birthDate, it.birthTime, includeUnlocked = true, location = it.location),
-            )
-        }
-        viewModelScope.launch {
-            val enabled = MilestoneNotificationScheduler.MILESTONE_TARGETS
-                .filter { userPrefs.milestoneEnabled(it).first() }
-                .toSet()
-            milestoneNotificationScheduler.scheduleUpcomingMilestones(birthDate, enabled)
-            badgeRepository.checkAndUnlock(birthDate, _uiState.value.birthTime)
         }
     }
 
@@ -327,16 +308,6 @@ class CalculatorViewModel @Inject constructor(
         reviewHelper.maybePromptAfterShare(activity)
     }
 
-    /** Share a parallel universe birth card. */
-    fun shareParallelUniverseCard(activity: Activity? = null) {
-        val result = _uiState.value.result ?: return
-        val universes = result.parallelUniverses.takeIf { it.isNotEmpty() } ?: return
-        viewModelScope.launch(Dispatchers.IO) {
-            shareCardGenerator.shareParallelUniverse(universes)
-        }
-        reviewHelper.maybePromptAfterShare(activity)
-    }
-
     /** Share the daily cosmic fortune card. */
     fun shareFortuneCard(activity: Activity? = null) {
         val fortune = _uiState.value.dailyFortune ?: return
@@ -355,18 +326,6 @@ class CalculatorViewModel @Inject constructor(
         reviewHelper.maybePromptAfterShare(activity)
     }
 
-    /** Generate ASCII art of total seconds and copy to clipboard. */
-    fun shareAsciiArt() {
-        val result = _uiState.value.result ?: return
-        val ascii = AsciiArtGenerator.render(result.totalSeconds)
-        val clipboard = appContext.getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
-        val clip = android.content.ClipData.newPlainText("AgeReveal ASCII Art", ascii)
-        clipboard.setPrimaryClip(clip)
-        _uiState.update { it.copy(error = "ASCII art copied to clipboard") }
-    }
-
-    fun setAdLoading(loading: Boolean) = _uiState.update { it.copy(isAdLoading = loading) }
-
     fun clearError() = _uiState.update { it.copy(error = null) }
     fun onNameChanged(name: String) {
         val sanitized = name.filterNot { it.isISOControl() }.take(50)
@@ -384,7 +343,7 @@ class CalculatorViewModel @Inject constructor(
             val date = state.birthDate ?: return@update state.copy(location = location)
             state.copy(
                 location = location,
-                result = computeResult(date, state.birthTime, state.isUnlocked, location = location),
+                result = computeResult(date, state.birthTime, includeUnlocked = true, location = location),
             )
         }
     }

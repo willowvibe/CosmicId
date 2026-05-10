@@ -67,10 +67,25 @@ colors:
   share-festive-end: "#138808"
   share-festive-gold: "#FFD700"
 
+  # Premium theme pack previews (v2.0)
+  theme-vaporwave-bg: "#1a0b2e"
+  theme-vaporwave-accent: "#ff00ff"
+  theme-vaporwave-text: "#00ffff"
+  theme-cottagecore-bg: "#f5f0e8"
+  theme-cottagecore-accent: "#8b7355"
+  theme-y2k-bg: "#ffe4f2"
+  theme-y2k-accent: "#ff0099"
+  theme-darkacademia-bg: "#2c241b"
+  theme-darkacademia-accent: "#c9a96e"
+  theme-cyberpunk-bg: "#0a0a0f"
+  theme-cyberpunk-accent: "#00ff41"
+
   # Utility
   transparent: "transparent"
   ad-slot-bg: "#2A2A3A"
   ad-slot-border: "#3A3A50"
+  paywall-glow: "#3D7A6E"
+  premium-gold: "#FFD700"
 
 typography:
   display-lg:
@@ -327,6 +342,13 @@ components:
     border: "1px solid {colors.ad-slot-border}"
     borderRadius: "{rounded.lg}"
 
+  paywall-card:
+    backgroundColor: "{colors.surface-elevated}"
+    borderRadius: "{rounded.3xl}"
+    padding: "{spacing.lg} {spacing.2xl}"
+    border: "1px solid {colors.paywall-glow}"
+    glow: "0 0 24px rgba(61, 122, 110, 0.15)"
+
 ---
 
 # AgeReveal — Design System
@@ -371,6 +393,7 @@ Light mode exists but is not the primary focus. It uses a near-white background 
 - **Teal** (#3D7A6E) is the functional accent — buttons, toggles, progress bars, active chips, share-row backgrounds.
 - **Amber** (#DEB84A) is the emotional accent — birthdays, countdowns, milestones, achievement badges, heartbeats. It represents celebration.
 - **User-defined accent** (default mint #86EFAC) overrides the teal in share cards and can be picked from 6 swatches in Settings.
+- **Premium gold** (#FFD700) — reserved for premium tier indicators, paywall CTAs, and exclusive theme pack badges.
 
 ### Share card themes
 Three share-card themes extend the palette into shareable media:
@@ -378,6 +401,17 @@ Three share-card themes extend the palette into shareable media:
 1. **Dark Cosmos** — navy gradient (#1A1A2E → #16213E) with white text and the user's chosen accent. Feels like a star chart.
 2. **Minimal Light** — white-to-cream gradient with dark ink text. Clean and editorial.
 3. **Festive India** — saffron-to-green gradient (#FF9933 → #138808) with gold (#FFD700) accents. Vibrant and celebratory.
+
+### Premium theme packs (v2.0)
+Exclusive to premium subscribers. Each pack is a complete color-token override:
+
+| Theme | Background | Surface | Accent | Text | Vibe |
+|---|---|---|---|---|---|
+| Vaporwave | #1a0b2e | #2d1b4e | #ff00ff | #00ffff | Sunset gradients + chrome |
+| Cottagecore | #f5f0e8 | #e8e0d0 | #8b7355 | #4a4032 | Floral + serif |
+| Y2K | #ffe4f2 | #ffb7e6 | #ff0099 | #330066 | Bling + bubblegum |
+| Dark Academia | #2c241b | #3d3226 | #c9a96e | #e8dcc5 | Sepia + old maps |
+| Cyberpunk | #0a0a0f | #1a1a2e | #00ff41 | #ff003c | Neon + grid lines |
 
 ## Typography
 
@@ -442,8 +476,20 @@ The calculator screen uses a **staggered entrance** where elements fade in and s
 
 Each element uses `350ms` duration with `FastOutSlowInEasing`.
 
+### Onboarding transitions (v2.0)
+The 3-step onboarding uses a **horizontal pager** with:
+- **Page enter:** `slideInHorizontally` + `fadeIn` (400ms)
+- **Page exit:** `slideOutHorizontally` + `fadeOut` (300ms)
+- **Step indicator:** Animated dot scale (200ms)
+- **Zodiac reveal:** Staggered fade-in of sign icon, name, and tagline (100ms delays)
+
 ### Tab switching
 `AnimatedContent` with crossfade handles bottom-nav tab changes. No jarring cuts — content dissolves and reappears smoothly.
+
+### Paywall entrance (v2.0)
+- **Backdrop:** `fadeIn` over 250ms
+- **Card:** `slideInVertically` from bottom + `scaleIn` from 0.95x to 1x (400ms, `FastOutSlowInEasing`)
+- **CTA button:** Pulse glow animation (subtle `animateColorAsState` loop on border)
 
 ### Color transitions
 `animateColorAsState` drives badge selection backgrounds and chip active states. Duration is typically `200ms` for interactive feedback.
@@ -469,10 +515,16 @@ Primary cards (`card-primary`) use `surface` (#1F1B16). Secondary cards (`card-s
 
 ### Buttons
 There are two button styles:
-1. **Filled pill** (`button-primary`) — teal background, black text, full pill radius. Used for primary actions (Save, Share, Watch & Reveal).
+1. **Filled pill** (`button-primary`) — teal background, black text, full pill radius. Used for primary actions (Save, Share, Unlock).
 2. **Outlined pill** (`button-secondary`) — transparent background, teal text, 1.5px teal border. Used for secondary actions (Cancel, Skip, secondary share options).
 
 Both use `label-md` typography (12px, Inter Medium, uppercase, 1px letter-spacing).
+
+### Premium CTA button (v2.0)
+A third button style for the paywall:
+- **Gradient gold pill** — subtle linear gradient from #FFD700 to #DEB84A, dark text, full pill radius.
+- **Glow effect** — `paywall-glow` colored drop shadow (0 0 24px rgba(61,122,110,0.15)).
+- Used exclusively for "Start Free Trial" and subscription actions.
 
 ### Chips
 Chips are compact toggle-like elements with 10px radius. Active chips (`chip-active`) use teal. Inactive chips (`chip-inactive`) use `surface-variant`. They feel like soft pills rather than hard rectangles.
@@ -494,8 +546,21 @@ Share cards are the app's "export" design system — a parallel visual language 
 - **Square** format: 900×900px, content area 900×600px centered with 150px vertical padding filled by the theme gradient. No cropping on any platform.
 - **Story** format: 1080×1920px portrait, 250px top safe zone and 350px bottom safe zone for Instagram/Snapchat UI overlays.
 - **Transparent** format: 1080×1920px with fully transparent background, white text with black outline for green-screen use.
+- **MP4** format: 1080×1920px, 5-second loop, 30fps, H.264 via MediaCodec.
+- **Sticker** format: 512×512px, transparent background, vector-drawn zodiac icon + name.
 
-All three formats use the same three themes (Dark Cosmos, Minimal Light, Festive India).
+All formats use the same three themes (Dark Cosmos, Minimal Light, Festive India).
+
+## Paywall Design (v2.0)
+
+The paywall is a **modal bottom sheet** (not full-screen) to reduce friction:
+- **Backdrop:** 60% black scrim with tap-to-dismiss
+- **Card:** `paywall-card` component — elevated surface with subtle teal glow border
+- **Header:** "Unlock Your Full Cosmic Profile" in `headline-lg`
+- **Feature list:** Bullet list with check icons (remove ads, full astrology, MP4 exports, theme packs)
+- **Pricing:** "₹49/month" primary + "₹299/year — Save 49%" secondary
+- **CTA:** Gradient gold pill "Start 7-Day Free Trial"
+- **Terms:** Small text "Cancel anytime. Billed via Google Play."
 
 ## Imagery & Widgets
 
@@ -508,6 +573,8 @@ Widgets extend the dark-cosmos palette into the Android home screen:
 
 ### App icon
 The app icon is not defined in code but the design intent is a warm-dark rounded square with a teal/amber motif — simple enough to read at 48dp, distinctive enough to stand out on a home screen.
+
+**v2.0 redesign direction:** Move from calculator motif to cosmic/zodiac identity. Consider a stylised constellation, crescent moon, or planetary orbit as the central mark.
 
 ## Accessibility
 
@@ -525,4 +592,6 @@ Every icon-only button has a `contentDescription`. Custom clickable elements dec
 
 ## Localization
 
-The app supports English and Hindi (हिन्दी). Typography handles Devanagari script via Inter's multilingual coverage. Labels in Hindi may run longer; the card-based layout with `fillMaxWidth` and generous internal padding accommodates script expansion without truncation.
+The app supports English and Hindi (हिन्दी) via system locale. Typography handles Devanagari script via Inter's multilingual coverage. Labels in Hindi may run longer; the card-based layout with `fillMaxWidth` and generous internal padding accommodates script expansion without truncation.
+
+**v2.0 change:** The custom in-app Hindi toggle is removed. Users switch language via Android system settings (API 33+). The `values-hi` resources remain fully maintained.
