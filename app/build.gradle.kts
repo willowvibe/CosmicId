@@ -26,7 +26,7 @@ android {
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "com.willowvibe.agereveal"
+        applicationId = "com.willowvibe.cosmicid"
         minSdk = 26  // java.time is native on API 26+; use desugaring below for API 21+
         //noinspection OldTargetApi
         targetSdk = 35
@@ -43,7 +43,7 @@ android {
         vectorDrawables.useSupportLibrary = true
 
         // Per-app language support — enables system-level language picker integration
-        resourceConfigurations += listOf("en", "hi")
+        resourceConfigurations += listOf("en", "hi", "ta", "te", "kn", "ko", "vi", "zh-rCN")
 
         // Passing AdMob App ID via manifest placeholder (set real ID in local.properties or CI)
         manifestPlaceholders["admobAppId"] = "ca-app-pub-3940256099942544~3347511713" // test ID

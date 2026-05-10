@@ -382,19 +382,20 @@ fun SettingsScreen(
             }
 
             // ── Language ───────────────────────────────────────────────
-            // v2.0: Custom in-app language toggle removed. Hindi is available via Android system settings (API 33+).
+            // v2.0: No custom toggle — Android 13+ system per-app language picker.
             SettingsSection(title = stringResource(R.string.section_language)) {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text(
-                        stringResource(R.string.language_label),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = WarmInk,
-                        fontWeight = FontWeight.SemiBold,
-                    )
-                    AgeBody(
-                        text = stringResource(R.string.language_desc),
-                    )
-                }
+                ActionRow(
+                    title = stringResource(R.string.language_label),
+                    subtitle = stringResource(R.string.language_desc),
+                    tint = WarmTeal,
+                    onClick = {
+                        val intent = Intent(
+                            android.provider.Settings.ACTION_APP_LOCALE_SETTINGS,
+                            Uri.parse("package:${context.packageName}")
+                        )
+                        context.startActivity(intent)
+                    },
+                )
             }
 
             // ── Data ─────────────────────────────────────────────────────────
@@ -592,8 +593,8 @@ private fun OptionRow(label: String, isSelected: Boolean, onClick: () -> Unit) {
 private fun ActionRow(
     title: String,
     subtitle: String,
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
-    tint: Color,
+    icon: androidx.compose.ui.graphics.vector.ImageVector? = null,
+    tint: Color = WarmInk,
     onClick: () -> Unit,
     destructive: Boolean = false,
 ) {
@@ -617,7 +618,9 @@ private fun ActionRow(
             Spacer(Modifier.height(2.dp))
             AgeBody(text = subtitle)
         }
-        Icon(icon, contentDescription = null, tint = tint, modifier = Modifier.size(20.dp))
+        if (icon != null) {
+            Icon(icon, contentDescription = null, tint = tint, modifier = Modifier.size(20.dp))
+        }
     }
 }
 
