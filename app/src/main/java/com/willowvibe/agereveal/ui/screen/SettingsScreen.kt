@@ -420,6 +420,16 @@ fun SettingsScreen(
                 }
             }
 
+            // ── Premium ────────────────────────────────────────────────────────
+            SettingsSection(title = "Premium") {
+                ActionRow(
+                    title = "Restore purchases",
+                    subtitle = "Re-sync your subscription status from Play Store",
+                    tint = WarmTeal,
+                    onClick = settingsViewModel::restorePurchases,
+                )
+            }
+
             // ── About ─────────────────────────────────────────────────────────
             SettingsSection(title = stringResource(R.string.section_about)) {
                 Column(verticalArrangement = Arrangement.spacedBy(0.dp)) {

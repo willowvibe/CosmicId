@@ -154,7 +154,7 @@ fun DetailsUnlockScreen(
                 contentAlignment = Alignment.Center,
             ) {
                 Text(
-                    "Enter a birth date on the Age tab first.",
+                    "Enter a birth date on the My Cosmos tab first.",
                     style = MaterialTheme.typography.bodyMedium,
                     color = WarmInkDim,
                 )
@@ -171,7 +171,7 @@ fun DetailsUnlockScreen(
                 AstroTile(result = result, isUnlocked = true, hasLocation = uiState.location != null)
 
                 // ── Generation badge (Gen Z flex) ──────────────────────────
-                if (true && generation != null) {
+                if (generation != null) {
                     GenerationBadgeChip(
                         generation = generation,
                         totalSeconds = result.totalSeconds,
@@ -179,7 +179,7 @@ fun DetailsUnlockScreen(
                 }
 
                 // ── Global age percentile ──────────────────────────────────
-                if (true && result.globalPercentile.isNotEmpty()) {
+                if (result.globalPercentile.isNotEmpty()) {
                     PercentileCard(
                         percentileText = result.globalPercentile,
                         sharedEstimate = result.sharedBirthDateEstimate,
@@ -190,7 +190,7 @@ fun DetailsUnlockScreen(
                 // v2.0: Basic astrology is free. Premium depth gated via paywall.
 
                 // ── Birth moon phase visual ────────────────────────────────
-                if (true && birthMoonPhase != null) {
+                if (birthMoonPhase != null) {
                     MoonPhaseCard(
                         birthPhase = birthMoonPhase,
                         currentPhase = currentMoonPhase,
@@ -198,7 +198,7 @@ fun DetailsUnlockScreen(
                 }
 
                 // ── Planet ages (horizontal scroll) ────────────────────────
-                if (true && planetAges.isNotEmpty()) {
+                if (planetAges.isNotEmpty()) {
                     PlanetAgesRow(planetAges = planetAges)
                 }
 
@@ -216,12 +216,12 @@ fun DetailsUnlockScreen(
                 }
 
                 // ── Heartbeat counter ────────────────────────────────────────
-                if (true && result.estimatedHeartbeats > 0) {
+                if (result.estimatedHeartbeats > 0) {
                     HeartbeatRow(result.estimatedHeartbeats)
                 }
 
                 // ── Life stats dashboard ─────────────────────────────────────
-                if (true && lifeStats.isNotEmpty()) {
+                if (lifeStats.isNotEmpty()) {
                     LifeStatsSection(
                         stats = lifeStats,
                         onShare = { stat ->

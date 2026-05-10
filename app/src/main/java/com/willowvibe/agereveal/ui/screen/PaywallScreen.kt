@@ -59,6 +59,7 @@ fun PaywallScreen(
 ) {
     val products by viewModel.products.collectAsState()
     val isConnected by viewModel.isConnected.collectAsState()
+    val error by viewModel.error.collectAsState()
     val context = LocalContext.current
 
     Column(
@@ -88,13 +89,44 @@ fun PaywallScreen(
 
         Spacer(Modifier.height(32.dp))
 
-        if (!isConnected) {
+        // Error banner
+        if (error != null) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(WarmAmber.copy(alpha = 0.12f))
+                    .border(1.dp, WarmAmber.copy(alpha = 0.3f), RoundedCornerShape(12.dp))
+                    .padding(16.dp),
+            ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(
+                        error ?: "",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = WarmAmber,
+                        textAlign = TextAlign.Center,
+                    )
+                    Spacer(Modifier.height(8.dp))
+                    TextButton(
+                        onClick = {
+                            viewModel.clearError()
+                            viewModel.restorePurchases()
+                        },
+                    ) {
+                        Text("Retry", color = WarmTeal)
+                    }
+                }
+            }
+            Spacer(Modifier.height(16.dp))
+        }
+
+        if (!isConnected && error == null) {
             CircularProgressIndicator(color = WarmTeal)
             Spacer(Modifier.height(16.dp))
             Text("Connecting to Play Store…", color = WarmInkDim)
-        } else if (products.isEmpty()) {
+        } else if (isConnected && products.isEmpty() && error == null) {
             Text("No subscription products found.", color = WarmInkDim)
-        } else {
+        } else if (isConnected) {
             products.forEach { product ->
                 ProductCard(
                     product = product,
@@ -107,7 +139,16 @@ fun PaywallScreen(
             }
         }
 
-        Spacer(Modifier.height(24.dp))
+        Spacer(Modifier.height(16.dp))
+
+        // Restore purchases — mandatory for Play Store review
+        TextButton(
+            onClick = { viewModel.restorePurchases() },
+        ) {
+            Text("Restore purchases", color = WarmInkDim)
+        }
+
+        Spacer(Modifier.height(8.dp))
 
         TextButton(onClick = onDismiss) {
             Text("Maybe later", color = WarmInkDim)

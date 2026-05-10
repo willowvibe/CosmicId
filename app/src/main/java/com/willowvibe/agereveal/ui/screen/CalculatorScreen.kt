@@ -58,6 +58,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -125,7 +126,6 @@ fun CalculatorScreen(
     viewModel: CalculatorViewModel = hiltViewModel(),
     onShareCard: (ShareCardGenerator.CardTheme, ShareFormat) -> Unit,
     onOpenDetails: () -> Unit = {},
-    onOpenBadges: () -> Unit = {},
     onOpenSettings: () -> Unit = {},
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -1200,18 +1200,21 @@ private fun RotatingHighlightCard(
     fortune: com.willowvibe.agereveal.domain.DailyFortuneGenerator.Fortune?,
     name: String,
 ) {
-    val highlights = remember(result, fortune) {
+    val hasFortune = fortune != null
+    val highlights = remember(hasFortune) {
         buildList {
             add(HighlightType.MILESTONE)
-            if (fortune != null) add(HighlightType.FORTUNE)
+            if (hasFortune) add(HighlightType.FORTUNE)
             add(HighlightType.PLANET_AGE)
             add(HighlightType.CELEBRITY)
         }
     }
-    var index by remember { mutableStateOf(0) }
-    val current = highlights.getOrNull(index) ?: return
+    var index by remember { mutableIntStateOf(0) }
+    // Clamp index when list shrinks (e.g. fortune goes null)
+    if (index >= highlights.size) index = 0
+    val current = highlights[index]
 
-    LaunchedEffect(highlights) {
+    LaunchedEffect(highlights.size) {
         while (true) {
             delay(4_000L)
             index = (index + 1) % highlights.size

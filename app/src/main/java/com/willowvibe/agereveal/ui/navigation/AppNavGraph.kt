@@ -45,7 +45,6 @@ import androidx.navigation.compose.rememberNavController
 import com.willowvibe.agereveal.domain.ProfileDeepLinkGenerator
 import com.willowvibe.agereveal.domain.ShareCardGenerator
 import com.willowvibe.agereveal.ui.screen.ShareFormat
-import com.willowvibe.agereveal.ui.screen.BadgeScreen
 import com.willowvibe.agereveal.ui.screen.CalculatorScreen
 import com.willowvibe.agereveal.ui.screen.CompatibilityScreen
 import com.willowvibe.agereveal.ui.screen.DetailsUnlockScreen
@@ -57,7 +56,6 @@ import com.willowvibe.agereveal.ui.theme.WarmBlack
 import com.willowvibe.agereveal.ui.theme.WarmInk
 import com.willowvibe.agereveal.ui.theme.WarmInkDim
 import com.willowvibe.agereveal.ui.theme.WarmSurface
-import com.willowvibe.agereveal.ui.viewmodel.BadgeViewModel
 import com.willowvibe.agereveal.ui.viewmodel.CalculatorViewModel
 import com.willowvibe.agereveal.ui.viewmodel.CompatibilityViewModel
 import com.willowvibe.agereveal.ui.viewmodel.MainViewModel
@@ -70,7 +68,6 @@ sealed class Screen(val route: String, val label: String, @DrawableRes val icon:
     data object Details : Screen("details", "Profile", R.drawable.ic_tab_badges)
     data object Compatibility : Screen("compatibility", "Match", R.drawable.ic_tab_match)
     data object Reminders : Screen("reminders", "Bdays", R.drawable.ic_tab_bdays)
-    data object Badges : Screen("badges", "Badges", R.drawable.ic_tab_badges)
     data object Settings : Screen("settings", "Settings", R.drawable.ic_tab_you)
     data object Timeline : Screen("timeline", "Timeline", R.drawable.ic_tab_timeline)
 }
@@ -189,7 +186,6 @@ fun AppNavGraph(
                         }
                     },
                     onOpenDetails = { navController.navigate(Screen.Details.route) },
-                    onOpenBadges = { navController.navigate(Screen.Badges.route) },
                     onOpenSettings = { navController.navigate(Screen.Settings.route) },
                 )
             }
@@ -225,10 +221,6 @@ fun AppNavGraph(
                     viewModel = viewModel,
                     onNavigateToSettings = { navController.navigate(Screen.Settings.route) },
                 )
-            }
-            composable(Screen.Badges.route) { backStackEntry ->
-                val viewModel: BadgeViewModel = hiltViewModel(backStackEntry)
-                BadgeScreen(viewModel = viewModel)
             }
             composable(Screen.Settings.route) {
                 val settingsViewModel: SettingsViewModel = hiltViewModel()

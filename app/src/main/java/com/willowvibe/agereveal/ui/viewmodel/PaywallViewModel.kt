@@ -1,6 +1,8 @@
 package com.willowvibe.agereveal.ui.viewmodel
 
+import android.app.Activity
 import androidx.lifecycle.ViewModel
+import com.android.billingclient.api.ProductDetails
 import com.willowvibe.agereveal.billing.BillingManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.StateFlow
@@ -15,9 +17,18 @@ class PaywallViewModel @Inject constructor(
 ) : ViewModel() {
 
     val isConnected: StateFlow<Boolean> = billingManager.isConnected
-    val products: StateFlow<List<com.android.billingclient.api.ProductDetails>> = billingManager.products
+    val products: StateFlow<List<ProductDetails>> = billingManager.products
+    val error: StateFlow<String?> = billingManager.error
 
-    fun launchBillingFlow(activity: android.app.Activity, product: com.android.billingclient.api.ProductDetails) {
+    fun launchBillingFlow(activity: Activity, product: ProductDetails) {
         billingManager.launchBillingFlow(activity, product)
+    }
+
+    fun restorePurchases() {
+        billingManager.restorePurchases()
+    }
+
+    fun clearError() {
+        billingManager.clearError()
     }
 }
