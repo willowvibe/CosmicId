@@ -18,8 +18,13 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material3.Tab
+import androidx.compose.material3.TabRow
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.material.icons.filled.NotificationsActive
 import androidx.compose.material.icons.filled.NotificationsOff
 import androidx.compose.material.icons.filled.Share
@@ -62,6 +67,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import kotlinx.coroutines.launch
 import com.willowvibe.agereveal.data.model.AgeResult
 import com.willowvibe.agereveal.data.model.Milestone
 import com.willowvibe.agereveal.domain.AstronomicalCalculator
@@ -160,80 +166,267 @@ fun DetailsUnlockScreen(
                 )
             }
         } else {
-            Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .verticalScroll(rememberScrollState())
-                    .padding(horizontal = 20.dp),
-                verticalArrangement = Arrangement.spacedBy(14.dp),
-            ) {
-                // ── Big astro tile ───────────────────────────────────────────
-                AstroTile(result = result, isUnlocked = true, hasLocation = uiState.location != null)
+            val pagerState = rememberPagerState(pageCount = { 4 })
+            val scope = rememberCoroutineScope()
+            val tabTitles = listOf("Overview", "Western", "Vedic", "Chinese")
 
-                // ── Generation badge (Gen Z flex) ──────────────────────────
-                if (generation != null) {
-                    GenerationBadgeChip(
-                        generation = generation,
-                        totalSeconds = result.totalSeconds,
-                    )
+            Column(modifier = Modifier.weight(1f)) {
+                TabRow(
+                    selectedTabIndex = pagerState.currentPage,
+                    containerColor = WarmBlack,
+                    contentColor = WarmTeal,
+                    divider = {},
+                ) {
+                    tabTitles.forEachIndexed { index, title ->
+                        Tab(
+                            selected = pagerState.currentPage == index,
+                            onClick = { scope.launch { pagerState.animateScrollToPage(index) } },
+                            text = {
+                                Text(
+                                    title,
+                                    style = MaterialTheme.typography.labelMedium,
+                                    color = if (pagerState.currentPage == index) WarmTeal else WarmInkDim,
+                                )
+                            },
+                        )
+                    }
                 }
 
-                // ── Global age percentile ──────────────────────────────────
-                if (result.globalPercentile.isNotEmpty()) {
-                    PercentileCard(
-                        percentileText = result.globalPercentile,
-                        sharedEstimate = result.sharedBirthDateEstimate,
-                        onShare = { viewModel.sharePercentileCard() },
-                    )
+                HorizontalPager(
+                    state = pagerState,
+                    modifier = Modifier.fillMaxSize(),
+                ) { page ->
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .verticalScroll(rememberScrollState())
+                            .padding(horizontal = 20.dp, vertical = 14.dp),
+                        verticalArrangement = Arrangement.spacedBy(14.dp),
+                    ) {
+                        when (page) {
+                            0 -> OverviewTab(
+                                result = result,
+                                generation = generation,
+                                birthMoonPhase = birthMoonPhase,
+                                currentMoonPhase = currentMoonPhase,
+                                planetAges = planetAges,
+                                lifeStats = lifeStats,
+                                viewModel = viewModel,
+                                onShareMilestone = onShareMilestone,
+                                hasLocation = uiState.location != null,
+                            )
+                            1 -> WesternTab(result = result)
+                            2 -> VedicTab(result = result, hasLocation = uiState.location != null)
+                            3 -> ChineseTab(result = result)
+                        }
+                    }
                 }
+            }
+        }
+    }
+}
 
-                // v2.0: Basic astrology is free. Premium depth gated via paywall.
+// ─────────────────────────────────────────────────────────────────────────────
+// Tab content
+// ─────────────────────────────────────────────────────────────────────────────
 
-                // ── Birth moon phase visual ────────────────────────────────
-                if (birthMoonPhase != null) {
-                    MoonPhaseCard(
-                        birthPhase = birthMoonPhase,
-                        currentPhase = currentMoonPhase,
-                    )
+@Composable
+private fun OverviewTab(
+    result: AgeResult,
+    generation: com.willowvibe.agereveal.domain.Generation?,
+    birthMoonPhase: com.willowvibe.agereveal.domain.MoonPhase?,
+    currentMoonPhase: com.willowvibe.agereveal.domain.MoonPhase,
+    planetAges: List<com.willowvibe.agereveal.domain.PlanetAge>,
+    lifeStats: List<LifeStatsCalculator.LifeStat>,
+    viewModel: CalculatorViewModel,
+    onShareMilestone: (Milestone) -> Unit,
+    hasLocation: Boolean,
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
+        AstroTile(
+            result = result,
+            isUnlocked = true,
+            hasLocation = hasLocation,
+            showDeepDetails = false,
+        )
+
+        if (generation != null) {
+            GenerationBadgeChip(
+                generation = generation,
+                totalSeconds = result.totalSeconds,
+            )
+        }
+
+        if (result.globalPercentile.isNotEmpty()) {
+            PercentileCard(
+                percentileText = result.globalPercentile,
+                sharedEstimate = result.sharedBirthDateEstimate,
+                onShare = { viewModel.sharePercentileCard() },
+            )
+        }
+
+        if (birthMoonPhase != null) {
+            MoonPhaseCard(
+                birthPhase = birthMoonPhase,
+                currentPhase = currentMoonPhase,
+            )
+        }
+
+        if (planetAges.isNotEmpty()) {
+            PlanetAgesRow(planetAges = planetAges)
+        }
+
+        if (result.planetPositions.isNotEmpty()) {
+            PlanetPositionTable(result.planetPositions)
+        }
+
+        if (result.milestones.isNotEmpty()) {
+            MilestoneTimeline(
+                milestones = result.milestones,
+                totalDays = result.totalDays,
+                isUnlocked = true,
+                onShare = onShareMilestone,
+                onToggleNotification = { target, enabled ->
+                    viewModel.setMilestoneEnabled(target, enabled)
+                },
+            )
+        }
+
+        if (result.estimatedHeartbeats > 0) {
+            HeartbeatRow(result.estimatedHeartbeats)
+        }
+
+        if (lifeStats.isNotEmpty()) {
+            LifeStatsSection(
+                stats = lifeStats,
+                onShare = { stat ->
+                    viewModel.shareLifeStatCard(stat.label, stat.value, stat.emoji)
+                },
+            )
+        }
+    }
+}
+
+@Composable
+private fun WesternTab(result: AgeResult) {
+    Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
+        if (result.westernZodiac.isNotEmpty()) {
+            AgeCard {
+                AgeLabel(text = "WESTERN ZODIAC")
+                Spacer(Modifier.height(6.dp))
+                Text(
+                    result.westernZodiac,
+                    fontFamily = SerifFamily,
+                    fontWeight = FontWeight.Normal,
+                    fontSize = 28.sp,
+                    lineHeight = 32.sp,
+                    letterSpacing = (-0.5).sp,
+                    color = WarmInk,
+                )
+            }
+        }
+
+        if (result.westernMoonSign.isNotEmpty()) {
+            AgeCard {
+                AgeLabel(text = "WESTERN MOON SIGN")
+                Spacer(Modifier.height(6.dp))
+                AgeValue(text = result.westernMoonSign)
+            }
+        }
+    }
+}
+
+@Composable
+private fun VedicTab(result: AgeResult, hasLocation: Boolean) {
+    Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
+        if (result.rashi.isNotEmpty()) {
+            AgeCard {
+                AgeLabel(text = "RASHI (SIDEREAL SUN SIGN)")
+                Spacer(Modifier.height(6.dp))
+                Text(
+                    result.rashi,
+                    fontFamily = SerifFamily,
+                    fontWeight = FontWeight.Normal,
+                    fontSize = 28.sp,
+                    lineHeight = 32.sp,
+                    letterSpacing = (-0.5).sp,
+                    color = WarmInk,
+                )
+                if (result.rashiLord.isNotEmpty()) {
+                    Spacer(Modifier.height(6.dp))
+                    AgeBody(text = "Lord: ${result.rashiLord}")
                 }
+            }
+        }
 
-                // ── Planet ages (horizontal scroll) ────────────────────────
-                if (planetAges.isNotEmpty()) {
-                    PlanetAgesRow(planetAges = planetAges)
+        if (result.nakshatra.isNotEmpty()) {
+            AgeCard {
+                AgeLabel(text = "NAKSHATRA")
+                Spacer(Modifier.height(6.dp))
+                AgeValue(text = result.nakshatra)
+                if (result.nakshatraPada.isNotEmpty()) {
+                    Spacer(Modifier.height(4.dp))
+                    AgeBody(text = "Pada: ${result.nakshatraPada}")
                 }
-
-                // ── Milestone timeline ───────────────────────────────────────
-                if (result.milestones.isNotEmpty()) {
-                    MilestoneTimeline(
-                        milestones = result.milestones,
-                        totalDays = result.totalDays,
-                        isUnlocked = true,
-                        onShare = onShareMilestone,
-                        onToggleNotification = { target, enabled ->
-                            viewModel.setMilestoneEnabled(target, enabled)
-                        },
-                    )
+                if (result.tithi.isNotEmpty()) {
+                    Spacer(Modifier.height(4.dp))
+                    AgeBody(text = "Tithi: ${result.tithi}")
                 }
+            }
+        }
 
-                // ── Heartbeat counter ────────────────────────────────────────
-                if (result.estimatedHeartbeats > 0) {
-                    HeartbeatRow(result.estimatedHeartbeats)
+        if (result.approximateAscendant.isNotEmpty()) {
+            AgeCard {
+                val label = if (hasLocation) "LAGNA (ASCENDANT)" else "LAGNA (APPROXIMATE)"
+                AgeLabel(text = label)
+                Spacer(Modifier.height(6.dp))
+                AgeValue(text = result.approximateAscendant)
+            }
+        }
+
+        if (result.dashaInfo.isNotEmpty()) {
+            AgeCard {
+                DashaRow(result.dashaInfo)
+            }
+        }
+    }
+}
+
+@Composable
+private fun ChineseTab(result: AgeResult) {
+    Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
+        if (result.chineseZodiac.isNotEmpty() || result.chineseStemBranch.isNotEmpty()) {
+            AgeCard {
+                AgeLabel(text = "CHINESE ZODIAC")
+                Spacer(Modifier.height(6.dp))
+                val hero = result.chineseStemBranch.ifEmpty { result.chineseZodiac }
+                Text(
+                    hero,
+                    fontFamily = SerifFamily,
+                    fontWeight = FontWeight.Normal,
+                    fontSize = 28.sp,
+                    lineHeight = 32.sp,
+                    letterSpacing = (-0.5).sp,
+                    color = WarmInk,
+                )
+                if (result.chineseZodiac.isNotEmpty() && result.chineseStemBranch.isNotEmpty()) {
+                    Spacer(Modifier.height(6.dp))
+                    AgeBody(text = "Animal: ${result.chineseZodiac}")
                 }
+            }
+        }
 
-                // ── Life stats dashboard ─────────────────────────────────────
-                if (lifeStats.isNotEmpty()) {
-                    LifeStatsSection(
-                        stats = lifeStats,
-                        onShare = { stat ->
-                            viewModel.shareLifeStatCard(stat.label, stat.value, stat.emoji)
-                        },
-                    )
-                }
+        if (result.baZiInfo.isNotEmpty()) {
+            AgeCard {
+                BaZiRow(result.baZiInfo)
+            }
+        }
 
-                // ── Parallel Universe Birth (removed in v2.0) ────────────────
-                // intentionally left empty
-
-                Spacer(Modifier.height(16.dp))
+        if (result.lunarBirthday.isNotEmpty()) {
+            AgeCard {
+                AgeLabel(text = "LUNAR BIRTHDAY")
+                Spacer(Modifier.height(6.dp))
+                AgeValue(text = result.lunarBirthday)
             }
         }
     }
@@ -244,7 +437,12 @@ fun DetailsUnlockScreen(
 // ─────────────────────────────────────────────────────────────────────────────
 
 @Composable
-internal fun AstroTile(result: AgeResult, isUnlocked: Boolean, hasLocation: Boolean = false) {
+internal fun AstroTile(
+    result: AgeResult,
+    isUnlocked: Boolean,
+    hasLocation: Boolean = false,
+    showDeepDetails: Boolean = true,
+) {
     AgeCard {
         // Radial glow in the top-right corner
         Box(
@@ -297,22 +495,24 @@ internal fun AstroTile(result: AgeResult, isUnlocked: Boolean, hasLocation: Bool
                 }
                 AstroGrid(items)
 
-                // ── Dasha ──────────────────────────────────────────────────
-                if (result.dashaInfo.isNotEmpty()) {
-                    Spacer(Modifier.height(10.dp))
-                    DashaRow(result.dashaInfo)
-                }
+                if (showDeepDetails) {
+                    // ── Dasha ──────────────────────────────────────────────────
+                    if (result.dashaInfo.isNotEmpty()) {
+                        Spacer(Modifier.height(10.dp))
+                        DashaRow(result.dashaInfo)
+                    }
 
-                // ── Ba Zi ──────────────────────────────────────────────────
-                if (result.baZiInfo.isNotEmpty()) {
-                    Spacer(Modifier.height(10.dp))
-                    BaZiRow(result.baZiInfo)
-                }
+                    // ── Ba Zi ──────────────────────────────────────────────────
+                    if (result.baZiInfo.isNotEmpty()) {
+                        Spacer(Modifier.height(10.dp))
+                        BaZiRow(result.baZiInfo)
+                    }
 
-                // ── Planet positions ───────────────────────────────────────
-                if (result.planetPositions.isNotEmpty()) {
-                    Spacer(Modifier.height(10.dp))
-                    PlanetPositionTable(result.planetPositions)
+                    // ── Planet positions ───────────────────────────────────────
+                    if (result.planetPositions.isNotEmpty()) {
+                        Spacer(Modifier.height(10.dp))
+                        PlanetPositionTable(result.planetPositions)
+                    }
                 }
             } else {
                 // Placeholder when not yet unlocked — blurred teaser
