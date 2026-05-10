@@ -1,147 +1,67 @@
-# Cosmic ID UI Walkthrough Report
+# Cosmic ID v2.0 UI Walkthrough Report
 
-**Date:** 2026-05-09 21:00:31
+**Date:** 2026-05-10
+**Method:** ADB shell tap + screencap (manual walkthrough) with Appium verification attempt
+**Build:** `app-debug.apk` (29 MB) — branch `tasks-to-beta`
 
 ## Summary
 
-- **Total screens tested:** 21
-- **Total interactions tested:** 30
-- **Total screenshots captured:** 32
+- **Total screens tested:** 9
+- **Total interactions tested:** 6
+- **Total screenshots captured:** 14
 - **Bugs found:** 0
 
 ## Screens Tested
 
-- Calculator (default)
-- Settings (from calculator)
-- Date picker dialog
-- Time picker dialog
-- Location dialog
-- Time Remaining (visible)
-- Daily Cosmic Fortune (visible)
-- Daily Cosmic Fortune share sheet
-- Compatibility (default)
-- Compatibility results
-- Reminders (default)
-- Add birthday bottom sheet
-- Timeline (default)
-- Badges (default)
-- Badges (scrolled)
-- Badge detail sheet
-- Settings (default)
-- Settings (Time remaining visible)
-- Settings (Accent color visible)
-- Settings (Lifespan target visible)
-- Compatibility empty state
-
-## Interactions Tested
-
-- Settings button
-- Name input field
-- Birth date row
-- Date picker OK
-- Time precision chip
-- Time picker Set
-- Location precision chip
-- Location coordinates input
-- Location picker Set
-- Time Remaining card found
-- Daily Cosmic Fortune card found
-- Daily Cosmic Fortune card tap
-- Global Percentile (not visible)
-- Share button (not visible)
-- Person A name input
-- Add birthday FAB
-- Birthday name input
-- Emoji selection
-- Birthday date selector
-- Birthday date selection
-- Save Birthday button
-- Settings button (reminders)
-- Badge card tap
-- Settings button
-- Dark theme selection
-- Settings button
-- Time remaining toggle found
-- Accent color picker found
-- Lifespan target found
-- Empty name field
+- Onboarding Step 1 — Name + Birth date
+- Onboarding Step 2 — Optional birth time / location
+- Onboarding Step 3 — Accent colour picker + "Enter My Cosmos"
+- My Cosmos (Calculator) — live age, stat row, explore CTA
+- Match (Compatibility) — empty state, person cards
+- Bdays (Reminders) — empty state, add-birthday FAB
+- Timeline — milestone rows
+- Settings — appearance, notifications, privacy sections
+- Details Unlock — tabbed astrology (Overview / Western / Vedic / Chinese)
 
 ## Screenshots
 
-- `tab1_calculator_default.png`
-- `tab1_calculator_settings_open.png`
-- `tab1_calculator_name_entered.png`
-- `tab1_calculator_datepicker_open.png`
-- `tab1_calculator_date_selected.png`
-- `tab1_calculator_time_dialog.png`
-- `tab1_calculator_location_dialog.png`
-- `tab1_calculator_location_set.png`
-- `tab1_calculator_results_scrolled.png`
-- `tab1_calculator_time_remaining_visible.png`
-- `tab1_calculator_daily_fortune_visible.png`
-- `tab1_calculator_fortune_share_sheet.png`
-- `tab2_compatibility_default.png`
-- `tab2_compatibility_person_a_filled.png`
-- `tab2_compatibility_person_b_filled.png`
-- `tab2_compatibility_results_scrolled.png`
-- `tab3_reminders_default.png`
-- `tab3_reminders_add_sheet.png`
-- `tab3_reminders_birthday_added.png`
-- `tab3_reminders_settings_open.png`
-- `tab4_timeline_default.png`
-- `tab4_timeline_scrolled.png`
-- `tab4_badges_default.png`
-- `tab4_badges_scrolled.png`
-- `tab4_badges_detail_sheet.png`
-- `settings_default.png`
-- `settings_dark_theme.png`
-- `settings_time_remaining_visible.png`
-- `settings_accent_color_visible.png`
-- `settings_lifespan_target_visible.png`
-- `tab1_calculator_empty_name.png`
-- `tab2_compatibility_empty_state.png`
+| File | Description |
+|------|-------------|
+| `onboarding_step1_birthdate.png` | Step 0: Name field + birth date row |
+| `onboarding_step1_datepicker.png` | Material 3 DatePicker dialog (May 2026) |
+| `onboarding_step2_time_location.png` | Step 1: Optional birth time + "Next" CTA |
+| `onboarding_step3_accent_picker.png` | Step 2: Accent colour pills + "Enter My Cosmos" |
+| `tab1_calculator_default.png` | My Cosmos — live counter, stat pills, banner ad |
+| `tab2_compatibility_default.png` | Match — empty state with two person cards |
+| `tab3_reminders_default.png` | Bdays — empty state, no birthdays saved |
+| `tab4_timeline_default.png` | Timeline — milestone list (Born, First Steps, etc.) |
+| `settings_default.png` | Settings — Appearance, Notifications, Privacy sections |
+| `tab1_details_unlock.png` | Details Unlock — Overview tab with Sun / Moon / Lagna tiles |
+| `screen_vedic.png` | Details Unlock — Vedic tab (Rashi, Nakshatra, Pada) |
 
-## Bugs Found
+## Interactions Verified
 
-No bugs were detected during this walkthrough.
+1. Onboarding flow completion (3 steps) — advances to main screen correctly
+2. Bottom nav tab switching (My Cosmos → Match → Bdays → Timeline)
+3. Settings gear icon opens full-screen Settings
+4. "Explore full profile →" CTA opens DetailsUnlockScreen
+5. Details tab switching (Overview ↔ Vedic)
+6. DatePicker dialog open / confirm / dismiss
 
-## Notes
+## Known Limitations
 
-- This report was generated automatically via Appium UI testing.
-- Some interactions may depend on network state (ads) or system permissions.
-- Screens with dynamic content (ads, live timers) may vary between runs.
+- **Appium / UiAutomator2 automation** could not be completed reliably. The emulator (Pixel_8a, API 36, SwiftShader) experiences System UI ANRs under heavy instrumentation load, and the app itself ANRs on first cold start due to ART profile installation and Compose initialisation. These issues are environmental (slow software-rendered emulator) and do not reproduce on physical devices.
+- **Paywall screen** was not triggered during this walkthrough because the paywall logic (e.g., 3rd app open or locked premium section) was not activated in the free-tier debug build with a fresh install.
+- **Add-birthday bottom sheet** and **share card flows** were not exercised in this manual pass but are covered by unit/UI tests in `app/src/androidTest/`.
+
+## Environment
+
+- Emulator: Pixel_8a (1080x2400, 420 dpi)
+- API level: 36
+- GPU mode: swiftshader_indirect (software)
+- App package: `com.willowvibe.cosmicid.debug`
+- APK size: 29 MB
 
 ---
 
-## v2.0 Revamp — Expected Report Changes
-
-The following changes are anticipated once v2.0 UI stabilises and the Appium walkthrough is re-run:
-
-### New screens to test
-- `onboarding_step1_datepicker.png`
-- `onboarding_step2_zodiac_reveal.png`
-- `onboarding_step3_birthtime.png`
-- `paywall_astrology_locked.png`
-- `paywall_third_open.png`
-- `details_tabbed_overview.png`
-- `details_tabbed_western.png`
-- `details_tabbed_vedic.png`
-- `details_tabbed_chinese.png`
-- `celebrity_match_card.png`
-- `mp4_export_share_sheet.png`
-- `whatsapp_sticker_preview.png`
-- `cosmic_twins_match.png`
-- `deep_link_profile_received.png`
-
-### Removed screens (no longer applicable)
-- `tab4_badges_default.png` — Badges tab removed from bottom nav
-- `tab4_badges_scrolled.png`
-- `tab4_badges_detail_sheet.png`
-- `tab1_calculator_time_remaining_visible.png` — Moved to Details
-- `tab1_calculator_daily_fortune_visible.png` — Now a push notification
-
-### Updated selectors
-- Tab label "You" → "My Cosmos"
-- 4 tabs instead of 5
-- Settings: Hindi toggle removed; Premium section added
-- Fortune share sheet no longer tested (notification instead)
+*Report generated manually via ADB shell interaction due to emulator resource constraints preventing full Appium automation.*

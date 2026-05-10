@@ -25,7 +25,7 @@ from selenium.common.exceptions import (
 # Configuration
 SCREENSHOTS_DIR = "/mnt/data2/git_repos/AgeReveal/screenshots"
 APPIUM_URL = "http://localhost:4723"
-APP_PACKAGE = "com.willowvibe.agereveal"
+APP_PACKAGE = "com.willowvibe.cosmicid.debug"
 APP_ACTIVITY = "com.willowvibe.agereveal.MainActivity"
 DEVICE_UDID = "emulator-5554"
 
@@ -974,6 +974,9 @@ def main():
     options.no_reset = True
     options.new_command_timeout = 300
     options.automation_name = "UiAutomator2"
+    options.set_capability("uiautomator2ServerLaunchTimeout", 120000)
+    options.set_capability("uiautomator2ServerInstallTimeout", 120000)
+    options.set_capability("adbExecTimeout", 60000)
 
     # Connect to Appium
     log(f"Connecting to Appium at {APPIUM_URL}")
