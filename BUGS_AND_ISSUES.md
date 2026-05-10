@@ -1,4 +1,4 @@
-# AgeReveal — Bugs & Edge Case Issues
+# Cosmic ID — Bugs & Edge Case Issues
 
 _Last updated: 2026-05-10 — v2.0.0 Revamp (in progress)_
 

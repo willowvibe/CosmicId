@@ -1,6 +1,6 @@
-# AgeReveal
+# Cosmic ID
 
-AgeReveal is a native Android app (Kotlin + Jetpack Compose) that calculates your exact age in real-time and enriches it with astrological insights, shareable cards, milestone tracking, saved birthday reminders, and home screen widgets.
+Cosmic ID is a native Android app (Kotlin + Jetpack Compose) that calculates your exact age in real-time and enriches it with astrological insights, shareable cards, milestone tracking, saved birthday reminders, and home screen widgets.
 
 Current version: **2.0.0** (Revamp).
 

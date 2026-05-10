@@ -1,4 +1,4 @@
-# AgeReveal UI Walkthrough Report
+# Cosmic ID UI Walkthrough Report
 
 **Date:** 2026-05-09 21:00:31
 

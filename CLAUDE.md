@@ -1,12 +1,12 @@
-# CLAUDE.md — AgeReveal
+# CLAUDE.md — Cosmic ID
 
-Quick-start guide for Claude Code sessions on the AgeReveal Android project.
+Quick-start guide for Claude Code sessions on the Cosmic ID Android project.
 
 ---
 
 ## What This Is
 
-AgeReveal is a native Android app (Kotlin + Jetpack Compose) that calculates exact age in real time and enriches it with astrological insights, shareable cards, milestone tracking, saved birthday reminders, and a home screen widget. Currently **v1.0**.
+Cosmic ID is a native Android app (Kotlin + Jetpack Compose) that calculates exact age in real time and enriches it with astrological insights, shareable cards, milestone tracking, saved birthday reminders, and a home screen widget. Currently **v2.0**.
 
 **Package:** `com.willowvibe.agereveal`
 **Min SDK:** 26 (API 21–25 via core library desugaring)

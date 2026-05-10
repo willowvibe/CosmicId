@@ -1,4 +1,4 @@
-# MCP Setup for AgeReveal
+# MCP Setup for Cosmic ID
 
 This project includes local MCP (Model Context Protocol) servers for Claude Code, enabling local LLM integration via Ollama.
 
