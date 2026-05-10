@@ -45,6 +45,8 @@ class UserPreferencesRepository @Inject constructor(
         private val ACCENT_COLOR_KEY = intPreferencesKey("accent_color")
         private val RETIREMENT_AGE_KEY = intPreferencesKey("retirement_age")
         private val RETIREMENT_ENABLED_KEY = booleanPreferencesKey("retirement_enabled")
+        private val IS_PREMIUM_KEY = booleanPreferencesKey("is_premium")
+        private val ONBOARDING_COMPLETED_KEY = booleanPreferencesKey("onboarding_completed")
     }
 
     private val dataStore = context.userPrefsDataStore
@@ -120,5 +122,17 @@ class UserPreferencesRepository @Inject constructor(
     val retirementEnabled: Flow<Boolean> = dataStore.data.map { it[RETIREMENT_ENABLED_KEY] ?: true }
     suspend fun setRetirementEnabled(enabled: Boolean) {
         dataStore.edit { it[RETIREMENT_ENABLED_KEY] = enabled }
+    }
+
+    // ── Premium status (v2.0) ──────────────────────────────────────────────
+    val isPremium: Flow<Boolean> = dataStore.data.map { it[IS_PREMIUM_KEY] ?: false }
+    suspend fun setPremium(premium: Boolean) {
+        dataStore.edit { it[IS_PREMIUM_KEY] = premium }
+    }
+
+    // ── Onboarding completed (v2.0) ────────────────────────────────────────
+    val hasCompletedOnboarding: Flow<Boolean> = dataStore.data.map { it[ONBOARDING_COMPLETED_KEY] ?: false }
+    suspend fun setOnboardingCompleted(completed: Boolean) {
+        dataStore.edit { it[ONBOARDING_COMPLETED_KEY] = completed }
     }
 }

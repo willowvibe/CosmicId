@@ -1,6 +1,6 @@
 # AgeReveal — PRD
 
-_Last updated: 2026-04-23 — v1.0 Play Store candidate_
+_Last updated: 2026-05-10 — v2.0 Revamp (in progress)_
 
 ## Original problem statement
 
@@ -10,29 +10,58 @@ _Last updated: 2026-04-23 — v1.0 Play Store candidate_
 ## Project
 
 Native Android app (Kotlin + Jetpack Compose, Material3, Hilt, Room, WorkManager, Glance,
-AdMob). Single-activity architecture. minSdk 26, targetSdk 35, compileSdk 36.
+AdMob, Google Play Billing). Single-activity architecture. minSdk 26, targetSdk 35, compileSdk 36.
 
 ## User personas
 
-* **Astrology curious** — wants to know Rashi / Nakshatra / Chinese zodiac precisely.
-* **Milestone chaser** — enjoys "1 000 days alive!", "25 000 days", etc.
+* **Astrology curious** — wants to know Rashi / Nakshatra / Chinese zodiac precisely. Willing to pay for depth.
+* **Milestone chaser** — enjoys "1 000 days alive!", "25 000 days", etc. Shares milestones.
 * **Birthday organiser** — needs reminders for family & friends.
 * **Casual user** — wants a live "how old am I" ticker with shareable cards.
+* **Gen Z flexer** — wants TikTok/Reels content, celebrity matches, viral share formats.
 
 ## Core (static) requirements
 
 * Live age to the second
-* Western, Vedic, Chinese zodiac (opt-in unlock via rewarded ad)
+* Western, Vedic, Chinese zodiac (basic free; depth premium)
 * Milestone timeline (500 → 30 000 days)
 * Saved birthdays with reminders (1 day before, hour-of-day configurable)
 * Home screen widget (2×2 + 4×2)
 * Zodiac compatibility (user ↔ friend + arbitrary two people)
-* Share cards (3 themes, 900×900 square)
-* Bilingual EN + HI
+* Share cards (3 themes, 900×900 square + 1080×1920 story + transparent + MP4 + stickers)
+* Bilingual EN + HI (system locale)
 * Dark / Light / System theme
-* AdMob monetisation (Banner, Rewarded, Interstitial)
+* AdMob monetisation (Banner only on free tier)
+* Google Play Billing subscription (Premium tier)
 
-## What's implemented (this run)
+## v2.0 Revamp — What's being built
+
+### Monetisation
+* **Freemium subscription** — Premium tier (₹49/mo or ₹299/yr) replaces ad-gated astrology.
+* **Remove Ads one-time** — ₹199 alternative for users who hate subscriptions.
+* **Paywall screen** — Beautiful upsell with 7-day free trial.
+* **Banner-only ads** — Interstitial and rewarded ads removed completely.
+
+### Onboarding & Activation
+* **3-Step Animated Onboarding** — Date picker → instant zodiac reveal → optional birth time.
+* **Progressive Disclosure** — Main screen reduced to hero counter + rotating highlight + CTA.
+
+### Social & Viral
+* **Deep-Link Profile Sharing** — `agereveal://profile/[data]` for organic viral loops.
+* **Celebrity Birthday Matching** — "You share a birthday with [Name]" from curated data.
+* **Animated MP4 Export** — 5-second ticking-seconds video for Reels/TikTok.
+* **WhatsApp Sticker Pack** — Direct import of cosmic stickers.
+* **Cosmic Twins Discovery** — Offline match by Rashi + Nakshatra.
+
+### Retention
+* **Daily Cosmic Fortune Push** — Push notification at user-set time (default 8AM).
+* **Cosmic Year Report Notification** — Rich birthday notification with Mahadasha + fortune.
+
+### Brand
+* **App rename evaluation** — Nakshatra, CosmAge, BornAt.
+* **Icon redesign** — Cosmic/zodiac motif.
+
+## What's implemented (historical)
 
 * 2026-04-23 — **Play Store assets rendered** (`scripts/render_store_assets.py`):
   - `store_listing/icon_512.png` — 512×512 launcher icon (teal→amber gradient disc,
@@ -78,33 +107,28 @@ AdMob). Single-activity architecture. minSdk 26, targetSdk 35, compileSdk 36.
   `ZodiacCalculatorTest` × 24, `NakshatraCalculatorTest` × 6,
   `ZodiacCompatibilityCalculatorTest` × 13). Release AAB (11 MB) builds successfully.
 
-## Next action items
+## Next action items (v2.0)
 
-* **Replace 4 AdMob test IDs** with real production IDs:
-  - `app/build.gradle.kts` → `admobAppId` placeholder
-  - `ads/AdManager.kt` lines 37-39 → BANNER / REWARDED / INTERSTITIAL unit IDs
-* **Generate real keystore** and fill in `keystore.properties`.
-* **Produce Play Store assets**: 512×512 icon PNG, 1024×500 feature graphic, 2-8 phone
-  screenshots (see `store_listing/screenshots/README.md`).
-* **Host privacy policy** at `https://willowvibe.com/agereveal/privacy` (or edit the URL
-  in `SettingsScreen.kt`) using `store_listing/privacy_policy.md` as the source.
-* **Sanity-check** on a real device: Hindi locale switch, milestone notifications firing
-  with the per-target toggle, share-then-review prompt, 4×2 widget resize.
-
-## Prioritised backlog (P2, future versions)
-
-* Remove Ads IAP (₹99) via Google Play Billing Library
-* Firebase Firestore sync for saved birthdays (opt-in Google sign-in)
-* WhatsApp sticker pack (512×512 transparent PNGs)
-* Yearly "you've now lived X days!" re-engagement notification
-* Lock screen widget (API 33+)
-* iOS port (Flutter or React Native with WidgetKit)
+* **Remove rewarded & interstitial ads** and replace with subscription paywall
+* **Integrate Google Play Billing Library 6+** with SUBS product type
+* **Build 3-step onboarding** (`OnboardingScreen.kt`, `OnboardingViewModel.kt`)
+* **Implement deep-link profile sharing** (`ProfileDeepLinkGenerator.kt`, manifest intent-filter)
+* **Add celebrity birthday matching** (`CelebrityMatchCalculator.kt`, `assets/celebrities.json`)
+* **Wire daily fortune push notification** (`DailyFortuneWorker.kt`, fortune time setting)
+* **Refactor Calculator main screen** to progressive disclosure (hero + highlight + CTA)
+* **Build animated MP4 export** (`VideoExportWorker.kt`, MediaCodec + MediaMuxer)
+* **Build WhatsApp sticker pack** (`WhatsAppStickerProvider.kt`, `stickerpack.json`)
+* **Build cosmic year report notification** (`CosmicYearReportWorker.kt`)
+* **Build cosmic twins discovery** (`CosmicTwinScreen.kt`, offline matching)
+* **Evaluate app rename** and redesign icon
+* **Swap AdMob test IDs** for production banner ID
 
 ## Dependencies / setup
 
 * JDK 17, Gradle 8.13, Android Gradle Plugin 8.13.2, Kotlin 2.1.0
 * Room 2.7.0 with KSP; schemas exported to `app/schemas/` for migration tests
 * DataStore 1.1.1, AppCompat 1.7.0, Play Review 2.0.2
+* **NEW (v2.0):** Google Play Billing 6+ (`billing-ktx`)
 
 ## Build commands (local)
 

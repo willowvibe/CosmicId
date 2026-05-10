@@ -1,6 +1,6 @@
 # Privacy Policy — AgeReveal
 
-_Last updated: 2026-05-09_
+_Last updated: 2026-05-10_
 
 AgeReveal ("the app") is published by Willowvibe. This privacy policy explains what information the app handles and why.
 
@@ -8,7 +8,8 @@ AgeReveal ("the app") is published by Willowvibe. This privacy policy explains w
 
 * AgeReveal stores your birthdays **only on your device**.
 * We do **not** collect, sell, or share personal information.
-* Ads are served by **Google AdMob**, which may process device identifiers per its own policies.
+* Ads are served by **Google AdMob** (banner only on free tier), which may process device identifiers per its own policies.
+* Subscription billing is handled by **Google Play Billing**; we do not receive or store payment details.
 
 ## Data we store
 
@@ -16,7 +17,7 @@ AgeReveal ("the app") is published by Willowvibe. This privacy policy explains w
 |------|-------|---------|
 | Your own birth date (and optional time) | On-device SharedPreferences | Live age calculation |
 | Saved birthdays (name, date, optional time, emoji) | On-device Room database | Reminders & widget |
-| App preferences (theme, language, milestone toggles, accent color) | On-device DataStore | App settings |
+| App preferences (theme, notification toggles, accent color, premium status) | On-device DataStore | App settings |
 | Badge unlock timestamps | On-device Room database | Achievement tracking |
 
 Nothing on the list above leaves your device. Uninstalling the app removes everything.
@@ -26,22 +27,28 @@ Nothing on the list above leaves your device. Uninstalling the app removes every
 * We do not have a backend server.
 * We do not require a login or email address.
 * We do not use analytics or crash reporting SDKs.
+* We do not receive or store your payment information (handled entirely by Google Play).
 
 ## Advertising (AdMob)
 
-AgeReveal displays banner, rewarded, and interstitial ads served by **Google AdMob**. Google may use an advertising ID to serve relevant ads. You can:
+AgeReveal displays a **banner ad only** on the free tier, served by **Google AdMob**. Google may use an advertising ID to serve relevant ads. You can:
 
 * Reset your advertising ID via Android Settings → Privacy → Ads.
 * Opt out of personalised ads via Android Settings → Google → Ads.
+* Remove all ads by subscribing to Premium or purchasing the Remove Ads option.
 
 Google's privacy policy: https://policies.google.com/privacy
+
+## Subscriptions (Google Play Billing)
+
+Premium subscriptions and the Remove Ads purchase are processed through **Google Play Billing**. Willowvibe does not receive, store, or process your payment card details. Google handles all billing and receipt validation.
 
 ## Permissions
 
 | Permission | Why we ask |
 |---|---|
-| `POST_NOTIFICATIONS` (Android 13+) | To deliver birthday & milestone reminders. |
-| `INTERNET` / `ACCESS_NETWORK_STATE` | Required by AdMob to load ads. |
+| `POST_NOTIFICATIONS` (Android 13+) | To deliver birthday, milestone, daily fortune, and cosmic year reminders. |
+| `INTERNET` / `ACCESS_NETWORK_STATE` | Required by AdMob to load ads and Google Play Billing to validate purchases. |
 
 ## Children
 

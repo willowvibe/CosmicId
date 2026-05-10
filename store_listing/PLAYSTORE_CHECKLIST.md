@@ -1,4 +1,4 @@
-# Play Store Submission Checklist — AgeReveal v1.0.7
+# Play Store Submission Checklist — AgeReveal v2.0.0
 
 Use this list as you upload the AAB. Everything in `store_listing/` is ready to paste into the Play Console.
 
@@ -13,11 +13,17 @@ keytool -genkey -v -keystore release.jks -alias age_reveal \
 cp keystore.properties.example keystore.properties
 # edit keystore.properties
 
-# 3. Replace the 4 AdMob test IDs with your real production IDs:
+# 3. Replace the AdMob test banner ID with your real production ID:
 #    - app/build.gradle.kts line ~47 → "admobAppId" manifest placeholder
-#    - app/src/main/java/.../ads/AdManager.kt lines 37-39 → BANNER/REWARDED/INTERSTITIAL ids
+#    - app/src/main/java/.../ads/AdManager.kt → BANNER ad unit ID only
+#    (rewarded and interstitial IDs are removed in v2.0)
 
-# 4. Build
+# 4. Configure Play Billing product IDs in the Play Console:
+#    - premium_monthly (₹49)
+#    - premium_yearly (₹299)
+#    - remove_ads (₹199) — optional one-time purchase
+
+# 5. Build
 ./gradlew bundleRelease
 
 # The signed AAB is at: app/build/outputs/bundle/release/app-release.aab
@@ -27,10 +33,10 @@ cp keystore.properties.example keystore.properties
 
 | Field | Value |
 |---|---|
-| App name | AgeReveal |
+| App name | AgeReveal (or new name: Nakshatra / CosmAge / BornAt) |
 | Default language | English (United States) |
 | App category | Lifestyle |
-| Free / Paid | Free |
+| Free / Paid | Free with in-app purchases (subscriptions) |
 
 ## 3. Main store listing
 
@@ -62,8 +68,9 @@ Default target URL in the app settings screen: `https://willowvibe.com/agereveal
 
 Declare:
 - **Data collected**: *None*.
-- **Data processed but not collected**: *Approximate advertising ID (AdMob)*.
-- **Security practices**: Data is encrypted in transit (HTTPS for ad traffic only). Users can
+- **Data processed but not collected**: *Approximate advertising ID (AdMob banner only)*.
+- **Data shared**: *None*.
+- **Security practices**: Data is encrypted in transit (HTTPS for ad/billing traffic). Users can
   clear all saved data via Settings → Clear all birthdays.
 
 ## 6. Content rating questionnaire
@@ -71,7 +78,8 @@ Declare:
 Expected rating: **Everyone**.
 - No violence, sexual content, profanity.
 - Shares user-generated content via Android share sheet (not to any server).
-- Contains advertising (banner, rewarded, interstitial).
+- Contains advertising (banner only on free tier).
+- Offers in-app purchases (subscriptions).
 
 ## 7. Target audience
 
@@ -80,12 +88,18 @@ Expected rating: **Everyone**.
 
 ## 8. Release notes
 
-Paste contents of `store_listing/release_notes_v1.0.7.md`.
+Paste contents of `store_listing/release_notes_v2.0.md`.
 
-## 9. Track: Closed testing → Open testing → Production
+## 9. Subscription setup
+
+In Play Console → Monetisation → Subscriptions:
+- Create `premium_monthly` — ₹49/month, 7-day free trial
+- Create `premium_yearly` — ₹299/year (save 49%), 7-day free trial
+- Optional: `remove_ads` — ₹199 one-time (alternative to subscription)
+
+## 10. Track: Closed testing → Open testing → Production
 
 Recommended rollout:
-1. **Internal testing** with ≤20 testers — verify real AdMob impressions, Room migration,
-   widget behaviour, notifications, yearly re-engagement.
-2. **Open testing** for 1 week — gather reviews, iterate on descriptions.
+1. **Internal testing** with ≤20 testers — verify real AdMob banner impressions, Play Billing test purchases, widget behaviour, notifications, onboarding flow, paywall conversion.
+2. **Open testing** for 1 week — gather reviews, iterate on paywall conversion and onboarding drop-off.
 3. **Production** release at 20% → 50% → 100% staged rollout.

@@ -23,6 +23,7 @@ playReview = "2.0.2"
 datastore = "1.1.1"
 roomTesting = "2.7.0"
 coroutinesTest = "1.9.0"
+billing = "7.1.1"
 
 [libraries]
 # AndroidX core
@@ -77,6 +78,9 @@ play-review-ktx = { group = "com.google.android.play", name = "review-ktx", vers
 
 # DataStore (theme + preferences)
 androidx-datastore-preferences = { group = "androidx.datastore", name = "datastore-preferences", version.ref = "datastore" }
+
+# Google Play Billing Library (v2.0 subscriptions)
+billing-ktx = { group = "com.android.billingclient", name = "billing-ktx", version.ref = "billing" }
 
 # Java 8+ API desugaring (for LocalDate on API < 26)
 desugar-jdk-libs = { group = "com.android.tools", name = "desugar_jdk_libs", version.ref = "desugar" }

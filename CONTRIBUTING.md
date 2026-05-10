@@ -43,13 +43,14 @@ When filing a bug report, include:
 
 ## Pull Requests
 
-1. Fork the repository and create a branch from `main` (or the active feature branch, e.g., `feature/phase-3-depth-retention`).
+1. Fork the repository and create a branch from `main` (or the active feature branch, e.g., `feature/revamp-v2`).
 2. Keep the PR focused — one feature or bug fix per PR.
 3. Fill in the PR template (title, description, screenshots for UI changes).
 4. Do **not** include issue numbers in the PR title.
 5. Include screenshots or screen recordings for any UI changes.
 6. Follow the code style guidelines below.
 7. Ensure the project builds and runs before submitting.
+8. Run `./gradlew lint` and fix all errors before submitting.
 
 ---
 
@@ -61,6 +62,7 @@ When filing a bug report, include:
 - An Android device or emulator running **API 26+** (API 21–25 supported via desugaring)
 
 ### Recent Updates
+- **v2.0 (2026-05-10):** Major revamp in progress — freemium subscription model, 3-step onboarding, deep-link profile sharing, celebrity matching, animated MP4 export, WhatsApp sticker pack, daily fortune push notifications, cosmic year report notification, cosmic twins discovery. Rewarded/interstitial ads and several legacy features being removed.
 - **v0.9.1 (2026-04-23):** Phase 3 complete - Birth time support, milestone notifications, life timeline visual, and consolidated Settings screen. Settings screen now correctly uses `SettingsViewModel` instead of `RemindersViewModel`. If you're building after pulling recent changes, ensure your local branch has the latest ViewModel updates.
 
 ### Steps
@@ -70,7 +72,13 @@ When filing a bug report, include:
 4. Run the `app` configuration on your device or emulator.
 
 ### AdMob
-All bundled Ad Unit IDs are Google's safe test values. The app runs and shows test ads out of the box — no AdMob account needed for local development. See [TASKS.md §1](TASKS.md) for how to swap in production IDs before a release build.
+All bundled Ad Unit IDs are Google's safe test values. The app runs and shows test ads out of the box — no AdMob account needed for local development. See [TASKS.md §1a](TASKS.md) for how to swap in production IDs before a release build.
+
+### Google Play Billing (v2.0)
+The revamp introduces subscription billing via Google Play Billing Library 6+.
+- Test purchases use Google's test SKU `android.test.purchased` during development.
+- Real product IDs (`premium_monthly`, `premium_yearly`) must be configured in the Play Console before release.
+- `BillingManager.kt` handles all purchase flows; see `billing/` package.
 
 ### Optional — Custom Inter Typography
 The app defaults to the system sans-serif font. To enable the Inter custom font locally:
@@ -91,11 +99,14 @@ The app defaults to the system sans-serif font. To enable the Inter custom font 
 
 ```
 app/src/main/java/com/willowvibe/agereveal/
-├── ads/          # AdMob lifecycle management
+├── ads/          # AdMob lifecycle management (banner only on free tier)
+├── billing/      # Google Play Billing 6+ (subscription handling)
 ├── data/         # Room DB, DAOs, models, repository
 ├── di/           # Hilt DI modules
 ├── domain/       # Pure Kotlin business logic (no Android deps)
 ├── notification/ # WorkManager workers and schedulers
+├── onboarding/   # 3-step first-launch onboarding flow
+├── paywall/      # Subscription upsell screen
 ├── ui/           # Compose screens, ViewModels, navigation, theme
 └── widget/       # Jetpack Glance home screen widget
 ```
@@ -105,6 +116,7 @@ Key architectural conventions:
 - **ViewModels** expose `StateFlow<UiState>` and never hold a reference to a `Context` (use Hilt's `ApplicationContext` via constructor injection if needed).
 - **Repository** is the single source of truth for persisted data; screens never talk to the DAO directly.
 - `yearSafeBirthday()` is the canonical Feb 29 helper — reuse it wherever a birthday date is advanced by a year.
+- **Billing layer** (`billing/`) is the only place that imports `com.android.billingclient.api`; no other layer should reference billing directly.
 
 ---
 

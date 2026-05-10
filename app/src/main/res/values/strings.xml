@@ -8,7 +8,7 @@
     <string name="widget_seconds_description">Live seconds counter — shows your total seconds alive.</string>
 
     <!-- Bottom navigation -->
-    <string name="nav_age">You</string>
+    <string name="nav_age">My Cosmos</string>
     <string name="nav_profile">Profile</string>
     <!-- nav_compare removed — Compare tab replaced by Match -->
     <string name="nav_match">Match</string>
@@ -75,10 +75,10 @@
     <string name="app_label">App</string>
     <string name="made_with_love">Made with ❤ in India</string>
     <string name="privacy_policy">Privacy policy</string>
+    <!-- Language settings removed in v2.0 — system locale handles Hindi natively (API 33+) -->
     <string name="language_label">App language</string>
-    <string name="language_desc">Choose your preferred language</string>
-    <string name="language_english">English</string>
-    <string name="language_hindi">हिन्दी (Hindi)</string>
+    <string name="language_desc">Language is set by your Android system settings</string>
+    <string name="language_system">System default</string>
 
     <!-- Accessibility -->
     <string name="cd_settings">Settings</string>
@@ -108,7 +108,7 @@
 
     <!-- Errors -->
     <string name="err_birth_future">Birth date cannot be in the future</string>
-    <string name="err_ad_not_ready">Ad not ready yet — try again in a moment</string>
+    <string name="err_premium_required">Unlock Premium to access this feature</string>
     <string name="err_no_calendar_app">No calendar app installed</string>
     <string name="err_same_date">Both dates are the same — compatibility requires two different birth dates</string>
 

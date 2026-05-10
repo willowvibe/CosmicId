@@ -32,7 +32,6 @@ class AgeCalculator @Inject constructor(
      *
      * @param birthTime Optional time of birth for precise Nakshatra/Rashi calculations
      * @param includeUnlocked When true, populates zodiac / Vedic / heartbeats fields.
-     *                        Pass false initially; pass true after rewarded ad is watched.
      */
     fun calculate(
         birthDate: LocalDate,
