@@ -179,7 +179,7 @@ class BillingManager @Inject constructor(
             return
         }
         if (result.billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
-            handlePurchases(result.purchasesList)
+            handlePurchases(result.purchasesList ?: emptyList())
             _error.value = null
         } else {
             _error.value = billingErrorMessage(result.billingResult.responseCode)

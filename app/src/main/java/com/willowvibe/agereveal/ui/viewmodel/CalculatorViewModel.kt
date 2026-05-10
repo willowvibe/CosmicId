@@ -149,6 +149,8 @@ class CalculatorViewModel @Inject constructor(
             billingManager.trialDaysRemaining.collect { days ->
                 _uiState.update { it.copy(trialDaysRemaining = days) }
             }
+        }
+        viewModelScope.launch {
             billingManager.graceDaysRemaining.collect { days ->
                 _uiState.update { it.copy(graceDaysRemaining = days) }
             }

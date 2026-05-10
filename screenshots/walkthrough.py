@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 """
-AgeReveal Automated UI Walkthrough
+Cosmic ID (AgeReveal) v2.0 Automated UI Walkthrough
 Performs comprehensive testing of all screens, interactions, and features.
+Updated for v2.0: onboarding, progressive disclosure, paywall, fortune push,
+celebrity match, deep-link auto-populate, grace period banner.
 """
 
 import os
@@ -96,7 +98,7 @@ def safe_input(by, value, text, description, timeout=10):
 def navigate_to_tab(tab_label):
     """Navigate to a tab by its bottom nav label."""
     try:
-        # Try to find the clickable parent of the text label in bottom nav
+        # v2.0: TextView labels are not clickable — tap the parent View
         xpath = f'//android.widget.TextView[@text="{tab_label}"]/ancestor::android.view.View[@clickable="true"]'
         el = driver.find_element(AppiumBy.XPATH, xpath)
         el.click()
@@ -197,18 +199,96 @@ def dump_page_source(label):
         pass
 
 # =============================================================================
-# Test Scenarios
+# v2.0 Test Scenarios
 # =============================================================================
 
+def test_onboarding_flow():
+    """Test the 3-step onboarding flow on first launch."""
+    log("=== Testing Onboarding Flow ===")
+    # Clear app data to force onboarding
+    driver.execute_script("mobile: shell", {
+        "command": "pm clear",
+        "args": [APP_PACKAGE],
+    })
+    time.sleep(2)
+    driver.activate_app(APP_PACKAGE)
+    time.sleep(3)
+
+    source = driver.page_source
+    if "When were you born?" in source or "Let" in source:
+        log("Onboarding screen detected")
+        safe_screenshot("onboarding_step1_birthdate.png")
+        screens_tested.append("Onboarding Step 1 (Birth Date)")
+    else:
+        log("Onboarding not triggered — may already be completed")
+        return
+
+    # Step 1: Select date and Continue
+    try:
+        ok_btn = driver.find_element(AppiumBy.ANDROID_UIAUTOMATOR,
+            'new UiSelector().text("OK")')
+        ok_btn.click()
+        log("Selected birth date (OK)")
+        interactions_tested.append("Onboarding birth date OK")
+        time.sleep(1)
+    except Exception as e:
+        log(f"Onboarding date OK failed: {e}")
+
+    try:
+        continue_btn = driver.find_element(AppiumBy.ANDROID_UIAUTOMATOR,
+            'new UiSelector().text("Continue")')
+        continue_btn.click()
+        log("Tapped Continue on onboarding")
+        interactions_tested.append("Onboarding Continue")
+        time.sleep(2)
+        safe_screenshot("onboarding_step2_zodiac_reveal.png")
+        screens_tested.append("Onboarding Step 2 (Zodiac Reveal)")
+    except Exception as e:
+        log(f"Onboarding Continue failed: {e}")
+
+    # Step 3: Optional birth time — skip
+    try:
+        skip_btn = driver.find_element(AppiumBy.ANDROID_UIAUTOMATOR,
+            'new UiSelector().text("Skip")')
+        skip_btn.click()
+        log("Skipped optional birth time")
+        interactions_tested.append("Onboarding Skip birth time")
+        time.sleep(2)
+        safe_screenshot("onboarding_step3_accent_picker.png")
+        screens_tested.append("Onboarding Step 3 (Accent Picker)")
+    except Exception as e:
+        log(f"Onboarding Skip failed: {e}")
+
+    # Enter My Cosmos
+    try:
+        enter_btn = driver.find_element(AppiumBy.ANDROID_UIAUTOMATOR,
+            'new UiSelector().text("Enter My Cosmos")')
+        enter_btn.click()
+        log("Tapped Enter My Cosmos")
+        interactions_tested.append("Onboarding Enter My Cosmos")
+        time.sleep(2)
+    except Exception as e:
+        log(f"Enter My Cosmos failed: {e}")
+
 def test_calculator_tab():
-    """Test the Calculator (You) tab thoroughly."""
-    log("=== Testing Calculator Tab ===")
-    navigate_to_tab("You")
+    """Test the My Cosmos (Calculator) tab — v2.0 progressive disclosure."""
+    log("=== Testing My Cosmos Tab ===")
+    navigate_to_tab("My Cosmos")
     time.sleep(1)
     safe_screenshot("tab1_calculator_default.png")
-    screens_tested.append("Calculator (default)")
+    screens_tested.append("My Cosmos (default)")
 
-    # Interaction 1: Tap Settings button
+    # Header: trial chip or grace chip
+    source = driver.page_source
+    if "day" in source and "left" in source:
+        log("Trial/Grace chip detected in header")
+        interactions_tested.append("Trial/Grace chip visible")
+    if "Renew to keep premium" in source:
+        log("Grace period banner detected")
+        interactions_tested.append("Grace period banner visible")
+        safe_screenshot("tab1_calculator_grace_banner.png")
+
+    # Interaction 1: Settings gear
     safe_tap(AppiumBy.ACCESSIBILITY_ID, "Settings", "Settings button")
     time.sleep(1)
     safe_screenshot("tab1_calculator_settings_open.png")
@@ -217,14 +297,12 @@ def test_calculator_tab():
     time.sleep(1)
 
     # Interaction 2: Enter name
-    # Try to find EditText; if not found, tap the field area first
     edit_text = None
     try:
         edit_text = driver.find_element(AppiumBy.ANDROID_UIAUTOMATOR,
             'new UiSelector().className("android.widget.EditText")')
     except Exception:
         log("EditText not found, trying to tap field first")
-        # Tap on the name field area (roughly near top center)
         driver.tap([(540, 500)])
         time.sleep(0.5)
         try:
@@ -248,7 +326,7 @@ def test_calculator_tab():
     hide_keyboard()
     safe_screenshot("tab1_calculator_name_entered.png")
 
-    # Interaction 3: Tap birth date row (use contains for dynamic content-desc)
+    # Interaction 3: Birth date row
     try:
         date_row = driver.find_element(AppiumBy.ANDROID_UIAUTOMATOR,
             'new UiSelector().descriptionContains("Change birth date")')
@@ -261,7 +339,6 @@ def test_calculator_tab():
     except Exception as e:
         log(f"Birth date row tap failed: {e}")
 
-    # Select a date and confirm
     try:
         ok_btn = driver.find_element(AppiumBy.ANDROID_UIAUTOMATOR,
             'new UiSelector().text("OK")')
@@ -279,7 +356,7 @@ def test_calculator_tab():
         except:
             pass
 
-    # Interaction 4: Tap TIME precision chip (use description contains)
+    # Interaction 4: TIME precision chip
     try:
         time_chip = driver.find_element(AppiumBy.ANDROID_UIAUTOMATOR,
             'new UiSelector().descriptionContains("TIME")')
@@ -292,7 +369,6 @@ def test_calculator_tab():
     except Exception as e:
         log(f"Time chip tap failed: {e}")
 
-    # Set time
     try:
         set_btn = driver.find_element(AppiumBy.ANDROID_UIAUTOMATOR,
             'new UiSelector().text("Set")')
@@ -309,7 +385,7 @@ def test_calculator_tab():
         except:
             pass
 
-    # Interaction 5: Tap LOCATION precision chip
+    # Interaction 5: LOCATION precision chip (v2.0: now opens bottom sheet)
     try:
         loc_chip = driver.find_element(AppiumBy.ANDROID_UIAUTOMATOR,
             'new UiSelector().descriptionContains("LOCATION")')
@@ -317,28 +393,30 @@ def test_calculator_tab():
         log("Tapped: Location precision chip")
         interactions_tested.append("Location precision chip")
         time.sleep(1)
-        safe_screenshot("tab1_calculator_location_dialog.png")
-        screens_tested.append("Location dialog")
+        safe_screenshot("tab1_calculator_location_bottomsheet.png")
+        screens_tested.append("Location bottom sheet")
     except Exception as e:
         log(f"Location chip tap failed: {e}")
 
-    # Enter location
+    # v2.0: Location bottom sheet uses Indian State dropdown
     try:
-        edit_texts = driver.find_elements(AppiumBy.CLASS_NAME, "android.widget.EditText")
-        if len(edit_texts) >= 2:
-            edit_texts[0].send_keys("28.6")
-            edit_texts[1].send_keys("77.2")
-            log("Entered location coordinates")
-            interactions_tested.append("Location coordinates input")
-            set_btn = driver.find_element(AppiumBy.ANDROID_UIAUTOMATOR,
-                'new UiSelector().text("Set")')
-            set_btn.click()
-            log("Set location")
-            interactions_tested.append("Location picker Set")
-            time.sleep(0.5)
-            safe_screenshot("tab1_calculator_location_set.png")
+        # Search for a state
+        state_input = driver.find_element(AppiumBy.ANDROID_UIAUTOMATOR,
+            'new UiSelector().className("android.widget.EditText")')
+        state_input.send_keys("Karnataka")
+        log("Entered state search: Karnataka")
+        interactions_tested.append("State search input")
+        time.sleep(0.5)
+        # Tap the state result
+        state_result = driver.find_element(AppiumBy.ANDROID_UIAUTOMATOR,
+            'new UiSelector().textContains("Karnataka")')
+        state_result.click()
+        log("Selected Karnataka")
+        interactions_tested.append("State selection")
+        time.sleep(0.5)
+        safe_screenshot("tab1_calculator_location_set.png")
     except Exception as e:
-        log(f"Location set failed: {e}")
+        log(f"State selection failed: {e}")
         try:
             cancel_btn = driver.find_element(AppiumBy.ANDROID_UIAUTOMATOR,
                 'new UiSelector().text("Cancel")')
@@ -346,7 +424,7 @@ def test_calculator_tab():
         except:
             pass
 
-    # Scroll down to see results
+    # Scroll down to see rotating highlight and explore CTA
     try:
         driver.swipe(540, 1800, 540, 800, 500)
         time.sleep(0.5)
@@ -354,8 +432,102 @@ def test_calculator_tab():
     except:
         pass
 
+def test_rotating_highlight():
+    """Test the rotating highlight card (v2.0 progressive disclosure)."""
+    log("=== Testing Rotating Highlight ===")
+    navigate_to_tab("My Cosmos")
+    time.sleep(1)
+
+    # Wait for highlight to cycle through types
+    for cycle in range(4):
+        time.sleep(4)
+        source = driver.page_source
+        if "MILESTONE" in source:
+            log("Rotating highlight: Milestone visible")
+            interactions_tested.append("Rotating highlight — Milestone")
+            safe_screenshot(f"tab1_calculator_highlight_milestone_{cycle}.png")
+        elif "CELEBRITY MATCH" in source:
+            log("Rotating highlight: Celebrity Match visible")
+            interactions_tested.append("Rotating highlight — Celebrity Match")
+            safe_screenshot(f"tab1_calculator_highlight_celebrity_{cycle}.png")
+            # Try to tap share on celebrity card
+            try:
+                share_btn = driver.find_element(AppiumBy.ANDROID_UIAUTOMATOR,
+                    'new UiSelector().descriptionContains("Share celebrity")')
+                share_btn.click()
+                log("Tapped celebrity match share")
+                interactions_tested.append("Celebrity match share tap")
+                time.sleep(1)
+                safe_screenshot("tab1_calculator_celebrity_share_sheet.png")
+                go_back()
+            except Exception as e:
+                log(f"Celebrity share tap failed: {e}")
+        elif "PLANET AGE" in source or "Mars" in source:
+            log("Rotating highlight: Planet Age visible")
+            interactions_tested.append("Rotating highlight — Planet Age")
+            safe_screenshot(f"tab1_calculator_highlight_planet_{cycle}.png")
+        elif "FORTUNE" in source or "DAILY COSMIC" in source:
+            log("Rotating highlight: Fortune visible")
+            interactions_tested.append("Rotating highlight — Fortune")
+            safe_screenshot(f"tab1_calculator_highlight_fortune_{cycle}.png")
+
+def test_explore_profile_cta():
+    """Test the 'Explore full profile' CTA that opens DetailsUnlockScreen."""
+    log("=== Testing Explore Full Profile CTA ===")
+    navigate_to_tab("My Cosmos")
+    time.sleep(1)
+    try:
+        explore_btn = driver.find_element(AppiumBy.ANDROID_UIAUTOMATOR,
+            'new UiSelector().textContains("Explore full profile")')
+        explore_btn.click()
+        log("Tapped Explore full profile")
+        interactions_tested.append("Explore full profile CTA")
+        time.sleep(2)
+        safe_screenshot("tab1_calculator_details_unlock_screen.png")
+        screens_tested.append("Details Unlock Screen")
+        go_back()
+        time.sleep(0.5)
+    except Exception as e:
+        log(f"Explore full profile CTA failed: {e}")
+
+def test_paywall_screen():
+    """Test the Paywall screen triggered from locked astrology sections."""
+    log("=== Testing Paywall Screen ===")
+    navigate_to_tab("My Cosmos")
+    time.sleep(1)
+
+    # Open details and tap a locked premium section
+    test_explore_profile_cta()
+    time.sleep(1)
+
+    try:
+        # Scroll to find a locked section (e.g., Dasha, Ba Zi)
+        locked_section = driver.find_element(AppiumBy.ANDROID_UIAUTOMATOR,
+            'new UiScrollable(new UiSelector().scrollable(true)).scrollIntoView(new UiSelector().textContains("Unlock"))')
+        locked_section.click()
+        log("Tapped locked premium section")
+        interactions_tested.append("Locked premium section tap")
+        time.sleep(2)
+        safe_screenshot("paywall_astrology_locked.png")
+        screens_tested.append("Paywall (astrology locked)")
+
+        # Verify paywall elements
+        source = driver.page_source
+        if "Unlock Your Full Cosmic Profile" in source:
+            log("Paywall title found")
+            interactions_tested.append("Paywall title visible")
+        if "7-Day Free Trial" in source:
+            log("Free trial CTA found")
+            interactions_tested.append("Paywall free trial CTA visible")
+
+        # Dismiss paywall
+        go_back()
+        time.sleep(0.5)
+    except Exception as e:
+        log(f"Paywall test failed: {e}")
+
 def test_compatibility_tab():
-    """Test the Match (Compatibility) tab."""
+    """Test the Match (Compatibility) tab — v2.0 deep-link auto-populate."""
     log("=== Testing Compatibility Tab ===")
     navigate_to_tab("Match")
     time.sleep(1)
@@ -364,7 +536,6 @@ def test_compatibility_tab():
 
     # Interaction 1: Select relationship type
     try:
-        # Scroll up in case selector is above current view
         driver.swipe(540, 800, 540, 1600, 500)
         time.sleep(0.3)
         romance_btn = driver.find_element(AppiumBy.ANDROID_UIAUTOMATOR,
@@ -388,7 +559,6 @@ def test_compatibility_tab():
     except Exception as e:
         log(f"Person A input failed: {e}")
 
-    # Tap date for Person A
     tap_by_text("Tap to set birthday", "Person A date picker", scroll=True)
     time.sleep(1)
     try:
@@ -420,7 +590,6 @@ def test_compatibility_tab():
     except Exception as e:
         log(f"Person B input failed: {e}")
 
-    # Tap date for Person B (look for second date row)
     try:
         date_rows = driver.find_elements(AppiumBy.ANDROID_UIAUTOMATOR,
             'new UiSelector().textContains("Tap to set birthday")')
@@ -543,10 +712,9 @@ def test_timeline_tab():
         pass
 
 def test_settings_screen():
-    """Test the Settings screen from bottom nav or other paths."""
+    """Test the Settings screen — v2.0 fortune notification time picker."""
     log("=== Testing Settings Screen ===")
-    # Navigate to Calculator first and open settings
-    navigate_to_tab("You")
+    navigate_to_tab("My Cosmos")
     time.sleep(0.5)
     safe_tap(AppiumBy.ACCESSIBILITY_ID, "Settings", "Settings button")
     time.sleep(1)
@@ -562,7 +730,6 @@ def test_settings_screen():
             interactions_tested.append("Notifications toggle")
             time.sleep(0.5)
             safe_screenshot("settings_notifications_toggled.png")
-            # Toggle back
             switches[0].click()
             time.sleep(0.3)
     except Exception as e:
@@ -580,18 +747,49 @@ def test_settings_screen():
     except Exception as e:
         log(f"Dark theme selection failed: {e}")
 
-    # Interaction 3: Select language (scroll to find) -- but skip changing to avoid locale issues
-    # Just scroll to it and screenshot
+    # Interaction 3: v2.0 — Fortune notification toggle and time picker
     try:
-        hindi_option = driver.find_element(AppiumBy.ANDROID_UIAUTOMATOR,
-            'new UiScrollable(new UiSelector().scrollable(true)).scrollIntoView(new UiSelector().textContains("Hindi"))')
-        log("Found Hindi language option (not tapping to avoid locale changes)")
-        interactions_tested.append("Hindi language found (not selected)")
+        fortune_toggle = driver.find_element(AppiumBy.ANDROID_UIAUTOMATOR,
+            'new UiScrollable(new UiSelector().scrollable(true)).scrollIntoView(new UiSelector().textContains("Daily cosmic fortune"))')
+        log("Found Daily cosmic fortune toggle")
+        interactions_tested.append("Daily cosmic fortune toggle found")
         time.sleep(0.3)
-    except Exception as e:
-        log(f"Hindi language find failed: {e}")
+        safe_screenshot("settings_fortune_toggle_visible.png")
+        screens_tested.append("Settings (Fortune toggle visible)")
 
-    # Interaction 4: Export CSV (scroll to find, but don't tap to avoid share chooser)
+        # Tap the toggle
+        fortune_toggle.click()
+        log("Toggled Daily cosmic fortune")
+        interactions_tested.append("Daily cosmic fortune toggle")
+        time.sleep(0.5)
+        safe_screenshot("settings_fortune_toggled.png")
+
+        # Fortune time picker should appear when enabled
+        try:
+            time_picker = driver.find_element(AppiumBy.ANDROID_UIAUTOMATOR,
+                'new UiSelector().textContains("Fortune delivery time")')
+            log("Fortune delivery time picker visible")
+            interactions_tested.append("Fortune time picker visible")
+            time.sleep(0.3)
+            safe_screenshot("settings_fortune_time_picker.png")
+            screens_tested.append("Settings (Fortune time picker)")
+        except Exception as e2:
+            log(f"Fortune time picker not found: {e2}")
+    except Exception as e:
+        log(f"Daily cosmic fortune toggle find failed: {e}")
+
+    # Interaction 4: v2.0 — Restore purchases (scroll to find)
+    try:
+        restore_btn = driver.find_element(AppiumBy.ANDROID_UIAUTOMATOR,
+            'new UiScrollable(new UiSelector().scrollable(true)).scrollIntoView(new UiSelector().textContains("Restore purchases"))')
+        log("Found Restore purchases button")
+        interactions_tested.append("Restore purchases found")
+        time.sleep(0.3)
+        safe_screenshot("settings_restore_purchases_visible.png")
+    except Exception as e:
+        log(f"Restore purchases find failed: {e}")
+
+    # Interaction 5: Export CSV (scroll to find, but don't tap to avoid share chooser)
     try:
         export_row = driver.find_element(AppiumBy.ANDROID_UIAUTOMATOR,
             'new UiScrollable(new UiSelector().scrollable(true)).scrollIntoView(new UiSelector().textContains("Export birthdays"))')
@@ -602,7 +800,7 @@ def test_settings_screen():
     except Exception as e:
         log(f"Export CSV find failed: {e}")
 
-    # Interaction 5: Clear all birthdays (show confirmation dialog; scroll to find)
+    # Interaction 6: Clear all birthdays
     try:
         clear_row = driver.find_element(AppiumBy.ANDROID_UIAUTOMATOR,
             'new UiScrollable(new UiSelector().scrollable(true)).scrollIntoView(new UiSelector().textContains("Clear all birthdays"))')
@@ -613,7 +811,6 @@ def test_settings_screen():
         safe_screenshot("settings_clear_confirm_dialog.png")
         screens_tested.append("Clear all confirmation dialog")
 
-        # Cancel the dialog
         cancel_btn = driver.find_element(AppiumBy.ANDROID_UIAUTOMATOR,
             'new UiSelector().text("Cancel")')
         cancel_btn.click()
@@ -625,7 +822,6 @@ def test_settings_screen():
     # Back from settings
     go_back()
     time.sleep(2)
-    # Ensure we're back on the main app screen
     driver.activate_app(APP_PACKAGE)
     time.sleep(1)
 
@@ -634,10 +830,9 @@ def test_edge_cases():
     log("=== Testing Edge Cases ===")
 
     # Edge case 1: Calculator with empty name
-    navigate_to_tab("You")
+    navigate_to_tab("My Cosmos")
     time.sleep(0.5)
     try:
-        # Scroll to top to ensure name field is visible
         driver.swipe(540, 800, 540, 1800, 500)
         time.sleep(0.3)
         edit_text = driver.find_element(AppiumBy.ANDROID_UIAUTOMATOR,
@@ -656,7 +851,7 @@ def test_edge_cases():
     safe_screenshot("tab2_compatibility_empty_state.png")
     screens_tested.append("Compatibility empty state")
 
-    # Edge case 3: Reminders empty state (after clearing or on fresh install)
+    # Edge case 3: Reminders empty state
     navigate_to_tab("Bdays")
     time.sleep(0.5)
     source = driver.page_source
@@ -665,244 +860,46 @@ def test_edge_cases():
         safe_screenshot("tab3_reminders_empty_state.png")
         screens_tested.append("Reminders empty state")
 
-def test_badges_tab():
-    """Test the Badges tab."""
-    log("=== Testing Badges Tab ===")
-    navigate_to_tab("Badges")
-    time.sleep(1)
-    safe_screenshot("tab4_badges_default.png")
-    screens_tested.append("Badges (default)")
-
-    # Scroll through badge grid
+def test_deep_link_auto_populate():
+    """Test deep-link auto-populate in Compatibility screen (v2.0)."""
+    log("=== Testing Deep-Link Auto-Populate ===")
+    # Open a deep link via adb
     try:
-        driver.swipe(540, 1800, 540, 800, 500)
-        time.sleep(0.5)
-        safe_screenshot("tab4_badges_scrolled.png")
-        screens_tested.append("Badges (scrolled)")
-    except:
-        pass
+        # Encode a simple profile: birth date = 1990-05-15
+        import base64
+        import json
+        profile = {"d": "1990-05-15", "n": "DeepLinkTest"}
+        encoded = base64.urlsafe_b64encode(json.dumps(profile).encode()).decode().strip("=")
+        deep_link = f"agereveal://profile/{encoded}"
 
-    # Try to tap a badge (first unlocked or any)
-    try:
-        badges = driver.find_elements(AppiumBy.CLASS_NAME, "android.view.View")
-        if len(badges) > 5:
-            badges[5].click()
-            log("Tapped a badge card")
-            interactions_tested.append("Badge card tap")
-            time.sleep(1)
-            safe_screenshot("tab4_badges_detail_sheet.png")
-            screens_tested.append("Badge detail sheet")
-            go_back()
-            time.sleep(0.5)
-    except Exception as e:
-        log(f"Badge tap failed: {e}")
+        driver.execute_script("mobile: deepLink", {
+            "url": deep_link,
+            "package": APP_PACKAGE,
+        })
+        log(f"Opened deep link: {deep_link}")
+        interactions_tested.append("Deep link opened")
+        time.sleep(3)
+        safe_screenshot("deeplink_profile_loaded.png")
+        screens_tested.append("Deep-link profile loaded")
 
-def test_new_settings_features():
-    """Test Time Remaining toggle and Accent Color picker in Settings."""
-    log("=== Testing New Settings Features ===")
-    navigate_to_tab("You")
-    time.sleep(0.5)
-    safe_tap(AppiumBy.ACCESSIBILITY_ID, "Settings", "Settings button")
-    time.sleep(1)
-
-    # Scroll down to find Time Remaining toggle
-    try:
-        tr_toggle = driver.find_element(AppiumBy.ANDROID_UIAUTOMATOR,
-            'new UiScrollable(new UiSelector().scrollable(true)).scrollIntoView(new UiSelector().textContains("Time remaining"))')
-        log("Found Time remaining visuals toggle")
-        interactions_tested.append("Time remaining toggle found")
-        time.sleep(0.3)
-        safe_screenshot("settings_time_remaining_visible.png")
-        screens_tested.append("Settings (Time remaining visible)")
-    except Exception as e:
-        log(f"Time remaining toggle find failed: {e}")
-
-    # Scroll down to find Accent Color picker
-    try:
-        accent_label = driver.find_element(AppiumBy.ANDROID_UIAUTOMATOR,
-            'new UiScrollable(new UiSelector().scrollable(true)).scrollIntoView(new UiSelector().textContains("Accent color"))')
-        log("Found Accent color picker")
-        interactions_tested.append("Accent color picker found")
-        time.sleep(0.3)
-        safe_screenshot("settings_accent_color_visible.png")
-        screens_tested.append("Settings (Accent color visible)")
-    except Exception as e:
-        log(f"Accent color picker find failed: {e}")
-
-    # Scroll down to find Lifespan target (verify it's still there)
-    try:
-        lifespan_label = driver.find_element(AppiumBy.ANDROID_UIAUTOMATOR,
-            'new UiScrollable(new UiSelector().scrollable(true)).scrollIntoView(new UiSelector().textContains("Lifespan target"))')
-        log("Found Lifespan target section")
-        interactions_tested.append("Lifespan target found")
-        time.sleep(0.3)
-        safe_screenshot("settings_lifespan_target_visible.png")
-        screens_tested.append("Settings (Lifespan target visible)")
-    except Exception as e:
-        log(f"Lifespan target find failed: {e}")
-
-    go_back()
-    time.sleep(1)
-
-def test_daily_fortune_card():
-    """Test the Daily Cosmic Fortune card on Calculator screen."""
-    log("=== Testing Daily Cosmic Fortune ===")
-    navigate_to_tab("You")
-    time.sleep(1)
-
-    # Scroll down aggressively to find the fortune card (it appears after birth date is set)
-    for _ in range(5):
-        driver.swipe(540, 1800, 540, 600, 500)
-        time.sleep(0.5)
-        source = driver.page_source
-        if "DAILY COSMIC FORTUNE" in source:
-            log("Found Daily Cosmic Fortune card in page source")
-            interactions_tested.append("Daily Cosmic Fortune card found")
-            safe_screenshot("tab1_calculator_daily_fortune_visible.png")
-            screens_tested.append("Daily Cosmic Fortune (visible)")
-
-            # Try to tap the fortune card
-            try:
-                fortune_el = driver.find_element(AppiumBy.ANDROID_UIAUTOMATOR,
-                    'new UiSelector().textContains("DAILY COSMIC")')
-                fortune_el.click()
-                log("Tapped Daily Cosmic Fortune card")
-                interactions_tested.append("Daily Cosmic Fortune card tap")
-                time.sleep(1)
-                safe_screenshot("tab1_calculator_fortune_share_sheet.png")
-                screens_tested.append("Daily Cosmic Fortune share sheet")
-                go_back()
-                time.sleep(0.5)
-            except Exception as tap_e:
-                log(f"Fortune card tap failed: {tap_e}")
-            return
-
-    log("Daily Cosmic Fortune card not found after scrolling")
-    interactions_tested.append("Daily Cosmic Fortune (not visible)")
-
-def test_percentile_card():
-    """Test the Global Age Percentile card on Calculator screen."""
-    log("=== Testing Global Age Percentile ===")
-    navigate_to_tab("You")
-    time.sleep(1)
-
-    # Scroll down to find the percentile card (appears after birth date is set and unlocked)
-    for _ in range(5):
-        driver.swipe(540, 1800, 540, 600, 500)
-        time.sleep(0.5)
-        source = driver.page_source
-        if "GLOBAL PERCENTILE" in source:
-            log("Found Global Percentile card in page source")
-            interactions_tested.append("Global Percentile card found")
-            safe_screenshot("tab1_calculator_percentile_visible.png")
-            screens_tested.append("Global Percentile (visible)")
-
-            # Try to tap the share button on the percentile card
-            try:
-                share_btn = driver.find_element(AppiumBy.ANDROID_UIAUTOMATOR,
-                    'new UiSelector().textContains("Share stat")')
-                share_btn.click()
-                log("Tapped Global Percentile share button")
-                interactions_tested.append("Global Percentile share tap")
-                time.sleep(1)
-                safe_screenshot("tab1_calculator_percentile_share_sheet.png")
-                screens_tested.append("Global Percentile share sheet")
-                go_back()
-                time.sleep(0.5)
-            except Exception as tap_e:
-                log(f"Percentile share tap failed: {tap_e}")
-            return
-
-    log("Global Percentile card not found after scrolling")
-    interactions_tested.append("Global Percentile (not visible)")
-
-
-def test_share_sheet_formats():
-    """Test the share sheet with new ASCII and Green Screen formats."""
-    log("=== Testing Share Sheet Formats ===")
-    navigate_to_tab("You")
-    time.sleep(1)
-
-    # Scroll to top first to find the share button
-    driver.swipe(540, 800, 540, 1800, 500)
-    time.sleep(0.5)
-
-    # Check if share button is visible in page source
-    source = driver.page_source
-    if "Share your cosmic profile" not in source:
-        log("Share button not visible in current view")
-        interactions_tested.append("Share button (not visible)")
-        return
-
-    # Try to open the share sheet via text search only
-    try:
-        share_btn = driver.find_element(AppiumBy.ANDROID_UIAUTOMATOR,
-            'new UiSelector().textContains("Share your cosmic profile")')
-        share_btn.click()
-        log("Tapped Share button")
-        interactions_tested.append("Share button (calculator)")
+        # Navigate to Match tab to see auto-populate
+        navigate_to_tab("Match")
         time.sleep(1)
-        safe_screenshot("tab1_calculator_share_sheet_open.png")
-        screens_tested.append("Share sheet (open)")
+        source = driver.page_source
+        if "DeepLinkTest" in source or "1990" in source:
+            log("Deep-link auto-populate detected in Match tab")
+            interactions_tested.append("Deep-link auto-populate verified")
+            safe_screenshot("tab2_deeplink_auto_populate.png")
+        else:
+            log("Deep-link auto-populate not visible (may need manual trigger)")
     except Exception as e:
-        log(f"Share button tap failed: {e}")
-        interactions_tested.append("Share button (tap failed)")
-        return
-
-    # Try to select ASCII Art format
-    try:
-        ascii_chip = driver.find_element(AppiumBy.ANDROID_UIAUTOMATOR,
-            'new UiSelector().text("ASCII")')
-        ascii_chip.click()
-        log("Selected ASCII Art format")
-        interactions_tested.append("ASCII Art format selection")
-        time.sleep(0.5)
-        safe_screenshot("tab1_calculator_share_ascii_selected.png")
-        screens_tested.append("Share sheet (ASCII selected)")
-    except Exception as e:
-        log(f"ASCII Art format selection failed: {e}")
-
-    # Try to select Green Screen format
-    try:
-        green_chip = driver.find_element(AppiumBy.ANDROID_UIAUTOMATOR,
-            'new UiSelector().text("Green")')
-        green_chip.click()
-        log("Selected Green Screen format")
-        interactions_tested.append("Green Screen format selection")
-        time.sleep(0.5)
-        safe_screenshot("tab1_calculator_share_green_selected.png")
-        screens_tested.append("Share sheet (Green Screen selected)")
-    except Exception as e:
-        log(f"Green Screen format selection failed: {e}")
-
-    # Dismiss share sheet
-    go_back()
-    time.sleep(0.5)
-
-def test_time_remaining_card():
-    """Test the Time Remaining card on Calculator screen."""
-    log("=== Testing Time Remaining Card ===")
-    navigate_to_tab("You")
-    time.sleep(1)
-
-    # Scroll down to find the Time Remaining card
-    try:
-        tr_card = driver.find_element(AppiumBy.ANDROID_UIAUTOMATOR,
-            'new UiScrollable(new UiSelector().scrollable(true)).scrollIntoView(new UiSelector().textContains("weekends left"))')
-        log("Found Time Remaining card")
-        interactions_tested.append("Time Remaining card found")
-        time.sleep(0.3)
-        safe_screenshot("tab1_calculator_time_remaining_visible.png")
-        screens_tested.append("Time Remaining (visible)")
-    except Exception as e:
-        log(f"Time Remaining card not found: {e}")
-        interactions_tested.append("Time Remaining card (not visible)")
+        log(f"Deep-link test failed: {e}")
 
 def generate_report():
     """Generate the REPORT.md file."""
     report_path = os.path.join(SCREENSHOTS_DIR, "REPORT.md")
     with open(report_path, "w") as f:
-        f.write("# AgeReveal UI Walkthrough Report\n\n")
+        f.write("# Cosmic ID v2.0 UI Walkthrough Report\n\n")
         f.write(f"**Date:** {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n")
 
         f.write("## Summary\n\n")
@@ -937,10 +934,22 @@ def generate_report():
         else:
             f.write("## Bugs Found\n\nNo bugs were detected during this walkthrough.\n\n")
 
+        f.write("## v2.0 Features Tested\n\n")
+        f.write("- Onboarding flow (3 steps)\n")
+        f.write("- Progressive disclosure (rotating highlight)\n")
+        f.write("- Celebrity birthday match card + share\n")
+        f.write("- Daily cosmic fortune push notification settings\n")
+        f.write("- Grace period banner for lapsed subscriptions\n")
+        f.write("- Paywall screen (premium-gated astrology)\n")
+        f.write("- Deep-link profile sharing + auto-populate\n")
+        f.write("- Indian State dropdown for birth location\n")
+        f.write("- Restore purchases in Settings\n\n")
+
         f.write("## Notes\n\n")
         f.write("- This report was generated automatically via Appium UI testing.\n")
         f.write("- Some interactions may depend on network state (ads) or system permissions.\n")
-        f.write("- Screens with dynamic content (ads, live timers) may vary between runs.\n")
+        f.write("- Screens with dynamic content (ads, live timers, rotating highlights) may vary between runs.\n")
+        f.write("- v2.0 removed: Badges tab (now inside My Cosmos), Hindi language toggle (system locale only), ASCII Art share.\n")
 
     log(f"Report generated: {report_path}")
 
@@ -951,7 +960,7 @@ def generate_report():
 def main():
     global driver
 
-    log("Starting AgeReveal UI Walkthrough")
+    log("Starting Cosmic ID v2.0 UI Walkthrough")
 
     # Ensure screenshots directory exists
     os.makedirs(SCREENSHOTS_DIR, exist_ok=True)
@@ -989,17 +998,16 @@ def main():
 
     try:
         # Run all test scenarios
+        test_onboarding_flow()
         test_calculator_tab()
-        test_time_remaining_card()
-        test_daily_fortune_card()
-        test_percentile_card()
-        test_share_sheet_formats()
+        test_rotating_highlight()
+        test_explore_profile_cta()
+        test_paywall_screen()
         test_compatibility_tab()
         test_reminders_tab()
         test_timeline_tab()
-        test_badges_tab()
         test_settings_screen()
-        test_new_settings_features()
+        test_deep_link_auto_populate()
         test_edge_cases()
 
         # Generate report

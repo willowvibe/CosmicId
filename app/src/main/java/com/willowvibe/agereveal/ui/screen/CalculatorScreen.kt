@@ -307,6 +307,7 @@ fun CalculatorScreen(
                                 fortune = uiState.dailyFortune,
                                 name = uiState.name,
                                 celebrityMatches = uiState.celebrityMatches,
+                                onShareCelebrity = { viewModel.shareCelebrityCard() },
                             )
                         }
 
@@ -1233,6 +1234,7 @@ private fun RotatingHighlightCard(
     fortune: com.willowvibe.agereveal.domain.DailyFortuneGenerator.Fortune?,
     name: String,
     celebrityMatches: List<com.willowvibe.agereveal.data.model.CelebrityMatch>,
+    onShareCelebrity: () -> Unit = {},
 ) {
     val hasFortune = fortune != null
     val hasCelebrities = celebrityMatches.isNotEmpty()
@@ -1268,7 +1270,7 @@ private fun RotatingHighlightCard(
             HighlightType.MILESTONE -> MilestoneHighlight(result)
             HighlightType.FORTUNE -> FortuneHighlight(fortune)
             HighlightType.PLANET_AGE -> PlanetAgeHighlight(result, name)
-            HighlightType.CELEBRITY -> CelebrityHighlight(celebrityMatches)
+            HighlightType.CELEBRITY -> CelebrityHighlight(celebrityMatches, onShareCelebrity)
         }
     }
 }
@@ -1347,7 +1349,7 @@ private fun PlanetAgeHighlight(result: AgeResult, name: String) {
 @Composable
 private fun CelebrityHighlight(
     matches: List<com.willowvibe.agereveal.data.model.CelebrityMatch>,
-    viewModel: CalculatorViewModel = hiltViewModel(),
+    onShare: () -> Unit = {},
 ) {
     if (matches.isEmpty()) {
         CelebrityHighlightPlaceholder()
@@ -1370,7 +1372,7 @@ private fun CelebrityHighlight(
                     color = WarmInkMute,
                 )
             }
-            IconButton(onClick = { viewModel.shareCelebrityCard() }) {
+            IconButton(onClick = onShare) {
                 Icon(
                     imageVector = Icons.Default.Share,
                     contentDescription = "Share celebrity match",
