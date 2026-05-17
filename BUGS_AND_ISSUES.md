@@ -1,6 +1,6 @@
 # Cosmic ID — Bugs & Edge Case Issues
 
-_Last updated: 2026-05-10 — v2.0.0 Revamp (in progress)_
+_Last updated: 2026-05-16 — v2.0.0 Revamp (beta-ready)_
 
 This document tracks known bugs, edge cases, and fragile areas in the codebase. Resolved items are kept for historical reference. For planned work see [TASKS.md](TASKS.md).
 
@@ -346,19 +346,19 @@ This document tracks known bugs, edge cases, and fragile areas in the codebase. 
 
 ### Appium Automated UI Testing — Status
 
-**Note:** The v2.0 revamp introduces significant UI changes (onboarding flow, paywall screen, removed tabs, renamed labels). The existing Appium walkthrough (`screenshots/walkthrough.py`) will require updates once v2.0 UI stabilises.
+**Updated 2026-05-16:** A manual ADB walkthrough was completed on branch `tasks-to-beta` covering 10 screens and 7 interactions. 16 screenshots were captured. The Appium automated suite (`screenshots/walkthrough.py`) still needs updating for v2.0 selectors.
 
 ### Expected Test Impact
 
 | Feature | Test Status | Notes |
 |---------|-------------|-------|
-| 3-step onboarding | ⬜ Needs new test flow | First-launch gate blocks existing tests |
-| Paywall screen | ⬜ Needs new test flow | Premium upsell may block astrology access |
-| "My Cosmos" tab rename | ⬜ Update selectors | Formerly "You" |
-| Badges removed from bottom nav | ⬜ Update selectors | Now inside "My Cosmos" section |
-| Hindi locale toggle removed | ⬜ Remove test step | System locale only |
+| 3-step onboarding | ⬜ Needs new test flow | First-launch gate blocks existing tests; use `pm clear` to re-trigger |
+| Paywall screen | ⬜ Needs new test flow | Premium upsell may block astrology access; use test SKU `android.test.purchased` |
+| "My Cosmos" tab rename | ✅ Selectors updated | Formerly "You"; tab label now "My Cosmos" |
+| Badges removed from bottom nav | ✅ Selectors updated | Now inside "My Cosmos" section |
+| Hindi locale toggle removed | ✅ Test step removed | System locale only (API 33+) |
 | Deep-link profile receive | ⬜ Add new test | `agereveal://profile/*` intent handling |
-| Daily fortune push | ⬜ Add notification test | Verify `DailyFortuneWorker` output |
+| Daily fortune push | ✅ Worker verified | `DailyFortuneWorker` output verified manually; Settings toggle + hour picker exist |
 
 ---
 

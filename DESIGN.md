@@ -351,18 +351,18 @@ components:
 
 ---
 
-# AgeReveal — Design System
+# Cosmic ID — Design System
 
 ## Overview
 
-AgeReveal is a warm-dark, astrology-infused Android app built on Jetpack Compose and Material 3. The design language balances **intimacy** (this is your personal timeline) with **wonder** (the cosmos, milestones, and hidden stats). The UI feels like a personal diary that happens to know astrophysics.
+Cosmic ID is a warm-dark, astrology-infused Android app built on Jetpack Compose and Material 3. The design language balances **intimacy** (this is your personal timeline) with **wonder** (the cosmos, milestones, and hidden stats). The UI feels like a personal diary that happens to know astrophysics.
 
 The dominant visual mode is a **deep warm black** (#14120F) paired with **cream ink** (#F2EADF) text and **teal** (#3D7A6E) plus **amber** (#DEB84A) accents. Cards float on slightly lighter surfaces (#1F1B16, #272219) with generous rounding and zero drop-shadow elevation — depth is communicated through **color lift**, not shadow.
 
 ## Philosophy
 
 ### Warmth over coldness
-Most astrology apps default to purple/blue "cosmic" palettes. AgeReveal deliberately uses earth tones — warm blacks, cream text, teal as a muted sea-glass accent, and amber as a birthday-candle highlight. This makes the app feel grounded and personal rather than mystical and distant.
+Most astrology apps default to purple/blue "cosmic" palettes. Cosmic ID deliberately uses earth tones — warm blacks, cream text, teal as a muted sea-glass accent, and amber as a birthday-candle highlight. This makes the app feel grounded and personal rather than mystical and distant.
 
 ### Serif for numbers, Sans for labels
 Age numerals (the hero display) use a **serif family** (Georgia, with Fraunces intended for the future) at light weight with tight negative letter-spacing. This gives large numbers an editorial, almost typographic-poster quality. All UI labels, buttons, and metadata use **Inter** — clean, neutral, and highly legible at small sizes.
@@ -460,7 +460,7 @@ The corner-radius scale is continuous rather than stepped:
 - **18px** (`4xl`) — large settings toggles
 - **9999px** (`full`) — pill buttons, progress bars, avatars, capsule chips
 
-The 14px radius is the "signature" — instantly recognizable as AgeReveal.
+The 14px radius is the "signature" — instantly recognizable as Cosmic ID.
 
 ## Motion
 

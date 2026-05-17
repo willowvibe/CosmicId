@@ -1,6 +1,6 @@
 # Privacy Policy — Cosmic ID
 
-_Last updated: 2026-05-10_
+_Last updated: 2026-05-16_
 
 Cosmic ID ("the app") is published by Willowvibe. This privacy policy explains what information the app handles and why.
 

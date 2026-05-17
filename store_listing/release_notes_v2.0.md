@@ -7,11 +7,11 @@
 - 💎 **Freemium Subscription Model** — Premium tier (₹49/month or ₹299/year) unlocks full astrology depth, removes ads, enables MP4 exports, and grants exclusive theme packs. 7-day free trial with visible "N days left" chip.
 - 🔗 **Deep-Link Profile Sharing** — Share your cosmic profile as a URL (`agereveal://profile/[data]`). Friends tap to view your profile or auto-populate compatibility comparison.
 - 🌟 **Celebrity Birthday Matching** — "You share a birthday with [Name]" matched from 375 curated celebrities across 8 categories (Bollywood, Cricket, Sports, Global, Politics, South Indian, Music, Business).
-- 🎬 **Animated MP4 Export** — 5-second ticking-seconds video rendered with MediaCodec for Reels/TikTok.
-- 💬 **WhatsApp Sticker Pack Export** — Direct import of cosmic stickers into WhatsApp.
-- 🔮 **Daily Cosmic Fortune Push Notification** — Delivered at your chosen time (default 8AM) instead of a silent card.
-- 🎂 **Cosmic Year Report Notification** — Rich birthday notification with "You've lived [X] days" + Mahadasha + fortune summary.
-- 👥 **Cosmic Twins Discovery** — Offline match users with identical Rashi + Nakshatra combos; generate dual share cards.
+- 🎬 **Animated MP4 Export** — 5-second ticking-seconds video rendered with MediaCodec for Reels/TikTok *(coming in v2.1)*.
+- 💬 **WhatsApp Sticker Pack Export** — Direct import of cosmic stickers into WhatsApp *(coming in v2.1)*.
+- 🔮 **Daily Cosmic Fortune Push Notification** — Delivered at your chosen time (default 8AM) with deterministic fortune text + CTA. Settings include master toggle and hour picker.
+- 🎂 **Cosmic Year Report Notification** — Rich birthday notification with Mahadasha + fortune summary *(coming in v2.1)*.
+- 👥 **Cosmic Twins Discovery** — Offline match users with identical Rashi + Nakshatra combos; generate dual share cards *(coming in v2.1)*.
 - 🪐 **Planet Age Hero CTA** — "On Mars, you're only 14" as a prominent shareable card on your profile.
 
 ### Redesigns

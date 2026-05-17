@@ -1,6 +1,6 @@
 # Cosmic ID — PRD
 
-_Last updated: 2026-05-10 — v2.0 Revamp (in progress)_
+_Last updated: 2026-05-16 — v2.0 Revamp (beta-ready)_
 
 ## Original problem statement
 
@@ -109,19 +109,22 @@ AdMob, Google Play Billing). Single-activity architecture. minSdk 26, targetSdk 
 
 ## Next action items (v2.0)
 
-* **Remove rewarded & interstitial ads** and replace with subscription paywall
-* **Integrate Google Play Billing Library 6+** with SUBS product type
-* **Build 3-step onboarding** (`OnboardingScreen.kt`, `OnboardingViewModel.kt`)
-* **Implement deep-link profile sharing** (`ProfileDeepLinkGenerator.kt`, manifest intent-filter)
-* **Add celebrity birthday matching** (`CelebrityMatchCalculator.kt`, `assets/celebrities.json`)
-* **Wire daily fortune push notification** (`DailyFortuneWorker.kt`, fortune time setting)
-* **Refactor Calculator main screen** to progressive disclosure (hero + highlight + CTA)
-* **Build animated MP4 export** (`VideoExportWorker.kt`, MediaCodec + MediaMuxer)
-* **Build WhatsApp sticker pack** (`WhatsAppStickerProvider.kt`, `stickerpack.json`)
-* **Build cosmic year report notification** (`CosmicYearReportWorker.kt`)
-* **Build cosmic twins discovery** (`CosmicTwinScreen.kt`, offline matching)
-* **Evaluate app rename** and redesign icon
-* **Swap AdMob test IDs** for production banner ID
+* ~~Remove rewarded & interstitial ads~~ ✅ — replaced with subscription paywall
+* ~~Integrate Google Play Billing Library 7+~~ ✅ with SUBS product type
+* ~~Build 3-step onboarding~~ ✅ (`OnboardingScreen.kt`, `MainViewModel.kt`)
+* ~~Implement deep-link profile sharing~~ ✅ (`ProfileDeepLinkGenerator.kt`, manifest intent-filter)
+* ~~Add celebrity birthday matching~~ ✅ (`CelebrityMatchCalculator.kt`, `assets/celebrities.json`)
+* ~~Wire daily fortune push notification~~ ✅ (`DailyFortuneWorker.kt`, `DailyFortuneScheduler.kt`, Settings UI)
+* ~~Refactor Calculator main screen~~ ✅ to progressive disclosure (hero + highlight + CTA)
+* ~~Add Firebase Analytics MVP~~ ✅ (`AnalyticsManager.kt`, onboarding/paywall/share/deep-link/premium events)
+* ~~Add tabbed DetailsUnlockScreen~~ ✅ (Overview | Western | Vedic | Chinese)
+* ~~Add grace period for lapsed subscriptions~~ ✅ (`BillingManager.kt` + DataStore)
+* **Build animated MP4 export** (`VideoExportWorker.kt`, MediaCodec + MediaMuxer) — *deferred to v2.1*
+* **Build WhatsApp sticker pack** (`WhatsAppStickerProvider.kt`, `stickerpack.json`) — *deferred to v2.1*
+* **Build cosmic year report notification** (`CosmicYearReportWorker.kt`) — *deferred to v2.1*
+* **Build cosmic twins discovery** (`CosmicTwinScreen.kt`, offline matching) — *deferred to v2.1*
+* ~~Evaluate app rename~~ ✅ — **Cosmic ID**
+* **Swap AdMob test IDs** for production banner ID — *pre-release only*
 
 ## Dependencies / setup
 
