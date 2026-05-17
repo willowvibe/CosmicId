@@ -33,6 +33,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccessTime
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.DatePicker
@@ -229,6 +230,25 @@ fun CalculatorScreen(
                                 color = WarmAmber,
                             )
                         }
+                    }
+                    // Refresh button — force-recalculate astrology results
+                    val refreshHaptic = LocalHapticFeedback.current
+                    IconButton(
+                        onClick = {
+                            refreshHaptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                            viewModel.refresh()
+                        },
+                        modifier = Modifier
+                            .size(32.dp)
+                            .clip(CircleShape)
+                            .background(WarmSurface),
+                    ) {
+                        Icon(
+                            Icons.Default.Refresh,
+                            contentDescription = "Refresh calculations",
+                            tint = WarmInkDim,
+                            modifier = Modifier.size(14.dp),
+                        )
                     }
                     IconButton(
                         onClick = onOpenSettings,

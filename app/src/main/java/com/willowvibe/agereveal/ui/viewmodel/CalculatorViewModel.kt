@@ -246,6 +246,38 @@ class CalculatorViewModel @Inject constructor(
         }
     }
 
+    /**
+     * Force-recalculate all astrology results using current state values.
+     * Useful when the user edits name, birth time, or location and wants an immediate refresh.
+     */
+    fun refresh() {
+        val state = _uiState.value
+        val birthDate = state.birthDate ?: return
+        viewModelScope.launch {
+            val targetAge = userPrefs.targetAge.first()
+            val trEnabled = userPrefs.timeRemainingEnabled.first()
+            val retEnabled = userPrefs.retirementEnabled.first()
+            val retirementAge = userPrefs.retirementAge.first()
+            val isPremium = userPrefs.isPremium.first()
+            val tr = if (trEnabled) TimeRemainingCalculator().calculate(birthDate, targetAge = targetAge) else null
+            val ret = if (retEnabled) RetirementCalculator().calculate(birthDate, retirementAge = retirementAge) else null
+            val celebrities = celebrityMatchCalculator.findMatches(birthDate)
+            _uiState.update {
+                it.copy(
+                    result = computeResult(birthDate, it.birthTime, includeUnlocked = true, location = it.location),
+                    timeRemaining = tr,
+                    timeRemainingEnabled = trEnabled,
+                    retirement = ret,
+                    retirementEnabled = retEnabled,
+                    celebrityMatches = celebrities,
+                    isPremium = isPremium,
+                )
+            }
+            val fortune = computeDailyFortune(birthDate)
+            _uiState.update { it.copy(dailyFortune = fortune) }
+        }
+    }
+
     /** Toggle a single milestone target on/off and update WorkManager accordingly. */
     fun setMilestoneEnabled(targetDays: Int, enabled: Boolean) {
         val date = _uiState.value.birthDate
