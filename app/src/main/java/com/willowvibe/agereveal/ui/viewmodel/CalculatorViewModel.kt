@@ -109,7 +109,7 @@ class CalculatorViewModel @Inject constructor(
             _uiState.update { it.copy(error = "Failed to share parallel universe: ${error.message}") }
         }
 
-        // Restore previously entered birth date + time + location
+        // Restore previously entered birth date + time + location + name
         val savedDate = prefs.getString("birth_date", null)
             ?.let { runCatching { LocalDate.parse(it) }.getOrNull() }
             ?.takeIf { !it.isAfter(LocalDate.now()) }
@@ -117,6 +117,7 @@ class CalculatorViewModel @Inject constructor(
             ?.let { runCatching { LocalTime.parse(it) }.getOrNull() }
         val savedLocation = prefs.getString("birth_location", null)
             ?.let { runCatching { parseLocation(it) }.getOrNull() }
+        val savedName = prefs.getString("user_name", null) ?: ""
         val timeRemainingCalc = TimeRemainingCalculator()
         val retirementCalc = RetirementCalculator()
         viewModelScope.launch {
@@ -125,7 +126,7 @@ class CalculatorViewModel @Inject constructor(
             val targetAge = userPrefs.targetAge.first()
             val retirementAge = userPrefs.retirementAge.first()
             val isPremium = userPrefs.isPremium.first()
-            _uiState.update { it.copy(timeRemainingEnabled = trEnabled, retirementEnabled = retEnabled, isPremium = isPremium) }
+            _uiState.update { it.copy(timeRemainingEnabled = trEnabled, retirementEnabled = retEnabled, isPremium = isPremium, name = savedName) }
             if (savedDate != null) {
                 val tr = if (trEnabled) timeRemainingCalc.calculate(savedDate, targetAge = targetAge) else null
                 val ret = if (retEnabled) retirementCalc.calculate(savedDate, retirementAge = retirementAge) else null
@@ -377,6 +378,7 @@ class CalculatorViewModel @Inject constructor(
     fun clearError() = _uiState.update { it.copy(error = null) }
     fun onNameChanged(name: String) {
         val sanitized = name.filterNot { it.isISOControl() }.take(50)
+        prefs.edit().putString("user_name", sanitized).apply()
         _uiState.update { it.copy(name = sanitized) }
     }
 
