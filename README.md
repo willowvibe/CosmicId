@@ -143,7 +143,7 @@ app/src/main/java/com/willowvibe/agereveal/
 
 > **Billing:** Test purchases use Google Play's test SKU `android.test.purchased` during development. Switch to real product IDs before release.
 
-> **Development Branch:** Revamp features are actively developed on `feature/revamp-v2`. The `main` branch tracks the latest stable release.
+> **Development Branch:** v2.0 beta features are on `tasks-to-beta`. The `main` branch tracks the latest stable release. Merge `tasks-to-beta` → `main` when beta completes.
 
 ---
 

@@ -1,6 +1,6 @@
-# Android Automated UI Test Prompt — AgeReveal
+# Android Automated UI Test Prompt — Cosmic ID
 
-Use this guide when running Appium UI walkthroughs on AgeReveal. It documents the app's specific UI patterns, accessibility labels, and interaction quirks so tests can be precise and reliable.
+Use this guide when running Appium UI walkthroughs on Cosmic ID. It documents the app's specific UI patterns, accessibility labels, and interaction quirks so tests can be precise and reliable.
 
 ---
 
@@ -8,7 +8,7 @@ Use this guide when running Appium UI walkthroughs on AgeReveal. It documents th
 
 1. Ensure Appium server is running (`appium` or `appium --relaxed-security`).
 2. Ensure an Android emulator or device is connected (`adb devices`).
-3. The app package is `com.willowvibe.agereveal`.
+3. The app package is `com.willowvibe.cosmicid`.
 4. Create a `screenshots/` folder in the project root if it does not already exist.
 5. This walkthrough is **iterative** — overwrite existing screenshots. Never skip a step because a file exists.
 
@@ -37,31 +37,33 @@ Use this guide when running Appium UI walkthroughs on AgeReveal. It documents th
 
 **v2.0 new flow:** If `hasCompletedOnboarding` is false, the app shows `OnboardingScreen` instead of the main calculator.
 
-### Step 1 — Birth Date
-- Title: "When were you born?"
-- Large DatePicker (spinner or calendar mode depending on API)
+### Step 1 — Name + Birth Date
+- Title: "Let's build your Cosmic ID"
+- Name `OutlinedTextField` at top
+- Birth date row with calendar icon: `contentDescription` contains "Change birth date, currently..."
 - "Continue" button (filled pill, teal)
 
-### Step 2 — Zodiac Reveal
-- Animated zodiac icon (fade + scale in)
-- Headline: "You're a [Sign]"
-- Live counter starts ticking immediately
-- "Add birth time for exact Nakshatra (optional)" — secondary pill button
-- "Skip" — ghost button
+### Step 2 — Optional Birth Time + Location
+- Title: "Fine-tune your chart"
+- Optional TimePicker row
+- Indian State dropdown (searchable bottom-sheet picker) for approximate location
+- "Next" button (filled pill, teal)
+- "Skip" — ghost button (saves null time/location)
 
-### Step 3 — Optional Birth Time
-- TimePicker dialog
-- "Set" / "Skip" buttons
-- Completing or skipping both save to prefs and dismiss onboarding
+### Step 3 — Accent Colour Picker
+- Title: "Choose your cosmic vibe"
+- 6 colour swatch pills (Mint, Amber, Pink, Blue, Purple, Emerald)
+- "Enter My Cosmos" CTA button (filled pill, teal)
+- Completing saves accent to prefs and dismisses onboarding
 
-**Testing note:** To re-test onboarding, clear app data (`pm clear com.willowvibe.agereveal`) or manually set `hasCompletedOnboarding = false` in SharedPreferences.
+**Testing note:** To re-test onboarding, clear app data (`pm clear com.willowvibe.cosmicid`) or manually set `hasCompletedOnboarding = false` in SharedPreferences.
 
 ---
 
 ## Tab 1 — My Cosmos (CalculatorScreen)
 
 ### Header
-- Title: "AgeReveal" (18sp, left-aligned)
+- Title: "Cosmic ID" (18sp, left-aligned)
 - LIVE badge: Pill chip with amber dot + "LIVE" text, right of title
 - Settings gear: 32dp circle, 14dp icon size, `contentDescription = "Settings"`
 

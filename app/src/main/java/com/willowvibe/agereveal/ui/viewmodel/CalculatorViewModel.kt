@@ -109,7 +109,7 @@ class CalculatorViewModel @Inject constructor(
             _uiState.update { it.copy(error = "Failed to share parallel universe: ${error.message}") }
         }
 
-        // Restore previously entered birth date + time + location
+        // Restore previously entered birth date + time + location + name
         val savedDate = prefs.getString("birth_date", null)
             ?.let { runCatching { LocalDate.parse(it) }.getOrNull() }
             ?.takeIf { !it.isAfter(LocalDate.now()) }
@@ -117,6 +117,7 @@ class CalculatorViewModel @Inject constructor(
             ?.let { runCatching { LocalTime.parse(it) }.getOrNull() }
         val savedLocation = prefs.getString("birth_location", null)
             ?.let { runCatching { parseLocation(it) }.getOrNull() }
+        val savedName = prefs.getString("user_name", null) ?: ""
         val timeRemainingCalc = TimeRemainingCalculator()
         val retirementCalc = RetirementCalculator()
         viewModelScope.launch {
@@ -125,7 +126,7 @@ class CalculatorViewModel @Inject constructor(
             val targetAge = userPrefs.targetAge.first()
             val retirementAge = userPrefs.retirementAge.first()
             val isPremium = userPrefs.isPremium.first()
-            _uiState.update { it.copy(timeRemainingEnabled = trEnabled, retirementEnabled = retEnabled, isPremium = isPremium) }
+            _uiState.update { it.copy(timeRemainingEnabled = trEnabled, retirementEnabled = retEnabled, isPremium = isPremium, name = savedName) }
             if (savedDate != null) {
                 val tr = if (trEnabled) timeRemainingCalc.calculate(savedDate, targetAge = targetAge) else null
                 val ret = if (retEnabled) retirementCalc.calculate(savedDate, retirementAge = retirementAge) else null
@@ -242,6 +243,38 @@ class CalculatorViewModel @Inject constructor(
                 result = computeResult(birthDate, it.birthTime, includeUnlocked = true, location = it.location),
                 timeRemaining = tr,
             )
+        }
+    }
+
+    /**
+     * Force-recalculate all astrology results using current state values.
+     * Useful when the user edits name, birth time, or location and wants an immediate refresh.
+     */
+    fun refresh() {
+        val state = _uiState.value
+        val birthDate = state.birthDate ?: return
+        viewModelScope.launch {
+            val targetAge = userPrefs.targetAge.first()
+            val trEnabled = userPrefs.timeRemainingEnabled.first()
+            val retEnabled = userPrefs.retirementEnabled.first()
+            val retirementAge = userPrefs.retirementAge.first()
+            val isPremium = userPrefs.isPremium.first()
+            val tr = if (trEnabled) TimeRemainingCalculator().calculate(birthDate, targetAge = targetAge) else null
+            val ret = if (retEnabled) RetirementCalculator().calculate(birthDate, retirementAge = retirementAge) else null
+            val celebrities = celebrityMatchCalculator.findMatches(birthDate)
+            _uiState.update {
+                it.copy(
+                    result = computeResult(birthDate, it.birthTime, includeUnlocked = true, location = it.location),
+                    timeRemaining = tr,
+                    timeRemainingEnabled = trEnabled,
+                    retirement = ret,
+                    retirementEnabled = retEnabled,
+                    celebrityMatches = celebrities,
+                    isPremium = isPremium,
+                )
+            }
+            val fortune = computeDailyFortune(birthDate)
+            _uiState.update { it.copy(dailyFortune = fortune) }
         }
     }
 
@@ -377,6 +410,7 @@ class CalculatorViewModel @Inject constructor(
     fun clearError() = _uiState.update { it.copy(error = null) }
     fun onNameChanged(name: String) {
         val sanitized = name.filterNot { it.isISOControl() }.take(50)
+        prefs.edit().putString("user_name", sanitized).apply()
         _uiState.update { it.copy(name = sanitized) }
     }
 

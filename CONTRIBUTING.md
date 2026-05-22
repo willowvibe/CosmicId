@@ -62,7 +62,7 @@ When filing a bug report, include:
 - An Android device or emulator running **API 26+** (API 21–25 supported via desugaring)
 
 ### Recent Updates
-- **v2.0 (2026-05-10):** Major revamp in progress — freemium subscription model, 3-step onboarding, deep-link profile sharing, celebrity matching, animated MP4 export, WhatsApp sticker pack, daily fortune push notifications, cosmic year report notification, cosmic twins discovery. Rewarded/interstitial ads and several legacy features being removed.
+- **v2.0 (2026-05-16):** Major revamp beta-ready — freemium subscription model (Billing 7.1.1), 3-step onboarding, deep-link profile sharing, celebrity matching, daily fortune push notifications, Firebase Analytics MVP, tabbed DetailsUnlockScreen (Overview | Western | Vedic | Chinese), progressive disclosure UI, Indian state dropdown, grace period for lapsed subscriptions. Rewarded/interstitial ads removed. Remaining post-beta: animated MP4 export, WhatsApp sticker pack, cosmic twins discovery, cosmic year report notification.
 - **v0.9.1 (2026-04-23):** Phase 3 complete - Birth time support, milestone notifications, life timeline visual, and consolidated Settings screen. Settings screen now correctly uses `SettingsViewModel` instead of `RemindersViewModel`. If you're building after pulling recent changes, ensure your local branch has the latest ViewModel updates.
 
 ### Steps
@@ -75,7 +75,7 @@ When filing a bug report, include:
 All bundled Ad Unit IDs are Google's safe test values. The app runs and shows test ads out of the box — no AdMob account needed for local development. See [TASKS.md §1a](TASKS.md) for how to swap in production IDs before a release build.
 
 ### Google Play Billing (v2.0)
-The revamp introduces subscription billing via Google Play Billing Library 6+.
+The revamp introduces subscription billing via Google Play Billing Library 7.1.1.
 - Test purchases use Google's test SKU `android.test.purchased` during development.
 - Real product IDs (`premium_monthly`, `premium_yearly`) must be configured in the Play Console before release.
 - `BillingManager.kt` handles all purchase flows; see `billing/` package.
@@ -100,15 +100,14 @@ The app defaults to the system sans-serif font. To enable the Inter custom font 
 ```
 app/src/main/java/com/willowvibe/agereveal/
 ├── ads/          # AdMob lifecycle management (banner only on free tier)
-├── billing/      # Google Play Billing 6+ (subscription handling)
-├── data/         # Room DB, DAOs, models, repository
+├── analytics/    # Firebase Analytics MVP wrapper
+├── billing/      # Google Play Billing 7+ (subscription handling)
+├── data/         # Room DB, DAOs, models, repository, preferences
 ├── di/           # Hilt DI modules
 ├── domain/       # Pure Kotlin business logic (no Android deps)
 ├── notification/ # WorkManager workers and schedulers
-├── onboarding/   # 3-step first-launch onboarding flow
-├── paywall/      # Subscription upsell screen
 ├── ui/           # Compose screens, ViewModels, navigation, theme
-└── widget/       # Jetpack Glance home screen widget
+└── widget/       # Jetpack Glance home screen widgets
 ```
 
 Key architectural conventions:

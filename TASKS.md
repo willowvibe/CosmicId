@@ -1,6 +1,6 @@
 # Cosmic ID — Tasks & Implementation Checklist
 
-_Last updated: 2026-05-10 — v2.0.0 Revamp (in progress)_
+_Last updated: 2026-05-16 — v2.0.0 Revamp (beta-ready)_
 
 ---
 
@@ -31,7 +31,7 @@ _Last updated: 2026-05-10 — v2.0.0 Revamp (in progress)_
 | 7 | Swap AdMob test IDs for production | ⬜ | Replace banner ID only (rewarded + interstitial IDs deleted) |
 | 8 | **Restore purchases flow** | ✅ | "Restore purchases" button in PaywallScreen + Settings; delegates to `BillingManager.restorePurchases()` |
 | 9 | **Billing error handling UI** | ✅ | `BillingManager` exposes `error: StateFlow<String?>` with human-readable messages; PaywallScreen shows error banner with retry CTA |
-| 10 | **Grace period for lapsed subscriptions** | ⬜ | 3-day grace; show "Renew to keep premium" banner instead of hard lockout |
+| 10 | **Grace period for lapsed subscriptions** | ✅ | 3-day grace tracked via `gracePeriodStart` in DataStore; BillingManager exposes `isInGracePeriod` |
 | 11 | **Free trial UX** | ✅ | `BillingManager` parses free pricing phase → `trialDaysRemaining: StateFlow<Int?>`. CalculatorScreen header shows "N days left" chip |
 | 12 | **Acknowledge purchases + setPremium sync** | ✅ | `BillingManager.handlePurchases()` mirrors to DataStore; stores purchase timestamp for trial calculation |
 
@@ -62,7 +62,7 @@ _Last updated: 2026-05-10 — v2.0.0 Revamp (in progress)_
 | # | Task | Status | Notes |
 |---|------|--------|-------|
 | 1 | Refactor `CalculatorScreen.kt` | ✅ | Hero counter + rotating highlight + "Explore full profile →" CTA; share card + copy link side-by-side |
-| 2 | Move all other cards to `DetailsUnlockScreen` tabs | ⬜ | Overview / Western / Vedic / Chinese tabbed layout |
+| 2 | Move all other cards to `DetailsUnlockScreen` tabs | ✅ | Overview / Western / Vedic / Chinese tabbed layout implemented |
 | 3 | Remove "Work weeks until retirement" from main screen | ✅ | Retirement card removed from main screen (now only in Details if enabled) |
 | 4 | Rotating highlight logic | ✅ | 4-second auto-rotate through Milestone / Fortune / Planet Age / Celebrity Match; `remember(fortune != null)` to prevent timer restart |
 
@@ -98,15 +98,15 @@ _Last updated: 2026-05-10 — v2.0.0 Revamp (in progress)_
 | 2 | **Data source & curation strategy** | ✅ | Curated static JSON baked into APK; sorted by exact-year-first, then year, then name |
 | 3 | Create `CelebrityMatchCalculator.kt` | ✅ | Singleton with `findMatches(birthDate, limit = 3)`; parses JSON from assets; matches month+day |
 | 4 | Add celebrity card to `CalculatorScreen` | ✅ | Shows in `RotatingHighlightCard` when matches exist; auto-hides when empty |
-| 5 | Generate shareable celebrity card | ⬜ | Via `ShareCardGenerator` — "You share a birthday with [Name]" |
+| 5 | Generate shareable celebrity card | ✅ | `CalculatorViewModel.shareCelebrityCard()` wired; highlight rotates through matches |
 
 ### 2b. Daily Fortune Push Notification 🟢
 
 | # | Task | Status | Notes |
 |---|------|--------|-------|
-| 1 | Create `DailyFortuneWorker.kt` | ⬜ | `PeriodicWorkRequest` at user-set time (default 8AM) |
-| 2 | Build notification with fortune text + CTA | ⬜ | "Tap to see your full cosmic day" |
-| 3 | Settings toggle for fortune time | ⬜ | Add to Settings → Notifications |
+| 1 | Create `DailyFortuneWorker.kt` | ✅ | `OneTimeWorkRequest` with exact daily rescheduling; fires at user-set hour (default 8AM) |
+| 2 | Build notification with fortune text + CTA | ✅ | "Tap to see your full cosmic day" — opens MainActivity |
+| 3 | Settings toggle for fortune time | ✅ | Settings → Notifications section with hour picker and master toggle |
 
 ### 2c. Animated MP4 Export 🟢
 
@@ -180,7 +180,7 @@ _Last updated: 2026-05-10 — v2.0.0 Revamp (in progress)_
 |---|------|--------|-------|
 | 1 | Decide new name | ✅ | **Cosmic ID** — distinct, cosmic, identity-focused |
 | 2 | Update `strings.xml` app_name | ✅ | `Cosmic ID` |
-| 3 | Update README.md, CONTRIBUTING.md, all store docs | ⬜ | Replace "AgeReveal" with "Cosmic ID" where referring to display name |
+| 3 | Update README.md, CONTRIBUTING.md, all store docs | ✅ | "AgeReveal" → "Cosmic ID" rename applied to README, CONTRIBUTING, DESIGN, TASKS, BUGS_AND_ISSUES, privacy policy, and store docs. Source filenames (e.g. `AgeRevealApp.kt`) kept for compatibility. |
 | 4 | Redesign icon to cosmic/zodiac motif | ⬜ | Move away from generic calculator look |
 | 5 | Update all store listing assets | ⬜ | Feature graphic, screenshots, descriptions |
 | 6 | **Package ID decision** | ✅ | Keep `com.willowvibe.agereveal` — existing installs auto-update |
@@ -207,29 +207,36 @@ _Last updated: 2026-05-10 — v2.0.0 Revamp (in progress)_
 
 | # | Task | Status | Notes |
 |---|------|--------|-------|
-| 1 | Add `firebase-analytics` dependency | ⬜ | Free; no account limits for basic events |
-| 2 | Log onboarding funnel | ⬜ | `onboarding_step_1_complete`, `onboarding_step_2_complete`, `onboarding_complete` |
-| 3 | Log paywall funnel | ⬜ | `paywall_shown`, `paywall_subscribe_tap`, `paywall_dismiss` |
-| 4 | Log share events | ⬜ | `share_initiated` with param `format: square/story/mp4/whatsapp` |
-| 5 | Log deep-link events | ⬜ | `deep_link_received`, `deep_link_profile_viewed` |
-| 6 | Log premium conversion | ⬜ | `purchase_complete`, `trial_started`, `trial_converted` |
+| 1 | Add `firebase-analytics` dependency | ✅ | `firebase-bom:33.12.0` + `firebase-analytics-ktx` added to `build.gradle.kts` |
+| 2 | Log onboarding funnel | ✅ | `AnalyticsManager` exposes `logOnboardingStep{1,2,3}Complete()` and `logOnboardingComplete()` |
+| 3 | Log paywall funnel | ✅ | `logPaywallShown()`, `logPaywallSubscribeTap(sku)`, `logPaywallDismiss()` |
+| 4 | Log share events | ✅ | `logShareInitiated(format)` with `format` parameter |
+| 5 | Log deep-link events | ✅ | `logDeepLinkReceived()`, `logDeepLinkProfileViewed()` |
+| 6 | Log premium conversion | ✅ | `logPurchaseComplete(sku)`, `logTrialStarted(sku)`, `logTrialConverted(sku)` |
 
 ---
 
-## 6. Play Store Submission (Post-Revamp)
+## 6. Play Store Submission
 
-### 6a. Required Assets
+### 6a. Pre-build Version Bump 🔴
+- [ ] **Bump `VERSION` file** → `2.0.0`
+- [ ] **Bump `versionCode`** in `app/build.gradle.kts` → `8` (must be higher than v1.0.7's versionCode 7)
+- [ ] **Verify `versionName` resolves to `2.0.0`** after VERSION file update
+
+---
+
+### 6b. Required Assets
 - [ ] App icon — 512 × 512 PNG (new cosmic/zodiac design)
 - [ ] Feature graphic — 1024 × 500 PNG
-- [ ] Phone screenshots — 5–8 portrait (showcasing onboarding, premium paywall, MP4 export, celebrity match)
+- [ ] Phone screenshots — 5–8 portrait (showcasing onboarding, premium paywall, celebrity match, tabbed details)
 - [ ] Short description — max 80 characters
 - [ ] Full description — max 4 000 characters
 - [ ] Content rating questionnaire
-- [ ] **Subscription pricing declaration in Play Console** | ⬜ | Mandatory for billing apps |
-- [ ] **"Subscription Terms" link in app settings** | ⬜ | Google policy requirement |
-- [ ] **Privacy Policy URL in Play Console** | ⬜ | Required for any app with billing |
+- [x] **Subscription pricing declaration in Play Console** | ✅ | `premium_monthly` (₹49) + `premium_yearly` (₹299) declared in Play Console |
+- [x] **"Subscription Terms" link in app settings** | ✅ | "Terms & Privacy" row in Settings → About links to privacy policy |
+- [x] **Privacy Policy URL in Play Console** | ✅ | `store_listing/privacy_policy.md` hosted at `https://willowvibe.com/agereveal/privacy` |
 
-### 6b. Release Rollout
+### 6c. Release Rollout
 1. **Internal testing** — verify real AdMob impressions, Play Billing test purchases, widget behaviour, notifications
 2. **Open testing** — gather reviews, iterate on paywall conversion
 3. **Production** — staged rollout 20% → 50% → 100%
