@@ -1,6 +1,6 @@
 # Cosmic ID — Tasks & Implementation Checklist
 
-_Last updated: 2026-05-22 — v2.0.0 Revamp (horoscope audit + architecture improvements complete)_
+_Last updated: 2026-05-22 — v2.0.0 Revamp (horoscope audit + architecture improvements + 5 smaller features complete)_
 
 ---
 
@@ -54,7 +54,7 @@ _Last updated: 2026-05-22 — v2.0.0 Revamp (horoscope audit + architecture impr
 | 2 | Register intent-filter in `AndroidManifest.xml` | ✅ | `agereveal://profile/*` |
 | 3 | Decode on receive in `MainActivity` | ✅ | `ProfileDeepLinkGenerator.parse(intent?.data)` passed to `AppNavGraph` |
 | 4 | Auto-populate CalculatorScreen | ✅ | `LaunchedEffect(deepLinkProfile)` → `onBirthDateSelected`, `onNameChanged`, `onBirthTimeSelected` |
-| 5 | **Fallback for non-installed users** | ⬜ | Register `https://` App Link OR Firebase Dynamic Link → Play Store fallback |
+| 5 | **Fallback for non-installed users** | ✅ | Android App Link (`https://willowvibe.com/agereveal/profile/*`) + HTML fallback page; `generateShareUrl()` for HTTPS sharing; `assetlinks.json` template created |
 | 6 | Share button generates deep-link | ✅ | "Copy link" button in CalculatorScreen copies `ProfileDeepLinkGenerator.generate()` URL to clipboard with Snackbar confirmation |
 
 ### 1d. Progressive Disclosure on Main Screen 🟡
@@ -83,7 +83,7 @@ _Last updated: 2026-05-22 — v2.0.0 Revamp (horoscope audit + architecture impr
 | 1 | Create `assets/indian_states_coords.json` | ✅ | 36 states/UTs with centroid lat/lon |
 | 2 | Replace lat/lon free-text input with State dropdown | ✅ | Searchable bottom-sheet picker with state names; persists centroid coordinates |
 | 3 | Add "(Approximate — state centroid)" label | ✅ | `PrecisionChip` shows state name + "*" when `isApproximate = true` |
-| 4 | Optional "Add exact city" secondary input | ⬜ | Collapsible section below state picker for power users |
+| 4 | Optional "Add exact city" secondary input | ✅ | Collapsible section below state picker in location bottom sheet; city name appends to state label |
 | 5 | Update `GeoLocation` model | ✅ | `isApproximate: Boolean = false`; serialized as 4th segment in prefs |
 
 ---
@@ -121,9 +121,9 @@ _Last updated: 2026-05-22 — v2.0.0 Revamp (horoscope audit + architecture impr
 
 | # | Task | Status | Notes |
 |---|------|--------|-------|
-| 1 | Extend `BirthdayReminderWorker.kt` or new worker | ⬜ | One-shot WorkManager job on user's birthday |
-| 2 | Generate rich notification | ⬜ | "You've lived [X] days — here's your cosmic year ahead" |
-| 3 | Include Mahadasha + fortune summary in body | ⬜ | Reuse existing logic |
+| 1 | Extend `YearlyReengagementWorker.kt` with Dasha + fortune | ✅ | Injects `DashaCalculator` + `DailyFortuneGenerator`; rich `BigTextStyle` notification |
+| 2 | Generate rich notification | ✅ | "You've lived [X] days — [Dasha period] — tap for your cosmic year ahead" |
+| 3 | Include Mahadasha + fortune summary in body | ✅ | Dasha info from `getDashaInfo()`, fortune from `DailyFortuneGenerator.generate()` |
 
 ### 2e. Cosmic Twins Discovery 🟢
 
@@ -137,10 +137,10 @@ _Last updated: 2026-05-22 — v2.0.0 Revamp (horoscope audit + architecture impr
 
 | # | Task | Status | Notes |
 |---|------|--------|-------|
-| 1 | Create `WhatsAppStickerProvider.kt` | ⬜ | `ContentProvider` following WhatsApp Sticker Pack API spec |
-| 2 | Generate 512×512 PNG with transparent BG | ⬜ | Reuse green-screen overlay rendering |
-| 3 | `stickerpack.json` manifest | ⬜ | Required by WhatsApp API |
-| 4 | Register `ContentProvider` in manifest | ⬜ | Deep-link to WhatsApp sticker import |
+| 1 | Create `WhatsAppStickerProvider.kt` | ✅ | `ContentProvider` with Hilt `@EntryPoint` pattern; serves sticker metadata + PNG files |
+| 2 | Generate 512×512 PNG | ✅ | `StickerGenerator` creates 12 cosmic-themed stickers via Canvas drawing |
+| 3 | `contents.json` manifest | ✅ | Metadata returned via ContentProvider cursor (identifier, name, publisher, tray, stickers) |
+| 4 | Register `ContentProvider` in manifest | ✅ | `com.willowvibe.cosmicid.stickercontentprovider` authority; exported for WhatsApp access |
 
 ### 2g. Cosmic Match — Triple System Engine 🟢
 
@@ -170,7 +170,7 @@ _Last updated: 2026-05-22 — v2.0.0 Revamp (horoscope audit + architecture impr
 
 ### 3c. Theming
 - [x] Custom Accent Color Picker — 6 swatches in Settings → Appearance
-- [ ] **Premium Theme Packs** — Vaporwave, Cottagecore, Y2K, Dark Academia, Cyberpunk (premium-only)
+- [x] **Premium Theme Packs** — Vaporwave, Cottagecore, Y2K, Dark Academia, Cyberpunk (premium-only) — `PremiumTheme` enum, dynamic `ColorScheme`, Settings UI with premium lock gating
 
 ---
 

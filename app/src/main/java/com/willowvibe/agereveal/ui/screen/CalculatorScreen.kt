@@ -32,6 +32,8 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccessTime
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.ExpandLess
+import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Settings
@@ -407,7 +409,7 @@ fun CalculatorScreen(
                                             role = Role.Button,
                                             onClick = {
                                                 copyHaptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                                val link = ProfileDeepLinkGenerator.generate(
+                                                val link = ProfileDeepLinkGenerator.generateShareUrl(
                                                     birthDate = result.birthDate,
                                                     name = uiState.name,
                                                     birthTime = uiState.birthTime,
@@ -957,6 +959,8 @@ private fun PrecisionRow(
         val filtered = remember(query, states) {
             if (query.isBlank()) states else states.filter { it.name.contains(query, ignoreCase = true) }
         }
+        var cityName by remember { mutableStateOf("") }
+        var showCityInput by remember { mutableStateOf(false) }
 
         ModalBottomSheet(
             onDismissRequest = { showLocationDialog = false },
@@ -1028,11 +1032,12 @@ private fun PrecisionRow(
                                 .background(WarmSurfaceSoft)
                                 .clickable {
                                     haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                    val label = if (cityName.isNotBlank()) "$cityName, ${state.name}" else state.name
                                     onLocationSelected(
                                         com.willowvibe.agereveal.data.model.GeoLocation(
                                             latitude = state.lat,
                                             longitude = state.lon,
-                                            label = state.name,
+                                            label = label,
                                             isApproximate = true,
                                         )
                                     )
@@ -1056,6 +1061,49 @@ private fun PrecisionRow(
                     }
                 }
                 Spacer(Modifier.height(12.dp))
+                // ── Exact city input (collapsible) ─────────────────────
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(10.dp))
+                        .clickable { showCityInput = !showCityInput }
+                        .padding(vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Icon(
+                        if (showCityInput) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+                        contentDescription = if (showCityInput) "Collapse city input" else "Expand city input",
+                        tint = WarmInkDim,
+                        modifier = Modifier.size(20.dp),
+                    )
+                    Spacer(Modifier.width(6.dp))
+                    Text(
+                        "Add exact city (optional)",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = WarmInkDim,
+                    )
+                }
+                if (showCityInput) {
+                    AgeBody(
+                        text = "Type your city name to refine the location label. Coordinates still use the state centroid.",
+                    )
+                    Spacer(Modifier.height(8.dp))
+                    OutlinedTextField(
+                        value = cityName,
+                        onValueChange = { cityName = it },
+                        label = { Text("City name", color = WarmInkDim) },
+                        placeholder = { Text("e.g. Mumbai, Jaipur, Chennai", color = WarmInkMute) },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = WarmTeal,
+                            unfocusedBorderColor = WarmInkDim,
+                            focusedTextColor = WarmInk,
+                            unfocusedTextColor = WarmInk,
+                        ),
+                    )
+                    Spacer(Modifier.height(8.dp))
+                }
                 if (location != null) {
                     TextButton(
                         onClick = {

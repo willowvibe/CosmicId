@@ -17,8 +17,9 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
- * Schedules a yearly re-engagement notification on the user's own birthday.
- * Fires at 09:00 on the birthday with a message: "You've now lived X days!"
+ * Schedules a yearly "Cosmic Year Report" notification on the user's own birthday.
+ * Fires at 09:00 with total days lived, current Vimshottari Dasha period, and a
+ * daily fortune preview — giving the user a snapshot of their cosmic year ahead.
  */
 @Singleton
 class YearlyReengagementScheduler @Inject constructor(
@@ -26,7 +27,7 @@ class YearlyReengagementScheduler @Inject constructor(
 ) {
     companion object {
         const val CHANNEL_ID = "yearly_reengagement"
-        const val CHANNEL_NAME = "Birthday Re-engagement"
+        const val CHANNEL_NAME = "Cosmic Year Report"
         const val WORK_TAG = "yearly_reengagement"
         const val NOTIFICATION_ID = 2_000_000
         const val KEY_BIRTH_DATE = "birth_date"
@@ -106,7 +107,7 @@ class YearlyReengagementScheduler @Inject constructor(
         val channel = NotificationChannel(
             CHANNEL_ID, CHANNEL_NAME, NotificationManager.IMPORTANCE_HIGH,
         ).apply {
-            description = "Celebrates your own birthday with a yearly re-engagement message."
+            description = "Your annual Cosmic Year Report — total days lived, current Dasha period, and a fortune for the year ahead."
         }
         manager.createNotificationChannel(channel)
     }
