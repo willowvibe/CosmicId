@@ -1,7 +1,6 @@
 package com.willowvibe.agereveal.ui.viewmodel
 
 import android.app.Activity
-import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.willowvibe.agereveal.data.model.AgeResult
@@ -21,7 +20,6 @@ import com.willowvibe.agereveal.notification.MilestoneNotificationScheduler
 import com.willowvibe.agereveal.notification.YearlyReengagementScheduler
 import com.willowvibe.agereveal.util.ReviewHelper
 import dagger.hilt.android.lifecycle.HiltViewModel
-import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -74,10 +72,7 @@ class CalculatorViewModel @Inject constructor(
     private val celebrityMatchCalculator: CelebrityMatchCalculator,
     private val billingManager: com.willowvibe.agereveal.billing.BillingManager,
     private val analytics: com.willowvibe.agereveal.analytics.AnalyticsManager,
-    @ApplicationContext private val appContext: Context,
 ) : ViewModel() {
-
-    private val prefs = appContext.getSharedPreferences("calculator_prefs", Context.MODE_PRIVATE)
 
     private val _uiState = MutableStateFlow(CalculatorUiState())
     val uiState: StateFlow<CalculatorUiState> = _uiState.asStateFlow()
@@ -109,18 +104,17 @@ class CalculatorViewModel @Inject constructor(
             _uiState.update { it.copy(error = "Failed to share parallel universe: ${error.message}") }
         }
 
-        // Restore previously entered birth date + time + location + name
-        val savedDate = prefs.getString("birth_date", null)
-            ?.let { runCatching { LocalDate.parse(it) }.getOrNull() }
-            ?.takeIf { !it.isAfter(LocalDate.now()) }
-        val savedTime = prefs.getString("birth_time", null)
-            ?.let { runCatching { LocalTime.parse(it) }.getOrNull() }
-        val savedLocation = prefs.getString("birth_location", null)
-            ?.let { runCatching { parseLocation(it) }.getOrNull() }
-        val savedName = prefs.getString("user_name", null) ?: ""
         val timeRemainingCalc = TimeRemainingCalculator()
         val retirementCalc = RetirementCalculator()
         viewModelScope.launch {
+            val savedDate = userPrefs.birthDate.first()
+                ?.let { runCatching { LocalDate.parse(it) }.getOrNull() }
+                ?.takeIf { !it.isAfter(LocalDate.now()) }
+            val savedTime = userPrefs.birthTime.first()
+                ?.let { runCatching { LocalTime.parse(it) }.getOrNull() }
+            val savedLocation = userPrefs.birthLocation.first()
+                ?.let { runCatching { parseLocation(it) }.getOrNull() }
+            val savedName = userPrefs.userName.first()
             val trEnabled = userPrefs.timeRemainingEnabled.first()
             val retEnabled = userPrefs.retirementEnabled.first()
             val targetAge = userPrefs.targetAge.first()
@@ -190,8 +184,8 @@ class CalculatorViewModel @Inject constructor(
         }
         yearlyReengagementScheduler.schedule(date)
         dailyFortuneScheduler.schedule(date)
-        prefs.edit().putString("birth_date", date.toString()).apply()
         viewModelScope.launch {
+            userPrefs.setBirthDate(date.toString())
             val targetAge = userPrefs.targetAge.first()
             val trEnabled = userPrefs.timeRemainingEnabled.first()
             val retEnabled = userPrefs.retirementEnabled.first()
@@ -220,8 +214,7 @@ class CalculatorViewModel @Inject constructor(
     }
 
     fun onBirthTimeSelected(time: LocalTime?) {
-        if (time != null) prefs.edit().putString("birth_time", time.toString()).apply()
-        else prefs.edit().remove("birth_time").apply()
+        viewModelScope.launch { userPrefs.setBirthTime(time?.toString()) }
         _uiState.update { state ->
             val date = state.birthDate ?: return@update state.copy(birthTime = time)
             state.copy(
@@ -410,16 +403,14 @@ class CalculatorViewModel @Inject constructor(
     fun clearError() = _uiState.update { it.copy(error = null) }
     fun onNameChanged(name: String) {
         val sanitized = name.filterNot { it.isISOControl() }.take(50)
-        prefs.edit().putString("user_name", sanitized).apply()
+        viewModelScope.launch { userPrefs.setUserName(sanitized) }
         _uiState.update { it.copy(name = sanitized) }
     }
 
     /** Set or clear the birth location for exact Lagna calculation. */
     fun onLocationSelected(location: GeoLocation?) {
-        if (location != null) {
-            prefs.edit().putString("birth_location", serializeLocation(location)).apply()
-        } else {
-            prefs.edit().remove("birth_location").apply()
+        viewModelScope.launch {
+            userPrefs.setBirthLocation(location?.let { serializeLocation(it) })
         }
         _uiState.update { state ->
             val date = state.birthDate ?: return@update state.copy(location = location)
@@ -432,10 +423,10 @@ class CalculatorViewModel @Inject constructor(
 
     // ---------------------------------------------------------------------------
 
-    private fun computeDailyFortune(birthDate: LocalDate): DailyFortuneGenerator.Fortune {
+    private suspend fun computeDailyFortune(birthDate: LocalDate): DailyFortuneGenerator.Fortune {
         val today = LocalDate.now().toString()
-        val cachedDate = prefs.getString("fortune_date", null)
-        val cachedJson = prefs.getString("fortune_json", null)
+        val cachedDate = userPrefs.fortuneDate.first()
+        val cachedJson = userPrefs.fortuneJson.first()
         if (cachedDate == today && cachedJson != null) {
             return runCatching { parseFortune(cachedJson) }.getOrNull()
                 ?: dailyFortuneGenerator.generate(birthDate).also { cacheFortune(it) }
@@ -445,12 +436,9 @@ class CalculatorViewModel @Inject constructor(
         return fortune
     }
 
-    private fun cacheFortune(fortune: DailyFortuneGenerator.Fortune) {
+    private suspend fun cacheFortune(fortune: DailyFortuneGenerator.Fortune) {
         val json = """{"headline":"${fortune.headline}","body":"${fortune.body}","emoji":"${fortune.emoji}","moonPhase":"${fortune.moonPhase}","sunSign":"${fortune.sunSign}","stemBranch":"${fortune.stemBranch}","luckyNumber":${fortune.luckyNumber},"luckyColor":"${fortune.luckyColor}"}"""
-        prefs.edit()
-            .putString("fortune_date", LocalDate.now().toString())
-            .putString("fortune_json", json)
-            .apply()
+        userPrefs.setFortune(LocalDate.now().toString(), json)
     }
 
     private fun parseFortune(json: String): DailyFortuneGenerator.Fortune {

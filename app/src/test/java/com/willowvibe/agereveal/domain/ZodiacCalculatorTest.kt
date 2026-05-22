@@ -247,7 +247,7 @@ class ZodiacCalculatorTest {
     fun `tithi number is between 1 and 30`() {
         // Verify underlying tithi index by checking the astronomical calculator directly
         val astro = AstronomicalCalculator()
-        val jd = astro.julianDayNoon(LocalDate.of(1990, 6, 15))
+        val jd = astro.julianDay(LocalDate.of(1990, 6, 15).atTime(12, 0))
         val sun = astro.sunLongitude(jd)
         val moon = astro.moonLongitude(jd)
         val tithi = astro.tithi(sun, moon)
@@ -262,7 +262,7 @@ class ZodiacCalculatorTest {
         val seen = mutableSetOf<Int>()
         val astro = AstronomicalCalculator()
         for (i in 0..29) {
-            val jd = astro.julianDayNoon(start.plusDays(i.toLong()))
+            val jd = astro.julianDay(start.plusDays(i.toLong()).atTime(12, 0))
             val sun = astro.sunLongitude(jd)
             val moon = astro.moonLongitude(jd)
             seen.add(astro.tithi(sun, moon))

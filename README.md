@@ -11,7 +11,7 @@ Current version: **2.0.0** (Revamp).
 - **Live Age Calculation** — Exact age in years, months, days, hours, minutes, and ticking seconds; updates every second via a StateFlow ticker.
 - **Milestone Days** — Automatically flags special days (500, 1 000, 2 000, 3 000, 5 000, 7 000, 10 000, 12 500, 15 000, 20 000, 25 000, 30 000) with dedicated share cards.
 - **Age Compare** — Two date-picker comparison showing the exact age difference between two people.
-- **Celebrity Birthday Matching** — "You share a birthday with [Name]" card matched from a curated JSON asset (~500 celebrities). Most retweetable stat in the app.
+- **Celebrity Birthday Matching** — "You share a birthday with [Name]" card matched from a curated JSON asset (375 celebrities). Most retweetable stat in the app.
 
 ### Astrological Insights (Free + Premium)
 - **Western Zodiac** — Tropical sun-sign computed from the Sun's ecliptic longitude with cusp detection (⚠) when near a boundary.
@@ -34,8 +34,6 @@ Current version: **2.0.0** (Revamp).
   - *Festive India*
 - **9:16 Story Cards** — Portrait 1080 × 1920 cards optimized for Instagram Stories, WhatsApp Status, and Snapchat with UI-safe margins.
 - **Transparent Green-Screen Overlay** — 1080×1920 transparent-background PNG for TikTok/Reels/YouTube Shorts green-screen import.
-- **Animated MP4 Export** — 5-second MediaCodec-rendered Canvas animation of seconds ticking; shareable as video for Reels/TikTok.
-- **WhatsApp Sticker Pack Export** — 512 × 512 transparent PNGs following WhatsApp Sticker Pack API spec; direct import into WhatsApp.
 - **Google Calendar Export** — One-tap Intent to add any birthday to Google Calendar with app availability check.
 - **CSV Export** — Export all saved birthdays as a CSV file via share sheet.
 - **Zodiac Compatibility** — Western (angle-based) + Chinese (trine group) compatibility scoring with a shareable headline card; available via deep-link invite or manual input.
@@ -43,13 +41,13 @@ Current version: **2.0.0** (Revamp).
 - **Custom Accent Color** — Six preset swatches (Mint, Amber, Pink, Blue, Purple, Emerald) in Settings → Appearance. Applied to share card highlights across themes.
 - **Planet Age Hero CTA** — "On Mars, you're only 14" as a prominent shareable card near the top of the profile screen.
 - **Daily Cosmic Fortune Push** — Deterministic daily "vibe check" delivered as a push notification at user-set time (default 8AM). Tap opens the app.
-- **Cosmic Twins Discovery** — Offline matching of users with the same Rashi + Nakshatra combo; generates a "We're Cosmic Twins" dual share card.
+- **Cosmic Twins Discovery** — (Planned) Offline matching of users with the same Rashi + Nakshatra combo; generates a "We're Cosmic Twins" dual share card.
 
 ### Reminders & Notifications
 - **Saved Birthdays** — Store family and friends' birthdays with name + emoji; backed by Room DB.
 - **Birthday Notifications** — WorkManager job fires 1 day before each saved birthday at a user-selected hour (7 AM – 9 PM presets).
 - **Milestone Notifications** — WorkManager scheduling for upcoming day-milestone reminders (e.g., "You turn 10 000 days old tomorrow 🎉").
-- **Cosmic Year Report Notification** — On the user's own birthday, a rich notification: "You've lived [X] days — here's your cosmic year ahead" with Mahadasha + fortune summary.
+- **Cosmic Year Report Notification** — (Planned) On the user's own birthday, a rich notification: "You've lived [X] days — here's your cosmic year ahead" with Mahadasha + fortune summary.
 - **Notification Time Customisation** — Settings gear on the Birthdays tab; change reminder hour and all active jobs reschedule automatically.
 
 ### Home Screen Widgets
@@ -62,7 +60,7 @@ Current version: **2.0.0** (Revamp).
 
 ### Monetisation (Freemium)
 - **Free tier:** Banner ad on Calculator screen; all core age + basic astrology features.
-- **Premium tier (₹49/mo or ₹299/yr):** Remove ads; unlock full astrology depth (Dasha, Ba Zi, exact Lagna, planetary table); unlimited MP4 exports; exclusive theme packs; priority support.
+- **Premium tier (₹49/mo or ₹299/yr):** Remove ads; unlock full astrology depth (Dasha, Ba Zi, exact Lagna, planetary table); priority support.
 - **Subscription paywall** — Shown when tapping locked astrology sections, or on 3rd app open if no sub. 7-day free trial.
 - **Real AdMob IDs** — Production banner ad unit required for any revenue-generating build.
 
@@ -93,41 +91,75 @@ Current version: **2.0.0** (Revamp).
 app/src/main/java/com/willowvibe/agereveal/
 ├── AgeRevealApp.kt            # Application class (Hilt + AdMob init)
 ├── MainActivity.kt            # Single-activity host + notification permission + deep-link receiver + BillingManager lifecycle
+├── analytics/
+│   └── AnalyticsManager.kt    # Firebase Analytics wrapper
 ├── billing/
 │   └── BillingManager.kt      # Google Play Billing 7+ (SUBS only); trial parsing + error handling
 ├── ads/
 │   └── AdManager.kt           # Centralised AdMob lifecycle (Banner only on free tier)
+├── ai/
+│   ├── AiModels.kt            # AI request/response data classes
+│   ├── AiService.kt           # AI service abstraction interface
+│   ├── AiDiModule.kt          # Hilt module for AI service binding
+│   └── NoOpAiServiceImpl.kt   # No-op implementation (placeholder for future AI integration)
 ├── data/
 │   ├── db/                    # Room database, DAO, type converters, migrations
 │   ├── model/                 # AgeResult, SavedBirthday, Milestone, GeoLocation, CelebrityMatch data classes
-│   └── repository/            # BirthdayRepository, BadgeRepository, UserPreferencesRepository (single source of truth)
+│   ├── preferences/           # UserPreferencesRepository (DataStore)
+│   └── repository/            # BirthdayRepository, BadgeRepository (single source of truth)
 ├── di/
 │   └── DatabaseModule.kt      # Hilt module for Room singleton
 ├── domain/
 │   ├── AgeCalculator.kt       # Core age + milestone logic (java.time)
+│   ├── AgePercentileCalculator.kt  # Age percentile vs global population
 │   ├── AstronomicalCalculator.kt  # Ephemeris: sidereal Sun/Moon positions
-│   ├── ZodiacCalculator.kt        # Western, Vedic Rashi, Chinese Zodiac + Stem-Branch
-│   ├── NakshatraCalculator.kt     # 27 lunar mansions + Pada (quarters)
-│   ├── ZodiacCompatibilityCalculator.kt  # Compatibility scoring
-│   ├── ShareCardGenerator.kt      # Bitmap card renderer + share Intent
-│   ├── DailyFortuneGenerator.kt     # Deterministic daily fortune based on birth date
-│   ├── ProfileDeepLinkGenerator.kt  # Base64-encoded profile URL builder
+│   ├── BaZiCalculator.kt         # Four Pillars of Destiny
+│   ├── BadgeDefinitions.kt       # Achievement badge definitions
+│   ├── CalendarExport.kt         # Calendar event export intent
 │   ├── CelebrityMatchCalculator.kt  # Birthday-to-celebrity matcher from JSON assets
-│   └── PlanetAgeCalculator.kt       # Age on Mercury, Venus, Mars, Jupiter, Saturn, etc.
+│   ├── DailyFortuneGenerator.kt     # Deterministic daily fortune based on birth date
+│   ├── DashaCalculator.kt        # Vimshottari Dasha periods
+│   ├── EphemerisSnapshot.kt      # Current planetary snapshot
+│   ├── GenerationCalculator.kt   # Generational cohort classification
+│   ├── LifeStatsCalculator.kt    # Life statistics dashboard
+│   ├── LunarCalendarConverter.kt # Gregorian → Chinese lunar (android.icu)
+│   ├── MoonPhaseCalculator.kt    # Moon phase + illumination
+│   ├── NakshatraCalculator.kt     # 27 lunar mansions + Pada (quarters)
+│   ├── ParallelUniverseGenerator.kt  # "What if" age in different eras
+│   ├── PlanetAgeCalculator.kt       # Age on Mercury, Venus, Mars, Jupiter, Saturn, etc.
+│   ├── ProfileDeepLinkGenerator.kt  # Base64-encoded profile URL builder
+│   ├── RelationshipType.kt          # Compatibility relationship types
+│   ├── RetirementCalculator.kt      # Retirement stats
+│   ├── ShareCardGenerator.kt      # Bitmap card renderer + share Intent
+│   ├── TimeRemainingCalculator.kt  # Time until target age
+│   ├── ZodiacCalculator.kt        # Western, Vedic Rashi, Chinese Zodiac + Stem-Branch
+│   └── ZodiacCompatibilityCalculator.kt  # Compatibility scoring
 ├── notification/
 │   ├── BirthdayNotificationScheduler.kt
 │   ├── BirthdayReminderWorker.kt
+│   ├── DailyFortuneScheduler.kt
+│   ├── DailyFortuneWorker.kt
 │   ├── MilestoneNotificationScheduler.kt
 │   ├── MilestoneReminderWorker.kt
-│   └── YearlyReengagementScheduler.kt
+│   ├── YearlyReengagementScheduler.kt
+│   └── YearlyReengagementWorker.kt
 ├── ui/
+│   ├── components/                 # Reusable composables (AgeBody, AgeCard, AgeLabel, AgeValue)
 │   ├── navigation/AppNavGraph.kt    # NavHost + bottom nav (4 tabs); onboarding gate; deep-link auto-populate
-│   ├── screen/                      # Compose screens (Calculator, Compatibility, Reminders, Timeline, Details, Settings, Onboarding, Paywall)
-│   ├── theme/                       # Color, Theme, Type
-│   └── viewmodel/                   # CalculatorViewModel, CompatibilityViewModel, RemindersViewModel, SettingsViewModel, MainViewModel, PaywallViewModel
+│   ├── screen/                      # Compose screens (12 screens)
+│   ├── theme/                       # Color, Theme, Type (Inter font family)
+│   └── viewmodel/                   # 8 ViewModels
+├── util/
+│   ├── BirthdayCsvExporter.kt       # CSV export utility
+│   ├── LocaleManager.kt             # Locale helper (system-only since v2.0)
+│   └── ReviewHelper.kt             # In-app review prompt
 └── widget/
-    ├── SecondsCounterUpdateWorker.kt  # Periodic widget refresh (15 min)
-    └── BirthdayGlanceWidget.kt
+    ├── BirthdayGlanceWidget.kt
+    ├── BirthdayWideGlanceWidget.kt
+    ├── LifespanProgressGlanceWidget.kt
+    ├── MilestoneRingGlanceWidget.kt
+    ├── SecondsCounterGlanceWidget.kt
+    └── SecondsCounterUpdateWorker.kt  # Periodic widget refresh (15 min)
 ```
 
 ---

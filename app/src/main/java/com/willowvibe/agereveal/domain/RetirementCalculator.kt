@@ -40,11 +40,7 @@ class RetirementCalculator {
 
         // Total potential work days from age 22 (typical career start) to retirement
         val careerStart = birthDate.plusYears(22)
-        val totalWorkDays = if (careerStart.isBefore(today)) {
-            ChronoUnit.DAYS.between(careerStart, retirementDate).toDouble()
-        } else {
-            ChronoUnit.DAYS.between(careerStart, retirementDate).toDouble()
-        }
+        val totalWorkDays = ChronoUnit.DAYS.between(careerStart, retirementDate).toDouble()
         val workDaysCompleted = if (careerStart.isBefore(today)) {
             ChronoUnit.DAYS.between(careerStart, today).toDouble()
         } else 0.0

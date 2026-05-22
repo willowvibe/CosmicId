@@ -32,7 +32,7 @@ class ParallelUniverseGeneratorTest {
     fun `age text contains actual age`() {
         val birth = LocalDate.of(1990, 6, 15)
         val today = LocalDate.of(2026, 1, 1)
-        val age = today.year - birth.year // 35
+        val age = today.year - birth.year - 1 // 35 (birthday not yet passed in 2026)
         val result = generator.generate(birth, today)
         result.forEach { ctx ->
             assertTrue("Expected age $age in '${ctx.ageText}'", ctx.ageText.contains(age.toString()))

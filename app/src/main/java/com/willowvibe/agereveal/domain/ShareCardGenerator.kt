@@ -59,6 +59,7 @@ class ShareCardGenerator @Inject constructor(
     private val sharingPercentile = AtomicBoolean(false)
     private val sharingParallelUniverse = AtomicBoolean(false)
     private val sharingCelebrity = AtomicBoolean(false)
+    private val sharingFortune = AtomicBoolean(false)
 
     // Error callback — invoked on main thread when sharing fails
     private var onShareError: ((Throwable) -> Unit)? = null
@@ -69,6 +70,8 @@ class ShareCardGenerator @Inject constructor(
     private var onStoryShareError: ((Throwable) -> Unit)? = null
     private var onTransparentShareError: ((Throwable) -> Unit)? = null
     private var onPercentileShareError: ((Throwable) -> Unit)? = null
+    private var onFortuneShareError: ((Throwable) -> Unit)? = null
+    private var onCelebrityShareError: ((Throwable) -> Unit)? = null
 
     /** Register an error callback for share failures. */
     fun setShareErrorHandler(handler: ((Throwable) -> Unit)?) {
@@ -115,6 +118,16 @@ class ShareCardGenerator @Inject constructor(
     /** Register an error callback for parallel universe share failures. */
     fun setParallelUniverseShareErrorHandler(handler: ((Throwable) -> Unit)?) {
         onParallelUniverseShareError = handler
+    }
+
+    /** Register an error callback for fortune share failures. */
+    fun setFortuneShareErrorHandler(handler: ((Throwable) -> Unit)?) {
+        onFortuneShareError = handler
+    }
+
+    /** Register an error callback for celebrity share failures. */
+    fun setCelebrityShareErrorHandler(handler: ((Throwable) -> Unit)?) {
+        onCelebrityShareError = handler
     }
 
     companion object {
@@ -580,7 +593,7 @@ class ShareCardGenerator @Inject constructor(
         luckyColor: String,
         theme: CardTheme = CardTheme.DARK_COSMOS,
     ) {
-        if (!sharingCard.compareAndSet(false, true)) return
+        if (!sharingFortune.compareAndSet(false, true)) return
         var bitmap: Bitmap? = null
         try {
             bitmap = generateFortuneBitmap(headline, body, emoji, moonPhase, sunSign, stemBranch, luckyNumber, luckyColor, theme)
@@ -603,15 +616,15 @@ class ShareCardGenerator @Inject constructor(
                         context.startActivity(chooser.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
                     }
                 } catch (e: Exception) {
-                    onShareError?.invoke(e)
+                    onFortuneShareError?.invoke(e)
                 } finally {
-                    sharingCard.set(false)
+                    sharingFortune.set(false)
                 }
             }
         } catch (e: Exception) {
             bitmap?.recycle()
-            sharingCard.set(false)
-            onShareError?.invoke(e)
+            sharingFortune.set(false)
+            onFortuneShareError?.invoke(e)
         }
     }
 
@@ -677,7 +690,7 @@ class ShareCardGenerator @Inject constructor(
                         context.startActivity(chooser.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
                     }
                 } catch (e: Exception) {
-                    onShareError?.invoke(e)
+                    onCelebrityShareError?.invoke(e)
                 } finally {
                     sharingCelebrity.set(false)
                 }
@@ -685,7 +698,7 @@ class ShareCardGenerator @Inject constructor(
         } catch (e: Exception) {
             bitmap?.recycle()
             sharingCelebrity.set(false)
-            onShareError?.invoke(e)
+            onCelebrityShareError?.invoke(e)
         }
     }
 

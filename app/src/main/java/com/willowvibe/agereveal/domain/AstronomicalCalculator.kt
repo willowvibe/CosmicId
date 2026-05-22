@@ -22,20 +22,6 @@ import kotlin.math.sqrt
 @Singleton
 class AstronomicalCalculator @Inject constructor() {
 
-    /** Julian Day Number at 12:00 UT on the given civil date. */
-    fun julianDayNoon(date: LocalDate): Double {
-        var y = date.year
-        var m = date.monthValue
-        if (m <= 2) {
-            y -= 1; m += 12
-        }
-        val a = y / 100
-        val b = 2 - a + a / 4
-        return floor(365.25 * (y + 4716)) +
-                floor(30.6001 * (m + 1)) +
-                date.dayOfMonth + b - 1524.5 + 0.5
-    }
-
     /**
      * Sun's apparent ecliptic longitude in degrees, normalised to [0, 360).
      *

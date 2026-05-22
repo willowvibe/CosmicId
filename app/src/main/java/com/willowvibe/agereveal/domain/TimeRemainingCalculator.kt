@@ -28,7 +28,6 @@ class TimeRemainingCalculator {
         val daysRemaining = ChronoUnit.DAYS.between(today, targetDate)
         val weekends = daysRemaining / 7
         val fridays = countDaysOfWeek(birthDate, targetDate, today, java.time.DayOfWeek.FRIDAY)
-        val paychecks = fridays // assume monthly paychecks ≈ fridays is a rough proxy; better: months remaining
         val fullMoons = (daysRemaining / 29.53).toLong()
 
         return TimeRemaining(

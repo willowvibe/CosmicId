@@ -13,8 +13,9 @@ import java.util.Base64
 object ProfileDeepLinkGenerator {
 
     fun generate(birthDate: LocalDate, name: String = "", birthTime: LocalTime? = null): String {
+        val escapedName = name.replace("\\", "\\\\").replace("\"", "\\\"")
         val payload = buildString {
-            append("""{"d":"${birthDate}","n":"${name}"""")
+            append("""{"d":"${birthDate}","n":"${escapedName}"""")
             if (birthTime != null) append(""","t":"${birthTime}"""")
             append("}")
         }
@@ -41,7 +42,7 @@ object ProfileDeepLinkGenerator {
     }
 
     private fun extractValue(json: String, key: String): String? {
-        val regex = """"$key":"([^"]*+)"""".toRegex()
-        return regex.find(json)?.groupValues?.get(1)
+        val regex = """"$key":"((?:[^"\\]|\\.)*+)"""".toRegex()
+        return regex.find(json)?.groupValues?.get(1)?.replace("\\\"", "\"")?.replace("\\\\", "\\")
     }
 }

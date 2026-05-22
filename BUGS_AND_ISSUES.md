@@ -1,6 +1,6 @@
 # Cosmic ID — Bugs & Edge Case Issues
 
-_Last updated: 2026-05-16 — v2.0.0 Revamp (beta-ready)_
+_Last updated: 2026-05-22 — v2.0.0 Revamp (post-audit architecture + horoscope improvements)_
 
 This document tracks known bugs, edge cases, and fragile areas in the codebase. Resolved items are kept for historical reference. For planned work see [TASKS.md](TASKS.md).
 
@@ -359,6 +359,126 @@ This document tracks known bugs, edge cases, and fragile areas in the codebase. 
 | Hindi locale toggle removed | ✅ Test step removed | System locale only (API 33+) |
 | Deep-link profile receive | ⬜ Add new test | `agereveal://profile/*` intent handling |
 | Daily fortune push | ✅ Worker verified | `DailyFortuneWorker` output verified manually; Settings toggle + hour picker exist |
+
+---
+
+## Revamp v2.0 — Bugs Fixed in 2026-05-22 Audit
+
+### 🟢 BUG-052 — JSON Injection in Deep Link Payload
+**Status:** 🟢 Fixed 2026-05-22
+**Severity:** High (data integrity — unparseable deep links)
+**File:** `domain/ProfileDeepLinkGenerator.kt`
+**Description:** The `name` field was inserted directly into a JSON string with no escaping. A name containing double quotes (e.g., `John "Doe"`) would produce malformed JSON that could not be parsed on the receiving end.
+**Fix applied:** Name is now escaped with `replace("\\", "\\\\").replace("\"", "\\\"")`. Parser regex updated to handle escaped characters.
+
+### 🟢 BUG-053 — shareFortune() Used Wrong AtomicBoolean Gate
+**Status:** 🟢 Fixed 2026-05-22
+**Severity:** High (silent share failure)
+**File:** `domain/ShareCardGenerator.kt`
+**Description:** `shareFortune()` reused `sharingCard` as its concurrency gate instead of having a dedicated `sharingFortune` flag. Calling `share()` and `shareFortune()` in rapid succession silently dropped one of them.
+**Fix applied:** Added `sharingFortune` AtomicBoolean; `shareFortune()` now uses it exclusively.
+
+### 🟢 BUG-054 — shareCelebrity() Fired Wrong Error Callback
+**Status:** 🟢 Fixed 2026-05-22
+**Severity:** Medium (incorrect error routing)
+**File:** `domain/ShareCardGenerator.kt`
+**Description:** `shareCelebrity()` invoked `onShareError` (generic card-share error handler) instead of a celebrity-specific handler. No `setCelebrityShareErrorHandler` existed.
+**Fix applied:** Added `onCelebrityShareError` field and `setCelebrityShareErrorHandler()` setter. `shareCelebrity()` now uses `onCelebrityShareError` in both error paths. Also added `onFortuneShareError` and `setFortuneShareErrorHandler()` for parity.
+
+### 🟢 BUG-055 — Negative Modulo Crash in LunarCalendarConverter
+**Status:** 🟢 Fixed 2026-05-22
+**Severity:** Medium (silent empty-string fallback for BC dates)
+**File:** `domain/LunarCalendarConverter.kt`
+**Description:** `lunarYear % 12` on a negative `EXTENDED_YEAR` (BC dates) produced a negative array index. Caught by blanket `catch`, silently returning empty string.
+**Fix applied:** Changed to `Math.floorMod(lunarYear.toLong(), 12).toInt()` for safe modulo.
+
+### 🟢 BUG-056 — abs(Long.MIN_VALUE) Returns Negative in DailyFortuneGenerator
+**Status:** 🟢 Fixed 2026-05-22
+**Severity:** Low (theoretically reachable only with extreme dates)
+**File:** `domain/DailyFortuneGenerator.kt`
+**Description:** `kotlin.math.abs(Long.MIN_VALUE)` returns `Long.MIN_VALUE` (still negative). Could produce negative array indices. Extremely unlikely with real-world dates but is a classic anti-pattern.
+**Fix applied:** Added guard: `if (h == Long.MIN_VALUE) Long.MAX_VALUE else kotlin.math.abs(h)`.
+
+### 🟢 BUG-057 — Integration Tests Reference Non-Existent WatchAdBanner Composable
+**Status:** 🟢 Fixed 2026-05-22
+**Severity:** High (compile failure — entire test suite broken)
+**Files:** `DetailsUnlockScreenUiTest.kt`, `EndToEndFlowTest.kt`
+**Description:** Both files imported and tested `WatchAdBanner` which was removed from the codebase when rewarded ads were removed in v2.0. Three tests in DetailsUnlockScreenUiTest and two in EndToEndFlowTest would not compile.
+**Fix applied:** Removed `WatchAdBanner` import and all related tests. Remaining tests (MilestoneRow, HeartbeatRow, LifeProgressBar, AstroTile, compatibility flows) kept intact.
+
+### 🟢 BUG-058 — AppDatabaseMigrationTest Missing MIGRATION_2_3
+**Status:** 🟢 Fixed 2026-05-22
+**Severity:** Critical (both migration tests crashed at runtime)
+**File:** `AppDatabaseMigrationTest.kt`
+**Description:** AppDatabase is now at version 3 (with `MIGRATION_2_3` adding `unlocked_badges` table), but both migration tests only provided `MIGRATION_1_2`. Room threw `IllegalStateException: A migration from 2 to 3 was required but not found`.
+**Fix applied:** Added `MIGRATION_2_3` to both existing tests. Added new test `migration_2_3_addsUnlockedBadgesTable` to verify the v2→v3 migration.
+
+### 🟢 BUG-059 — AstroTileUiTest Wrong Text Assertions
+**Status:** 🟢 Fixed 2026-05-22
+**Severity:** High (two tests always failed)
+**File:** `AstroTileUiTest.kt`
+**Description:** `exactLocation_showsExactLabel` asserted `"(Exact)"` which does not appear in the composable. `noLocation_showsApproximateLabel` asserted `"Approximate — no location"` which also does not exist. Actual labels are `"Lagna"` (exact) and `"Lagna (approx)"` (approximate).
+**Fix applied:** Updated assertions to match actual composable output.
+
+### 🟢 BUG-060 — Dead Code in Domain Layer
+**Status:** 🟢 Fixed 2026-05-22
+**Severity:** Low
+**Files:** `RetirementCalculator.kt`, `TimeRemainingCalculator.kt`, `ParallelUniverseGenerator.kt`
+**Description:** `RetirementCalculator` had a dead if/else with identical branches. `TimeRemainingCalculator` had a dead `val paychecks = fridays` assignment. `ParallelUniverseGenerator` used naive `year - year` age calculation ignoring birthday passage within the current year.
+**Fix applied:** Removed dead conditional from RetirementCalculator. Removed dead assignment from TimeRemainingCalculator. Fixed ParallelUniverseGenerator to compute proper age accounting for month/day.
+
+---
+
+## Revamp v2.0 — Bugs Fixed in 2026-05-22 Audit (Round 2: Horoscope + Architecture)
+
+### 🟢 BUG-061 — Western Zodiac Compatibility Used Hardcoded Date Ranges Instead of Ephemeris
+**Status:** 🟢 Fixed 2026-05-22
+**Severity:** High (inconsistent sign assignment between profile and compatibility)
+**Files:** `domain/ZodiacCompatibilityCalculator.kt`, `domain/ZodiacCalculator.kt`
+**Description:** `ZodiacCompatibilityCalculator.getSignIndex()` used hardcoded date ranges (e.g., "Mar 21 – Apr 19 = Aries") to determine Western zodiac signs. `ZodiacCalculator.getWesternZodiac()` used the actual tropical Sun longitude from the astronomical ephemeris. On cusp dates (±1 day of a sign change, which varies by year and leap-cycle), the two methods could assign different signs, causing users to see one sign on their profile and a different sign in compatibility results.
+**Fix applied:** Added `getWesternSignIndex()` to `ZodiacCalculator` that returns the astronomical sign index (0–11) from the ephemeris. `ZodiacCompatibilityCalculator` now uses this index for element determination and Western compatibility scoring, eliminating the hardcoded date-range lookup.
+
+### 🟢 BUG-062 — LunarCalendarConverter Caught Throwable Instead of Exception
+**Status:** 🟢 Fixed 2026-05-22
+**Severity:** Medium (masked fatal errors)
+**File:** `domain/LunarCalendarConverter.kt`
+**Description:** The catch block used `catch (_: Throwable)` which catches `OutOfMemoryError`, `StackOverflowError`, and other fatal JVM errors. If such an error occurred in the Chinese calendar conversion, it would be silently swallowed and an empty string returned, making debugging impossible.
+**Fix applied:** Changed to `catch (_: Exception)` — only catches recoverable exceptions.
+
+### 🟢 BUG-063 — Dead Code: julianDayNoon() Never Used
+**Status:** 🟢 Fixed 2026-05-22
+**Severity:** Low (dead code)
+**Files:** `domain/AstronomicalCalculator.kt`, `domain/DailyFortuneGenerator.kt`
+**Description:** `AstronomicalCalculator.julianDayNoon(date: LocalDate)` was a public method that was never called from any production code. `DailyFortuneGenerator` used it but now uses `julianDay(dateTime: LocalDateTime)` with noon time instead.
+**Fix applied:** Removed `julianDayNoon()` method. Updated `DailyFortuneGenerator` to use `julianDay(today.atTime(12, 0))`.
+
+### 🟢 BUG-064 — SharedPreferences Scattered Across 7+ Classes
+**Status:** 🟢 Fixed 2026-05-22
+**Severity:** Medium (maintainability, data consistency risk)
+**Files:** `CalculatorViewModel.kt`, `RemindersViewModel.kt`, `RemindersScreen.kt`, plus 4 widget/worker classes
+**Description:** User profile data (birth_date, birth_time, birth_location, user_name, fortune cache) was written to `calculator_prefs` SharedPreferences by multiple ViewModels and screens independently, with no single source of truth. Accent color and target age were already mirrored to SharedPreferences from DataStore, but new keys were not centralized.
+**Fix applied:** Extended `UserPreferencesRepository` with 7 new DataStore keys that all mirror to `calculator_prefs` SharedPreferences for widget/worker compatibility. `CalculatorViewModel` and `RemindersViewModel` no longer hold `Context` references or read SharedPreferences directly. `RemindersScreen` now reads the birth date via `viewModel.cachedUserBirthDate.collectAsState()` instead of `context.getSharedPreferences()`.
+
+### 🟢 BUG-065 — CalculatorViewModel Held Direct Context Reference
+**Status:** 🟢 Fixed 2026-05-22
+**Severity:** Medium (MVVM violation, testability)
+**File:** `ui/viewmodel/CalculatorViewModel.kt`
+**Description:** `CalculatorViewModel` injected `@ApplicationContext appContext: Context` and used it to create a `SharedPreferences` instance directly. ViewModels should not hold Context references — they should go through Repository classes.
+**Fix applied:** Removed `appContext` parameter and `.getSharedPreferences()` call. All persistence now goes through `UserPreferencesRepository` suspend functions. `computeDailyFortune()` and `cacheFortune()` converted to suspend functions.
+
+### 🟢 BUG-066 — RemindersViewModel Held Direct Context Reference
+**Status:** 🟢 Fixed 2026-05-22
+**Severity:** Medium (MVVM violation)
+**File:** `ui/viewmodel/RemindersViewModel.kt`
+**Description:** `RemindersViewModel` injected `@ApplicationContext context: Context` solely to read `birth_date` from `calculator_prefs`. Also set `notification_hour` only in the scheduler's local prefs, not in the centralized store.
+**Fix applied:** Replaced `context` with `UserPreferencesRepository` injection. `cachedUserBirthDate` now loaded asynchronously via `StateFlow`. `setNotificationHour()` now persists through `userPrefs.setNotificationHour()` as well as the scheduler.
+
+### 🟢 BUG-067 — RemindersScreen Read SharedPreferences in Composition
+**Status:** 🟢 Fixed 2026-05-22
+**Severity:** Low (performance — disk I/O during recomposition)
+**File:** `ui/screen/RemindersScreen.kt`
+**Description:** Both "LATER" and single-birthday sections called `context.getSharedPreferences("calculator_prefs", ...).getString("birth_date", ...)` inside `remember` blocks during composition, causing repeated disk I/O on every recomposition.
+**Fix applied:** Replaced with `viewModel.cachedUserBirthDate.collectAsState()` which reads from the in-memory `StateFlow`, eliminating disk I/O during composition.
 
 ---
 

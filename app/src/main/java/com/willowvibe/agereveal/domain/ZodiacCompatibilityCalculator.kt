@@ -48,9 +48,11 @@ class ZodiacCompatibilityCalculator @Inject constructor(
         val westernB = zodiacCalculator.getWesternZodiac(dateB)
         val chineseA = zodiacCalculator.getChineseZodiac(dateA)
         val chineseB = zodiacCalculator.getChineseZodiac(dateB)
-        val elementA = getWesternElement(dateA.monthValue, dateA.dayOfMonth)
-        val elementB = getWesternElement(dateB.monthValue, dateB.dayOfMonth)
-        val westernScore = westernCompatibilityScore(dateA, dateB)
+        val indexA = zodiacCalculator.getWesternSignIndex(dateA)
+        val indexB = zodiacCalculator.getWesternSignIndex(dateB)
+        val elementA = getWesternElementByIndex(indexA)
+        val elementB = getWesternElementByIndex(indexB)
+        val westernScore = westernCompatibilityScoreByIndex(indexA, indexB)
         val chineseScore = chineseCompatibilityScore(dateA, dateB)
         val chineseLabel = chineseRelationshipLabel(dateA, dateB)
         val overallScore = when (relationshipType) {
@@ -89,31 +91,14 @@ class ZodiacCompatibilityCalculator @Inject constructor(
         )
     }
 
-    private fun getSignIndex(month: Int, day: Int): Int = when {
-        (month == 3 && day >= 21) || (month == 4 && day <= 19) -> 0  // Aries    – Fire
-        (month == 4 && day >= 20) || (month == 5 && day <= 20) -> 1  // Taurus   – Earth
-        (month == 5 && day >= 21) || (month == 6 && day <= 20) -> 2  // Gemini   – Air
-        (month == 6 && day >= 21) || (month == 7 && day <= 22) -> 3  // Cancer   – Water
-        (month == 7 && day >= 23) || (month == 8 && day <= 22) -> 4  // Leo      – Fire
-        (month == 8 && day >= 23) || (month == 9 && day <= 22) -> 5  // Virgo    – Earth
-        (month == 9 && day >= 23) || (month == 10 && day <= 22) -> 6  // Libra    – Air
-        (month == 10 && day >= 23) || (month == 11 && day <= 21) -> 7  // Scorpio  – Water
-        (month == 11 && day >= 22) || (month == 12 && day <= 21) -> 8  // Sagittarius – Fire
-        (month == 12 && day >= 22) || (month == 1 && day <= 19) -> 9  // Capricorn – Earth
-        (month == 1 && day >= 20) || (month == 2 && day <= 18) -> 10 // Aquarius – Air
-        else -> 11 // Pisces   – Water
-    }
-
-    private fun getWesternElement(month: Int, day: Int): String = when (getSignIndex(month, day) % 4) {
+    private fun getWesternElementByIndex(index: Int): String = when (index % 4) {
         0 -> "Fire"
         1 -> "Earth"
         2 -> "Air"
         else -> "Water"
     }
 
-    private fun westernCompatibilityScore(a: LocalDate, b: LocalDate): Int {
-        val signA = getSignIndex(a.monthValue, a.dayOfMonth)
-        val signB = getSignIndex(b.monthValue, b.dayOfMonth)
+    private fun westernCompatibilityScoreByIndex(signA: Int, signB: Int): Int {
         val diff = kotlin.math.abs(signA - signB)
         return when (minOf(diff, 12 - diff)) {
             0 -> 85  // Same sign

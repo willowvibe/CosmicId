@@ -3,26 +3,28 @@ package com.willowvibe.agereveal.ui.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.willowvibe.agereveal.data.model.SavedBirthday
+import com.willowvibe.agereveal.data.preferences.UserPreferencesRepository
 import com.willowvibe.agereveal.data.repository.BirthdayRepository
 import com.willowvibe.agereveal.domain.CompatibilityResult
 import com.willowvibe.agereveal.domain.ZodiacCompatibilityCalculator
 import com.willowvibe.agereveal.notification.BirthdayNotificationScheduler
 import dagger.hilt.android.lifecycle.HiltViewModel
-import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import javax.inject.Inject
-import android.content.Context
 
 @HiltViewModel
 class RemindersViewModel @Inject constructor(
     private val repository: BirthdayRepository,
     private val notificationScheduler: BirthdayNotificationScheduler,
     private val compatibilityCalculator: ZodiacCompatibilityCalculator,
-    @ApplicationContext private val context: Context,
+    private val userPrefs: UserPreferencesRepository,
 ) : ViewModel() {
 
     val birthdays: StateFlow<List<SavedBirthday>> = repository.allBirthdays
@@ -30,11 +32,15 @@ class RemindersViewModel @Inject constructor(
 
     val notificationHour: StateFlow<Int> = notificationScheduler.notificationHour
 
-    // Cached once at construction — avoids repeated disk I/O on every compatibility lookup
-    private val cachedUserBirthDate: LocalDate? = context
-        .getSharedPreferences("calculator_prefs", Context.MODE_PRIVATE)
-        .getString("birth_date", null)
-        ?.let { runCatching { LocalDate.parse(it) }.getOrNull() }
+    private val _cachedUserBirthDate = MutableStateFlow<LocalDate?>(null)
+    val cachedUserBirthDate: StateFlow<LocalDate?> = _cachedUserBirthDate.asStateFlow()
+
+    init {
+        viewModelScope.launch {
+            _cachedUserBirthDate.value = userPrefs.birthDate.first()
+                ?.let { runCatching { LocalDate.parse(it) }.getOrNull() }
+        }
+    }
 
     fun addBirthday(name: String, birthDate: LocalDate, emoji: String = "🎂") {
         if (birthDate.isAfter(LocalDate.now())) return
@@ -74,6 +80,7 @@ class RemindersViewModel @Inject constructor(
 
     fun setNotificationHour(hour: Int) {
         notificationScheduler.setNotificationHour(hour)
+        viewModelScope.launch { userPrefs.setNotificationHour(hour) }
         // Reschedule all active notification jobs to fire at the new time
         viewModelScope.launch {
             birthdays.value
@@ -82,7 +89,7 @@ class RemindersViewModel @Inject constructor(
         }
     }
 
-    fun getUserBirthDate(): LocalDate? = cachedUserBirthDate
+    fun getUserBirthDate(): LocalDate? = _cachedUserBirthDate.value
 
     fun getCompatibilityWithSavedBirthday(savedBirthday: SavedBirthday): CompatibilityResult? {
         val userBirthDate = getUserBirthDate() ?: return null

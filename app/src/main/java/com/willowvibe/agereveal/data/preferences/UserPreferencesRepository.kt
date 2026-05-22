@@ -18,19 +18,18 @@ private val Context.userPrefsDataStore by preferencesDataStore(name = "user_pref
 /**
  * Central DataStore-backed preferences.
  *
- * Stores:
- *  - Theme mode (system/light/dark)
- *  - Language override ("system" / "en" / "hi")
- *  - In-app review prompted flag
- *  - Share count (used as heuristic for review prompt timing)
- *  - Global birthday notifications enabled flag
- *  - Per-milestone enabled flags (e.g. "milestone_10000" -> true)
+ * Stores all user preferences. Values that need to be read by external processes
+ * (widgets, WorkManager workers) are mirrored to SharedPreferences so they can
+ * be accessed synchronously.
  */
 @Singleton
 class UserPreferencesRepository @Inject constructor(
     @ApplicationContext private val context: Context,
 ) {
     companion object {
+        // SharedPreferences name visible to widgets and workers
+        const val SYNC_PREFS_NAME = "calculator_prefs"
+
         // Theme
         const val THEME_SYSTEM = 0
         const val THEME_LIGHT = 1
@@ -51,9 +50,21 @@ class UserPreferencesRepository @Inject constructor(
         private val TRIAL_DURATION_DAYS_KEY = intPreferencesKey("trial_duration_days")
         private val GRACE_PERIOD_START_KEY = longPreferencesKey("grace_period_start")
         private val ONBOARDING_COMPLETED_KEY = booleanPreferencesKey("onboarding_completed")
+
+        // User profile (mirrored to SharedPreferences for widget/worker access)
+        private val BIRTH_DATE_KEY = stringPreferencesKey("birth_date")
+        private val BIRTH_TIME_KEY = stringPreferencesKey("birth_time")
+        private val BIRTH_LOCATION_KEY = stringPreferencesKey("birth_location")
+        private val USER_NAME_KEY = stringPreferencesKey("user_name")
+        private val NOTIFICATION_HOUR_KEY = intPreferencesKey("notification_hour")
+
+        // Daily fortune cache
+        private val FORTUNE_DATE_KEY = stringPreferencesKey("fortune_date")
+        private val FORTUNE_JSON_KEY = stringPreferencesKey("fortune_json")
     }
 
     private val dataStore = context.userPrefsDataStore
+    private val syncPrefs = context.getSharedPreferences(SYNC_PREFS_NAME, Context.MODE_PRIVATE)
 
     // ── Theme ─────────────────────────────────────────────────────────────
     val themeMode: Flow<Int> = dataStore.data.map { it[THEME_KEY] ?: THEME_SYSTEM }
@@ -99,9 +110,7 @@ class UserPreferencesRepository @Inject constructor(
     val targetAge: Flow<Int> = dataStore.data.map { it[TARGET_AGE_KEY] ?: 80 }
     suspend fun setTargetAge(age: Int) {
         dataStore.edit { it[TARGET_AGE_KEY] = age }
-        // Mirror to SharedPreferences so the widget can read synchronously
-        context.getSharedPreferences("calculator_prefs", Context.MODE_PRIVATE)
-            .edit().putInt("target_age", age).apply()
+        syncPrefs.edit().putInt("target_age", age).apply()
     }
 
     // ── Time remaining visuals toggle ────────────────────────────────────
@@ -112,9 +121,7 @@ class UserPreferencesRepository @Inject constructor(
     val accentColor: Flow<Int> = dataStore.data.map { it[ACCENT_COLOR_KEY] ?: 0xFF86EFAC.toInt() }
     suspend fun setAccentColor(color: Int) {
         dataStore.edit { it[ACCENT_COLOR_KEY] = color }
-        // Mirror to SharedPreferences so ShareCardGenerator can read synchronously
-        context.getSharedPreferences("calculator_prefs", Context.MODE_PRIVATE)
-            .edit().putInt("accent_color", color).apply()
+        syncPrefs.edit().putInt("accent_color", color).apply()
     }
 
     // ── Retirement calculator settings ───────────────────────────────────
@@ -156,4 +163,50 @@ class UserPreferencesRepository @Inject constructor(
     suspend fun setOnboardingCompleted(completed: Boolean) {
         dataStore.edit { it[ONBOARDING_COMPLETED_KEY] = completed }
     }
+
+    // ── User profile (mirrored to SharedPreferences for widget/worker access) ──
+    val birthDate: Flow<String?> = dataStore.data.map { it[BIRTH_DATE_KEY] }
+    suspend fun setBirthDate(date: String?) {
+        dataStore.edit { if (date != null) it[BIRTH_DATE_KEY] = date else it.remove(BIRTH_DATE_KEY) }
+        if (date != null) syncPrefs.edit().putString("birth_date", date).apply()
+        else syncPrefs.edit().remove("birth_date").apply()
+    }
+
+    val birthTime: Flow<String?> = dataStore.data.map { it[BIRTH_TIME_KEY] }
+    suspend fun setBirthTime(time: String?) {
+        dataStore.edit { if (time != null) it[BIRTH_TIME_KEY] = time else it.remove(BIRTH_TIME_KEY) }
+        if (time != null) syncPrefs.edit().putString("birth_time", time).apply()
+        else syncPrefs.edit().remove("birth_time").apply()
+    }
+
+    val birthLocation: Flow<String?> = dataStore.data.map { it[BIRTH_LOCATION_KEY] }
+    suspend fun setBirthLocation(location: String?) {
+        dataStore.edit { if (location != null) it[BIRTH_LOCATION_KEY] = location else it.remove(BIRTH_LOCATION_KEY) }
+        if (location != null) syncPrefs.edit().putString("birth_location", location).apply()
+        else syncPrefs.edit().remove("birth_location").apply()
+    }
+
+    val userName: Flow<String> = dataStore.data.map { it[USER_NAME_KEY] ?: "" }
+    suspend fun setUserName(name: String) {
+        dataStore.edit { it[USER_NAME_KEY] = name }
+        syncPrefs.edit().putString("user_name", name).apply()
+    }
+
+    val notificationHour: Flow<Int> = dataStore.data.map { it[NOTIFICATION_HOUR_KEY] ?: 8 }
+    suspend fun setNotificationHour(hour: Int) {
+        dataStore.edit { it[NOTIFICATION_HOUR_KEY] = hour }
+        syncPrefs.edit().putInt("notification_hour", hour).apply()
+    }
+
+    // ── Daily fortune cache (mirrored for worker access) ───────────────────
+    val fortuneDate: Flow<String?> = dataStore.data.map { it[FORTUNE_DATE_KEY] }
+    suspend fun setFortune(date: String, json: String) {
+        dataStore.edit {
+            it[FORTUNE_DATE_KEY] = date
+            it[FORTUNE_JSON_KEY] = json
+        }
+        syncPrefs.edit().putString("fortune_date", date).putString("fortune_json", json).apply()
+    }
+
+    val fortuneJson: Flow<String?> = dataStore.data.map { it[FORTUNE_JSON_KEY] }
 }

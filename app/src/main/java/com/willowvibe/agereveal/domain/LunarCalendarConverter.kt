@@ -32,7 +32,7 @@ class LunarCalendarConverter @Inject constructor() {
             val isLeap = chinese.get(Calendar.IS_LEAP_MONTH) == 1
             val lunarYear = chinese.get(Calendar.EXTENDED_YEAR)
 
-            val zodiacAnimal = ZODIAC_ANIMALS[lunarYear % 12]
+            val zodiacAnimal = ZODIAC_ANIMALS[Math.floorMod(lunarYear.toLong(), 12).toInt()]
             val dayStr = ordinalDay(lunarDay)
             val monthStr = buildString {
                 if (isLeap) append("leap ")
@@ -40,7 +40,7 @@ class LunarCalendarConverter @Inject constructor() {
             }
 
             "$dayStr of the ${monthStr}th lunar month, Year of the $zodiacAnimal"
-        } catch (_: Throwable) {
+        } catch (_: Exception) {
             // Fallback for JVM unit tests where android.icu is unavailable
             ""
         }

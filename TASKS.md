@@ -1,6 +1,6 @@
 # Cosmic ID — Tasks & Implementation Checklist
 
-_Last updated: 2026-05-16 — v2.0.0 Revamp (beta-ready)_
+_Last updated: 2026-05-22 — v2.0.0 Revamp (horoscope audit + architecture improvements complete)_
 
 ---
 
@@ -160,7 +160,7 @@ _Last updated: 2026-05-16 — v2.0.0 Revamp (beta-ready)_
 ## 3. UI/UX & Design Polish
 
 ### 3a. Tabbed Details Screen
-- [ ] Refactor `DetailsUnlockScreen` into horizontal Pager/Tab layout: `Overview` | `Western` | `Vedic` | `Chinese`
+- [x] Refactor `DetailsUnlockScreen` into horizontal Pager/Tab layout: `Overview` | `Western` | `Vedic` | `Chinese`
 - [ ] Expandable cards for deep educational text (Nakshatra meanings, Element descriptions)
 
 ### 3b. Micro-Interactions & Animations
@@ -219,7 +219,7 @@ _Last updated: 2026-05-16 — v2.0.0 Revamp (beta-ready)_
 ## 6. Play Store Submission
 
 ### 6a. Pre-build Version Bump 🔴
-- [ ] **Bump `VERSION` file** → `2.0.0`
+- [x] **Bump `VERSION` file** → `2.0.0` ✅ 2026-05-22
 - [ ] **Bump `versionCode`** in `app/build.gradle.kts` → `8` (must be higher than v1.0.7's versionCode 7)
 - [ ] **Verify `versionName` resolves to `2.0.0`** after VERSION file update
 
@@ -240,6 +240,38 @@ _Last updated: 2026-05-16 — v2.0.0 Revamp (beta-ready)_
 1. **Internal testing** — verify real AdMob impressions, Play Billing test purchases, widget behaviour, notifications
 2. **Open testing** — gather reviews, iterate on paywall conversion
 3. **Production** — staged rollout 20% → 50% → 100%
+
+---
+
+## 7. Infrastructure & Architecture Improvements (2026-05-22)
+
+### 7a. Horoscope Engine Audit & Fixes ✅
+
+| # | Task | Status | Notes |
+|---|------|--------|-------|
+| 1 | Audit Western zodiac calculation engine | ✅ | AstronomicalCalculator uses Meeus Ch.25 for Sun (~0.01°), Ch.47 for Moon (~0.1°); Lahiri ayanamsa with secular quadratic term — accurate for sign/nakshatra level |
+| 2 | Audit Vedic calculation engine | ✅ | NakshatraCalculator (27 equal divisions), DashaCalculator (120-year Vimshottari cycle) — mathematically correct |
+| 3 | Audit Chinese calculation engine | ✅ | BaZiCalculator 五虎遁月 month stem rule correct; CNY_DATES lookup table 1900–2100 verified against known dates |
+| 4 | Fix Western zodiac inconsistency in compatibility | ✅ | ZodiacCompatibilityCalculator now uses astronomical ephemeris via getWesternSignIndex() instead of hardcoded date ranges — cusp dates now consistent |
+| 5 | Fix LunarCalendarConverter Throwable catch | ✅ | Changed to catch Exception instead of Throwable |
+| 6 | Remove dead julianDayNoon() code | ✅ | Replaced with julianDay(LocalDateTime) in the one caller |
+
+### 7b. SharedPreferences Consolidation ✅
+
+| # | Task | Status | Notes |
+|---|------|--------|-------|
+| 1 | Add user profile keys to UserPreferencesRepository | ✅ | Added birth_date, birth_time, birth_location, user_name, notification_hour, fortune_date, fortune_json — all mirrored to calculator_prefs for widget/worker access |
+| 2 | Remove Context from CalculatorViewModel | ✅ | All prefs reads/writes now via UserPreferencesRepository suspend functions |
+| 3 | Remove Context from RemindersViewModel | ✅ | cachedUserBirthDate loaded via StateFlow; notification_hour persisted centrally |
+| 4 | Fix RemindersScreen direct SharedPreferences reads | ✅ | Now uses viewModel.cachedUserBirthDate.collectAsState() |
+
+### 7c. AI Integration Provision ✅
+
+| # | Task | Status | Notes |
+|---|------|--------|-------|
+| 1 | Create ai/ package | ✅ | ai/AiModels.kt, ai/AiService.kt, ai/NoOpAiServiceImpl.kt, ai/AiDiModule.kt |
+| 2 | Define AiService interface | ✅ | generateFortune(), generateCompatibilityInsight(), generateTransitForecast() — all suspend functions |
+| 3 | Create Hilt DI binding | ✅ | AiDiModule binds NoOpAiServiceImpl as default; swap to real AI backend without consumer changes |
 
 ---
 

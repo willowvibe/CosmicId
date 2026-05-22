@@ -11,7 +11,6 @@ import com.willowvibe.agereveal.ui.screen.AstroTile
 import com.willowvibe.agereveal.ui.screen.HeartbeatRow
 import com.willowvibe.agereveal.ui.screen.LifeProgressBar
 import com.willowvibe.agereveal.ui.screen.MilestoneRow
-import com.willowvibe.agereveal.ui.screen.WatchAdBanner
 import com.willowvibe.agereveal.ui.theme.AgeRevealTheme
 import org.junit.Rule
 import org.junit.Test
@@ -21,7 +20,6 @@ import java.time.LocalDate
  * UI tests for DetailsUnlockScreen sub-components.
  *
  * Covers:
- *  - WatchAdBanner locked state and loading state
  *  - MilestoneRow rendering, share button, notification toggle
  *  - HeartbeatRow display
  *  - LifeProgressBar percentage
@@ -83,42 +81,6 @@ class DetailsUnlockScreenUiTest {
         isPast = false,
         daysAway = 2_500,
     )
-
-    @Test
-    fun watchAdBanner_showsUnlockPrompt_andWatchButton() {
-        composeTestRule.setContent {
-            AgeRevealTheme {
-                WatchAdBanner(isLoading = false, onWatch = {})
-            }
-        }
-        composeTestRule.onNodeWithText("Unlock full profile").assertIsDisplayed()
-        composeTestRule.onNodeWithText("Watch a 15s ad").assertIsDisplayed()
-        composeTestRule.onNodeWithText("Watch & Reveal").assertIsDisplayed()
-    }
-
-    @Test
-    fun watchAdBanner_showsLoading_whenAdLoading() {
-        composeTestRule.setContent {
-            AgeRevealTheme {
-                WatchAdBanner(isLoading = true, onWatch = {})
-            }
-        }
-        composeTestRule.onNodeWithText("Unlock full profile").assertIsDisplayed()
-        // CircularProgressIndicator has no text; assert the button is NOT shown
-        composeTestRule.onNodeWithText("Watch & Reveal").assertDoesNotExist()
-    }
-
-    @Test
-    fun watchAdBanner_clickTriggersOnWatch() {
-        var clicked = false
-        composeTestRule.setContent {
-            AgeRevealTheme {
-                WatchAdBanner(isLoading = false, onWatch = { clicked = true })
-            }
-        }
-        composeTestRule.onNodeWithText("Watch & Reveal").performClick()
-        assert(clicked)
-    }
 
     @Test
     fun milestoneRow_pastMilestone_showsShareButton() {
