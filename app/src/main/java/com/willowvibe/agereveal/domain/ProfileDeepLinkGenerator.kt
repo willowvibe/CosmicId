@@ -24,6 +24,19 @@ object ProfileDeepLinkGenerator {
         return "agereveal://profile/$encoded"
     }
 
+    /** Returns an https:// share URL that falls back to the Play Store for non-installed users. */
+    fun generateShareUrl(birthDate: LocalDate, name: String = "", birthTime: LocalTime? = null): String {
+        val escapedName = name.replace("\\", "\\\\").replace("\"", "\\\"")
+        val payload = buildString {
+            append("""{"d":"${birthDate}","n":"${escapedName}"""")
+            if (birthTime != null) append(""","t":"${birthTime}"""")
+            append("}")
+        }
+        val encoded = Base64.getUrlEncoder().withoutPadding()
+            .encodeToString(payload.toByteArray(Charsets.UTF_8))
+        return "https://willowvibe.com/agereveal/profile/$encoded"
+    }
+
     data class ParsedProfile(
         val birthDate: LocalDate,
         val name: String,

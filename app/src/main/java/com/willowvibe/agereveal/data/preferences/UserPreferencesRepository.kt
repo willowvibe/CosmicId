@@ -50,6 +50,7 @@ class UserPreferencesRepository @Inject constructor(
         private val TRIAL_DURATION_DAYS_KEY = intPreferencesKey("trial_duration_days")
         private val GRACE_PERIOD_START_KEY = longPreferencesKey("grace_period_start")
         private val ONBOARDING_COMPLETED_KEY = booleanPreferencesKey("onboarding_completed")
+        private val THEME_PACK_KEY = intPreferencesKey("theme_pack")
 
         // User profile (mirrored to SharedPreferences for widget/worker access)
         private val BIRTH_DATE_KEY = stringPreferencesKey("birth_date")
@@ -156,6 +157,12 @@ class UserPreferencesRepository @Inject constructor(
     val gracePeriodStart: Flow<Long> = dataStore.data.map { it[GRACE_PERIOD_START_KEY] ?: 0L }
     suspend fun setGracePeriodStart(timeMillis: Long) {
         dataStore.edit { it[GRACE_PERIOD_START_KEY] = timeMillis }
+    }
+
+    // ── Premium theme pack (v2.0) ─────────────────────────────────────────
+    val themePack: Flow<Int> = dataStore.data.map { it[THEME_PACK_KEY] ?: 0 }
+    suspend fun setThemePack(packId: Int) {
+        dataStore.edit { it[THEME_PACK_KEY] = packId }
     }
 
     // ── Onboarding completed (v2.0) ────────────────────────────────────────

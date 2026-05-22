@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cosmic ID — Open Profile</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0a0a1a;
+            color: #e0d6c2;
+            display: flex; align-items: center; justify-content: center;
+            min-height: 100vh; text-align: center; padding: 24px;
+        }
+        .card {
+            background: #1a1a2e;
+            border-radius: 16px;
+            padding: 40px 32px;
+            max-width: 400px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+        }
+        h1 { font-size: 24px; margin-bottom: 8px; color: #ffffff; }
+        p { font-size: 14px; line-height: 1.6; margin-bottom: 24px; color: #a09888; }
+        .btn {
+            display: inline-block; padding: 14px 32px;
+            background: #4fd1c5; color: #0a0a1a;
+            border-radius: 24px; text-decoration: none;
+            font-weight: 600; font-size: 16px;
+        }
+        .btn:hover { background: #38b2a0; }
+        .meta { margin-top: 24px; font-size: 12px; color: #605848; }
+    </style>
+    <script>
+        // Extract the encoded profile from the path
+        const path = window.location.pathname;
+        const match = path.match(/^\/agereveal\/profile\/(.+)/);
+        const encoded = match ? match[1] : null;
+
+        if (encoded) {
+            // Try to open the app via custom scheme first
+            const customSchemeUrl = 'agereveal://profile/' + encoded;
+            const playStoreUrl = 'https://play.google.com/store/apps/details?id=com.willowvibe.cosmicid';
+
+            // Attempt to open the app
+            window.location.href = customSchemeUrl;
+
+            // If the app doesn't open within 2s, redirect to Play Store
+            setTimeout(function() {
+                window.location.href = playStoreUrl;
+            }, 2000);
+        }
+    </script>
+</head>
+<body>
+    <div class="card">
+        <h1>Cosmic ID</h1>
+        <p>Opening your cosmic profile…<br>If you don't have the app yet, you'll be taken to the Play Store to install it.</p>
+        <a class="btn"
+           href="https://play.google.com/store/apps/details?id=com.willowvibe.cosmicid">
+           Get Cosmic ID
+        </a>
+        <p class="meta">Your profile will load automatically once the app is installed.</p>
+    </div>
+</body>
+</html>

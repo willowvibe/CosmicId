@@ -47,6 +47,13 @@
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data android:scheme="agereveal" android:host="profile" />
             </intent-filter>
+            <!-- Android App Link fallback for non-installed users: https://willowvibe.com/agereveal/profile/* -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="https" android:host="willowvibe.com" android:pathPrefix="/agereveal/profile" />
+            </intent-filter>
         </activity>
 
         <!-- Home screen widget: 2×2 birthday countdown -->
@@ -135,6 +142,13 @@
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/file_paths" />
         </provider>
+
+        <!-- WhatsApp Sticker Pack ContentProvider -->
+        <provider
+            android:name=".notification.WhatsAppStickerProvider"
+            android:authorities="${applicationId}.stickercontentprovider"
+            android:exported="true"
+            android:grantUriPermissions="true" />
 
     </application>
 

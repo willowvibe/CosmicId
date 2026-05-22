@@ -64,6 +64,12 @@ class SettingsViewModel @Inject constructor(
     val accentColor: StateFlow<Int> = userPrefs.accentColor
         .stateIn(viewModelScope, SharingStarted.Eagerly, 0xFF86EFAC.toInt())
 
+    val themePack: StateFlow<Int> = userPrefs.themePack
+        .stateIn(viewModelScope, SharingStarted.Eagerly, 0)
+
+    val isPremium: StateFlow<Boolean> = userPrefs.isPremium
+        .stateIn(viewModelScope, SharingStarted.Eagerly, false)
+
     val retirementAge: StateFlow<Int> = userPrefs.retirementAge
         .stateIn(viewModelScope, SharingStarted.Eagerly, 60)
 
@@ -122,6 +128,8 @@ class SettingsViewModel @Inject constructor(
     fun setTimeRemainingEnabled(enabled: Boolean) = viewModelScope.launch { userPrefs.setTimeRemainingEnabled(enabled) }
 
     fun setAccentColor(color: Int) = viewModelScope.launch { userPrefs.setAccentColor(color) }
+
+    fun setThemePack(packId: Int) = viewModelScope.launch { userPrefs.setThemePack(packId) }
 
     fun setRetirementAge(age: Int) = viewModelScope.launch { userPrefs.setRetirementAge(age) }
 

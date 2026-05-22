@@ -16,13 +16,16 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.FileDownload
+import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.HorizontalDivider
@@ -43,8 +46,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -56,8 +62,10 @@ import com.willowvibe.agereveal.ui.components.AgeBody
 import com.willowvibe.agereveal.ui.components.AgeCard
 import com.willowvibe.agereveal.ui.components.AgeLabel
 import com.willowvibe.agereveal.ui.components.AgeValue
+import com.willowvibe.agereveal.ui.theme.PremiumTheme
 import com.willowvibe.agereveal.ui.theme.SerifFamily
 import com.willowvibe.agereveal.ui.theme.WarmAmber
+import com.willowvibe.agereveal.ui.theme.premiumDarkColorScheme
 import com.willowvibe.agereveal.ui.theme.WarmBlack
 import com.willowvibe.agereveal.ui.theme.WarmInk
 import com.willowvibe.agereveal.ui.theme.WarmInkDim
@@ -81,6 +89,8 @@ fun SettingsScreen(
     val targetAge by settingsViewModel.targetAge.collectAsState()
     val timeRemainingEnabled by settingsViewModel.timeRemainingEnabled.collectAsState()
     val accentColor by settingsViewModel.accentColor.collectAsState()
+    val themePackId by settingsViewModel.themePack.collectAsState()
+    val isPremium by settingsViewModel.isPremium.collectAsState()
     val retirementAge by settingsViewModel.retirementAge.collectAsState()
     val retirementEnabled by settingsViewModel.retirementEnabled.collectAsState()
     var showClearDialog by remember { mutableStateOf(false) }
@@ -366,6 +376,88 @@ fun SettingsScreen(
                                     style = MaterialTheme.typography.labelSmall,
                                     color = if (selected) WarmInk else WarmInkMute,
                                     fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
+                                )
+                            }
+                        }
+                    }
+
+                    Spacer(Modifier.height(12.dp))
+                    HorizontalDivider(color = WarmSurfaceSoft)
+                    Spacer(Modifier.height(12.dp))
+
+                    // ── Premium Theme Packs ────────────────────────────
+                    Text(
+                        "Theme pack",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = WarmInk,
+                        fontWeight = FontWeight.SemiBold,
+                    )
+                    AgeBody(
+                        text = if (isPremium) "Choose a theme pack to change the app's look and feel."
+                        else "Unlock premium to access exclusive theme packs.",
+                    )
+                    Spacer(Modifier.height(8.dp))
+                    PremiumTheme.entries.forEach { theme ->
+                        val selected = theme.id == themePackId
+                        val locked = theme != PremiumTheme.DEFAULT && !isPremium
+                        val haptic = LocalHapticFeedback.current
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(
+                                    if (selected) WarmSurfaceSoft else Color.Transparent,
+                                )
+                                .border(
+                                    width = if (selected) 1.5.dp else 0.dp,
+                                    color = if (selected) WarmTeal else Color.Transparent,
+                                    shape = RoundedCornerShape(10.dp),
+                                )
+                                .clickable(
+                                    role = Role.Button,
+                                    enabled = !locked,
+                                    onClick = {
+                                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                        settingsViewModel.setThemePack(theme.id)
+                                    },
+                                )
+                                .padding(horizontal = 12.dp, vertical = 10.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(28.dp)
+                                    .clip(RoundedCornerShape(14.dp))
+                                    .background(premiumDarkColorScheme(theme).primary),
+                            )
+                            Spacer(Modifier.width(10.dp))
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    theme.label,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = if (locked) WarmInkDim else WarmInk,
+                                    fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
+                                )
+                                Text(
+                                    theme.description,
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = WarmInkDim,
+                                    maxLines = 1,
+                                )
+                            }
+                            if (locked) {
+                                Icon(
+                                    Icons.Default.Lock,
+                                    contentDescription = "Premium",
+                                    tint = WarmAmber,
+                                    modifier = Modifier.size(18.dp),
+                                )
+                            } else if (selected) {
+                                Icon(
+                                    Icons.Default.Check,
+                                    contentDescription = "Selected",
+                                    tint = WarmTeal,
+                                    modifier = Modifier.size(18.dp),
                                 )
                             }
                         }
