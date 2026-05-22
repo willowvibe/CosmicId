@@ -51,7 +51,7 @@ class AppDatabaseMigrationTest {
             context,
             AppDatabase::class.java,
             testDbName,
-        ).addMigrations(Migrations.MIGRATION_1_2)
+        ).addMigrations(Migrations.MIGRATION_1_2, Migrations.MIGRATION_2_3)
             .build()
 
         // 3. Verify migrated data
@@ -65,6 +65,47 @@ class AppDatabaseMigrationTest {
             assertEquals("🎂", alice.emoji)
             assertEquals(true, alice.notifyEnabled)
             assertEquals(20_000L, alice.nextBirthdayEpochDay)
+        }
+
+        roomDb.close()
+    }
+
+    @Test
+    fun migration_2_3_addsUnlockedBadgesTable() {
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        val dbPath = context.getDatabasePath(testDbName + "_v2tov3").absolutePath
+        File(dbPath).delete()
+
+        // Create v2 database (has saved_birthdays but no unlocked_badges table)
+        val v2Db = SQLiteDatabase.openOrCreateDatabase(dbPath, null)
+        v2Db.version = 2
+        v2Db.execSQL(
+            """
+            CREATE TABLE saved_birthdays (
+                id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                name TEXT NOT NULL,
+                birthDate TEXT NOT NULL,
+                emoji TEXT NOT NULL,
+                notifyEnabled INTEGER NOT NULL,
+                nextBirthdayEpochDay INTEGER NOT NULL,
+                birthTime TEXT
+            )
+            """.trimIndent()
+        )
+        v2Db.close()
+
+        val roomDb = Room.databaseBuilder(
+            context,
+            AppDatabase::class.java,
+            testDbName + "_v2tov3",
+        ).addMigrations(Migrations.MIGRATION_2_3)
+            .build()
+
+        // Verify unlocked_badges table exists and is empty
+        roomDb.openHelper.readableDatabase.rawQuery(
+            "SELECT name FROM sqlite_master WHERE type='table' AND name='unlocked_badges'", null
+        ).use { cursor ->
+            assertTrue(cursor.count > 0)
         }
 
         roomDb.close()
@@ -98,7 +139,7 @@ class AppDatabaseMigrationTest {
             context,
             AppDatabase::class.java,
             testDbName + "_new",
-        ).addMigrations(Migrations.MIGRATION_1_2)
+        ).addMigrations(Migrations.MIGRATION_1_2, Migrations.MIGRATION_2_3)
             .build()
 
         // 3. Insert a new row with birthTime after migration

@@ -59,11 +59,11 @@ When filing a bug report, include:
 ### Requirements
 - **Android Studio** Hedgehog (2023.1.1) or newer
 - **JDK 17** (bundled with Android Studio)
-- An Android device or emulator running **API 26+** (API 21–25 supported via desugaring)
+- An Android device or emulator running **API 26+**
 
 ### Recent Updates
-- **v2.0 (2026-05-16):** Major revamp beta-ready — freemium subscription model (Billing 7.1.1), 3-step onboarding, deep-link profile sharing, celebrity matching, daily fortune push notifications, Firebase Analytics MVP, tabbed DetailsUnlockScreen (Overview | Western | Vedic | Chinese), progressive disclosure UI, Indian state dropdown, grace period for lapsed subscriptions. Rewarded/interstitial ads removed. Remaining post-beta: animated MP4 export, WhatsApp sticker pack, cosmic twins discovery, cosmic year report notification.
-- **v0.9.1 (2026-04-23):** Phase 3 complete - Birth time support, milestone notifications, life timeline visual, and consolidated Settings screen. Settings screen now correctly uses `SettingsViewModel` instead of `RemindersViewModel`. If you're building after pulling recent changes, ensure your local branch has the latest ViewModel updates.
+- **v2.0 (2026-05-22):** Beta build — freemium subscription model (Billing 7.1.1), 3-step onboarding, deep-link profile sharing, celebrity matching, daily fortune push notifications, Firebase Analytics MVP, tabbed DetailsUnlockScreen (Overview | Western | Vedic | Chinese), progressive disclosure UI, Indian state dropdown, grace period for lapsed subscriptions. Rewarded/interstitial ads removed. Remaining post-beta: animated MP4 export, WhatsApp sticker pack, cosmic twins discovery, cosmic year report notification.
+- **v0.9.1 (2026-04-23):** Phase 3 complete.
 
 ### Steps
 1. Clone the repository.
@@ -80,18 +80,8 @@ The revamp introduces subscription billing via Google Play Billing Library 7.1.1
 - Real product IDs (`premium_monthly`, `premium_yearly`) must be configured in the Play Console before release.
 - `BillingManager.kt` handles all purchase flows; see `billing/` package.
 
-### Optional — Custom Inter Typography
-The app defaults to the system sans-serif font. To enable the Inter custom font locally:
-1. Download Inter TTF files from rsms.me/inter
-2. Place the following files in `app/src/main/res/font/`:
-   - `inter_regular.ttf`
-   - `inter_medium.ttf`
-   - `inter_semibold.ttf`
-   - `inter_bold.ttf`
-3. Uncomment the `InterFamily` font-family block in `app/src/main/java/com/willowvibe/agereveal/ui/theme/Type.kt` (lines 20–25)
-4. Replace `FontFamily.Default` with `InterFamily` in every `TextStyle` in that file
-
-> These font files are not committed to the repo to avoid binary bloat; the fallback looks fine in practice.
+### Typography
+The app uses the Inter font family as its default typeface. TTF files are committed in `app/src/main/res/font/` and wired into `Type.kt` via `FontFamily` from resources. No setup is required — Inter is active by default for all body and label text styles.
 
 ---
 
@@ -100,6 +90,7 @@ The app defaults to the system sans-serif font. To enable the Inter custom font 
 ```
 app/src/main/java/com/willowvibe/agereveal/
 ├── ads/          # AdMob lifecycle management (banner only on free tier)
+├── ai/           # AI service abstraction layer (interfaces, models, no-op impl, Hilt module)
 ├── analytics/    # Firebase Analytics MVP wrapper
 ├── billing/      # Google Play Billing 7+ (subscription handling)
 ├── data/         # Room DB, DAOs, models, repository, preferences
@@ -114,6 +105,8 @@ Key architectural conventions:
 - **Domain layer** (`domain/`) must stay free of Android framework imports; it holds pure Kotlin logic only.
 - **ViewModels** expose `StateFlow<UiState>` and never hold a reference to a `Context` (use Hilt's `ApplicationContext` via constructor injection if needed).
 - **Repository** is the single source of truth for persisted data; screens never talk to the DAO directly.
+- **UserPreferencesRepository** (DataStore) is the single source of truth for all user preferences. ViewModels must not hold Context or read SharedPreferences directly. Values needed by widgets/workers are mirrored to SharedPreferences automatically by the repository.
+- **AI layer** (`ai/`) provides an `AiService` interface with a no-op default implementation. When a real AI backend is integrated, only the Hilt binding needs to change — zero consumer code changes.
 - `yearSafeBirthday()` is the canonical Feb 29 helper — reuse it wherever a birthday date is advanced by a year.
 - **Billing layer** (`billing/`) is the only place that imports `com.android.billingclient.api`; no other layer should reference billing directly.
 

@@ -78,7 +78,7 @@ class ParallelUniverseGenerator @Inject constructor() {
     )
 
     fun generate(birthDate: LocalDate, today: LocalDate = LocalDate.now()): List<UniverseContext> {
-        val age = today.year - birthDate.year
+        val age = today.year - birthDate.year - if (today.monthValue < birthDate.monthValue || (today.monthValue == birthDate.monthValue && today.dayOfMonth < birthDate.dayOfMonth)) 1 else 0
         // Deterministic selection based on birth year — same user always gets same contexts
         val seed = birthDate.year.absoluteValue
         val selected = contexts.shuffled(java.util.Random(seed.toLong())).take(3)

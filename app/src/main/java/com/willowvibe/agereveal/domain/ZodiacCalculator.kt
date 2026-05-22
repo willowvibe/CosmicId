@@ -26,17 +26,26 @@ class ZodiacCalculator @Inject constructor(
         "Sagittarius ♐", "Capricorn ♑", "Aquarius ♒", "Pisces ♓"
     )
 
+    /** Returns the western (tropical) zodiac sign index (0=Aries, …, 11=Pisces) from the Sun's ecliptic longitude. */
+    fun getWesternSignIndex(
+        birthDate: LocalDate,
+        birthTime: LocalTime? = null,
+        zoneOffset: ZoneOffset? = null,
+    ): Int {
+        val snapshot = astronomy.snapshot(birthDate, birthTime, zoneOffset)
+        return ((snapshot.tropicalSunLongitude / 30.0).toInt() % 12 + 12) % 12
+    }
+
     /** Western (tropical) zodiac from the Sun's ecliptic longitude with cusp detection. */
     fun getWesternZodiac(
         birthDate: LocalDate,
         birthTime: LocalTime? = null,
         zoneOffset: ZoneOffset? = null,
     ): String {
+        val index = getWesternSignIndex(birthDate, birthTime, zoneOffset)
         val snapshot = astronomy.snapshot(birthDate, birthTime, zoneOffset)
-        val longitude = snapshot.tropicalSunLongitude
-        val index = ((longitude / 30.0).toInt() % 12 + 12) % 12
+        val posInSign = snapshot.tropicalSunLongitude % 30.0
         val name = westernSignNames[index]
-        val posInSign = longitude % 30.0
         // Within 1° of a sign boundary — Sun moves ~1°/day so cusp = ±1 day of sign change
         return if (posInSign < 1.0 || posInSign > 29.0) "$name ⚠ Cusp" else name
     }

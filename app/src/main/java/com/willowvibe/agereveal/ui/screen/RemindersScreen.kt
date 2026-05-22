@@ -1,8 +1,6 @@
 package com.willowvibe.agereveal.ui.screen
 
-import android.content.Context
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -96,10 +94,10 @@ fun RemindersScreen(
     onNavigateToSettings: () -> Unit = {},
 ) {
     val birthdays by viewModel.birthdays.collectAsState()
+    val userBirthDate by viewModel.cachedUserBirthDate.collectAsState()
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     var showAddSheet by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
-    val context = LocalContext.current
 
     if (showAddSheet) {
         AddBirthdaySheet(
@@ -213,10 +211,6 @@ fun RemindersScreen(
                         val daysUntil =
                             ChronoUnit.DAYS.between(today, LocalDate.ofEpochDay(birthday.nextBirthdayEpochDay))
 
-                        val userBirthDate = remember {
-                            val prefs = context.getSharedPreferences("calculator_prefs", Context.MODE_PRIVATE)
-                            prefs.getString("birth_date", null)?.let { runCatching { LocalDate.parse(it) }.getOrNull() }
-                        }
                         val compatibility = remember(userBirthDate, birthday) {
                             userBirthDate?.let { birthDate ->
                                 viewModel.getCompatibilityWithSavedBirthday(birthday)
@@ -237,10 +231,6 @@ fun RemindersScreen(
                         val daysUntil =
                             ChronoUnit.DAYS.between(today, LocalDate.ofEpochDay(nextUp.nextBirthdayEpochDay))
 
-                        val userBirthDate = remember {
-                            val prefs = context.getSharedPreferences("calculator_prefs", Context.MODE_PRIVATE)
-                            prefs.getString("birth_date", null)?.let { runCatching { LocalDate.parse(it) }.getOrNull() }
-                        }
                         val compatibility = remember(userBirthDate, nextUp) {
                             userBirthDate?.let { birthDate ->
                                 viewModel.getCompatibilityWithSavedBirthday(nextUp)

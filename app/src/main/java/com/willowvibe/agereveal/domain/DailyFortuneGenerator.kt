@@ -30,7 +30,7 @@ class DailyFortuneGenerator @Inject constructor(
     )
 
     fun generate(birthDate: LocalDate, today: LocalDate = LocalDate.now()): Fortune {
-        val jd = astronomicalCalculator.julianDayNoon(today)
+        val jd = astronomicalCalculator.julianDay(today.atTime(12, 0))
         val sunLon = astronomicalCalculator.sunLongitude(jd)
         val moonLon = astronomicalCalculator.moonLongitude(jd)
         val moonPhase = moonPhaseCalculator.calculate(sunLon, moonLon)
@@ -62,7 +62,7 @@ class DailyFortuneGenerator @Inject constructor(
         var h = 17L
         h = 31 * h + today.toEpochDay()
         h = 31 * h + birthDate.toEpochDay()
-        return kotlin.math.abs(h)
+        return if (h == Long.MIN_VALUE) Long.MAX_VALUE else kotlin.math.abs(h)
     }
 
     private fun buildHeadline(moonPhase: String, sunSign: String, seed: Long): String {

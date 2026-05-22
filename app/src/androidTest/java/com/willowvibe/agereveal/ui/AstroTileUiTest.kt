@@ -133,13 +133,13 @@ class AstroTileUiTest {
     }
 
     @Test
-    fun exactLocation_showsExactLabel() {
+    fun exactLocation_showsLagnaLabel() {
         composeTestRule.setContent {
             AgeRevealTheme {
                 AstroTile(result = sampleResult, isUnlocked = true, hasLocation = true)
             }
         }
-        composeTestRule.onNodeWithText("(Exact)", substring = true).assertIsDisplayed()
+        composeTestRule.onNodeWithText("Lagna").assertIsDisplayed()
     }
 
     @Test
@@ -149,6 +149,6 @@ class AstroTileUiTest {
                 AstroTile(result = sampleResult, isUnlocked = true, hasLocation = false)
             }
         }
-        composeTestRule.onNodeWithText("Approximate — no location", substring = true).assertIsDisplayed()
+        composeTestRule.onNodeWithText("Lagna (approx)").assertIsDisplayed()
     }
 }

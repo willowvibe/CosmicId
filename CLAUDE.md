@@ -20,21 +20,26 @@ Cosmic ID is a native Android app (Kotlin + Jetpack Compose) that calculates you
 
 | Layer | Contents |
 |-------|----------|
-| **UI** (`ui/screen/`, `ui/viewmodel/`) | Compose screens + MVVM ViewModels (`StateFlow<UiState>`) |
+| **UI** (`ui/screen/`, `ui/viewmodel/`, `ui/components/`) | Compose screens + MVVM ViewModels (`StateFlow<UiState>`) + reusable composables |
 | **Navigation** (`ui/navigation/`) | Compose Navigation with single-activity + bottom nav (4 tabs) |
-| **Domain** (`domain/`) | Pure Kotlin business logic — no Android framework imports |
-| **Data** (`data/db/`, `data/repository/`, `data/model/`) | Room DB, DAOs, repository (single source of truth) |
+| **Theme** (`ui/theme/`) | Material 3 theme, colors, typography (Inter font family) |
+| **Domain** (`domain/`) | Business logic — some files have Android imports (ShareCardGenerator, CalendarExport, CelebrityMatchCalculator) |
+| **Data** (`data/db/`, `data/repository/`, `data/model/`, `data/preferences/`) | Room DB, DAOs, repository (single source of truth), DataStore preferences |
 | **DI** (`di/`) | Hilt modules (`DatabaseModule.kt`) |
 | **Billing** (`billing/`) | Google Play Billing 7+ wrapper (`BillingManager.kt`) |
 | **Ads** (`ads/`) | Banner-only AdManager (rewarded + interstitial removed in v2.0) |
 | **Notifications** (`notification/`) | WorkManager workers + schedulers |
-| **Widget** (`widget/`) | Jetpack Glance 2×2 + wide widgets |
+| **Widget** (`widget/`) | Jetpack Glance widgets (5 variants: birthday, wide, seconds, lifespan, milestone ring) |
+| **Analytics** (`analytics/`) | Firebase Analytics (`AnalyticsManager.kt`) |
+| **AI** (`ai/`) | AI service abstraction layer (`AiService`, `NoOpAiServiceImpl`, Hilt module) |
+| **Utilities** (`util/`) | CSV export, locale manager, review helper |
 
 **Key rules:**
-- Domain layer must stay Android-framework-free.
-- ViewModels never hold `Context`; inject `ApplicationContext` via Hilt if needed.
+- Domain layer should minimize Android framework imports (known exceptions: `ShareCardGenerator`, `CalendarExport`, `CelebrityMatchCalculator`, `LunarCalendarConverter`, `ProfileDeepLinkGenerator`, `BadgeDefinitions`).
+- ViewModels must not hold `Context` directly; all persistence goes through `UserPreferencesRepository` (DataStore with SharedPreferences mirroring for widget/worker access).
 - Screens never talk to DAOs directly — always go through Repository.
 - No manual language toggle — Android 13+ system per-app locale only.
+- Inter font is compiled from resources and used as default (not optional).
 
 ---
 
@@ -83,31 +88,53 @@ Cosmic ID is a native Android app (Kotlin + Jetpack Compose) that calculates you
 
 ### Screens (Composables)
 - `OnboardingScreen.kt` — 3-step first-launch flow: Name+Birth Date → Optional Birth Time → Accent Picker
-- `CalculatorScreen.kt` — Live age, hero counter, rotating highlight, "Explore full profile →" CTA, banner ad (free tier)
+- `CalculatorScreen.kt` — Live age, hero counter, rotating highlight, "Explore full profile →" CTA, banner ad (free tier), refresh button
 - `CompatibilityScreen.kt` — Zodiac compatibility; two-person comparison; deep-link auto-fill
 - `RemindersScreen.kt` — Saved birthdays list, AddBirthday bottom sheet, FAB
 - `LifeTimelineScreen.kt` — Milestone timeline
-- `DetailsUnlockScreen.kt` — Astrology details (basic free; depth premium-gated)
+- `DetailsUnlockScreen.kt` — Tabbed astrology details (Overview | Western | Vedic | Chinese); premium-gated deep content
 - `PaywallScreen.kt` — Subscription tiers (monthly/yearly); restore purchases CTA
 - `SettingsScreen.kt` — Theme, accent color, notifications, export CSV, clear all, language → system settings
+- `BadgeScreen.kt` — Unlocked achievement badges
+- `ShareThemeSheet.kt` — Share card theme picker bottom sheet
+- `AstroInfoDialog.kt` — Astrology info dialog
+- `CompareScreen.kt` — Age comparison (accessible from Compatibility; not in bottom nav)
 
 ### ViewModels
 - `MainViewModel` — App-wide onboarding gate (`hasCompletedOnboarding`)
-- `CalculatorViewModel` — Age calc, ephemeris, share card generation, premium status
+- `CalculatorViewModel` — Age calc, ephemeris, share card generation, premium status, fortune caching
 - `CompatibilityViewModel` — Two-person comparison + compatibility scoring
 - `RemindersViewModel` — Birthday CRUD + bottom sheet state
 - `SettingsViewModel` — Theme, notification prefs, clear/export, restore purchases
 - `PaywallViewModel` — BillingManager state exposure for PaywallScreen
+- `BadgeViewModel` — Badge unlock state and progress
+- `CompareViewModel` — Age comparison logic (used by CompareScreen)
 
-### Domain Logic (Pure Kotlin)
+### Domain Logic
 - `AgeCalculator.kt` — Core age + milestone logic
+- `AgePercentileCalculator.kt` — Age percentile vs global population
 - `AstronomicalCalculator.kt` — Sun/Moon sidereal positions
-- `ZodiacCalculator.kt` — Western, Vedic Rashi, Chinese Zodiac + Stem-Branch
-- `NakshatraCalculator.kt` — 27 lunar mansions + Pada
-- `ZodiacCompatibilityCalculator.kt` — Western compatibility scoring
-- `ShareCardGenerator.kt` — Bitmap card renderer
-- `ProfileDeepLinkGenerator.kt` — `agereveal://profile/[data]` encode/decode
+- `BaZiCalculator.kt` — Four Pillars of Destiny (Ba Zi)
+- `BadgeDefinitions.kt` — Achievement badge definitions
+- `CalendarExport.kt` — Calendar event export
 - `CelebrityMatchCalculator.kt` — Load `celebrities.json`, match by month+day, return top N matches
+- `DailyFortuneGenerator.kt` — Deterministic daily fortune/vibe check
+- `DashaCalculator.kt` — Vimshottari Dasha periods
+- `EphemerisSnapshot.kt` — Current planetary snapshot
+- `GenerationCalculator.kt` — Generational cohort (Gen Z, Millennial, etc.)
+- `LifeStatsCalculator.kt` — Life statistics dashboard
+- `LunarCalendarConverter.kt` — Gregorian to Chinese lunar calendar (uses android.icu)
+- `MoonPhaseCalculator.kt` — Moon phase and illumination
+- `NakshatraCalculator.kt` — 27 lunar mansions + Pada
+- `ParallelUniverseGenerator.kt` — "What if" age in different historical eras
+- `PlanetAgeCalculator.kt` — Age on other planets
+- `ProfileDeepLinkGenerator.kt` — `agereveal://profile/[data]` encode/decode
+- `RelationshipType.kt` — Compatibility relationship types
+- `RetirementCalculator.kt` — Retirement stats
+- `ShareCardGenerator.kt` — Bitmap card renderer (has Android graphics imports)
+- `TimeRemainingCalculator.kt` — Time-remaining-until-target-age stats
+- `ZodiacCalculator.kt` — Western, Vedic Rashi, Chinese Zodiac + Stem-Branch; `getWesternSignIndex()` for compatibility use
+- `ZodiacCompatibilityCalculator.kt` — Western + Chinese compatibility scoring
 
 ### Billing
 - `BillingManager.kt` — Google Play Billing 7+ wrapper; SKU `premium_monthly` (₹49) + `premium_yearly` (₹299); 7-day free trial; purchase acknowledge + DataStore sync
@@ -118,10 +145,10 @@ Cosmic ID is a native Android app (Kotlin + Jetpack Compose) that calculates you
 
 | Tab Label | Route | Screen | Icon |
 |-----------|-------|--------|------|
-| My Cosmos | `calculator` | CalculatorScreen | Calculate |
-| Match | `compatibility` | CompatibilityScreen | Favorite |
-| Bdays | `reminders` | RemindersScreen | Cake |
-| Timeline | `timeline` | LifeTimelineScreen | Cake |
+| My Cosmos | `calculator` | CalculatorScreen | ic_tab_you (person) |
+| Match | `compatibility` | CompatibilityScreen | ic_tab_match (heart) |
+| Bdays | `reminders` | RemindersScreen | ic_tab_bdays (cake) |
+| Timeline | `timeline` | LifeTimelineScreen | ic_tab_timeline |
 
 Settings opens as a full-screen destination (no bottom bar change) from Calculator or Reminders.
 Onboarding is the start destination on first launch.
@@ -133,7 +160,7 @@ Onboarding is the start destination on first launch.
 - **Stateless composables:** Pass state + callbacks down; keep state in ViewModel.
 - **Comments:** Only when the *why* is non-obvious. No restating the obvious.
 - **Feb 29 helper:** `yearSafeBirthday()` is the canonical utility — reuse it everywhere.
-- **Font:** Defaults to system sans-serif. Optional Inter font (see CONTRIBUTING.md § Custom Inter Typography).
+- **Font:** Inter is compiled from `res/font/` and used as the default typeface for all body/label text.
 - **End files with newline.**
 - **Run `./gradlew lint` before PR.**
 
@@ -196,8 +223,10 @@ Onboarding is the start destination on first launch.
 
 ## Current Session Context
 
-- Branch: `feat/progressive-disclosure-and-sharing` (ahead of `origin/main`)
-- Recently added: Celebrity birthday matching (375 curated entries), free trial UX chip, Indian state dropdown, billing error handling, restore purchases flow, progressive disclosure UI
-- Package ID: `com.willowvibe.cosmicid` (applicationId changed; namespace kept for source compatibility)
+- Branch: `beta-release-v2`
+- Recently added: Celebrity birthday matching (375 curated entries), free trial UX chip, Indian state dropdown, billing error handling, restore purchases flow, progressive disclosure UI, tabbed DetailsUnlockScreen (Overview | Western | Vedic | Chinese), CalculatorScreen refresh button, Firebase Analytics, daily fortune push notifications
+- **2026-05-22 audit:** Horoscope engines audited (Western/Vedic/Chinese — all mathematically sound). Western compatibility fixed to use astronomical ephemeris instead of hardcoded date ranges. SharedPreferences consolidated into UserPreferencesRepository with DataStore mirroring. ViewModels cleansed of Context references. AI integration abstraction layer created (ai/ package). VERSION bumped to 2.0.0.
+- Package ID: `com.willowvibe.cosmicid` (applicationId changed; namespace `com.willowvibe.agereveal` kept for source compatibility)
 - Display name: Cosmic ID
-- Build compiles and all unit tests pass
+- Version: v2.0.0
+- Build compiles and all 137 unit tests pass

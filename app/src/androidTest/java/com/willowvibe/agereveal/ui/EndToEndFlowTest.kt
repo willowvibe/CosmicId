@@ -24,20 +24,19 @@ import com.willowvibe.agereveal.ui.screen.CompatibilityResultCard
 import com.willowvibe.agereveal.ui.screen.MilestoneRow
 import com.willowvibe.agereveal.ui.screen.PersonDateCard
 import com.willowvibe.agereveal.ui.screen.RelationshipTypeSelector
-import com.willowvibe.agereveal.ui.screen.WatchAdBanner
 import com.willowvibe.agereveal.ui.theme.AgeRevealTheme
 import org.junit.Rule
 import org.junit.Test
 import java.time.LocalDate
 
 /**
- * End-to-end integration tests that exercise multi-component flows
+ * Multi-component integration tests that exercise flows
  * as a user would experience them.
  *
  * Covers:
- *  - Age calculation → unlock profile → milestone share flow
- *  - Compatibility input → result → share card flow
- *  - Locked → unlocked astro profile transition
+ *  - Unlocked profile with milestones
+ *  - Compatibility input result share card flow
+ *  - Milestone notification toggle flow
  */
 class EndToEndFlowTest {
 
@@ -91,27 +90,8 @@ class EndToEndFlowTest {
         daysAway = -2_500,
     )
 
+    // Flow 1: Unlocked profile with milestones
     // ─────────────────────────────────────────────────────────────────────────
-    // Flow 1: Locked profile → watch ad → unlocked profile with milestones
-    // ─────────────────────────────────────────────────────────────────────────
-
-    @Test
-    fun lockedProfileFlow_showsPlaceholder_andUnlockBanner() {
-        composeTestRule.setContent {
-            AgeRevealTheme {
-                Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
-                    AstroTile(result = ageResult, isUnlocked = false)
-                    Spacer(Modifier.height(16.dp))
-                    WatchAdBanner(isLoading = false, onWatch = {})
-                }
-            }
-        }
-        // Locked: placeholder text visible, no planet table
-        composeTestRule.onNodeWithText("Watch an ad to reveal your signs").assertIsDisplayed()
-        composeTestRule.onNodeWithText("PLANETARY POSITIONS").assertDoesNotExist()
-        // Unlock banner
-        composeTestRule.onNodeWithText("Unlock full profile").assertIsDisplayed()
-    }
 
     @Test
     fun unlockedProfileFlow_showsFullAstro_andMilestones() {
@@ -135,21 +115,6 @@ class EndToEndFlowTest {
         composeTestRule.onNodeWithText("BA ZI (FOUR PILLARS)").assertIsDisplayed()
         // Milestone share button visible when unlocked
         composeTestRule.onNodeWithText("10,000th day").assertIsDisplayed()
-    }
-
-    @Test
-    fun unlockAdBanner_clickGrantsReward() {
-        var rewarded = false
-        composeTestRule.setContent {
-            AgeRevealTheme {
-                WatchAdBanner(
-                    isLoading = false,
-                    onWatch = { rewarded = true },
-                )
-            }
-        }
-        composeTestRule.onNodeWithText("Watch & Reveal").performClick()
-        assert(rewarded)
     }
 
     // ─────────────────────────────────────────────────────────────────────────
