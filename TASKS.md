@@ -1,6 +1,6 @@
 # Cosmic ID — Tasks & Implementation Checklist
 
-_Last updated: 2026-05-22 — v2.0.0 Revamp (horoscope audit + architecture improvements + 5 smaller features complete)_
+_Last updated: 2026-05-22 — v2.0.0 complete; Phase 6 (Platform Ecosystem) active development_
 
 ---
 
@@ -272,6 +272,49 @@ _Last updated: 2026-05-22 — v2.0.0 Revamp (horoscope audit + architecture impr
 | 1 | Create ai/ package | ✅ | ai/AiModels.kt, ai/AiService.kt, ai/NoOpAiServiceImpl.kt, ai/AiDiModule.kt |
 | 2 | Define AiService interface | ✅ | generateFortune(), generateCompatibilityInsight(), generateTransitForecast() — all suspend functions |
 | 3 | Create Hilt DI binding | ✅ | AiDiModule binds NoOpAiServiceImpl as default; swap to real AI backend without consumer changes |
+
+---
+
+## 8. Phase 6 — Platform Ecosystem (Active Development)
+
+### 8a. Cloud Backup 🔵
+
+| # | Task | Status | Notes |
+|---|------|--------|-------|
+| 1 | Add Firebase Firestore dependency | ⬜ | `firebase-firestore-ktx` to `build.gradle.kts` |
+| 2 | Create `CloudSyncRepository.kt` | ⬜ | Sync saved birthdays, preferences; Google sign-in opt-in |
+| 3 | Add Cloud Sync UI toggle | ⬜ | Settings → Appearance → "Sync to Cloud" |
+
+### 8b. Wear OS Companion 🔵
+
+| # | Task | Status | Notes |
+|---|------|--------|-------|
+| 1 | Create Wear OS module | ⬜ | `app-wear/` with watch face and complication support |
+| 2 | Live seconds counter complication | ⬜ | Show age in seconds on watch face |
+| 3 | Next-birthday complication | ⬜ | Days remaining until next birthday |
+
+### 8c. Lock Screen Widget 🔵
+
+| # | Task | Status | Notes |
+|---|------|--------|-------|
+| 1 | API 33+ widget feature | ⬜ | `AppWidgetProviderInfo.WIDGET_FEATURE_RECONFIGURABLE` |
+| 2 | Size adjustment support | ⬜ | User can resize widget on lock screen |
+
+### 8d. iOS Port (Long-term) 🔵
+
+| # | Task | Status | Notes |
+|---|------|--------|-------|
+| 1 | Tech stack decision | ⬜ | Flutter vs React Native |
+| 2 | WidgetKit support | ⬜ | iOS 16+ complication support |
+| 3 | Cloud sync foundation | ⬜ | Firebase Firestore for iOS data sync |
+
+### 8e. Deferred from v2.0 🔵
+
+| # | Task | Status | Notes |
+|---|------|--------|-------|
+| 1 | Animated MP4 Export | ⬜ | 5-second Reels/TikTok video export (MediaCodec + MediaMuxer) |
+| 2 | Cosmic Twins Discovery | ⬜ | Offline Rashi+Nakshatra matching; dual share card |
+| 3 | WhatsApp Sticker Pack | ⬜ | ContentProvider with 12 sticker PNG files |
 
 ---
 

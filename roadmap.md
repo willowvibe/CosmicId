@@ -76,12 +76,89 @@
 
 ---
 
+## Phase 5.6: Calculation Engine Improvements (Complete) ✅
+
+Audit of Vedic, Chinese, and Western engines (2026-05-23) identified 22 gaps. This phase addresses them in priority order. See [BUGS_AND_ISSUES.md](BUGS_AND_ISSUES.md) §Engine Architecture Audit for full details.
+
+### 5.6.1 Foundation (enables everything else)
+
+| Task | Priority | Effort | Bug IDs | Status |
+|------|----------|--------|---------|--------|
+| Add `AstronomicalCalculatorTest` — known-epoch verification | 🔴 Critical | S | BUG-071 | ✅ Complete |
+| Introduce `BirthChart` model — decouple age math from astrology | 🔴 Critical | M | BUG-068 | ✅ Complete |
+| Add `isRetrograde(planet, jd)` to AstronomicalCalculator | 🟡 High | S | BUG-074 | ✅ Complete |
+| Consolidate `Planet` enums into shared `CelestialBody` | 🟢 Medium | S | BUG-069 | ✅ Complete |
+| Add Uranus, Neptune, Pluto to `AstronomicalCalculator.Planet` | 🟢 Medium | S | BUG-084 | ✅ Complete |
+| Add `LifeStatsCalculator` DI annotations (`@Singleton`, `@Inject`) | 🟢 Low | XS | BUG-089 | ✅ Complete |
+
+**Files created/modified:**
+- `domain/model/BirthChart.kt` — new comprehensive birth chart model
+- `domain/model/CelestialBody.kt` — new consolidated celestial body enum
+- `domain/AstronomicalCalculator.kt` — added `isRetrograde()` method and outer planets (Uranus, Neptune, Pluto)
+- `domain/PlanetAgeCalculator.kt` — updated to use `CelestialBody` enum
+- `domain/LifeStatsCalculator.kt` — added DI annotations
+- `domain/ZodiacCalculator.kt` — added `getWesternSignNames()` and `getWesternSignName()` methods
+- `ui/screen/CalculatorScreen.kt` — updated to use `CelestialBody`
+- `app/src/test/java/com/willowvibe/agereveal/domain/AstronomicalCalculatorTest.kt` — new test file
+
+### 5.6.2 Vedic Depth
+
+| Task | Priority | Effort | Bug IDs |
+|------|----------|--------|---------|
+| Add Nakshatra lord + deity + guna metadata | 🟡 High | S | BUG-076 |
+| Add planetary dignities (exaltation/debilitation/own/moolatrikona) | 🟡 High | M | BUG-073 |
+| Expose Dasha balance at birth to UI | 🟢 Medium | XS | BUG-075 (partial) |
+| Add Pratyantar Dasha (sub-sub-period) | 🟢 Medium | S | BUG-075 |
+| Add Navamsa (D-9) divisional chart | 🟢 Medium | M | BUG-072 |
+| Add Vedic compatibility (Ashtakoot/Guna Milan, 36-point) | 🔵 Low | L | BUG-077 |
+
+### 5.6.3 Chinese Depth
+
+| Task | Priority | Effort | Bug IDs |
+|------|----------|--------|---------|
+| Add Day and Hour Pillars (complete Four Pillars) | 🔴 Critical | M | BUG-078 |
+| Add Day Master + Ten Gods analysis | 🟡 High | M | BUG-079 |
+| Fix solar term boundaries to use astronomical calculation | 🟡 High | M | BUG-080 |
+| Add Luck Pillars (大运 / Da Yun, 10-year cycles) | 🟢 Medium | L | BUG-081 |
+| Improve LunarCalendarConverter error handling (Result type) | 🟢 Medium | XS | BUG-082 |
+
+### 5.6.4 Western Depth
+
+| Task | Priority | Effort | Bug IDs |
+|------|----------|--------|---------|
+| Add tropical (Western) rising sign | 🟡 High | XS | BUG-083 |
+| Add planetary aspects (conjunction/sextile/square/trine/opposition) | 🟡 High | M | BUG-085 |
+| Add birth moon phase to profile | 🟢 Medium | XS | BUG-086 |
+| Add chart-to-chart synastry for compatibility | 🔵 Low | L | BUG-087 |
+
+### 5.6.5 Refactoring (improves maintainability, no user-facing changes)
+
+| Task | Priority | Effort | Bug IDs |
+|------|----------|--------|---------|
+| Split `ZodiacCalculator` (350 lines) into focused calculators | 🟡 High | M | BUG-070 |
+| Add transit computation to DailyFortuneGenerator | 🔵 Low | L | BUG-088 |
+
+### Effort Key
+
+| Label | Meaning |
+|-------|---------|
+| XS | Trivial — < 30 min |
+| S | Small — 1–2 hours |
+| M | Medium — half a day |
+| L | Large — 1–2 days |
+
+---
+
 ## Phase 6: Platform Ecosystem (Planned)
 
-- **Cloud Backup** — Firebase Firestore sync for saved profiles (opt-in Google sign-in).
-- **Lock Screen Widget** — API 33+ `AppWidgetProviderInfo.WIDGET_FEATURE_RECONFIGURABLE`.
-- **Wear OS Companion** — Live seconds counter and next-birthday complication.
-- **iOS Port** — Flutter or React Native with WidgetKit (long-term).
+| Feature | Status | Notes |
+|---------|--------|-------|
+| Cloud Backup (Firebase Firestore) | ⬜ Planned | Opt-in Google sign-in sync for saved profiles |
+| Lock Screen Widget | ⬜ Planned | API 33+ `WIDGET_FEATURE_RECONFIGURABLE` |
+| Wear OS Companion | ⬜ Planned | Live seconds counter, next-birthday complication |
+| iOS Port | ⬜ Planned | Flutter or React Native with WidgetKit (long-term) |
+| Animated MP4 Export | ⬜ Deferred | 5-second Reels/TikTok video (deferred from v2.0) |
+| Cosmic Twins Discovery | ⬜ Deferred | Offline Rashi+Nakshatra matching (deferred from v2.0) |
 
 ---
 
@@ -89,8 +166,10 @@
 
 | Item | Value |
 |---|---|
-| Version | 2.0.0 (beta-ready) |
+| Version | 2.0.0 (production rollout in progress) |
+| Current branch | `feat/smaller-features-v2` |
+| Next phase | **Phase 6** — Platform Ecosystem |
 | minSdk | 26 (desugaring enables API 21+) |
 | targetSdk | 35 |
 | compileSdk | 36 |
-| Status | 🚧 Phase 5 Active — Beta branch `tasks-to-beta`; core v2.0 features complete; remaining: MP4 export, WhatsApp stickers, Cosmic Twins, Cosmic Match engine |
+| Build status | ✅ Compiles; 152+ unit tests passing |

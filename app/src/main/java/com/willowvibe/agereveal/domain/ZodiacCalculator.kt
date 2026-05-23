@@ -36,6 +36,12 @@ class ZodiacCalculator @Inject constructor(
         return ((snapshot.tropicalSunLongitude / 30.0).toInt() % 12 + 12) % 12
     }
 
+    /** Get the full western zodiac names list for programmatic access. */
+    fun getWesternSignNames(): List<String> = westernSignNames
+
+    /** Get just the sign name without emoji for display. */
+    fun getWesternSignName(index: Int): String = westernSignNames[index].split(" ").first()
+
     /** Western (tropical) zodiac from the Sun's ecliptic longitude with cusp detection. */
     fun getWesternZodiac(
         birthDate: LocalDate,
