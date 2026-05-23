@@ -49,6 +49,8 @@ import com.willowvibe.agereveal.ui.screen.LifeTimelineScreen
 import com.willowvibe.agereveal.ui.screen.RemindersScreen
 import com.willowvibe.agereveal.ui.screen.OnboardingScreen
 import com.willowvibe.agereveal.ui.screen.SettingsScreen
+import com.willowvibe.agereveal.ui.screen.PaywallScreen
+import com.willowvibe.agereveal.ui.screen.BadgeScreen
 import com.willowvibe.agereveal.ui.theme.WarmBlack
 import com.willowvibe.agereveal.ui.theme.WarmInk
 import com.willowvibe.agereveal.ui.theme.WarmInkDim
@@ -67,6 +69,8 @@ sealed class Screen(val route: String, val label: String, @DrawableRes val icon:
     data object Reminders : Screen("reminders", "Bdays", R.drawable.ic_tab_bdays)
     data object Settings : Screen("settings", "Settings", R.drawable.ic_tab_you)
     data object Timeline : Screen("timeline", "Timeline", R.drawable.ic_tab_timeline)
+    data object Paywall : Screen("paywall", "Paywall", R.drawable.ic_tab_you)
+    data object Badges : Screen("badges", "Badges", R.drawable.ic_tab_badges)
 }
 
 private val bottomNavItems = listOf(
@@ -181,6 +185,7 @@ fun AppNavGraph(
                     },
                     onOpenDetails = { navController.navigate(Screen.Details.route) },
                     onOpenSettings = { navController.navigate(Screen.Settings.route) },
+                    onOpenBadges = { navController.navigate(Screen.Badges.route) },
                 )
             }
             composable(Screen.Details.route) {
@@ -220,8 +225,15 @@ fun AppNavGraph(
                 val settingsViewModel: SettingsViewModel = hiltViewModel()
                 SettingsScreen(
                     onBack = { navController.popBackStack() },
-                    settingsViewModel = settingsViewModel
+                    settingsViewModel = settingsViewModel,
+                    onOpenPaywall = { navController.navigate(Screen.Paywall.route) },
                 )
+            }
+            composable(Screen.Paywall.route) {
+                PaywallScreen(onDismiss = { navController.popBackStack() })
+            }
+            composable(Screen.Badges.route) {
+                BadgeScreen()
             }
             composable(Screen.Timeline.route) {
                 val calcEntry = runCatching { navController.getBackStackEntry(Screen.Calculator.route) }.getOrNull()

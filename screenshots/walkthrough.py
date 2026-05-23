@@ -215,7 +215,7 @@ def test_onboarding_flow():
     time.sleep(3)
 
     source = driver.page_source
-    if "When were you born?" in source or "Let" in source:
+    if "Let\'s build your Cosmic ID" in source or "Tap to pick your birth date" in source:
         log("Onboarding screen detected")
         safe_screenshot("onboarding_step1_birthdate.png")
         screens_tested.append("Onboarding Step 1 (Birth Date)")
@@ -223,41 +223,51 @@ def test_onboarding_flow():
         log("Onboarding not triggered — may already be completed")
         return
 
-    # Step 1: Select date and Continue
+    # Step 1: Tap date box to open picker, then OK
+    try:
+        date_box = driver.find_element(AppiumBy.ANDROID_UIAUTOMATOR,
+            'new UiSelector().textContains("Tap to pick your birth date")')
+        date_box.click()
+        log("Tapped birth date box")
+        interactions_tested.append("Onboarding birth date box tap")
+        time.sleep(1)
+    except Exception as e:
+        log(f"Onboarding date box tap failed: {e}")
+
     try:
         ok_btn = driver.find_element(AppiumBy.ANDROID_UIAUTOMATOR,
             'new UiSelector().text("OK")')
         ok_btn.click()
         log("Selected birth date (OK)")
         interactions_tested.append("Onboarding birth date OK")
-        time.sleep(1)
+        time.sleep(2)
+        safe_screenshot("onboarding_step2_time_location.png")
+        screens_tested.append("Onboarding Step 2 (Time + Location)")
     except Exception as e:
         log(f"Onboarding date OK failed: {e}")
 
-    try:
-        continue_btn = driver.find_element(AppiumBy.ANDROID_UIAUTOMATOR,
-            'new UiSelector().text("Continue")')
-        continue_btn.click()
-        log("Tapped Continue on onboarding")
-        interactions_tested.append("Onboarding Continue")
-        time.sleep(2)
-        safe_screenshot("onboarding_step2_zodiac_reveal.png")
-        screens_tested.append("Onboarding Step 2 (Zodiac Reveal)")
-    except Exception as e:
-        log(f"Onboarding Continue failed: {e}")
-
-    # Step 3: Optional birth time — skip
+    # Step 2: Optional birth time — tap "I don't know my birth time" to skip, then Next
     try:
         skip_btn = driver.find_element(AppiumBy.ANDROID_UIAUTOMATOR,
-            'new UiSelector().text("Skip")')
+            'new UiSelector().textContains("don\'t know my birth time")')
         skip_btn.click()
         log("Skipped optional birth time")
         interactions_tested.append("Onboarding Skip birth time")
+        time.sleep(1)
+    except Exception as e:
+        log(f"Onboarding Skip failed: {e}")
+
+    try:
+        next_btn = driver.find_element(AppiumBy.ANDROID_UIAUTOMATOR,
+            'new UiSelector().text("Next")')
+        next_btn.click()
+        log("Tapped Next on onboarding")
+        interactions_tested.append("Onboarding Next")
         time.sleep(2)
         safe_screenshot("onboarding_step3_accent_picker.png")
         screens_tested.append("Onboarding Step 3 (Accent Picker)")
     except Exception as e:
-        log(f"Onboarding Skip failed: {e}")
+        log(f"Onboarding Next failed: {e}")
 
     # Enter My Cosmos
     try:
@@ -274,7 +284,7 @@ def test_calculator_tab():
     """Test the My Cosmos (Calculator) tab — v2.0 progressive disclosure."""
     log("=== Testing My Cosmos Tab ===")
     navigate_to_tab("My Cosmos")
-    time.sleep(1)
+    time.sleep(2)  # v2.0: StaggeredEnter animations up to 300ms delay + 350ms duration
     safe_screenshot("tab1_calculator_default.png")
     screens_tested.append("My Cosmos (default)")
 
@@ -436,7 +446,7 @@ def test_rotating_highlight():
     """Test the rotating highlight card (v2.0 progressive disclosure)."""
     log("=== Testing Rotating Highlight ===")
     navigate_to_tab("My Cosmos")
-    time.sleep(1)
+    time.sleep(2)
 
     # Wait for highlight to cycle through types
     for cycle in range(4):
@@ -475,7 +485,7 @@ def test_explore_profile_cta():
     """Test the 'Explore full profile' CTA that opens DetailsUnlockScreen."""
     log("=== Testing Explore Full Profile CTA ===")
     navigate_to_tab("My Cosmos")
-    time.sleep(1)
+    time.sleep(2)
     try:
         explore_btn = driver.find_element(AppiumBy.ANDROID_UIAUTOMATOR,
             'new UiSelector().textContains("Explore full profile")')
@@ -491,40 +501,92 @@ def test_explore_profile_cta():
         log(f"Explore full profile CTA failed: {e}")
 
 def test_paywall_screen():
-    """Test the Paywall screen triggered from locked astrology sections."""
+    """Test the Paywall screen triggered from a locked premium theme."""
     log("=== Testing Paywall Screen ===")
     navigate_to_tab("My Cosmos")
-    time.sleep(1)
+    time.sleep(2)
 
-    # Open details and tap a locked premium section
-    test_explore_profile_cta()
+    safe_tap(AppiumBy.ACCESSIBILITY_ID, "Settings", "Settings button")
     time.sleep(1)
 
     try:
-        # Scroll to find a locked section (e.g., Dasha, Ba Zi)
-        locked_section = driver.find_element(AppiumBy.ANDROID_UIAUTOMATOR,
-            'new UiScrollable(new UiSelector().scrollable(true)).scrollIntoView(new UiSelector().textContains("Unlock"))')
-        locked_section.click()
-        log("Tapped locked premium section")
-        interactions_tested.append("Locked premium section tap")
+        # Scroll to theme packs and tap a locked theme (e.g., Vaporwave)
+        locked_theme = driver.find_element(AppiumBy.ANDROID_UIAUTOMATOR,
+            'new UiScrollable(new UiSelector().scrollable(true)).scrollIntoView(new UiSelector().textContains("Vaporwave"))')
+        log("Found Vaporwave theme (locked)")
+        interactions_tested.append("Vaporwave theme row found")
+        time.sleep(0.3)
+        safe_screenshot("settings_vaporwave_locked.png")
+
+        locked_theme.click()
+        log("Tapped locked Vaporwave theme")
+        interactions_tested.append("Locked theme tap")
         time.sleep(2)
-        safe_screenshot("paywall_astrology_locked.png")
-        screens_tested.append("Paywall (astrology locked)")
+        safe_screenshot("paywall_screen.png")
+        screens_tested.append("Paywall Screen")
 
         # Verify paywall elements
         source = driver.page_source
-        if "Unlock Your Full Cosmic Profile" in source:
+        if "Unlock the full cosmos" in source:
             log("Paywall title found")
             interactions_tested.append("Paywall title visible")
-        if "7-Day Free Trial" in source:
-            log("Free trial CTA found")
-            interactions_tested.append("Paywall free trial CTA visible")
+        if "Subscribe" in source:
+            log("Subscribe CTA found")
+            interactions_tested.append("Paywall subscribe CTA visible")
+        if "Restore purchases" in source:
+            log("Restore purchases found")
+            interactions_tested.append("Paywall restore purchases visible")
 
-        # Dismiss paywall
         go_back()
         time.sleep(0.5)
     except Exception as e:
         log(f"Paywall test failed: {e}")
+
+def test_badges_flow():
+    """Test the Badges screen reachable from My Cosmos header."""
+    log("=== Testing Badges Flow ===")
+    navigate_to_tab("My Cosmos")
+    time.sleep(2)
+
+    safe_tap(AppiumBy.ACCESSIBILITY_ID, "Open badges", "Badges button")
+    time.sleep(2)
+    safe_screenshot("badges_screen_default.png")
+    screens_tested.append("Badges Screen")
+
+    source = driver.page_source
+    if "Badges" in source:
+        log("Badges header found")
+        interactions_tested.append("Badges header visible")
+    if "unlocked" in source.lower():
+        log("Badge unlock count found")
+        interactions_tested.append("Badge unlock count visible")
+
+    # Interaction: Toggle Grid / Timeline view
+    try:
+        timeline_btn = driver.find_element(AppiumBy.ANDROID_UIAUTOMATOR,
+            'new UiSelector().text("Timeline")')
+        timeline_btn.click()
+        log("Tapped Timeline view mode")
+        interactions_tested.append("Badges Timeline view")
+        time.sleep(1)
+        safe_screenshot("badges_timeline_view.png")
+        screens_tested.append("Badges (Timeline view)")
+    except Exception as e:
+        log(f"Badges Timeline toggle failed: {e}")
+
+    try:
+        grid_btn = driver.find_element(AppiumBy.ANDROID_UIAUTOMATOR,
+            'new UiSelector().text("Grid")')
+        grid_btn.click()
+        log("Tapped Grid view mode")
+        interactions_tested.append("Badges Grid view")
+        time.sleep(1)
+        safe_screenshot("badges_grid_view.png")
+    except Exception as e:
+        log(f"Badges Grid toggle failed: {e}")
+
+    go_back()
+    time.sleep(0.5)
 
 def test_compatibility_tab():
     """Test the Match (Compatibility) tab — v2.0 deep-link auto-populate."""
@@ -536,8 +598,6 @@ def test_compatibility_tab():
 
     # Interaction 1: Select relationship type
     try:
-        driver.swipe(540, 800, 540, 1600, 500)
-        time.sleep(0.3)
         romance_btn = driver.find_element(AppiumBy.ANDROID_UIAUTOMATOR,
             'new UiSelector().text("Romantic")')
         romance_btn.click()
@@ -559,7 +619,10 @@ def test_compatibility_tab():
     except Exception as e:
         log(f"Person A input failed: {e}")
 
-    tap_by_text("Tap to set birthday", "Person A date picker", scroll=True)
+    hide_keyboard()
+    time.sleep(0.3)
+
+    tap_by_text("Tap to set birthday", "Person A date picker", scroll=False)
     time.sleep(1)
     try:
         ok_btn = driver.find_element(AppiumBy.ANDROID_UIAUTOMATOR,
@@ -589,6 +652,9 @@ def test_compatibility_tab():
             time.sleep(0.3)
     except Exception as e:
         log(f"Person B input failed: {e}")
+
+    hide_keyboard()
+    time.sleep(0.3)
 
     try:
         date_rows = driver.find_elements(AppiumBy.ANDROID_UIAUTOMATOR,
@@ -715,7 +781,7 @@ def test_settings_screen():
     """Test the Settings screen — v2.0 fortune notification time picker."""
     log("=== Testing Settings Screen ===")
     navigate_to_tab("My Cosmos")
-    time.sleep(0.5)
+    time.sleep(2)  # v2.0: StaggeredEnter animations
     safe_tap(AppiumBy.ACCESSIBILITY_ID, "Settings", "Settings button")
     time.sleep(1)
     safe_screenshot("settings_default.png")
@@ -831,10 +897,8 @@ def test_edge_cases():
 
     # Edge case 1: Calculator with empty name
     navigate_to_tab("My Cosmos")
-    time.sleep(0.5)
+    time.sleep(2)
     try:
-        driver.swipe(540, 800, 540, 1800, 500)
-        time.sleep(0.3)
         edit_text = driver.find_element(AppiumBy.ANDROID_UIAUTOMATOR,
             'new UiSelector().className("android.widget.EditText")')
         edit_text.clear()
@@ -940,7 +1004,8 @@ def generate_report():
         f.write("- Celebrity birthday match card + share\n")
         f.write("- Daily cosmic fortune push notification settings\n")
         f.write("- Grace period banner for lapsed subscriptions\n")
-        f.write("- Paywall screen (premium-gated astrology)\n")
+        f.write("- Paywall screen (locked premium theme trigger)\n")
+        f.write("- Badges screen (Grid + Timeline view toggle)\n")
         f.write("- Deep-link profile sharing + auto-populate\n")
         f.write("- Indian State dropdown for birth location\n")
         f.write("- Restore purchases in Settings\n\n")
@@ -949,7 +1014,7 @@ def generate_report():
         f.write("- This report was generated automatically via Appium UI testing.\n")
         f.write("- Some interactions may depend on network state (ads) or system permissions.\n")
         f.write("- Screens with dynamic content (ads, live timers, rotating highlights) may vary between runs.\n")
-        f.write("- v2.0 removed: Badges tab (now inside My Cosmos), Hindi language toggle (system locale only), ASCII Art share.\n")
+        f.write("- v2.0 changes: Badges moved to My Cosmos header, Hindi locale toggle removed (system locale only), ASCII Art share removed.\n")
 
     log(f"Report generated: {report_path}")
 
@@ -1006,6 +1071,7 @@ def main():
         test_rotating_highlight()
         test_explore_profile_cta()
         test_paywall_screen()
+        test_badges_flow()
         test_compatibility_tab()
         test_reminders_tab()
         test_timeline_tab()

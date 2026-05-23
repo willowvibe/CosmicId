@@ -81,6 +81,7 @@ private const val PRIVACY_POLICY_URL = "https://willowvibe.com/agereveal/privacy
 fun SettingsScreen(
     onBack: () -> Unit,
     settingsViewModel: SettingsViewModel = hiltViewModel(),
+    onOpenPaywall: () -> Unit = {},
 ) {
     val themeMode by settingsViewModel.themeMode.collectAsState()
     val languageTag by settingsViewModel.languageTag.collectAsState()
@@ -415,10 +416,13 @@ fun SettingsScreen(
                                 )
                                 .clickable(
                                     role = Role.Button,
-                                    enabled = !locked,
                                     onClick = {
-                                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                        settingsViewModel.setThemePack(theme.id)
+                                        if (locked) {
+                                            onOpenPaywall()
+                                        } else {
+                                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                            settingsViewModel.setThemePack(theme.id)
+                                        }
                                     },
                                 )
                                 .padding(horizontal = 12.dp, vertical = 10.dp),
