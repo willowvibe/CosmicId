@@ -38,6 +38,7 @@ import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -131,6 +132,7 @@ fun CalculatorScreen(
     onShareCard: (ShareCardGenerator.CardTheme, ShareFormat) -> Unit,
     onOpenDetails: () -> Unit = {},
     onOpenSettings: () -> Unit = {},
+    onOpenBadges: () -> Unit = {},
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val ticker by viewModel.tickerSeconds.collectAsState()
@@ -249,6 +251,20 @@ fun CalculatorScreen(
                         Icon(
                             Icons.Default.Refresh,
                             contentDescription = "Refresh calculations",
+                            tint = WarmInkDim,
+                            modifier = Modifier.size(14.dp),
+                        )
+                    }
+                    IconButton(
+                        onClick = onOpenBadges,
+                        modifier = Modifier
+                            .size(32.dp)
+                            .clip(CircleShape)
+                            .background(WarmSurface),
+                    ) {
+                        Icon(
+                            Icons.Default.EmojiEvents,
+                            contentDescription = "Open badges",
                             tint = WarmInkDim,
                             modifier = Modifier.size(14.dp),
                         )

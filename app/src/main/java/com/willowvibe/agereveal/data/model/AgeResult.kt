@@ -49,6 +49,9 @@ data class AgeResult(
     // Planetary positions summary
     val planetPositions: List<Pair<String, String>> = emptyList(),
 
+    // Planetary dignities (Vedic avastha)
+    val planetDignities: List<com.willowvibe.agereveal.domain.PlanetaryDignityCalculator.PlanetaryDignity> = emptyList(),
+
     // Vimshottari Dasha (unlockable)
     val dashaInfo: String = "",
 

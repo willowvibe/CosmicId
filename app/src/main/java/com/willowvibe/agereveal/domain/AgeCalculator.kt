@@ -25,6 +25,7 @@ class AgeCalculator @Inject constructor(
     private val lunarConverter: LunarCalendarConverter,
     private val percentileCalculator: AgePercentileCalculator,
     private val parallelUniverseGenerator: ParallelUniverseGenerator,
+    private val planetaryDignityCalculator: PlanetaryDignityCalculator,
 ) {
 
     /**
@@ -87,6 +88,10 @@ class AgeCalculator @Inject constructor(
             chineseZodiac = if (includeUnlocked) zodiacCalculator.getChineseZodiac(birthDate) else "",
             chineseStemBranch = if (includeUnlocked) zodiacCalculator.getChineseStemBranch(birthDate) else "",
             planetPositions = if (includeUnlocked) zodiacCalculator.getPlanetPositions(birthDate, birthTime, zoneOffset) else emptyList(),
+            planetDignities = if (includeUnlocked) {
+                val longitudes = zodiacCalculator.getPlanetLongitudes(birthDate, birthTime, zoneOffset)
+                planetaryDignityCalculator.computeDignities(longitudes)
+            } else emptyList(),
             dashaInfo = if (includeUnlocked) dashaCalculator.getDashaInfo(birthDate, birthTime, zoneOffset) else "",
             baZiInfo = if (includeUnlocked) baZiCalculator.getBaZiSummary(birthDate) else "",
             lunarBirthday = if (includeUnlocked) lunarConverter.toLunarString(birthDate) else "",

@@ -339,6 +339,9 @@ private fun WesternTab(result: AgeResult) {
 @Composable
 private fun VedicTab(result: AgeResult, hasLocation: Boolean) {
     Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
+        if (result.planetDignities.isNotEmpty()) {
+            PlanetDignityCard(dignities = result.planetDignities)
+        }
         if (result.rashi.isNotEmpty()) {
             AgeCard {
                 AgeLabel(text = "RASHI (SIDEREAL SUN SIGN)")
@@ -637,6 +640,40 @@ private fun BaZiRow(info: String) {
 // ─────────────────────────────────────────────────────────────────────────────
 // Planet positions table
 // ─────────────────────────────────────────────────────────────────────────────
+
+@Composable
+private fun PlanetDignityCard(dignities: List<com.willowvibe.agereveal.domain.PlanetaryDignityCalculator.PlanetaryDignity>) {
+    val colorForDignity: (com.willowvibe.agereveal.domain.PlanetaryDignityCalculator.Dignity) -> androidx.compose.ui.graphics.Color = {
+        when (it) {
+            com.willowvibe.agereveal.domain.PlanetaryDignityCalculator.Dignity.EXALTED -> WarmTeal
+            com.willowvibe.agereveal.domain.PlanetaryDignityCalculator.Dignity.MOOLATRIKONA -> WarmTeal.copy(alpha = 0.75f)
+            com.willowvibe.agereveal.domain.PlanetaryDignityCalculator.Dignity.OWN_HOUSE -> WarmInk
+            com.willowvibe.agereveal.domain.PlanetaryDignityCalculator.Dignity.NEUTRAL -> WarmInkDim
+            com.willowvibe.agereveal.domain.PlanetaryDignityCalculator.Dignity.DEBILITATED -> androidx.compose.ui.graphics.Color(0xFFE57373)
+        }
+    }
+    AgeCard {
+        AgeLabel(text = "PLANETARY DIGNITIES")
+        Spacer(Modifier.height(4.dp))
+        dignities.forEach { dignity ->
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                AgeBody(text = dignity.planetName)
+                Text(
+                    text = "${dignity.dignity.label}${dignity.proximityHint}",
+                    style = androidx.compose.material3.MaterialTheme.typography.labelSmall,
+                    color = colorForDignity(dignity.dignity),
+                )
+            }
+            if (dignity !== dignities.last()) {
+                Spacer(Modifier.height(4.dp))
+            }
+        }
+    }
+}
 
 @Composable
 private fun PlanetPositionTable(positions: List<Pair<String, String>>) {
