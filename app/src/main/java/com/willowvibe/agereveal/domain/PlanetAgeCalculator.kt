@@ -53,7 +53,9 @@ class PlanetAgeCalculator @Inject constructor() {
     /** Generate a shareable sentence. E.g. "On Mars, John is only 14 years old. 🚀" */
     fun shareSentence(name: String, planet: CelestialBody, ageYears: Double): String {
         val formatted = formatPlanetAge(ageYears)
-        return "On ${planet.displayName}, $name is only $formatted ${if (ageYears > 1.0) "years" else "year"} old. ${planet.emoji}"
+        val verb = if (name == "You") "are" else "is"
+        val noun = if (ageYears == 1.0) "year" else "years"
+        return "On ${planet.displayName}, $name $verb only $formatted $noun old. ${planet.emoji}"
     }
 }
 

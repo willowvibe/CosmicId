@@ -205,7 +205,7 @@ private fun PersonCard(
     isOlder: Boolean,
 ) {
     var showDialog by remember { mutableStateOf(false) }
-    val initialMillis = (selectedDate ?: LocalDate.now())
+    val initialMillis = (selectedDate ?: LocalDate.now().minusYears(20))
         .atStartOfDay(ZoneId.of("UTC")).toInstant().toEpochMilli()
     val datePickerState = rememberDatePickerState(initialSelectedDateMillis = initialMillis)
 

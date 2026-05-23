@@ -57,6 +57,7 @@ import com.willowvibe.agereveal.ui.theme.WarmAmber
 import com.willowvibe.agereveal.ui.theme.WarmBlack
 import com.willowvibe.agereveal.ui.theme.WarmInk
 import com.willowvibe.agereveal.ui.theme.WarmInkDim
+import com.willowvibe.agereveal.ui.theme.WarmInkMute
 import com.willowvibe.agereveal.ui.theme.WarmSurface
 import com.willowvibe.agereveal.ui.theme.WarmSurfaceSoft
 import com.willowvibe.agereveal.analytics.AnalyticsManager
@@ -122,8 +123,8 @@ fun OnboardingScreen(
             when (currentStep) {
                 0 -> StepNameAndBirthDate(
                     onNameChanged = viewModel::onNameChanged,
-                    onDateSelected = { date ->
-                        viewModel.onBirthDateSelected(date)
+                    onDateSelected = viewModel::onBirthDateSelected,
+                    onNext = {
                         viewModel.logOnboardingStep1()
                         step = 1
                     },
@@ -153,13 +154,15 @@ fun OnboardingScreen(
 private fun StepNameAndBirthDate(
     onNameChanged: (String) -> Unit,
     onDateSelected: (LocalDate) -> Unit,
+    onNext: () -> Unit,
 ) {
     var name by remember { mutableStateOf("") }
     var showDialog by remember { mutableStateOf(false) }
     var selectedDate by remember { mutableStateOf<LocalDate?>(null) }
-    val todayMillis = LocalDate.now()
+    val defaultDate = LocalDate.now().minusYears(20)
+    val defaultMillis = defaultDate
         .atStartOfDay(ZoneId.of("UTC")).toInstant().toEpochMilli()
-    val datePickerState = rememberDatePickerState(initialSelectedDateMillis = todayMillis)
+    val datePickerState = rememberDatePickerState(initialSelectedDateMillis = defaultMillis)
 
     if (showDialog) {
         DatePickerDialog(
@@ -211,7 +214,7 @@ private fun StepNameAndBirthDate(
                 name = it
                 onNameChanged(it)
             },
-            placeholder = { Text("Your name", color = WarmInkDim) },
+            placeholder = { Text("Your name") },
             singleLine = true,
             modifier = Modifier.fillMaxWidth(),
             textStyle = MaterialTheme.typography.bodyLarge.copy(color = WarmInk),
@@ -219,6 +222,8 @@ private fun StepNameAndBirthDate(
                 focusedBorderColor = WarmTeal,
                 unfocusedBorderColor = WarmSurfaceSoft,
                 cursorColor = WarmTeal,
+                focusedPlaceholderColor = WarmInkMute,
+                unfocusedPlaceholderColor = WarmInkMute,
             ),
         )
 
@@ -237,6 +242,20 @@ private fun StepNameAndBirthDate(
                 fontSize = if (selectedDate != null) 22.sp else 16.sp,
                 color = if (selectedDate != null) WarmTeal else WarmInkDim,
             )
+        }
+
+        Spacer(Modifier.height(16.dp))
+
+        Button(
+            onClick = onNext,
+            enabled = selectedDate != null,
+            modifier = Modifier.fillMaxWidth(),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = WarmTeal,
+                contentColor = WarmBlack,
+            ),
+        ) {
+            Text("Next", fontWeight = FontWeight.SemiBold)
         }
     }
 }

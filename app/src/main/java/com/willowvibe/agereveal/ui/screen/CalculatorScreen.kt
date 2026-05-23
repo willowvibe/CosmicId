@@ -291,7 +291,7 @@ fun CalculatorScreen(
                     .weight(1f)
                     .verticalScroll(rememberScrollState())
                     .padding(horizontal = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(10.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
                 // ── Person name input ─────────────────────────────────────────
                 OutlinedTextField(
@@ -333,7 +333,7 @@ fun CalculatorScreen(
                 )
 
                 uiState.result?.let { result ->
-                    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
                         // Hero stagger entrance — each block fades in with a slight delay
                         StaggeredEnter(delayMillis = 0) { ClockFaceHero(result) }
                         StaggeredEnter(delayMillis = 70) { SecondsStrip(result) }
@@ -1415,6 +1415,8 @@ private fun PlanetAgeHighlight(result: AgeResult, name: String) {
     }
     if (planetAge == null) return
     val displayName = name.ifEmpty { "You" }
+    val verb = if (displayName == "You") "are" else "is"
+    val noun = if (planetAge.ageYears == 1.0) "year" else "years"
     val formatted = calculator.formatPlanetAge(planetAge.ageYears)
     AgeCard {
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -1423,7 +1425,7 @@ private fun PlanetAgeHighlight(result: AgeResult, name: String) {
             Column(modifier = Modifier.weight(1f)) {
                 AgeLabel(text = "PLANET AGE")
                 AgeBody(
-                    text = "On Mars, $displayName is only $formatted ${if (planetAge.ageYears > 1.0) "years" else "year"} old",
+                    text = "On Mars, $displayName $verb only $formatted $noun old",
                     color = WarmInk,
                 )
             }

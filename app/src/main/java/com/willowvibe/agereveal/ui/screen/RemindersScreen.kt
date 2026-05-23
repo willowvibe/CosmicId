@@ -514,7 +514,7 @@ private fun AddBirthdaySheet(
     var showDatePicker by remember { mutableStateOf(false) }
 
     val datePickerState = rememberDatePickerState(
-        initialSelectedDateMillis = LocalDate.now()
+        initialSelectedDateMillis = LocalDate.now().minusYears(20)
             .atStartOfDay(ZoneId.of("UTC")).toInstant().toEpochMilli(),
     )
 
