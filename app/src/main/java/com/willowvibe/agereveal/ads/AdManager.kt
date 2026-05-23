@@ -19,7 +19,8 @@ class AdManager @Inject constructor(
     @ApplicationContext private val context: Context,
 ) {
     companion object {
-        // Test ad unit ID (safe to commit — will not generate real revenue)
+        // TODO(playstore): Replace with production banner ad unit ID before release.
+        // Test ID (safe to commit — generates no revenue).
         const val BANNER_AD_UNIT_ID = "ca-app-pub-3940256099942544/6300978111"
     }
 }

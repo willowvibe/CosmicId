@@ -45,6 +45,11 @@ object ProfileDeepLinkGenerator {
 
     fun parse(uri: Uri): ParsedProfile? {
         val encoded = uri.lastPathSegment ?: return null
+        return parse(encoded)
+    }
+
+    /** Parse from the raw Base64 payload string (no Android Uri required). */
+    fun parse(encoded: String): ParsedProfile? {
         return runCatching {
             val json = Base64.getUrlDecoder().decode(encoded).toString(Charsets.UTF_8)
             val date = extractValue(json, "d")?.let { LocalDate.parse(it) } ?: return null

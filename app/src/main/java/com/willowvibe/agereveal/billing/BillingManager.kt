@@ -86,7 +86,7 @@ class BillingManager @Inject constructor(
                         queryExistingPurchases()
                     }
                 } else {
-                    _error.value = billingErrorMessage(result.responseCode)
+                    _error.value = BillingUtils.billingErrorMessage(result.responseCode)
                 }
             }
             override fun onBillingServiceDisconnected() {
@@ -141,7 +141,7 @@ class BillingManager @Inject constructor(
         } else if (result.responseCode == BillingClient.BillingResponseCode.USER_CANCELED) {
             // No-op: user cancelled is not an error
         } else {
-            _error.value = billingErrorMessage(result.responseCode)
+            _error.value = BillingUtils.billingErrorMessage(result.responseCode)
         }
     }
 
@@ -167,7 +167,7 @@ class BillingManager @Inject constructor(
             val trialDays = list.firstNotNullOfOrNull { extractTrialDays(it) } ?: 0
             userPrefs.setTrialDurationDays(trialDays)
         } else {
-            _error.value = billingErrorMessage(result.billingResult.responseCode)
+            _error.value = BillingUtils.billingErrorMessage(result.billingResult.responseCode)
         }
     }
 
@@ -184,7 +184,7 @@ class BillingManager @Inject constructor(
             handlePurchases(result.purchasesList ?: emptyList())
             _error.value = null
         } else {
-            _error.value = billingErrorMessage(result.billingResult.responseCode)
+            _error.value = BillingUtils.billingErrorMessage(result.billingResult.responseCode)
         }
     }
 
@@ -199,7 +199,7 @@ class BillingManager @Inject constructor(
                         .build()
                     billingClient?.acknowledgePurchase(params) { ackResult ->
                         if (ackResult.responseCode != BillingClient.BillingResponseCode.OK) {
-                            _error.value = billingErrorMessage(ackResult.responseCode)
+                            _error.value = BillingUtils.billingErrorMessage(ackResult.responseCode)
                         }
                     }
                 }
@@ -265,21 +265,7 @@ class BillingManager @Inject constructor(
         val freePhase = offer.pricingPhases.pricingPhaseList.firstOrNull {
             it.priceAmountMicros == 0L
         } ?: return null
-        return parseBillingPeriodToDays(freePhase.billingPeriod)
-    }
-
-    /** Converts an ISO 8601 billing period (e.g. "P7D", "P1W", "P1M") to an approximate day count. */
-    private fun parseBillingPeriodToDays(period: String): Int? {
-        val regex = Regex("""P(\d+)([DWMY])""")
-        val match = regex.matchEntire(period.uppercase()) ?: return null
-        val value = match.groupValues[1].toIntOrNull() ?: return null
-        return when (match.groupValues[2]) {
-            "D" -> value
-            "W" -> value * 7
-            "M" -> value * 30
-            "Y" -> value * 365
-            else -> null
-        }
+        return BillingUtils.parseBillingPeriodToDays(freePhase.billingPeriod)
     }
 
     private suspend fun updateTrialDaysRemaining() {
@@ -294,18 +280,4 @@ class BillingManager @Inject constructor(
         _trialDaysRemaining.value = if (remaining > 0) remaining else null
     }
 
-    private fun billingErrorMessage(code: Int): String = when (code) {
-        BillingClient.BillingResponseCode.SERVICE_TIMEOUT -> "Play Store timed out. Please retry."
-        BillingClient.BillingResponseCode.SERVICE_UNAVAILABLE -> "Can't reach Play Store. Check your connection."
-        BillingClient.BillingResponseCode.BILLING_UNAVAILABLE -> "Billing is not available on this device."
-        BillingClient.BillingResponseCode.ITEM_UNAVAILABLE -> "This subscription is not available."
-        BillingClient.BillingResponseCode.DEVELOPER_ERROR -> "Billing configuration error."
-        BillingClient.BillingResponseCode.ERROR -> "An unexpected billing error occurred."
-        BillingClient.BillingResponseCode.ITEM_ALREADY_OWNED -> "You already own this subscription."
-        BillingClient.BillingResponseCode.ITEM_NOT_OWNED -> "Subscription not found."
-        BillingClient.BillingResponseCode.FEATURE_NOT_SUPPORTED -> "This feature is not supported on your device."
-        BillingClient.BillingResponseCode.SERVICE_DISCONNECTED -> "Play Store disconnected. Reconnecting..."
-        BillingClient.BillingResponseCode.USER_CANCELED -> "Purchase cancelled."
-        else -> "Billing error (code $code). Please retry."
-    }
 }

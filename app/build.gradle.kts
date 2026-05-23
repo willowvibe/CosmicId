@@ -31,7 +31,7 @@ android {
         minSdk = 26  // java.time is native on API 26+; use desugaring below for API 21+
         //noinspection OldTargetApi
         targetSdk = 35
-        versionCode = 2
+        versionCode = 8  // must increment for every release; v1.0.7 was 7
         // Read version from VERSION file
         val versionFile = File(projectDir.absolutePath + "/../VERSION")
         versionName = if (versionFile.exists()) {
@@ -46,8 +46,10 @@ android {
         // Per-app language support — enables system-level language picker integration
         resourceConfigurations += listOf("en", "hi", "ta", "te", "kn", "ko", "vi", "zh-rCN")
 
-        // Passing AdMob App ID via manifest placeholder (set real ID in local.properties or CI)
-        manifestPlaceholders["admobAppId"] = "ca-app-pub-3940256099942544~3347511713" // test ID
+        // TODO(playstore): Replace with production AdMob App ID before release.
+        // Test ID: ca-app-pub-3940256099942544~3347511713
+        // Production ID goes here — set via local.properties `admobAppId=...` or CI env var.
+        manifestPlaceholders["admobAppId"] = "ca-app-pub-3940256099942544~3347511713"
     }
 
     signingConfigs {
