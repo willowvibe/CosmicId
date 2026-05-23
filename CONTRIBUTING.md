@@ -62,7 +62,8 @@ When filing a bug report, include:
 - An Android device or emulator running **API 26+**
 
 ### Recent Updates
-- **v2.0 (2026-05-22):** Beta build — freemium subscription model (Billing 7.1.1), 3-step onboarding, deep-link profile sharing, celebrity matching, daily fortune push notifications, Firebase Analytics MVP, tabbed DetailsUnlockScreen (Overview | Western | Vedic | Chinese), progressive disclosure UI, Indian state dropdown, grace period for lapsed subscriptions. Rewarded/interstitial ads removed. Remaining post-beta: animated MP4 export, WhatsApp sticker pack, cosmic twins discovery, cosmic year report notification.
+- **v2.0 (2026-05-22):** Production rollout in progress. Beta release with freemium subscription model (Billing 7.1.1), 3-step onboarding, deep-link profile sharing, celebrity matching, daily fortune push notifications, Firebase Analytics MVP, tabbed DetailsUnlockScreen (Overview | Western | Vedic | Chinese), progressive disclosure UI, Indian state dropdown, grace period for lapsed subscriptions, premium theme packs. Rewarded/interstitial ads removed.
+- **Phase 6 (Active):** Platform Ecosystem development — Cloud Backup (Firebase Firestore), Wear OS Companion, Lock Screen Widget, iOS Port.
 - **v0.9.1 (2026-04-23):** Phase 3 complete.
 
 ### Steps

@@ -29,7 +29,7 @@ Cosmic ID is a native Android app (Kotlin + Jetpack Compose) that calculates you
 | **Billing** (`billing/`) | Google Play Billing 7+ wrapper (`BillingManager.kt`) |
 | **Ads** (`ads/`) | Banner-only AdManager (rewarded + interstitial removed in v2.0) |
 | **Notifications** (`notification/`) | WorkManager workers + schedulers |
-| **Widget** (`widget/`) | Jetpack Glance widgets (5 variants: birthday, wide, seconds, lifespan, milestone ring) |
+| **Widget** (`widget/`) | Jetpack Glance widgets: `BirthdayGlanceWidget`, `WideGlanceWidget`, `SecondsCounterGlanceWidget`, `LifespanGlanceWidget`, `MilestoneRingGlanceWidget`, `BirthdayCountGlanceWidget` |
 | **Analytics** (`analytics/`) | Firebase Analytics (`AnalyticsManager.kt`) |
 | **AI** (`ai/`) | AI service abstraction layer (`AiService`, `NoOpAiServiceImpl`, Hilt module) |
 | **Utilities** (`util/`) | CSV export, locale manager, review helper |
@@ -54,7 +54,8 @@ Cosmic ID is a native Android app (Kotlin + Jetpack Compose) that calculates you
 - **Background:** WorkManager
 - **Widget:** Jetpack Glance
 - **Ads:** Google AdMob (banner only on free tier; test IDs bundled)
-- **Billing:** Google Play Billing Library 7+ (subscriptions: `premium_monthly`, `premium_yearly`)
+- **Billing:** Google Play Billing Library 7+ (subscriptions: `premium_monthly` ₹49, `premium_yearly` ₹299; 7-day trial)
+- **Themes:** Material 3 + premium theme packs (Vaporwave, Cottagecore, Y2K, Dark Academia, Cyberpunk)
 - **Astro maths:** Meeus low-precision ephemeris + Lahiri ayanamsa
 
 ---
@@ -65,8 +66,14 @@ Cosmic ID is a native Android app (Kotlin + Jetpack Compose) that calculates you
 # Build debug APK
 ./gradlew :app:assembleDebug
 
-# Run unit tests
+# Run unit tests (JVM)
 ./gradlew testDebugUnitTest
+
+# Run UI tests (instrumented)
+./gradlew connectedAndroidTest
+
+# Run all tests
+./gradlew check
 
 # Run lint
 ./gradlew lint
@@ -139,6 +146,11 @@ Cosmic ID is a native Android app (Kotlin + Jetpack Compose) that calculates you
 ### Billing
 - `BillingManager.kt` — Google Play Billing 7+ wrapper; SKU `premium_monthly` (₹49) + `premium_yearly` (₹299); 7-day free trial; purchase acknowledge + DataStore sync
 
+### Premium Themes (v2.0)
+- `PremiumTheme.kt` — Enum: `Vaporwave`, `Cottagecore`, `Y2K`, `DarkAcademia`, `Cyberpunk`
+- `ui/theme/Theme.kt` — Dynamic `ColorScheme` based on selected theme; premium-gated
+- `SettingsScreen.kt` → Appearance section — theme pack picker with lock icons
+
 ---
 
 ## Navigation Tabs
@@ -192,6 +204,21 @@ Onboarding is the start destination on first launch.
 - **Per-app language** changes app locale and breaks subsequent selectors. Isolate locale tests.
 - **Notification shade** can appear on launch after `pm clear` — detect via `com.android.systemui` in page source and press Back.
 
+### Testing Commands
+| Type | Command | Notes |
+|------|---------|-------|
+| Unit tests | `./gradlew testDebugUnitTest` | JVM tests, no Android framework |
+| UI tests | `./gradlew connectedAndroidTest` | Instrumented tests on device/emulator |
+| All tests | `./gradlew check` | Runs both unit and instrumented tests |
+
+### Appium Automated UI Testing
+The project includes an Appium E2E suite in `screenshots/walkthrough.py`. Update required for v2.0 selectors:
+- Onboarding flow (blocks tests until completed)
+- Paywall screen (new premium upsell)
+- "My Cosmos" tab rename (was "You")
+- Badges moved from bottom nav to My Cosmos section
+- Hindi locale toggle removed (system locale only)
+
 ### Ads
 - All bundled AdMob IDs are Google test values — no revenue, no account needed.
 - Replace before Play Store release (see `TASKS.md §1`).
@@ -223,10 +250,61 @@ Onboarding is the start destination on first launch.
 
 ## Current Session Context
 
-- Branch: `beta-release-v2`
-- Recently added: Celebrity birthday matching (375 curated entries), free trial UX chip, Indian state dropdown, billing error handling, restore purchases flow, progressive disclosure UI, tabbed DetailsUnlockScreen (Overview | Western | Vedic | Chinese), CalculatorScreen refresh button, Firebase Analytics, daily fortune push notifications
-- **2026-05-22 audit:** Horoscope engines audited (Western/Vedic/Chinese — all mathematically sound). Western compatibility fixed to use astronomical ephemeris instead of hardcoded date ranges. SharedPreferences consolidated into UserPreferencesRepository with DataStore mirroring. ViewModels cleansed of Context references. AI integration abstraction layer created (ai/ package). VERSION bumped to 2.0.0.
-- Package ID: `com.willowvibe.cosmicid` (applicationId changed; namespace `com.willowvibe.agereveal` kept for source compatibility)
-- Display name: Cosmic ID
-- Version: v2.0.0
-- Build compiles and all 137 unit tests pass
+- **Current branch:** `feat/smaller-features-v2`
+- **Current phase:** Phase 6 — Platform Ecosystem (Planned) / Post-v2.0
+- **v2.0 release:** 2026-05-22 — Beta complete (Branch: `beta-release-v2`); production rollout pending
+- **Active development:** Phase 6 features (Cloud Backup, Wear OS, iOS port) — see [roadmap.md](roadmap.md)
+
+**Recently added in v2.0:**
+- Celebrity birthday matching (375 curated entries)
+- Free trial UX chip (7-day trial, N days left indicator)
+- Indian state dropdown with centroid coordinates
+- Billing error handling with human-readable messages
+- Restore purchases flow (PaywallScreen + Settings)
+- Progressive disclosure UI (hero counter + rotating highlight + DetailsUnlockScreen tabs)
+- Tabbed DetailsUnlockScreen (Overview | Western | Vedic | Chinese)
+- CalculatorScreen refresh button
+- Firebase Analytics MVP (onboarding, paywall, share, deep-link, purchase events)
+- Daily fortune push notifications
+- Premium theme packs (Vaporwave, Cottagecore, Y2K, Dark Academia, Cyberpunk)
+- WhatsApp sticker pack ContentProvider
+- Cosmic Year Report notification
+- 7-day free trial grace period tracking
+
+**v2.0 audit fixes (2026-05-22):**
+- Western compatibility now uses astronomical ephemeris (not hardcoded date ranges)
+- SharedPreferences consolidated into UserPreferencesRepository with DataStore mirroring
+- ViewModels cleansed of direct Context references
+- Horoscope engines audited (Western/Vedic/Chinese — all mathematically sound)
+
+**Package ID:** `com.willowvibe.cosmicid` (applicationId changed; namespace `com.willowvibe.agereveal` kept for source compatibility)  
+**Display name:** Cosmic ID  
+**Version:** 2.0.0 (production rollout in progress)  
+**Build status:** Compiles and all 137 unit tests pass
+
+---
+
+## Next Development Phase (Phase 6)
+
+See [roadmap.md](roadmap.md) for details.
+
+| Feature | Status | Notes |
+|---------|--------|-------|
+| Cloud Backup (Firebase Firestore) | ⬜ Planned | Opt-in Google sign-in sync for saved profiles |
+| Wear OS Companion | ⬜ Planned | Live seconds counter, next-birthday complication |
+| Lock Screen Widget | ⬜ Planned | API 33+ `WIDGET_FEATURE_RECONFIGURABLE` |
+| iOS Port | ⬜ Planned | Flutter/React Native with WidgetKit |
+| Animated MP4 Export | ⬜ Deferred | 5-second Reels/TikTok video (deferred from v2.0) |
+| Cosmic Twins Discovery | ⬜ Deferred | Offline Rashi+Nakshatra matching (deferred from v2.0) |
+
+**Testing commands:**
+```bash
+# Unit tests (JVM)
+./gradlew testDebugUnitTest
+
+# UI tests (instrumented)
+./gradlew connectedAndroidTest
+
+# Run all tests
+./gradlew check
+```

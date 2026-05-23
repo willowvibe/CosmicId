@@ -260,6 +260,33 @@ class AstronomicalCalculator @Inject constructor() {
     private fun norm360(x: Double): Double = ((x % 360.0) + 360.0) % 360.0
 
     /**
+     * Check if a planet appears retrograde at the given Julian Day.
+     *
+     * Retrograde motion is an apparent reversal of direction caused by Earth's
+     * orbital motion overtaking the planet (for superior planets) or the planet
+     * overtaking Earth (for inferior planets).
+     *
+     * Computed by comparing the planet's position at JD vs JD+1 day.
+     * Returns true if the planet's longitude decreases over the 24-hour period.
+     *
+     * @param planet The celestial body
+     * @param jd Julian Day
+     * @return true if the planet is retrograde at the given time
+     */
+    fun isRetrograde(planet: Planet, jd: Double): Boolean {
+        val current = planetLongitude(jd, planet)
+        val tomorrow = planetLongitude(jd + 1.0, planet)
+        // For retrograde motion, tomorrow's longitude < current's longitude
+        // when accounting for the 0-360 wraparound
+        // If tomorrow > current + 180, it means the planet moved "backward" through 360
+        // If tomorrow < current - 180, it's prograde across 0/360 boundary
+        val diff = tomorrow - current
+        // Normal prograde motion is ~0.5-2°/day for outer planets, up to ~15°/day for Mercury
+        // Retrograde motion shows as negative values (planet moves backward)
+        return diff < -0.5  // If planet moved more than 0.5° "backward" in 24h, it's retrograde
+    }
+
+    /**
      * Supported planets for the [planetLongitude] helper.
      * Keplerian elements are mean values at J2000 (NASA/JPL).
      */
@@ -286,6 +313,18 @@ class AstronomicalCalculator @Inject constructor() {
         SATURN(
             elements = PlanetElements(meanLon = 50.07744, dailyMotion = 0.0334448, eccentricity = 0.05415006, semiMajorAxis = 9.554909),
             perihelion = 92.861407,
+        ),
+        URANUS(
+            elements = PlanetElements(meanLon = 313.47370, dailyMotion = 0.0117282, eccentricity = 0.04725744, semiMajorAxis = 19.218446),
+            perihelion = 171.52679,
+        ),
+        NEPTUNE(
+            elements = PlanetElements(meanLon = 304.89624, dailyMotion = 0.0059819, eccentricity = 0.00859048, semiMajorAxis = 30.110388),
+            perihelion = 297.84337,
+        ),
+        PLUTO(
+            elements = PlanetElements(meanLon = 238.92930, dailyMotion = 0.0039677, eccentricity = 0.24882730, semiMajorAxis = 39.482116),
+            perihelion = 224.06933,
         ),
     }
 

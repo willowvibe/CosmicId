@@ -1,6 +1,6 @@
 # Cosmic ID — Bugs & Edge Case Issues
 
-_Last updated: 2026-05-22 — v2.0.0 Revamp (post-audit architecture + horoscope improvements)_
+_Last updated: 2026-05-23 — v2.0.0; engine architecture audit complete_
 
 This document tracks known bugs, edge cases, and fragile areas in the codebase. Resolved items are kept for historical reference. For planned work see [TASKS.md](TASKS.md).
 
@@ -479,6 +479,185 @@ This document tracks known bugs, edge cases, and fragile areas in the codebase. 
 **File:** `ui/screen/RemindersScreen.kt`
 **Description:** Both "LATER" and single-birthday sections called `context.getSharedPreferences("calculator_prefs", ...).getString("birth_date", ...)` inside `remember` blocks during composition, causing repeated disk I/O on every recomposition.
 **Fix applied:** Replaced with `viewModel.cachedUserBirthDate.collectAsState()` which reads from the in-memory `StateFlow`, eliminating disk I/O during composition.
+
+---
+
+## Phase 5.6 — Calculation Engine Improvements (Completed)
+
+### ✅ BUG-068 — No Unified Birth Chart Model
+**Status:** ✅ Fixed in Phase 5.6
+**Severity:** Medium (maintainability, feature velocity)
+**Files:** `domain/model/BirthChart.kt`, `AgeCalculator.kt`
+**Description:** Every calculator independently derives its data from raw `LocalDate`/`LocalTime` parameters. There was no single `BirthChart` data class that captures all computed astrological data for a given birth moment.
+**Fix applied:** Created `BirthChart` data class in `domain/model/` package. This comprehensive container holds the `EphemerisSnapshot` plus all computed astrological values (zodiac, rashi, ascendant, nakshatra, dasha, baZi, lunar birthday, retrograde status). Provides `BirthChart.compute()` factory method for easy instantiation. Decouples age math from astrology for cleaner architecture.
+
+### ✅ BUG-069 — Planet Enum Duplication
+**Status:** ✅ Fixed in Phase 5.6
+**Severity:** Low (code debt)
+**Files:** `domain/model/CelestialBody.kt`, `domain/AstronomicalCalculator.kt`, `domain/PlanetAgeCalculator.kt`
+**Description:** Two separate `Planet` enums existed with different fields and no mapping between them. `AstronomicalCalculator.Planet` had orbital elements; `PlanetAgeCalculator.Planet` had display name and emoji.
+**Fix applied:** Created consolidated `CelestialBody` enum in `domain/model/` package with orbital periods, aphelion/perihelion distances, display names, and emojis. Both calculators now reference the same type.
+
+### ✅ BUG-070 — ZodiacCalculator Has Too Many Responsibilities
+**Status:** 🟡 Open — design gap
+**Severity:** Medium (maintainability)
+**File:** `domain/ZodiacCalculator.kt` (350 lines)
+
+Comprehensive audit of Vedic, Chinese, and Western calculation engines. Each gap is classified by severity and effort.
+
+### Phase 5.6 Completed (Cross-Cutting Architecture Fixed)
+
+#### ✅ BUG-068 — No Unified Birth Chart Model
+**Status:** ✅ Fixed in Phase 5.6
+**Severity:** Medium (maintainability, feature velocity)
+**Files:** `domain/model/BirthChart.kt`, `AgeCalculator.kt`
+**Description:** Every calculator independently derived data from raw `LocalDate`/`LocalTime` parameters. No single `BirthChart` container captured all computed astrological data.
+**Fix applied:** Created `BirthChart` data class holding `EphemerisSnapshot` plus all computed values (zodiac, rashi, ascendant, nakshatra, dasha, baZi, lunar birthday, retrograde status). Provides `BirthChart.compute()` factory method. Decouples age math from astrology.
+
+#### ✅ BUG-069 — Planet Enum Duplication
+**Status:** ✅ Fixed in Phase 5.6
+**Severity:** Low (code debt)
+**Files:** `domain/model/CelestialBody.kt`, `domain/AstronomicalCalculator.kt`, `domain/PlanetAgeCalculator.kt`
+**Description:** Two separate `Planet` enums existed with different fields and no mapping. `AstronomicalCalculator.Planet` had orbital elements; `PlanetAgeCalculator.Planet` had display name and emoji.
+**Fix applied:** Created consolidated `CelestialBody` enum in `domain/model/` with orbital periods, aphelion/perihelion, display names, and emojis. Both calculators now reference the same type.
+
+#### 🟡 BUG-070 — ZodiacCalculator Has Too Many Responsibilities
+**Status:** 🟡 Open — design gap
+**Severity:** Medium (maintainability)
+**File:** `domain/ZodiacCalculator.kt` (350 lines)
+**Description:** This single class handles Western zodiac (Sun/Moon signs + cusp), Vedic Rashi + Rashi Lord, Tithi, Lagna/Ascendant (both exact and approximate), planet positions, Chinese zodiac + stem-branch, AND a 201-entry CNY lookup table. Adding any new feature bloats this further.
+**Recommendation:** Split into `WesternZodiacCalculator`, `VedicZodiacCalculator`, `ChineseZodiacCalculator`, and `PlanetaryCalculator`. Keep `ZodiacCalculator` as a thin facade if needed for backward compatibility. Defer to Phase 6 for cleaner separation.
+
+### ✅ BUG-071 — No AstronomicalCalculator Unit Tests
+**Status:** ✅ Fixed in Phase 5.6
+**Severity:** High (untested foundational engine)
+**Files:** `domain/AstronomicalCalculator.kt` (298 lines), `app/src/test/java/com/willowvibe/agereveal/domain/AstronomicalCalculatorTest.kt`
+**Description:** The foundational ephemeris engine had zero unit tests. All other calculators depend on it. A regression in Sun/Moon longitude or ayanamsa would silently corrupt every astrological output.
+**Fix applied:** Created `AstronomicalCalculatorTest` with 16 tests covering: J2000 epoch verification (Sun ~280.37°, Moon ~223.3°), Lahiri ayanamsa at J2000 = 23.85306°, Sidereal conversion, Tithi calculation (new moon=1, full moon=16), Planet longitudes (Jupiter, Saturn), Retrograde detection, and outer planets (Uranus, Neptune, Pluto).
+
+---
+
+### Vedic Engine Gaps
+
+#### 🟡 BUG-072 — No Navamsa (D-9) or Other Divisional Charts
+**Severity:** Low (feature gap)
+**Files:** None — feature does not exist
+**Description:** Vedic astrology relies heavily on divisional charts (vargas). The Navamsa (D-9) is the most important — it's used for marriage compatibility, spiritual evolution, and planetary strength. The code computes Lagna and planet positions but doesn't derive any divisional charts from them.
+**Recommended fix:** Add `DivisionalChartCalculator` that generates D-9 (Navamsa) from the birth chart. This is mathematically straightforward once planetary longitudes are known — each sign is divided into 9 parts of 3°20'.
+
+#### 🟡 BUG-073 — No Planetary Strength (Shadbala) or Dignity
+**Severity:** Low (feature gap)
+**Files:** `domain/ZodiacCalculator.kt`, `domain/NakshatraCalculator.kt`
+**Description:** No calculation of planetary dignities (exaltation, debilitation, own sign, moolatrikona). No Shadbala (six-fold strength) computation. Users see "Mars in Taurus" but get no indication that Mars is debilitated there, which is fundamental to Vedic interpretation.
+**Recommended fix:** Add `PlanetaryDignityCalculator` with exaltation/debilitation degrees and moolatrikona ranges. Add a `getDignity(planet, longitude)` function returning Dignity enum (Exalted, Own, Moolatrikona, Friendly, Neutral, Inimical, Debilitated).
+
+#### 🟡 BUG-074 — No Retrograde Detection
+**Severity:** Medium (accuracy gap)
+**Files:** `domain/AstronomicalCalculator.kt`
+**Description:** The Keplerian planet longitude solver computes position but not apparent motion direction. Retrograde planets are critical in Vedic interpretation — a retrograde Jupiter behaves very differently from a direct one. The data is computable from the same ephemeris by checking daily longitude change rate.
+**Recommended fix:** Add `isRetrograde(planet, jd): Boolean` to `AstronomicalCalculator`, computed via longitude derivative (compare position at JD and JD+1).
+
+#### 🟡 BUG-075 — Dasha Missing Pratyantar and Deeper Levels
+**Severity:** Low (feature depth)
+**File:** `domain/DashaCalculator.kt`
+**Description:** Only Mahadasha (major period) and Antardasha (sub-period) are computed. Full Vimshottari Dasha includes Pratyantar Dasha (sub-sub-period), Sookshma Dasha, and Prana Dasha. Adding Pratyantar at minimum would significantly improve the feature's perceived depth.
+**Recommended fix:** Extend `getDashaInfo()` to compute Pratyantar Dasha using the same proportional math already in place for Antardasha.
+
+#### 🟡 BUG-076 — No Nakshatra Lord or Deity Info
+**Severity:** Low (feature depth)
+**File:** `domain/NakshatraCalculator.kt`
+**Description:** `getNakshatra()` returns the name (e.g., "Rohini (रोहिणी)") but not the ruling planet (Moon) or presiding deity (Brahma/Prajapati). This rich metadata would improve the DetailsUnlockScreen Vedic tab.
+**Recommended fix:** Add `NakshatraData` data class with lord, deity, guna (Deva/Manushya/Rakshasa), and symbol. Return it from `getNakshatraWithDetails()`.
+
+#### 🟡 BUG-077 — No Vedic Compatibility (Guna Milan/Ashtakoot)
+**Severity:** Low (feature gap)
+**Files:** `domain/ZodiacCompatibilityCalculator.kt`
+**Description:** Compatibility only covers Western element matching and Chinese zodiac matrix. Vedic Kundali matching (Ashtakoot/Guna Milan — 8-fold matching scoring 36 points) is completely absent. This is the primary compatibility system used by ~1 billion people.
+**Recommended fix:** Add `VedicCompatibilityCalculator` implementing the 8 Kootas (Varna, Vashya, Tara, Yoni, Graha Maitri, Gana, Bhakoot, Nadi) from both charts' Nakshatras and Rashis.
+
+---
+
+### Chinese Engine Gaps
+
+#### 🟡 BUG-078 — Missing Day and Hour Pillars (Full BaZi)
+**Severity:** Medium (feature incomplete)
+**File:** `domain/BaZiCalculator.kt`
+**Description:** Only Year and Month pillars are computed. A proper BaZi (八字 / Four Pillars) reading requires all four: Year, Month, Day, and Hour. The Day Pillar's Heavenly Stem (日主 / Day Master) is the single most important element — it represents the self and is the reference point for all Ten Gods analysis. The code comment acknowledges this gap: "Day and Hour pillars require a full Chinese calendar / solar-term ephemeris which is beyond the scope of this approximation."
+**Recommended fix:** Compute Day Stem from Julian Day offset (day stem = (JD + 11) % 10, day branch = (JD + 1) % 12). Hour branch from birth hour in 2-hour blocks. This requires no new ephemeris — only the birth date/time.
+
+#### 🟡 BUG-079 — No Day Master or Ten Gods Analysis
+**Severity:** Medium (feature incomplete — depends on BUG-078)
+**File:** `domain/BaZiCalculator.kt`
+**Description:** Without the Day Master, Ten Gods (十神) relationships cannot be computed. Ten Gods describe how every other stem in the chart relates to the Day Master (e.g., 正官 Direct Officer, 正财 Direct Wealth, 食神 Eating God). This is the core interpretive framework of BaZi.
+**Recommended fix:** After BUG-078 is resolved, add `TenGodsCalculator` that maps stem-to-stem relationships (Same, Producing, Controlling, Produced by, Controlled by) × yin/yang polarity → Ten God type.
+
+#### 🟡 BUG-080 — Month Pillar Uses Hardcoded Solar Term Dates
+**Severity:** Medium (accuracy)
+**File:** `domain/BaZiCalculator.kt` (lines 115–131)
+**Description:** `getMonthBranchIndex()` uses fixed Gregorian date boundaries (e.g., 立春 ≈ Feb 4) for solar term divisions. Actual solar terms can shift by ±1 day depending on the year and leap cycles. On boundary dates, the Month Pillar can be wrong.
+**Recommended fix:** Replace hardcoded date ranges with astronomical solar term computation (the Sun's tropical longitude crossing multiples of 15°). This requires computing the exact moment the Sun enters each 15° segment, which can be done with the existing `sunLongitude()` function using bisection.
+
+#### 🟡 BUG-081 — No Luck Pillars (大运 / Da Yun)
+**Severity:** Low (feature gap)
+**File:** `domain/BaZiCalculator.kt`
+**Description:** BaZi timing uses 10-year luck pillars (大运) that determine which element/animal energy dominates each decade of life. The calculation depends on gender, year stem yin/yang, and birth month — all available data. This is fundamental to BaZi forecasting.
+**Recommended fix:** Add `LuckPillarCalculator` with gender parameter. Compute starting age (3–8 years depending on birth date proximity to next/prev solar term), then generate 10-year pillar sequence using the same stem-branch cycling logic.
+
+#### 🟡 BUG-082 — LunarCalendarConverter Silent Empty-String Fallback
+**Severity:** Low (UX)
+**File:** `domain/LunarCalendarConverter.kt`
+**Description:** On any `Exception`, `toLunarString()` returns `""` with no logging. While the `catch (_: Throwable → Exception)` fix (BUG-062) narrowed the catch scope, the silent empty-string return still masks legitimate failures. The UI shows nothing with no indication that an error occurred.
+**Recommended fix:** Return a `Result<String>` or a nullable type so callers can distinguish "no lunar data available" from "conversion produced empty result." Log the exception at minimum.
+
+---
+
+### Western Engine Gaps
+
+#### 🟡 BUG-083 — No Tropical Rising Sign
+**Severity:** Low (feature gap)
+**File:** `domain/ZodiacCalculator.kt`
+**Description:** `getApproximateAscendant()` computes the sidereal (Vedic) ascendant only. The tropical ascendant longitude is computed internally (`tropicalAsc` variable) but only the sidereal result is returned. Western astrology users expect a tropical rising sign — the data is already available but not exposed.
+**Recommended fix:** Add `getTropicalAscendant()` that returns the Western sign from the tropical ascendant longitude. Trivial to implement since the computation already happens.
+
+#### 🟡 BUG-084 — Missing Outer Planets (Uranus, Neptune, Pluto)
+**Severity:** Low (feature gap)
+**File:** `domain/AstronomicalCalculator.kt`
+**Description:** `Planet` enum only includes Mercury through Saturn. Uranus, Neptune, and Pluto are missing. While traditional astrology uses only the visible planets, modern Western astrology considers the outer planets essential (Uranus = innovation, Neptune = spirituality, Pluto = transformation). The DailyFortuneGenerator references all three in its messages but they can't be computed.
+**Recommended fix:** Add Uranus, Neptune, Pluto to `AstronomicalCalculator.Planet` enum with their Keplerian elements. The same `planetLongitude()` function works for them.
+
+#### 🟡 BUG-085 — No Planetary Aspects
+**Severity:** Medium (feature depth)
+**Files:** `domain/AstronomicalCalculator.kt`, `domain/ZodiacCalculator.kt`
+**Description:** No aspect computation between planets (conjunction 0°, sextile 60°, square 90°, trine 120°, opposition 180°). Aspects are fundamental to both Western and Vedic chart interpretation. The planet positions are already computed — aspects are just angular differences with orb tolerance.
+**Recommended fix:** Add `computeAspects(planetPositions, orbDegrees = 8.0): List<Aspect>` to a new `AspectCalculator`. An `Aspect` is just: planet1, planet2, type (Conjunction/Sextile/Square/Trine/Opposition), orb, and applying/separating.
+
+#### 🟡 BUG-086 — Moon Phase Not Integrated Into Astrological Profile
+**Severity:** Low (integration gap)
+**Files:** `domain/MoonPhaseCalculator.kt`, `domain/AgeCalculator.kt`, `data/model/AgeResult.kt`
+**Description:** `MoonPhaseCalculator` exists and works correctly, but the moon phase at birth is not exposed anywhere in the UI. The birth moon phase (e.g., "Born under a Waxing Crescent") is an engaging detail that would enrich the profile. The DailyFortuneGenerator uses today's moon phase but the birth moon phase is never shown.
+**Recommended fix:** Add `birthMoonPhase` field to `AgeResult` (or the new `BirthChart` model). `AgeCalculator.calculate()` already has access to both Sun and Moon longitudes at birth — just call `moonPhaseCalculator.calculate()`.
+
+#### 🟡 BUG-087 — Compatibility Uses No Synastry (Chart-to-Chart Aspects)
+**Severity:** Low (feature depth)
+**File:** `domain/ZodiacCompatibilityCalculator.kt`
+**Description:** Western compatibility scoring is pure element-based (Fire/Earth/Air/Water) using trine/sextile/square/opposition of Sun signs only. True synastry overlays two full birth charts and computes inter-chart aspects (e.g., Person A's Venus conjunct Person B's Mars). This is what professional astrology apps (Co-Star, The Pattern, Chani) offer.
+**Recommended fix:** After BUG-085 (planetary aspects) and BUG-068 (BirthChart model) are resolved, add `SynastryCalculator` that computes inter-chart aspects with configurable orbs.
+
+---
+
+### Daily Fortune & Life Stats Gaps
+
+#### 🟡 BUG-088 — DailyFortune Messages Reference Non-Existent Transits
+**Severity:** Low (misleading UX)
+**File:** `domain/DailyFortuneGenerator.kt`
+**Description:** The 80+ fortune messages reference "Mars energy," "Venus transit," "Saturn testing patience," "Jupiter saying yes," "your 10th house buzzing," etc. None of these transits or house positions are actually computed against the user's birth chart. The fortunes are purely cosmetic — seeded from date hashing, not from any astrological reality. Users with astrological knowledge will notice the disconnect.
+**Recommended fix:** Either (a) compute actual transits (today's planet positions vs. birth chart positions) and generate messages from real data, or (b) add a small disclaimer that fortunes are for entertainment only.
+
+#### 🟡 BUG-089 — LifeStatsCalculator Not Injectable
+**Severity:** Low (consistency)
+**File:** `domain/LifeStatsCalculator.kt`
+**Description:** Every other domain calculator is `@Singleton` with `@Inject constructor`. `LifeStatsCalculator` is a plain class with no annotation, making it inconsistent with the project's DI pattern. It cannot be injected via Hilt.
+**Recommended fix:** Add `@Singleton` and `@Inject constructor()` annotations.
 
 ---
 

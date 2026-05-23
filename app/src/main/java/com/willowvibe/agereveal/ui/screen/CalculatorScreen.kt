@@ -111,6 +111,7 @@ import com.willowvibe.agereveal.ui.theme.WarmInkMute
 import com.willowvibe.agereveal.ui.theme.WarmSurface
 import com.willowvibe.agereveal.ui.theme.WarmSurfaceSoft
 import com.willowvibe.agereveal.ui.theme.WarmTeal
+import com.willowvibe.agereveal.domain.model.CelestialBody
 import com.willowvibe.agereveal.domain.PlanetAgeCalculator
 import com.willowvibe.agereveal.domain.ProfileDeepLinkGenerator
 import com.willowvibe.agereveal.ui.viewmodel.CalculatorViewModel
@@ -1394,14 +1395,14 @@ private fun PlanetAgeHighlight(result: AgeResult, name: String) {
     val calculator = remember { PlanetAgeCalculator() }
     val planetAge = remember(result.totalSeconds) {
         calculator.calculatePlanetAges(result.years + result.months / 12.0)
-            .firstOrNull { it.planet == com.willowvibe.agereveal.domain.Planet.MARS }
+            .firstOrNull { it.planet == CelestialBody.MARS }
     }
     if (planetAge == null) return
     val displayName = name.ifEmpty { "You" }
     val formatted = calculator.formatPlanetAge(planetAge.ageYears)
     AgeCard {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(com.willowvibe.agereveal.domain.Planet.MARS.emoji, fontSize = 22.sp)
+            Text(CelestialBody.MARS.emoji, fontSize = 22.sp)
             Spacer(Modifier.width(10.dp))
             Column(modifier = Modifier.weight(1f)) {
                 AgeLabel(text = "PLANET AGE")

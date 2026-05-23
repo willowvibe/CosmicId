@@ -3,12 +3,15 @@ package com.willowvibe.agereveal.domain
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.Year
+import javax.inject.Inject
+import javax.inject.Singleton
 
 /**
  * Computes fun aggregated life statistics for shareable cards.
  * Pure Kotlin — no Android framework imports.
  */
-class LifeStatsCalculator {
+@Singleton
+class LifeStatsCalculator @Inject constructor() {
 
     data class LifeStat(
         val label: String,
