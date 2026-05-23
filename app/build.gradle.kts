@@ -74,6 +74,10 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            // Include native debug symbols so Play Store can symbolicate crashes/ANRs
+            ndk {
+                debugSymbolLevel = "FULL"
+            }
             // Use real release keystore when available; otherwise Gradle uses debug keystore
             // so the AAB can still be assembled locally for testing.
             signingConfig = if (hasReleaseKeystore) signingConfigs.getByName("release")
