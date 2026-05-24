@@ -46,6 +46,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -57,6 +58,7 @@ import com.willowvibe.agereveal.ui.theme.WarmAmber
 import com.willowvibe.agereveal.ui.theme.WarmBlack
 import com.willowvibe.agereveal.ui.theme.WarmInk
 import com.willowvibe.agereveal.ui.theme.WarmInkDim
+import com.willowvibe.agereveal.ui.theme.WarmInkMute
 import com.willowvibe.agereveal.ui.theme.WarmSurface
 import com.willowvibe.agereveal.ui.theme.WarmSurfaceSoft
 import com.willowvibe.agereveal.analytics.AnalyticsManager
@@ -98,7 +100,7 @@ fun OnboardingScreen(
                     modifier = Modifier
                         .size(8.dp)
                         .clip(CircleShape)
-                        .background(if (index <= step) WarmTeal else WarmSurfaceSoft),
+                        .background(if (index <= step) WarmTeal else WarmInkDim),
                 )
             }
         }
@@ -122,8 +124,8 @@ fun OnboardingScreen(
             when (currentStep) {
                 0 -> StepNameAndBirthDate(
                     onNameChanged = viewModel::onNameChanged,
-                    onDateSelected = { date ->
-                        viewModel.onBirthDateSelected(date)
+                    onDateSelected = viewModel::onBirthDateSelected,
+                    onNext = {
                         viewModel.logOnboardingStep1()
                         step = 1
                     },
@@ -135,10 +137,13 @@ fun OnboardingScreen(
                         step = 2
                     },
                 )
-                2 -> StepCosmicVibe(onEnter = {
-                    viewModel.logOnboardingStep3()
-                    onComplete()
-                })
+                2 -> StepCosmicVibe(
+                    onAccentColorSelected = viewModel::setAccentColor,
+                    onEnter = {
+                        viewModel.logOnboardingStep3()
+                        onComplete()
+                    },
+                )
             }
         }
     }
@@ -153,13 +158,15 @@ fun OnboardingScreen(
 private fun StepNameAndBirthDate(
     onNameChanged: (String) -> Unit,
     onDateSelected: (LocalDate) -> Unit,
+    onNext: () -> Unit,
 ) {
     var name by remember { mutableStateOf("") }
     var showDialog by remember { mutableStateOf(false) }
     var selectedDate by remember { mutableStateOf<LocalDate?>(null) }
-    val todayMillis = LocalDate.now()
+    val defaultDate = LocalDate.now().minusYears(20)
+    val defaultMillis = defaultDate
         .atStartOfDay(ZoneId.of("UTC")).toInstant().toEpochMilli()
-    val datePickerState = rememberDatePickerState(initialSelectedDateMillis = todayMillis)
+    val datePickerState = rememberDatePickerState(initialSelectedDateMillis = defaultMillis)
 
     if (showDialog) {
         DatePickerDialog(
@@ -211,7 +218,7 @@ private fun StepNameAndBirthDate(
                 name = it
                 onNameChanged(it)
             },
-            placeholder = { Text("Your name", color = WarmInkDim) },
+            placeholder = { Text("Your name") },
             singleLine = true,
             modifier = Modifier.fillMaxWidth(),
             textStyle = MaterialTheme.typography.bodyLarge.copy(color = WarmInk),
@@ -219,6 +226,8 @@ private fun StepNameAndBirthDate(
                 focusedBorderColor = WarmTeal,
                 unfocusedBorderColor = WarmSurfaceSoft,
                 cursorColor = WarmTeal,
+                focusedPlaceholderColor = WarmInkMute,
+                unfocusedPlaceholderColor = WarmInkMute,
             ),
         )
 
@@ -235,8 +244,22 @@ private fun StepNameAndBirthDate(
                 text = selectedDate?.toString() ?: "Tap to pick your birth date",
                 fontFamily = SerifFamily,
                 fontSize = if (selectedDate != null) 22.sp else 16.sp,
-                color = if (selectedDate != null) WarmTeal else WarmInkDim,
+                color = if (selectedDate != null) WarmTeal else WarmInkMute,
             )
+        }
+
+        Spacer(Modifier.height(16.dp))
+
+        Button(
+            onClick = onNext,
+            enabled = selectedDate != null,
+            modifier = Modifier.fillMaxWidth(),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = WarmTeal,
+                contentColor = WarmBlack,
+            ),
+        ) {
+            Text("Next", fontWeight = FontWeight.SemiBold)
         }
     }
 }
@@ -311,7 +334,7 @@ private fun StepTimeAndLocation(
                 text = selectedTime?.toString() ?: "Tap to add birth time (optional)",
                 fontFamily = SerifFamily,
                 fontSize = if (selectedTime != null) 18.sp else 14.sp,
-                color = if (selectedTime != null) WarmTeal else WarmInkDim,
+                color = if (selectedTime != null) WarmTeal else WarmInkMute,
             )
         }
 
@@ -324,7 +347,7 @@ private fun StepTimeAndLocation(
             },
             modifier = Modifier.fillMaxWidth(),
         ) {
-            Text("I don't know my birth time", color = WarmInkDim)
+            Text("I don't know my birth time", color = WarmInkMute)
         }
 
         Spacer(Modifier.height(8.dp))
@@ -347,7 +370,10 @@ private fun StepTimeAndLocation(
 // ─────────────────────────────────────────────────────────────────────────────
 
 @Composable
-private fun StepCosmicVibe(onEnter: () -> Unit) {
+private fun StepCosmicVibe(
+    onAccentColorSelected: (Int) -> Unit,
+    onEnter: () -> Unit,
+) {
     val accentOptions = listOf(
         "Teal" to WarmTeal,
         "Amber" to WarmAmber,
@@ -392,9 +418,12 @@ private fun StepCosmicVibe(onEnter: () -> Unit) {
                         .background(option.second)
                         .then(
                             if (isSelected) Modifier.border(3.dp, WarmInk, CircleShape)
-                            else Modifier
+                            else Modifier.border(1.5.dp, WarmInkDim, CircleShape)
                         )
-                        .clickable { selected = option },
+                        .clickable {
+                            selected = option
+                            onAccentColorSelected(option.second.toArgb())
+                        },
                 )
             }
         }

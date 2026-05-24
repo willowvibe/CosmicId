@@ -1,6 +1,7 @@
 package com.willowvibe.agereveal.ui.viewmodel
 
 import android.app.Activity
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.willowvibe.agereveal.data.model.AgeResult
@@ -125,12 +126,18 @@ class CalculatorViewModel @Inject constructor(
                 val tr = if (trEnabled) timeRemainingCalc.calculate(savedDate, targetAge = targetAge) else null
                 val ret = if (retEnabled) retirementCalc.calculate(savedDate, retirementAge = retirementAge) else null
                 val celebrities = celebrityMatchCalculator.findMatches(savedDate)
+                val result = runCatching {
+                    computeResult(savedDate, savedTime, includeUnlocked = true, location = savedLocation)
+                }.getOrElse { e ->
+                    Log.w("CalculatorViewModel", "computeResult crashed, falling back to basic", e)
+                    computeResult(savedDate, savedTime, includeUnlocked = false, location = savedLocation)
+                }
                 _uiState.update {
                     it.copy(
                         birthDate = savedDate,
                         birthTime = savedTime,
                         location = savedLocation,
-                        result = computeResult(savedDate, savedTime, includeUnlocked = true, location = savedLocation),
+                        result = result,
                         timeRemaining = tr,
                         retirement = ret,
                         celebrityMatches = celebrities,
@@ -151,6 +158,43 @@ class CalculatorViewModel @Inject constructor(
                 _uiState.update { it.copy(graceDaysRemaining = days) }
             }
         }
+
+        // Defensive: recompute result if DataStore birthDate arrives after init first() read
+        viewModelScope.launch {
+            userPrefs.birthDate.collect { dateStr ->
+                val date = dateStr?.let { runCatching { LocalDate.parse(it) }.getOrNull() }
+                    ?.takeIf { !it.isAfter(LocalDate.now()) }
+                val current = _uiState.value
+                if (date != null && current.result == null) {
+                    val savedTime = userPrefs.birthTime.first()
+                        ?.let { runCatching { LocalTime.parse(it) }.getOrNull() }
+                    val savedLocation = userPrefs.birthLocation.first()
+                        ?.let { runCatching { parseLocation(it) }.getOrNull() }
+                    val trEnabled = userPrefs.timeRemainingEnabled.first()
+                    val retEnabled = userPrefs.retirementEnabled.first()
+                    val targetAge = userPrefs.targetAge.first()
+                    val retirementAge = userPrefs.retirementAge.first()
+                    val tr = if (trEnabled) timeRemainingCalc.calculate(date, targetAge = targetAge) else null
+                    val ret = if (retEnabled) retirementCalc.calculate(date, retirementAge = retirementAge) else null
+                    val celebrities = celebrityMatchCalculator.findMatches(date)
+                    _uiState.update {
+                        it.copy(
+                            birthDate = date,
+                            birthTime = savedTime,
+                            location = savedLocation,
+                            result = computeResult(date, savedTime, includeUnlocked = true, location = savedLocation),
+                            timeRemaining = tr,
+                            retirement = ret,
+                            celebrityMatches = celebrities,
+                        )
+                    }
+                    badgeRepository.checkAndUnlock(date, savedTime)
+                    yearlyReengagementScheduler.schedule(date)
+                    val fortune = computeDailyFortune(date)
+                    _uiState.update { it.copy(dailyFortune = fortune) }
+                }
+            }
+        }
     }
 
     /** Get the user's birth date (if set). */
@@ -166,6 +210,8 @@ class CalculatorViewModel @Inject constructor(
             delay(1_000L)
         }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), 0L)
+
+    fun setAccentColor(color: Int) = viewModelScope.launch { userPrefs.setAccentColor(color) }
 
     fun onBirthDateSelected(date: LocalDate) {
         if (date.isAfter(LocalDate.now())) {
@@ -469,19 +515,42 @@ class CalculatorViewModel @Inject constructor(
         includeUnlocked: Boolean,
         location: GeoLocation? = null,
     ): AgeResult {
-        val now = LocalDateTime.now()
+        val name = _uiState.value.name.ifEmpty { "You" }
+        val zoneOffset = try {
+            OffsetDateTime.now().offset
+        } catch (e: Throwable) {
+            Log.w("CalculatorViewModel", "Failed to get system zone offset, using UTC", e)
+            ZoneOffset.UTC
+        }
+        val now = try {
+            LocalDateTime.now()
+        } catch (e: Throwable) {
+            Log.w("CalculatorViewModel", "Failed to get LocalDateTime.now(), using UTC clock", e)
+            LocalDateTime.now(java.time.Clock.systemUTC())
+        }
         val totalSeconds = ChronoUnit.SECONDS.between(
             birthDate.atStartOfDay(), now,
         )
-        val name = _uiState.value.name.ifEmpty { "You" }
-        return ageCalculator.calculate(
-            birthDate = birthDate,
-            birthTime = birthTime,
-            totalSecondsOverride = totalSeconds,
-            includeUnlocked = includeUnlocked,
-            zoneOffset = OffsetDateTime.now().offset,
-            location = location,
-        ).copy(name = name)
+        return try {
+            ageCalculator.calculate(
+                birthDate = birthDate,
+                birthTime = birthTime,
+                totalSecondsOverride = totalSeconds,
+                includeUnlocked = includeUnlocked,
+                zoneOffset = zoneOffset,
+                location = location,
+            ).copy(name = name)
+        } catch (e: Throwable) {
+            Log.w("CalculatorViewModel", "computeResult failed, falling back to basic result", e)
+            ageCalculator.calculate(
+                birthDate = birthDate,
+                birthTime = birthTime,
+                totalSecondsOverride = totalSeconds,
+                includeUnlocked = false,
+                zoneOffset = zoneOffset,
+                location = location,
+            ).copy(name = name)
+        }
     }
 
     fun logOnboardingStep1() = analytics.logOnboardingStep1Complete()

@@ -162,7 +162,7 @@ fun DetailsUnlockScreen(
                 Text(
                     "Enter a birth date on the My Cosmos tab first.",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = WarmInkDim,
+                    color = WarmInkMute,
                 )
             }
         } else {
@@ -185,7 +185,7 @@ fun DetailsUnlockScreen(
                                 Text(
                                     title,
                                     style = MaterialTheme.typography.labelMedium,
-                                    color = if (pagerState.currentPage == index) WarmTeal else WarmInkDim,
+                                    color = if (pagerState.currentPage == index) WarmTeal else WarmInkMute,
                                 )
                             },
                         )
@@ -798,7 +798,7 @@ internal fun MilestoneRow(
     val statusColor = when {
         isToday -> WarmAmber
         milestone.isPast -> WarmTeal
-        else -> WarmInkDim
+        else -> WarmInkMute
     }
     // Per-milestone notification toggle — collect from DataStore via Calculator VM prefs.
     // Because this composable is stateless w.r.t. DataStore, we store the toggle state

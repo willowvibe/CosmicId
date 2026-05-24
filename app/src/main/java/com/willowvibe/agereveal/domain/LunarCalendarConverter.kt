@@ -34,12 +34,10 @@ class LunarCalendarConverter @Inject constructor() {
 
             val zodiacAnimal = ZODIAC_ANIMALS[Math.floorMod(lunarYear.toLong(), 12).toInt()]
             val dayStr = ordinalDay(lunarDay)
-            val monthStr = buildString {
-                if (isLeap) append("leap ")
-                append(lunarMonth)
-            }
+            val monthOrdinal = ordinalDay(lunarMonth)
+            val leapPrefix = if (isLeap) "leap " else ""
 
-            "$dayStr of the ${monthStr}th lunar month, Year of the $zodiacAnimal"
+            "$dayStr of the $leapPrefix$monthOrdinal lunar month, Year of the $zodiacAnimal"
         } catch (_: Exception) {
             // Fallback for JVM unit tests where android.icu is unavailable
             ""

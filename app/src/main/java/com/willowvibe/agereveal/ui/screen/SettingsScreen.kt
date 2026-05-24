@@ -118,7 +118,7 @@ fun SettingsScreen(
                 Text(
                     stringResource(R.string.clear_all_confirm_body),
                     style = MaterialTheme.typography.bodyMedium,
-                    color = WarmInkDim,
+                    color = WarmInkMute,
                 )
             },
             confirmButton = {
@@ -135,7 +135,7 @@ fun SettingsScreen(
             },
             dismissButton = {
                 TextButton(onClick = { showClearDialog = false }) {
-                    Text(stringResource(R.string.cancel), color = WarmInkDim)
+                    Text(stringResource(R.string.cancel), color = WarmInkMute)
                 }
             },
             containerColor = WarmSurface,
@@ -174,7 +174,8 @@ fun SettingsScreen(
             modifier = Modifier
                 .weight(1f)
                 .verticalScroll(rememberScrollState())
-                .padding(horizontal = 20.dp),
+                .padding(horizontal = 20.dp)
+                .padding(bottom = 32.dp),
             verticalArrangement = Arrangement.spacedBy(24.dp),
         ) {
             Spacer(Modifier.height(4.dp))
@@ -439,13 +440,13 @@ fun SettingsScreen(
                                 Text(
                                     theme.label,
                                     style = MaterialTheme.typography.bodyMedium,
-                                    color = if (locked) WarmInkDim else WarmInk,
+                                    color = if (locked) WarmInkMute else WarmInk,
                                     fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
                                 )
                                 Text(
                                     theme.description,
                                     style = MaterialTheme.typography.labelSmall,
-                                    color = WarmInkDim,
+                                    color = WarmInkMute,
                                     maxLines = 1,
                                 )
                             }
@@ -662,7 +663,7 @@ private fun SettingsSection(title: String, content: @Composable ColumnScope.() -
         Text(
             title,
             style = MaterialTheme.typography.labelSmall,
-            color = WarmInkDim,
+            color = WarmInkMute,
         )
         AgeCard(modifier = Modifier.fillMaxWidth()) {
             content()
@@ -693,8 +694,8 @@ private fun SwitchRow(
             colors = SwitchDefaults.colors(
                 checkedThumbColor = WarmBlack,
                 checkedTrackColor = WarmTeal,
-                uncheckedThumbColor = WarmInkDim,
-                uncheckedTrackColor = WarmSurfaceSoft,
+                uncheckedThumbColor = WarmInkMute,
+                uncheckedTrackColor = WarmInkDim,
             ),
         )
     }
@@ -805,7 +806,7 @@ private fun NotificationHourGrid(currentHour: Int, onHourSelected: (Int) -> Unit
                                 shape = RoundedCornerShape(10.dp),
                             )
                             .clickable { onHourSelected(hour) }
-                            .padding(vertical = 10.dp),
+                            .padding(vertical = 10.dp, horizontal = 8.dp),
                         contentAlignment = Alignment.Center,
                     ) {
                         Text(
