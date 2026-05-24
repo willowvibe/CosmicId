@@ -101,14 +101,14 @@ fun PaywallScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(12.dp))
-                    .background(WarmAmber.copy(alpha = 0.12f))
-                    .border(1.dp, WarmAmber.copy(alpha = 0.3f), RoundedCornerShape(12.dp))
+                    .background(WarmAmber.copy(alpha = 0.2f))
+                    .border(1.dp, WarmAmber.copy(alpha = 0.5f), RoundedCornerShape(12.dp))
                     .padding(16.dp),
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
                         error ?: "",
-                        style = MaterialTheme.typography.bodyMedium,
+                        style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
                         color = WarmAmber,
                         textAlign = TextAlign.Center,
                     )

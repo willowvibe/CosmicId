@@ -113,7 +113,7 @@ private fun MilestoneRow(milestone: Milestone, onShare: () -> Unit = {}) {
     ) {
         Box(
             modifier = Modifier
-                .size(40.dp)
+                .size(52.dp)
                 .clip(CircleShape)
                 .background(
                     if (isPast) WarmTeal.copy(alpha = 0.2f)
@@ -127,13 +127,14 @@ private fun MilestoneRow(milestone: Milestone, onShare: () -> Unit = {}) {
                     Icons.Default.Cake,
                     contentDescription = "Achieved",
                     tint = WarmTeal,
-                    modifier = Modifier.size(20.dp),
+                    modifier = Modifier.size(24.dp),
                 )
             } else {
                 Text(
                     "${milestone.daysAway}d",
-                    style = MaterialTheme.typography.labelMedium,
+                    style = MaterialTheme.typography.labelSmall.copy(fontSize = 9.sp),
                     color = if (isToday) Color(0xFFFFD700) else WarmInkDim,
+                    maxLines = 1,
                 )
             }
         }
@@ -145,13 +146,7 @@ private fun MilestoneRow(milestone: Milestone, onShare: () -> Unit = {}) {
             Text(
                 text = when {
                     isToday -> "Today's Milestone!"
-                    milestone.targetDays == 1000 -> "1,000 Days Alive"
-                    milestone.targetDays == 5000 -> "5,000 Days Alive"
-                    milestone.targetDays == 10000 -> "10,000 Days Alive"
-                    milestone.targetDays == 15000 -> "15,000 Days Alive"
-                    milestone.targetDays == 20000 -> "20,000 Days Alive"
-                    milestone.targetDays == 25000 -> "25,000 Days Alive"
-                    else -> "${milestone.targetDays} Days"
+                    else -> "%,d Days Alive".format(milestone.targetDays)
                 },
                 style = MaterialTheme.typography.bodyMedium,
                 color = WarmInk,
@@ -163,10 +158,12 @@ private fun MilestoneRow(milestone: Milestone, onShare: () -> Unit = {}) {
             )
         }
 
-        if (!isPast) {
-            AgeBody(
-                text = "${milestone.daysAway} days",
-                color = if (isToday) Color(0xFFFFD700) else WarmInkDim,
+        if (isPast) {
+            Icon(
+                imageVector = Icons.Default.Check,
+                contentDescription = "Reached",
+                tint = WarmTeal,
+                modifier = Modifier.size(20.dp),
             )
         }
     }

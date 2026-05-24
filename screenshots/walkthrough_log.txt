@@ -1,137 +1,148 @@
-[17:47:08] Starting AgeReveal UI Walkthrough
-[17:47:08] Connecting to Appium at http://localhost:4723
-[17:47:10] Session created successfully
-[17:47:16] === Testing Calculator Tab ===
-[17:47:16] Navigated to tab: You
-[17:47:18] Screenshot saved: tab1_calculator_default.png
-[17:47:19] Tapped: Settings button
-[17:47:20] Screenshot saved: tab1_calculator_settings_open.png
-[17:47:22] Input: Name input field = 'Test User'
-[17:47:23] Screenshot saved: tab1_calculator_name_entered.png
-[17:47:24] Tapped: Birth date row
-[17:47:25] Screenshot saved: tab1_calculator_datepicker_open.png
-[17:47:26] Selected date (OK)
-[17:47:28] Screenshot saved: tab1_calculator_date_selected.png
-[17:47:29] Tapped: Time precision chip
-[17:47:30] Screenshot saved: tab1_calculator_time_dialog.png
-[17:47:31] Set time
-[17:47:33] Tapped: Location precision chip
-[17:47:34] Screenshot saved: tab1_calculator_location_dialog.png
-[17:47:35] Entered location coordinates
-[17:47:35] Set location
-[17:47:36] Screenshot saved: tab1_calculator_location_set.png
-[17:47:38] Screenshot saved: tab1_calculator_results_scrolled.png
-[17:47:38] === Testing Time Remaining Card ===
-[17:47:39] Navigated to tab: You
-[17:47:41] Found Time Remaining card
-[17:47:41] Screenshot saved: tab1_calculator_time_remaining_visible.png
-[17:47:41] === Testing Daily Cosmic Fortune ===
-[17:47:42] Navigated to tab: You
-[17:47:51] Daily Cosmic Fortune card not found after scrolling
-[17:47:51] === Testing Share Sheet Formats ===
-[17:47:51] Navigated to tab: You
-[17:47:54] Share button not visible in current view
-[17:47:54] === Testing Compatibility Tab ===
-[17:47:54] Navigated to tab: Match
-[17:47:56] Screenshot saved: tab2_compatibility_default.png
-[17:47:58] Romantic selection failed: Message: An element could not be located on the page using the given search parameters.; For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors#nosuchelementexception
+[21:09:41] Starting Cosmic ID v2.0 UI Walkthrough
+[21:09:41] Connecting to Appium at http://localhost:4723
+[21:09:44] Session created successfully
+[21:09:47] Dismissed permission dialog (Allow)
+[21:09:51] === Testing Onboarding Flow ===
+[21:09:56] Dismissed permission dialog (Allow)
+[21:09:57] Screenshot saved: onboarding_01_permission.png
+[21:09:58] Onboarding screen (birth date) detected
+[21:09:58] Screenshot saved: onboarding_02_birthdate.png
+[21:09:59] Entered name: Test User
+[21:10:01] Tapped birth date box
+[21:10:03] Selected birth date (OK)
+[21:10:06] Tapped Step 0 Next (last clickable view)
+[21:10:07] Tapped Step 1 Next/Skip (last clickable view)
+[21:10:10] Screenshot saved: onboarding_03_time_location.png
+[21:10:10] Tapped Enter My Cosmos (last clickable view)
+[21:10:12] === Testing My Cosmos Tab ===
+[21:10:13] Navigated to tab: My Cosmos
+[21:10:17] Screenshot saved: tab1_mycosmos_default.png
+[21:10:21] Screenshot saved: tab1_mycosmos_highlight_fortune.png
+[21:10:21] Explore full profile CTA failed: Message: An element could not be located on the page using the given search parameters.; For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors#nosuchelementexception
 Stacktrace:
 NoSuchElementError: An element could not be located on the page using the given search parameters.
     at AndroidUiautomator2Driver.findElOrEls (/home/harish/.appium/node_modules/appium-uiautomator2-driver/node_modules/appium-android-driver/build/lib/commands/find.js:62:15)
     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
     at async AndroidUiautomator2Driver.findElOrElsWithProcessing (/home/harish/.nvm/versions/node/v22.22.0/lib/node_modules/appium/node_modules/@appium/base-driver/build/lib/basedriver/commands/find.js:12:16)
     at async AndroidUiautomator2Driver.findElement (/home/harish/.nvm/versions/node/v22.22.0/lib/node_modules/appium/node_modules/@appium/base-driver/build/lib/basedriver/commands/find.js:27:16)
-[17:47:58] Entered Person A name: Alice
-[17:48:03] Person A date OK failed: Message: An element could not be located on the page using the given search parameters.; For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors#nosuchelementexception
+[21:10:21] === Testing Match Tab ===
+[21:10:21] Navigated to tab: Match
+[21:10:24] Screenshot saved: tab2_match_empty.png
+[21:10:24] Entered Person A name: Alice
+[21:10:24] FAILED to tap Person A date picker: Message: An element could not be located on the page using the given search parameters.; For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors#nosuchelementexception
 Stacktrace:
 NoSuchElementError: An element could not be located on the page using the given search parameters.
     at AndroidUiautomator2Driver.findElOrEls (/home/harish/.appium/node_modules/appium-uiautomator2-driver/node_modules/appium-android-driver/build/lib/commands/find.js:62:15)
     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
     at async AndroidUiautomator2Driver.findElOrElsWithProcessing (/home/harish/.nvm/versions/node/v22.22.0/lib/node_modules/appium/node_modules/@appium/base-driver/build/lib/basedriver/commands/find.js:12:16)
     at async AndroidUiautomator2Driver.findElement (/home/harish/.nvm/versions/node/v22.22.0/lib/node_modules/appium/node_modules/@appium/base-driver/build/lib/basedriver/commands/find.js:27:16)
-[17:48:03] Screenshot saved: tab2_compatibility_person_a_filled.png
-[17:48:03] Screenshot saved: tab2_compatibility_person_b_filled.png
-[17:48:05] Screenshot saved: tab2_compatibility_results_scrolled.png
-[17:48:05] === Testing Reminders Tab ===
-[17:48:06] Navigated to tab: Bdays
-[17:48:08] Screenshot saved: tab3_reminders_default.png
-[17:48:09] Tapped: Add birthday FAB
-[17:48:11] Screenshot saved: tab3_reminders_add_sheet.png
-[17:48:11] Entered birthday name: Mom
-[17:48:12] Selected heart emoji
-[17:48:14] Tapped: Birthday date selector
-[17:48:16] Selected birthday date
-[17:48:18] Saved birthday
-[17:48:19] Screenshot saved: tab3_reminders_birthday_added.png
-[17:48:20] Tapped: Settings button (reminders)
-[17:48:22] Screenshot saved: tab3_reminders_settings_open.png
-[17:48:23] === Testing Timeline Tab ===
-[17:48:24] Navigated to tab: Timeline
-[17:48:26] Screenshot saved: tab4_timeline_default.png
-[17:48:26] Timeline header found
-[17:48:28] Screenshot saved: tab4_timeline_scrolled.png
-[17:48:28] === Testing Badges Tab ===
-[17:48:28] Navigated to tab: Badges
-[17:48:30] Screenshot saved: tab4_badges_default.png
-[17:48:32] Screenshot saved: tab4_badges_scrolled.png
-[17:48:32] Tapped a badge card
-[17:48:33] Screenshot saved: tab4_badges_detail_sheet.png
-[17:48:35] Tapped Timeline toggle
-[17:48:37] Screenshot saved: tab4_badges_timeline_view.png
-[17:48:37] Grid toggle failed: Message: An element could not be located on the page using the given search parameters.; For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors#nosuchelementexception
+[21:10:26] Person A date OK failed: Message: An element could not be located on the page using the given search parameters.; For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors#nosuchelementexception
 Stacktrace:
 NoSuchElementError: An element could not be located on the page using the given search parameters.
     at AndroidUiautomator2Driver.findElOrEls (/home/harish/.appium/node_modules/appium-uiautomator2-driver/node_modules/appium-android-driver/build/lib/commands/find.js:62:15)
     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
     at async AndroidUiautomator2Driver.findElOrElsWithProcessing (/home/harish/.nvm/versions/node/v22.22.0/lib/node_modules/appium/node_modules/@appium/base-driver/build/lib/basedriver/commands/find.js:12:16)
     at async AndroidUiautomator2Driver.findElement (/home/harish/.nvm/versions/node/v22.22.0/lib/node_modules/appium/node_modules/@appium/base-driver/build/lib/basedriver/commands/find.js:27:16)
-[17:48:37] === Testing Settings Screen ===
-[17:48:37] Navigated to tab: You
-[17:48:39] Tapped: Settings button
-[17:48:41] Screenshot saved: settings_default.png
-[17:48:44] Selected Dark theme
-[17:48:45] Screenshot saved: settings_dark_theme.png
-[17:48:48] Hindi language find failed: Message: An element could not be located on the page using the given search parameters.; For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors#nosuchelementexception
+[21:10:26] Entered Person B name: Bob
+[21:10:26] FAILED to tap Match Calculate button: Message: An element could not be located on the page using the given search parameters.; For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors#nosuchelementexception
 Stacktrace:
 NoSuchElementError: An element could not be located on the page using the given search parameters.
     at AndroidUiautomator2Driver.findElOrEls (/home/harish/.appium/node_modules/appium-uiautomator2-driver/node_modules/appium-android-driver/build/lib/commands/find.js:62:15)
     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
     at async AndroidUiautomator2Driver.findElOrElsWithProcessing (/home/harish/.nvm/versions/node/v22.22.0/lib/node_modules/appium/node_modules/@appium/base-driver/build/lib/basedriver/commands/find.js:12:16)
     at async AndroidUiautomator2Driver.findElement (/home/harish/.nvm/versions/node/v22.22.0/lib/node_modules/appium/node_modules/@appium/base-driver/build/lib/basedriver/commands/find.js:27:16)
-[17:48:52] Export CSV find failed: Message: An element could not be located on the page using the given search parameters.; For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors#nosuchelementexception
+[21:10:26] Tapped: Match button
+[21:10:30] Screenshot saved: tab2_match_results.png
+[21:10:30] === Testing Reminders Tab ===
+[21:10:30] Navigated to tab: Bdays
+[21:10:33] Screenshot saved: tab3_bdays_default.png
+[21:10:34] Tapped: Add birthday FAB
+[21:10:35] Screenshot saved: tab3_bdays_add_sheet.png
+[21:10:36] === Testing Timeline Tab ===
+[21:10:37] Navigated to tab: Timeline
+[21:10:41] Screenshot saved: tab4_timeline_scrolled.png
+[21:10:41] === Testing Settings Screen ===
+[21:10:41] Navigated to tab: My Cosmos
+[21:10:44] Tapped: Settings button
+[21:10:45] Screenshot saved: settings_unified_view.png
+[21:10:49] Found Appearance section
+[21:10:50] Screenshot saved: settings_theme_picker.png
+[21:10:52] Paywall capture from Settings failed: Message: An element could not be located on the page using the given search parameters.; For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors#nosuchelementexception
 Stacktrace:
 NoSuchElementError: An element could not be located on the page using the given search parameters.
     at AndroidUiautomator2Driver.findElOrEls (/home/harish/.appium/node_modules/appium-uiautomator2-driver/node_modules/appium-android-driver/build/lib/commands/find.js:62:15)
     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
     at async AndroidUiautomator2Driver.findElOrElsWithProcessing (/home/harish/.nvm/versions/node/v22.22.0/lib/node_modules/appium/node_modules/@appium/base-driver/build/lib/basedriver/commands/find.js:12:16)
     at async AndroidUiautomator2Driver.findElement (/home/harish/.nvm/versions/node/v22.22.0/lib/node_modules/appium/node_modules/@appium/base-driver/build/lib/basedriver/commands/find.js:27:16)
-[17:48:56] Clear all dialog failed: Message: An element could not be located on the page using the given search parameters.; For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors#nosuchelementexception
+[21:10:53] === Testing Paywall Modal ===
+[21:10:54] Navigated to tab: My Cosmos
+[21:10:58] Tapped: Settings button
+[21:11:04] Lock icon by ACCESSIBILITY_ID failed: Message: An element could not be located on the page using the given search parameters.; For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors#nosuchelementexception
 Stacktrace:
 NoSuchElementError: An element could not be located on the page using the given search parameters.
     at AndroidUiautomator2Driver.findElOrEls (/home/harish/.appium/node_modules/appium-uiautomator2-driver/node_modules/appium-android-driver/build/lib/commands/find.js:62:15)
     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
     at async AndroidUiautomator2Driver.findElOrElsWithProcessing (/home/harish/.nvm/versions/node/v22.22.0/lib/node_modules/appium/node_modules/@appium/base-driver/build/lib/basedriver/commands/find.js:12:16)
     at async AndroidUiautomator2Driver.findElement (/home/harish/.nvm/versions/node/v22.22.0/lib/node_modules/appium/node_modules/@appium/base-driver/build/lib/basedriver/commands/find.js:27:16)
-[17:49:00] === Testing New Settings Features ===
-[17:49:01] Navigated to tab: You
-[17:49:02] Tapped: Settings button
-[17:49:08] Found Time remaining visuals toggle
-[17:49:08] Screenshot saved: settings_time_remaining_visible.png
-[17:49:08] Found Accent color picker
-[17:49:09] Screenshot saved: settings_accent_color_visible.png
-[17:49:09] Found Lifespan target section
-[17:49:09] Screenshot saved: settings_lifespan_target_visible.png
-[17:49:11] === Testing Edge Cases ===
-[17:49:12] Navigated to tab: You
-[17:49:14] Cleared name field
-[17:49:15] Screenshot saved: tab1_calculator_empty_name.png
-[17:49:15] Navigated to tab: Match
-[17:49:17] Screenshot saved: tab2_compatibility_empty_state.png
-[17:49:17] Navigated to tab: Bdays
-[17:49:19] Report generated: /mnt/data2/git_repos/AgeReveal/screenshots/REPORT.md
-[17:49:19] === Walkthrough Complete ===
-[17:49:19] Screens: 20
-[17:49:19] Interactions: 29
-[17:49:19] Screenshots: 31
-[17:49:19] Bugs: 0
-[17:49:19] Quitting driver
+[21:11:07] Theme 'Vaporwave' UiScrollable failed: Message: An element could not be located on the page using the given search parameters.; For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors#nosuchelementexception
+Stacktrace:
+NoSuchElementError: An element could not be located on the page using the given search parameters.
+    at AndroidUiautomator2Driver.findElOrEls (/home/harish/.appium/node_modules/appium-uiautomator2-driver/node_modules/appium-android-driver/build/lib/commands/find.js:62:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async AndroidUiautomator2Driver.findElOrElsWithProcessing (/home/harish/.nvm/versions/node/v22.22.0/lib/node_modules/appium/node_modules/@appium/base-driver/build/lib/basedriver/commands/find.js:12:16)
+    at async AndroidUiautomator2Driver.findElement (/home/harish/.nvm/versions/node/v22.22.0/lib/node_modules/appium/node_modules/@appium/base-driver/build/lib/basedriver/commands/find.js:27:16)
+[21:11:09] Theme 'Cottagecore' UiScrollable failed: Message: An element could not be located on the page using the given search parameters.; For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors#nosuchelementexception
+Stacktrace:
+NoSuchElementError: An element could not be located on the page using the given search parameters.
+    at AndroidUiautomator2Driver.findElOrEls (/home/harish/.appium/node_modules/appium-uiautomator2-driver/node_modules/appium-android-driver/build/lib/commands/find.js:62:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async AndroidUiautomator2Driver.findElOrElsWithProcessing (/home/harish/.nvm/versions/node/v22.22.0/lib/node_modules/appium/node_modules/@appium/base-driver/build/lib/basedriver/commands/find.js:12:16)
+    at async AndroidUiautomator2Driver.findElement (/home/harish/.nvm/versions/node/v22.22.0/lib/node_modules/appium/node_modules/@appium/base-driver/build/lib/basedriver/commands/find.js:27:16)
+[21:11:11] Theme 'Y2K' UiScrollable failed: Message: An element could not be located on the page using the given search parameters.; For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors#nosuchelementexception
+Stacktrace:
+NoSuchElementError: An element could not be located on the page using the given search parameters.
+    at AndroidUiautomator2Driver.findElOrEls (/home/harish/.appium/node_modules/appium-uiautomator2-driver/node_modules/appium-android-driver/build/lib/commands/find.js:62:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async AndroidUiautomator2Driver.findElOrElsWithProcessing (/home/harish/.nvm/versions/node/v22.22.0/lib/node_modules/appium/node_modules/@appium/base-driver/build/lib/basedriver/commands/find.js:12:16)
+    at async AndroidUiautomator2Driver.findElement (/home/harish/.nvm/versions/node/v22.22.0/lib/node_modules/appium/node_modules/@appium/base-driver/build/lib/basedriver/commands/find.js:27:16)
+[21:11:13] Theme 'Dark Academia' UiScrollable failed: Message: An element could not be located on the page using the given search parameters.; For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors#nosuchelementexception
+Stacktrace:
+NoSuchElementError: An element could not be located on the page using the given search parameters.
+    at AndroidUiautomator2Driver.findElOrEls (/home/harish/.appium/node_modules/appium-uiautomator2-driver/node_modules/appium-android-driver/build/lib/commands/find.js:62:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async AndroidUiautomator2Driver.findElOrElsWithProcessing (/home/harish/.nvm/versions/node/v22.22.0/lib/node_modules/appium/node_modules/@appium/base-driver/build/lib/basedriver/commands/find.js:12:16)
+    at async AndroidUiautomator2Driver.findElement (/home/harish/.nvm/versions/node/v22.22.0/lib/node_modules/appium/node_modules/@appium/base-driver/build/lib/basedriver/commands/find.js:27:16)
+[21:11:16] Theme 'Cyberpunk' UiScrollable failed: Message: An element could not be located on the page using the given search parameters.; For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors#nosuchelementexception
+Stacktrace:
+NoSuchElementError: An element could not be located on the page using the given search parameters.
+    at AndroidUiautomator2Driver.findElOrEls (/home/harish/.appium/node_modules/appium-uiautomator2-driver/node_modules/appium-android-driver/build/lib/commands/find.js:62:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async AndroidUiautomator2Driver.findElOrElsWithProcessing (/home/harish/.nvm/versions/node/v22.22.0/lib/node_modules/appium/node_modules/@appium/base-driver/build/lib/basedriver/commands/find.js:12:16)
+    at async AndroidUiautomator2Driver.findElement (/home/harish/.nvm/versions/node/v22.22.0/lib/node_modules/appium/node_modules/@appium/base-driver/build/lib/basedriver/commands/find.js:27:16)
+[21:11:16] No locked theme found — skipping paywall capture
+[21:11:16] === Cleaning up old screenshots ===
+[21:11:16] Cleanup complete: kept 12, removed 0
+[21:11:16] Report generated: /mnt/data2/git_repos/AgeReveal/screenshots/REPORT.md
+[21:11:16] === Self-Test: Verifying screenshot catalog ===
+[21:11:16]   OK: onboarding_02_birthdate.png
+[21:11:16]   OK: onboarding_01_permission.png
+[21:11:16]   OK: tab3_bdays_add_sheet.png
+[21:11:16]   OK: tab1_mycosmos_default.png
+[21:11:16]   OK: settings_theme_picker.png
+[21:11:16]   OK: tab3_bdays_default.png
+[21:11:16]   OK: tab1_mycosmos_highlight_fortune.png
+[21:11:16]   OK: tab2_match_empty.png
+[21:11:16]   OK: settings_unified_view.png
+[21:11:16]   MISSING: paywall_modal.png
+[21:11:16]   OK: tab2_match_results.png
+[21:11:16]   OK: tab4_timeline_scrolled.png
+[21:11:16]   OK: onboarding_03_time_location.png
+[21:11:16]   MISSING: tab1_details_astrology.png
+[21:11:16] WARNING: 2 expected screenshot(s) missing: ['paywall_modal.png', 'tab1_details_astrology.png']
+[21:11:16] === Walkthrough Complete ===
+[21:11:16] Screens: 12
+[21:11:16] Interactions: 12
+[21:11:16] Screenshots: 12
+[21:11:16] Difficult elements: 5
+[21:11:16] Bugs: 0
+[21:11:16] Quitting driver

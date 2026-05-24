@@ -103,6 +103,7 @@ import com.willowvibe.agereveal.ui.components.AgeBody
 import com.willowvibe.agereveal.ui.components.AgeCard
 import com.willowvibe.agereveal.ui.components.AgeLabel
 import com.willowvibe.agereveal.ui.components.AgeValue
+import com.willowvibe.agereveal.ui.theme.InterFamily
 import com.willowvibe.agereveal.ui.theme.SerifFamily
 import com.willowvibe.agereveal.ui.theme.WarmAmber
 import com.willowvibe.agereveal.ui.theme.WarmBlack
@@ -297,7 +298,7 @@ fun CalculatorScreen(
                 OutlinedTextField(
                     value = uiState.name,
                     onValueChange = { viewModel.onNameChanged(it) },
-                    label = { Text("Name", style = MaterialTheme.typography.labelSmall, color = WarmInkDim) },
+                    label = { Text("Name", style = MaterialTheme.typography.labelSmall, color = WarmInkMute) },
                     placeholder = {
                         Text(
                             "Enter your name",
@@ -314,7 +315,8 @@ fun CalculatorScreen(
                         unfocusedBorderColor = WarmInkDim,
                         focusedTextColor = WarmInk,
                         unfocusedTextColor = WarmInk,
-                        focusedLabelColor = WarmInkDim,
+                        focusedLabelColor = WarmInkMute,
+                        unfocusedLabelColor = WarmInkMute,
                     ),
                 )
 
@@ -618,7 +620,7 @@ private fun AgeNumeral(
         Text(
             text = value,
             fontFamily = SerifFamily,
-            fontWeight = if (large) FontWeight.Light else FontWeight.Normal,
+            fontWeight = FontWeight.Normal,
             fontSize = if (large) 78.sp else 46.sp,
             lineHeight = if (large) 74.sp else 44.sp,
             letterSpacing = (-2).sp,
@@ -627,7 +629,7 @@ private fun AgeNumeral(
         Text(
             text = unit.uppercase(),
             style = MaterialTheme.typography.labelSmall,
-            color = WarmInkDim,
+            color = WarmInkMute,
             modifier = Modifier.padding(top = 6.dp),
         )
     }
@@ -649,7 +651,7 @@ internal fun SecondsStrip(result: AgeResult) {
                     .clip(CircleShape)
                     .background(WarmAmber),
             )
-            Spacer(Modifier.width(12.dp))
+            Spacer(Modifier.width(16.dp))
             Column(modifier = Modifier.weight(1f)) {
                 AgeLabel(text = "SECONDS ALIVE")
                 RollingDigits(
@@ -661,7 +663,7 @@ internal fun SecondsStrip(result: AgeResult) {
             Text(
                 "+1 per\nsecond",
                 style = MaterialTheme.typography.labelSmall,
-                color = WarmInkDim,
+                color = WarmInkMute,
                 textAlign = TextAlign.End,
             )
         }
@@ -747,7 +749,7 @@ private fun MiniStatChip(
     accent: Boolean = false,
     modifier: Modifier = Modifier,
 ) {
-    Row(
+    Column(
         modifier = modifier
             .clip(RoundedCornerShape(99.dp))
             .background(WarmSurface)
@@ -756,15 +758,19 @@ private fun MiniStatChip(
                 color = Color.White.copy(alpha = 0.08f),
                 shape = RoundedCornerShape(99.dp),
             )
-            .padding(horizontal = 16.dp, vertical = 8.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween,
+            .padding(horizontal = 10.dp, vertical = 8.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center,
     ) {
         AgeLabel(text = label)
-        Spacer(Modifier.width(6.dp))
-        AgeValue(
+        Spacer(Modifier.height(2.dp))
+        Text(
             text = value,
-            accentColor = if (accent) WarmAmber else null,
+            fontFamily = InterFamily,
+            fontWeight = FontWeight.SemiBold,
+            fontSize = 16.sp,
+            color = if (accent) WarmAmber else WarmInk,
+            maxLines = 1,
         )
     }
 }
@@ -1021,7 +1027,7 @@ private fun PrecisionRow(
                 OutlinedTextField(
                     value = query,
                     onValueChange = { query = it },
-                    label = { Text("Search state", color = WarmInkDim) },
+                    label = { Text("Search state", color = WarmInkMute) },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
                     colors = OutlinedTextFieldDefaults.colors(
@@ -1108,7 +1114,7 @@ private fun PrecisionRow(
                     OutlinedTextField(
                         value = cityName,
                         onValueChange = { cityName = it },
-                        label = { Text("City name", color = WarmInkDim) },
+                        label = { Text("City name", color = WarmInkMute) },
                         placeholder = { Text("e.g. Mumbai, Jaipur, Chennai", color = WarmInkMute) },
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth(),
@@ -1270,7 +1276,7 @@ private fun DailyFortuneCard(
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
+            verticalAlignment = Alignment.Bottom,
         ) {
             AgeLabel(text = "DAILY COSMIC FORTUNE")
             Text(
@@ -1367,7 +1373,7 @@ private fun MilestoneHighlight(result: AgeResult) {
     val daysAway = nextTarget - days
     val formattedTarget = "%,d".format(nextTarget)
     AgeCard {
-        Row(verticalAlignment = Alignment.CenterVertically) {
+        Row(verticalAlignment = Alignment.Bottom) {
             Text("✦", color = WarmAmber, fontSize = 18.sp)
             Spacer(Modifier.width(10.dp))
             Column(modifier = Modifier.weight(1f)) {
@@ -1391,7 +1397,7 @@ private fun FortuneHighlight(
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
+            verticalAlignment = Alignment.Bottom,
         ) {
             AgeLabel(text = "DAILY COSMIC FORTUNE")
             Text(fortune.emoji, fontSize = 20.sp)
@@ -1419,7 +1425,7 @@ private fun PlanetAgeHighlight(result: AgeResult, name: String) {
     val noun = if (planetAge.ageYears == 1.0) "year" else "years"
     val formatted = calculator.formatPlanetAge(planetAge.ageYears)
     AgeCard {
-        Row(verticalAlignment = Alignment.CenterVertically) {
+        Row(verticalAlignment = Alignment.Bottom) {
             Text(CelestialBody.MARS.emoji, fontSize = 22.sp)
             Spacer(Modifier.width(10.dp))
             Column(modifier = Modifier.weight(1f)) {
@@ -1445,7 +1451,7 @@ private fun CelebrityHighlight(
     val match = matches.first()
     val categoryLabel = match.category.lowercase().replaceFirstChar { it.uppercase() }
     AgeCard {
-        Row(verticalAlignment = Alignment.CenterVertically) {
+        Row(verticalAlignment = Alignment.Bottom) {
             Text("⭐", fontSize = 20.sp)
             Spacer(Modifier.width(10.dp))
             Column(modifier = Modifier.weight(1f)) {
@@ -1474,7 +1480,7 @@ private fun CelebrityHighlight(
 @Composable
 private fun CelebrityHighlightPlaceholder() {
     AgeCard {
-        Row(verticalAlignment = Alignment.CenterVertically) {
+        Row(verticalAlignment = Alignment.Bottom) {
             Text("⭐", fontSize = 20.sp)
             Spacer(Modifier.width(10.dp))
             Column(modifier = Modifier.weight(1f)) {
