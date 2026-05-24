@@ -1,6 +1,6 @@
 # Cosmic ID — Tasks & Implementation Checklist
 
-_Last updated: 2026-05-22 — v2.0.0 complete; Phase 6 (Platform Ecosystem) active development_
+_Last updated: 2026-05-24 — Market research applied. Roadmap restructured into 6 missions. Tasks reprioritized for "sure hit" features._
 
 ---
 
@@ -13,308 +13,404 @@ _Last updated: 2026-05-22 — v2.0.0 complete; Phase 6 (Platform Ecosystem) acti
 | 0.3 | State vs city location | **Indian State dropdown (centroid)** | 80% of users don't know exact coordinates; state is "good enough" for Lagna |
 | 0.4 | Vedic compatibility weight | **50% of composite score** | Indian audience trusts Kundali Milan above all else |
 | 0.5 | Free trial duration | **7 days** | Industry standard; enough time to form habit |
+| 0.6 | **No weekly subscriptions** | **Enforced** | RevenueCat data: weekly plans have highest churn & lowest LTV in Lifestyle |
+| 0.7 | **No paywall creep** | **Enforced** | #1 churn driver across Co-Star, The Pattern, Nebula. Free tier is locked. |
+| 0.8 | **No AI chatbot (for now)** | **Deferred to v3.x** | Users spot templated AI immediately. Only build if genuinely personal with full chart context. |
+| 0.9 | **India-first, US/UK-second** | **Market priority** | India = 1.5B TAM, lowest CAC, proven demand. AstroSage has 80M downloads but dated UX. |
+| 0.10 | **Widget-first virality** | **Core UA strategy** | Every widget screenshot is free organic marketing. Every shareable card is a free ad. |
 
 ---
 
-## 1. v2.0 Revamp — Critical Path
+## Mission 1: Cosmic Identity Core — COMPLETE ✅
 
-### 1a. Monetisation Overhaul 🔴
+> **Goal:** The unified experience that no competitor has. Shipped in v2.0.
 
-| # | Task | Status | Notes |
-|---|------|--------|-------|
-| 1 | Remove rewarded ad gate from astrology | ✅ | Basic astrology free; premium gates depth (Dasha, Ba Zi, planetary table) |
-| 2 | Remove interstitial ad triggers | ✅ | Deleted all `maybeShowInterstitial()` calls; banner-only on free tier |
-| 3 | Integrate Google Play Billing Library 7+ | ✅ | `billing-ktx` dependency added; `BillingClient` with `SUBS` product type |
-| 4 | Create `BillingManager.kt` | ✅ | SKU `premium_monthly` (₹49) + `premium_yearly` (₹299); 7-day free trial |
-| 5 | Create `PaywallScreen.kt` | ✅ | Shows subscription tiers with "BEST VALUE" yearly badge |
-| 6 | Add `isPremium` flag to `UserPreferencesRepository` | ✅ | DataStore boolean; synced from BillingManager purchase state |
-| 7 | Swap AdMob test IDs for production | ⬜ | Replace banner ID only (rewarded + interstitial IDs deleted) |
-| 8 | **Restore purchases flow** | ✅ | "Restore purchases" button in PaywallScreen + Settings; delegates to `BillingManager.restorePurchases()` |
-| 9 | **Billing error handling UI** | ✅ | `BillingManager` exposes `error: StateFlow<String?>` with human-readable messages; PaywallScreen shows error banner with retry CTA |
-| 10 | **Grace period for lapsed subscriptions** | ✅ | 3-day grace tracked via `gracePeriodStart` in DataStore; BillingManager exposes `isInGracePeriod` |
-| 11 | **Free trial UX** | ✅ | `BillingManager` parses free pricing phase → `trialDaysRemaining: StateFlow<Int?>`. CalculatorScreen header shows "N days left" chip |
-| 12 | **Acknowledge purchases + setPremium sync** | ✅ | `BillingManager.handlePurchases()` mirrors to DataStore; stores purchase timestamp for trial calculation |
-
-### 1b. Onboarding 🔴
+### 1a. Live Age & Hero Counter
 
 | # | Task | Status | Notes |
 |---|------|--------|-------|
-| 1 | Create `OnboardingScreen.kt` | ✅ | 3-step horizontal animated pager |
-| 2 | **Step 1: Name + Birth date** | ✅ | Name is basic input; date is required; "Let's build your Cosmic ID" |
-| 3 | **Step 2: Optional birth time + location** | ✅ | "Fine-tune your chart"; skip saves null to prefs |
-| 4 | Step 3: Accent colour picker | ✅ | 5 swatches; "Enter My Cosmos" CTA |
-| 5 | First-launch gate in `MainActivity` | ✅ | `MainViewModel.hasCompletedOnboarding` → conditional start destination |
-| 6 | `MainViewModel.kt` | ✅ | `completeOnboarding()` writes to DataStore; exposes `hasCompletedOnboarding` |
+| 1 | Real-time age (years → seconds) | ✅ | `AgeCalculator.kt` with `java.time` desugaring |
+| 2 | Hero counter with `AgeNumeral` | ✅ | Serif font, `AnimatedContent` roll animation |
+| 3 | Seconds strip with amber dot | ✅ | Live ticking every second |
+| 4 | Mini stat chips (months, days, hours, minutes) | ✅ | Column layout, single-line values |
+| 5 | Precision chips (Exact/Approximate indicator) | ✅ | Shows state + city name |
 
-### 1c. Deep-Link Profile Sharing 🟡
-
-| # | Task | Status | Notes |
-|---|------|--------|-------|
-| 1 | Create `ProfileDeepLinkGenerator.kt` | ✅ | Base64-URL-encoded JSON: `{d, n, t}` → `agereveal://profile/[data]` |
-| 2 | Register intent-filter in `AndroidManifest.xml` | ✅ | `agereveal://profile/*` |
-| 3 | Decode on receive in `MainActivity` | ✅ | `ProfileDeepLinkGenerator.parse(intent?.data)` passed to `AppNavGraph` |
-| 4 | Auto-populate CalculatorScreen | ✅ | `LaunchedEffect(deepLinkProfile)` → `onBirthDateSelected`, `onNameChanged`, `onBirthTimeSelected` |
-| 5 | **Fallback for non-installed users** | ✅ | Android App Link (`https://willowvibe.com/agereveal/profile/*`) + HTML fallback page; `generateShareUrl()` for HTTPS sharing; `assetlinks.json` template created |
-| 6 | Share button generates deep-link | ✅ | "Copy link" button in CalculatorScreen copies `ProfileDeepLinkGenerator.generate()` URL to clipboard with Snackbar confirmation |
-
-### 1d. Progressive Disclosure on Main Screen 🟡
+### 1b. Multi-System Astrology
 
 | # | Task | Status | Notes |
 |---|------|--------|-------|
-| 1 | Refactor `CalculatorScreen.kt` | ✅ | Hero counter + rotating highlight + "Explore full profile →" CTA; share card + copy link side-by-side |
-| 2 | Move all other cards to `DetailsUnlockScreen` tabs | ✅ | Overview / Western / Vedic / Chinese tabbed layout implemented |
-| 3 | Remove "Work weeks until retirement" from main screen | ✅ | Retirement card removed from main screen (now only in Details if enabled) |
-| 4 | Rotating highlight logic | ✅ | 4-second auto-rotate through Milestone / Fortune / Planet Age / Celebrity Match; `remember(fortune != null)` to prevent timer restart |
+| 1 | **Western** — Sun sign, Moon sign, Rising (Lagna), planetary positions | ✅ | Meeus ephemeris, Lahiri ayanamsa |
+| 2 | **Vedic** — Rashi, Nakshatra, Pada, Lord, Dasha | ✅ | 27 Nakshatras, Vimshottari Dasha |
+| 3 | **Chinese** — Ba Zi (Year/Month/Day Pillar), Stem-Branch, Zodiac animal | ✅ | `BaZiCalculator.kt` with CNY lookup table |
+| 4 | **Numerology** — Life Path, Expression, Soul Urge, Personality | ✅ | Pythagorean numerology |
+| 5 | Tabbed `DetailsUnlockScreen` (Overview | Western | Vedic | Chinese) | ✅ | Progressive disclosure; premium gates depth |
 
-### 1e. Feature Removals 🔴
-
-| # | Task | Status | Notes |
-|---|------|--------|-------|
-| 1 | Delete `ParallelUniverseCalculator.kt` and UI card | ✅ | Card removed from `DetailsUnlockScreen`; file kept dormant |
-| 2 | Remove ASCII Art from `ShareThemeSheet.kt` | ✅ | `ShareFormat` enum trimmed; `ASCII_ART` chip deleted |
-| 3 | Delete custom Hindi language toggle | ✅ | Rely on Android system locale (API 33+); `setLanguage()` is no-op |
-| 4 | Move Badges from bottom nav to "My Cosmos" section | ✅ | 4 tabs: My Cosmos, Match, Bdays, Timeline |
-| 5 | Rename "You" tab to "My Cosmos" | ✅ | String resource + `Screen.Calculator.label` |
-
-### 1f. Location Input — Indian State Dropdown 🔴
+### 1c. Widgets (6+ Glance Widgets)
 
 | # | Task | Status | Notes |
 |---|------|--------|-------|
-| 1 | Create `assets/indian_states_coords.json` | ✅ | 36 states/UTs with centroid lat/lon |
-| 2 | Replace lat/lon free-text input with State dropdown | ✅ | Searchable bottom-sheet picker with state names; persists centroid coordinates |
-| 3 | Add "(Approximate — state centroid)" label | ✅ | `PrecisionChip` shows state name + "*" when `isApproximate = true` |
-| 4 | Optional "Add exact city" secondary input | ✅ | Collapsible section below state picker in location bottom sheet; city name appends to state label |
-| 5 | Update `GeoLocation` model | ✅ | `isApproximate: Boolean = false`; serialized as 4th segment in prefs |
+| 1 | `SecondsCounterGlanceWidget` | ✅ | Live ticking seconds on home screen |
+| 2 | `BirthdayCountGlanceWidget` | ✅ | Countdown to next birthday |
+| 3 | `LifespanGlanceWidget` | ✅ | Progress bar toward target age |
+| 4 | `MilestoneRingGlanceWidget` | ✅ | Circular progress to next milestone |
+| 5 | `WideGlanceWidget` (4×2) | ✅ | Multiple upcoming birthdays |
+| 6 | `BirthdayGlanceWidget` (2×2) | ✅ | Single next birthday |
+| 7 | Widget theming with accent color | ✅ | Dynamic color from user prefs |
+| 8 | Premium theme packs in widgets | ✅ | Vaporwave, Cottagecore, Y2K, Dark Academia, Cyberpunk |
+
+### 1d. Shareable Cards
+
+| # | Task | Status | Notes |
+|---|------|--------|-------|
+| 1 | `ShareCardGenerator.kt` — Canvas bitmap renderer | ✅ | 1080×1920 PNG export |
+| 2 | Age card theme | ✅ | Multiple dark/light/cosmos themes |
+| 3 | Compatibility card | ✅ | Dual-profile side-by-side |
+| 4 | Zodiac card | ✅ | "Big Three" snapshot |
+| 5 | Celebrity match card | ✅ | "I share a birthday with…" |
+| 6 | Milestone card | ✅ | "10,000 days alive" celebration |
+| 7 | `ShareThemeSheet.kt` — bottom sheet picker | ✅ | Theme chips with preview |
+
+### 1e. Birthday Reminders
+
+| # | Task | Status | Notes |
+|---|------|--------|-------|
+| 1 | Room DB + DAO for saved birthdays | ✅ | `BirthdayDao.kt`, `BirthdayEntity.kt` |
+| 2 | Add birthday bottom sheet | ✅ | Name + date picker |
+| 3 | Notification scheduling | ✅ | WorkManager with exact alarm |
+| 4 | CSV export via `FileProvider` | ✅ | `FileProvider` + `Intent.ACTION_SEND` |
+| 5 | Google Calendar export | ✅ | `CalendarExport.kt` |
+| 6 | Milestone alerts (18, 21, 30, 50…) | ✅ | Push notification on milestone birthdays |
+
+### 1f. Onboarding & Activation
+
+| # | Task | Status | Notes |
+|---|------|--------|-------|
+| 1 | 3-step animated onboarding | ✅ | Name + birth date → optional time + location → accent picker |
+| 2 | First-launch gate in `MainActivity` | ✅ | `MainViewModel.hasCompletedOnboarding` |
+| 3 | Accent color persistence | ✅ | `UserPreferencesRepository.setAccentColor()` |
+| 4 | Birth time support (optional) | ✅ | `TimePicker` dialog; exact vs approximate indicator |
+| 5 | Indian state dropdown (centroid) | ✅ | 36 states/UTs in `assets/indian_states_coords.json` |
+
+### 1g. Monetization (v2.0)
+
+| # | Task | Status | Notes |
+|---|------|--------|-------|
+| 1 | Google Play Billing Library 7+ | ✅ | `billing-ktx` dependency |
+| 2 | `BillingManager.kt` — `premium_monthly` (₹49) + `premium_yearly` (₹299) | ✅ | 7-day free trial |
+| 3 | `PaywallScreen.kt` with tier cards | ✅ | "BEST VALUE" yearly badge |
+| 4 | `isPremium` flag in DataStore | ✅ | Synced from BillingManager |
+| 5 | Restore purchases flow | ✅ | PaywallScreen + Settings |
+| 6 | Billing error handling UI | ✅ | Human-readable messages + retry CTA |
+| 7 | Grace period (3 days) | ✅ | `gracePeriodStart` in DataStore |
+| 8 | Free trial UX chip | ✅ | "N days left" in CalculatorScreen header |
+| 9 | AdMob banner (free tier only) | ✅ | Test IDs; production swap pending |
+| 10 | **One-time lifetime SKU** | ⬜ | `$49.99` — appeals to subscription-fatigued users |
+
+### 1h. Social & Viral
+
+| # | Task | Status | Notes |
+|---|------|--------|-------|
+| 1 | Profile deep-link sharing | ✅ | `agereveal://profile/[data]` |
+| 2 | HTTPS fallback page | ✅ | `willowvibe.com/agereveal/profile/*` |
+| 3 | Celebrity birthday matching (375 entries) | ✅ | 8 categories; auto-rotates in highlight |
+| 4 | WhatsApp sticker pack | ✅ | 12 stickers; `ContentProvider` |
+| 5 | Daily fortune push notification | ✅ | `DailyFortuneWorker` + user-set hour |
+| 6 | Cosmic Year Report notification | ✅ | Rich notification with Dasha + fortune |
 
 ---
 
-## 2. v2.0 Revamp — Growth Features
+## Mission 2: Vedic Supremacy — ACTIVE 🔥
 
-### 2a. Celebrity Birthday Matching 🟢
+> **Goal:** Own the Indian market. No Western competitor has Vedic. AstroSage has 80M downloads but dated UX and extreme nickel-and-diming.
 
-| # | Task | Status | Notes |
-|---|------|--------|-------|
-| 1 | Create `assets/celebrities.json` (~375 entries) | ✅ | `[{name, dob, category}]` — 8 categories: Bollywood, Cricket, Sports, Global, Politics, South Indian, Music, Business |
-| 2 | **Data source & curation strategy** | ✅ | Curated static JSON baked into APK; sorted by exact-year-first, then year, then name |
-| 3 | Create `CelebrityMatchCalculator.kt` | ✅ | Singleton with `findMatches(birthDate, limit = 3)`; parses JSON from assets; matches month+day |
-| 4 | Add celebrity card to `CalculatorScreen` | ✅ | Shows in `RotatingHighlightCard` when matches exist; auto-hides when empty |
-| 5 | Generate shareable celebrity card | ✅ | `CalculatorViewModel.shareCelebrityCard()` wired; highlight rotates through matches |
+### 2a. Vedic Compatibility (ASHTAKOOT / GUNA MILAN) — CRITICAL 🔴
 
-### 2b. Daily Fortune Push Notification 🟢
+| # | Task | Status | Priority | Notes |
+|---|------|--------|----------|-------|
+| 1 | Create `VedicCompatibilityScorer.kt` | ⬜ | 🔴 Critical | 8-Koot Ashtakoot (36-point Guna Milan) |
+| 2 | Implement Varna Koot (1 point) | ⬜ | 🔴 Critical | Spiritual compatibility |
+| 3 | Implement Vasya Koot (2 points) | ⬜ | 🔴 Critical | Mutual attraction |
+| 4 | Implement Tara Koot (3 points) | ⬜ | 🔴 Critical | Birth star compatibility |
+| 5 | Implement Yoni Koot (4 points) | ⬜ | 🔴 Critical | Sexual compatibility |
+| 6 | Implement Graha Maitri Koot (5 points) | ⬜ | 🔴 Critical | Planetary friendship |
+| 7 | Implement Gana Koot (6 points) | ⬜ | 🔴 Critical | Temperament matching |
+| 8 | Implement Bhakut Koot (7 points) | ⬜ | 🔴 Critical | Kuta / relationship health |
+| 9 | Implement Nadi Koot (8 points) | ⬜ | 🔴 Critical | Health / progeny compatibility |
+| 10 | Composite score display (X/36) | ⬜ | 🔴 Critical | Indian users expect this format prominently |
+| 11 | Interpretation text for each Koot | ⬜ | 🟡 High | What the score means in plain language |
+| 12 | `CosmicMatchScreen.kt` — unified 3-system UI | ⬜ | 🟡 High | Western 25% + Chinese 25% + Vedic 50% weighting |
 
-| # | Task | Status | Notes |
-|---|------|--------|-------|
-| 1 | Create `DailyFortuneWorker.kt` | ✅ | `OneTimeWorkRequest` with exact daily rescheduling; fires at user-set hour (default 8AM) |
-| 2 | Build notification with fortune text + CTA | ✅ | "Tap to see your full cosmic day" — opens MainActivity |
-| 3 | Settings toggle for fortune time | ✅ | Settings → Notifications section with hour picker and master toggle |
+### 2b. Mangal Dosha (Manglik) Detection — CRITICAL 🔴
 
-### 2c. Animated MP4 Export 🟢
+| # | Task | Status | Priority | Notes |
+|---|------|--------|----------|-------|
+| 1 | Create `ManglikCalculator.kt` | ⬜ | 🔴 Critical | Mars in houses 1, 4, 7, 8, 12 = Mangal Dosha |
+| 2 | Show Manglik flag in profile | ⬜ | 🔴 Critical | Must be prominent for Indian marriage compatibility |
+| 3 | Manglik-to-Manglik matching rule | ⬜ | 🟡 High | "Both are Manglik = neutralizes" explanation |
+| 4 | Partial Manglik (from Lagna vs Moon vs Venus) | ⬜ | 🟢 Medium | Advanced; shows depth |
 
-| # | Task | Status | Notes |
-|---|------|--------|-------|
-| 1 | Create `VideoExportWorker.kt` | ⬜ | `MediaCodec` + `MediaMuxer`; 5-second Canvas animation |
-| 2 | Render seconds counter ticking | ⬜ | Frame-by-frame Canvas draw |
-| 3 | Export to `FileProvider` URI | ⬜ | Share via `ACTION_SEND` with `video/mp4` MIME |
-| 4 | Add "Video (MP4)" to `ShareThemeSheet.kt` | ⬜ | Premium-only or free with watermark |
+### 2c. Navamsa (D-9) Chart — HIGH 🟡
 
-### 2d. Cosmic Year Report Notification 🟢
+| # | Task | Status | Priority | Notes |
+|---|------|--------|----------|-------|
+| 1 | Navamsa division calculation | ⬜ | 🟡 High | Standard for marriage analysis in India |
+| 2 | Navamsa Lagna (rising sign in D-9) | ⬜ | 🟡 High | Critical for marriage timing |
+| 3 | Simple visual representation | ⬜ | 🟡 High | **Keep simple** — AstroSage's dense charts are unusable for beginners |
+| 4 | Integration with compatibility screen | ⬜ | 🟢 Medium | Show Navamsa compatibility alongside Ashtakoot |
 
-| # | Task | Status | Notes |
-|---|------|--------|-------|
-| 1 | Extend `YearlyReengagementWorker.kt` with Dasha + fortune | ✅ | Injects `DashaCalculator` + `DailyFortuneGenerator`; rich `BigTextStyle` notification |
-| 2 | Generate rich notification | ✅ | "You've lived [X] days — [Dasha period] — tap for your cosmic year ahead" |
-| 3 | Include Mahadasha + fortune summary in body | ✅ | Dasha info from `getDashaInfo()`, fortune from `DailyFortuneGenerator.generate()` |
+### 2d. Vedic Engine Depth — MEDIUM 🟢
 
-### 2e. Cosmic Twins Discovery 🟢
+| # | Task | Status | Priority | Notes |
+|---|------|--------|----------|-------|
+| 1 | Nakshatra lord + deity + guna metadata | ⬜ | 🟢 Medium | BUG-076 |
+| 2 | Planetary dignities (exaltation/debilitation/own/moolatrikona) | ⬜ | 🟢 Medium | BUG-073; shows we take Vedic seriously |
+| 3 | Dasha balance at birth exposure | ⬜ | 🟢 Medium | BUG-075 (partial) |
+| 4 | Pratyantar Dasha (sub-sub-period) | ⬜ | 🟢 Medium | BUG-075 |
+| 5 | Tropical rising sign (Western Lagna) | ⬜ | 🟢 Medium | BUG-083; bridge feature for Western users |
 
-| # | Task | Status | Notes |
-|---|------|--------|-------|
-| 1 | Create `CosmicTwinScreen.kt` | ⬜ | Offline matching by Rashi + Nakshatra combo |
-| 2 | Create `CosmicTwinShareCard` | ⬜ | Dual card showing both profiles side-by-side |
-| 3 | No backend needed | ⬜ | Works entirely offline; deterministic matching |
+### 2e. Vedic UI/UX — HIGH 🟡
 
-### 2f. WhatsApp Sticker Pack 🟢
+| # | Task | Status | Priority | Notes |
+|---|------|--------|----------|-------|
+| 1 | Hindi / Tamil / Telugu / Kannada string review | ⬜ | 🟡 High | Ensure all Vedic terms are localized |
+| 2 | "Marriage Compatibility" dedicated flow | ⬜ | 🟡 High | High-intent use case; could be standalone screen |
+| 3 | Simplified Kundli visual | ⬜ | 🟡 High | 12-house wheel; beginner-friendly; **not** AstroSage-complex |
+| 4 | Indian festival push notifications | ⬜ | 🟢 Medium | Diwali, Raksha Bandhan, etc. tied to user's profile |
+| 5 | Vedic educational content | ⬜ | 🟢 Medium | "What is Nakshatra?" "What is Dasha?" in-app glossary |
 
-| # | Task | Status | Notes |
-|---|------|--------|-------|
-| 1 | Create `WhatsAppStickerProvider.kt` | ✅ | `ContentProvider` with Hilt `@EntryPoint` pattern; serves sticker metadata + PNG files |
-| 2 | Generate 512×512 PNG | ✅ | `StickerGenerator` creates 12 cosmic-themed stickers via Canvas drawing |
-| 3 | `contents.json` manifest | ✅ | Metadata returned via ContentProvider cursor (identifier, name, publisher, tray, stickers) |
-| 4 | Register `ContentProvider` in manifest | ✅ | `com.willowvibe.cosmicid.stickercontentprovider` authority; exported for WhatsApp access |
+### 2f. Chinese Engine Depth — HIGH 🟡
 
-### 2g. Cosmic Match — Triple System Engine 🟢
-
-| # | Task | Status | Notes |
-|---|------|--------|-------|
-| 1 | `ChineseCompatibilityScorer.kt` | ⬜ | 12×12 animal matrix + Five Elements clash/support logic |
-| 2 | `VedicCompatibilityScorer.kt` | ⬜ | Full 8-Koot Ashtakoot (36-point Guna Milan) |
-| 3 | `ManglikCalculator.kt` | ⬜ | Mars in houses 1,4,7,8,12 = Mangal Dosha flag |
-| 4 | `CosmicMatchEngine.kt` | ⬜ | Weighted composite: Western 25% + Chinese 25% + Vedic 50% |
-| 5 | `CosmicMatchScreen.kt` | ⬜ | Unified UI showing all 3 system scores + composite |
-| 6 | Show raw Ashtakoot score (X/36) prominently | ⬜ | Indian users expect this format |
-| 7 | "Cosmic Twins" result state | ⬜ | Ashtakoot ≥ 28 + Western ≥ 75 + Chinese harmony |
-| 8 | Dual share card with both profiles | ⬜ | Composite score + individual system breakdowns |
-
----
-
-## 3. UI/UX & Design Polish
-
-### 3a. Tabbed Details Screen
-- [x] Refactor `DetailsUnlockScreen` into horizontal Pager/Tab layout: `Overview` | `Western` | `Vedic` | `Chinese`
-- [ ] Expandable cards for deep educational text (Nakshatra meanings, Element descriptions)
-
-### 3b. Micro-Interactions & Animations
-- [x] Number Roll Animation — `AnimatedContent` with `slideInVertically` + `fadeIn`
-- [x] Hero Stagger Entrance — enter/reveal stagger when age result first appears
-- [x] Haptic Feedback Sweep — date/time picker scrolls + important button taps
-
-### 3c. Theming
-- [x] Custom Accent Color Picker — 6 swatches in Settings → Appearance
-- [x] **Premium Theme Packs** — Vaporwave, Cottagecore, Y2K, Dark Academia, Cyberpunk (premium-only) — `PremiumTheme` enum, dynamic `ColorScheme`, Settings UI with premium lock gating
+| # | Task | Status | Priority | Notes |
+|---|------|--------|----------|-------|
+| 1 | Day and Hour Pillars (complete Four Pillars) | ⬜ | 🔴 Critical | BUG-078; currently only Year and Month |
+| 2 | Day Master + Ten Gods analysis | ⬜ | 🟡 High | BUG-079; core of Ba Zi interpretation |
+| 3 | Solar term boundaries (astronomical calculation) | ⬜ | 🟡 High | BUG-080; fixes month pillar accuracy |
+| 4 | Luck Pillars (大运 / Da Yun, 10-year cycles) | ⬜ | 🟢 Medium | BUG-081; standard for Chinese astrology depth |
+| 5 | LunarCalendarConverter error handling (Result type) | ⬜ | 🟢 Medium | BUG-082 |
 
 ---
 
-## 4. App Rename & Brand
+## Mission 3: Viral Growth Engine — ACTIVE 🔥
 
-| # | Task | Status | Notes |
-|---|------|--------|-------|
-| 1 | Decide new name | ✅ | **Cosmic ID** — distinct, cosmic, identity-focused |
-| 2 | Update `strings.xml` app_name | ✅ | `Cosmic ID` |
-| 3 | Update README.md, CONTRIBUTING.md, all store docs | ✅ | "AgeReveal" → "Cosmic ID" rename applied to README, CONTRIBUTING, DESIGN, TASKS, BUGS_AND_ISSUES, privacy policy, and store docs. Source filenames (e.g. `AgeRevealApp.kt`) kept for compatibility. |
-| 4 | Redesign icon to cosmic/zodiac motif | ⬜ | Move away from generic calculator look |
-| 5 | Update all store listing assets | ⬜ | Feature graphic, screenshots, descriptions |
-| 6 | **Package ID decision** | ✅ | Keep `com.willowvibe.agereveal` — existing installs auto-update |
+> **Goal:** Turn every user into a free marketer. Reduce paid UA to near-zero.
 
----
+### 3a. Shareable Cards — HIGH 🟡
 
-## 5. Technical Debt
+| # | Task | Status | Priority | Notes |
+|---|------|--------|----------|-------|
+| 1 | **Daily Fortune Card** | ⬜ | 🟡 High | Morning fortune as shareable Story card; drives daily opens |
+| 2 | **Vedic Kundli Card** | ⬜ | 🟡 High | Simplified Kundli snapshot for sharing |
+| 3 | **Milestone celebration card** (enhanced) | ⬜ | 🟢 Medium | "10,000 days" with confetti animation in PNG |
+| 4 | **Compatibility result card** (enhanced) | ⬜ | 🟢 Medium | Show 3-system scores + composite + share CTA |
+| 5 | Card watermark / branding | ⬜ | 🟢 Medium | Small "Cosmic ID" logo — free attribution |
+| 6 | Card analytics | ⬜ | 🟢 Medium | Track share events by card type for optimization |
 
-### 5a. Testing
-- [x] UI tests (Compose test) — Calculator screen happy path, date validation errors
-- [x] Instrumented test for Room DAO
-- [x] Migration test using `MigrationTestHelper`
-- [ ] Add billing tests with `BillingClient` test SKUs
-- [ ] Add deep-link intent-filter tests
-- [ ] **Update `screenshots/walkthrough.py` Appium suite for v2.0** | ⬜ | Onboarding flow, paywall screen, new tab names, removed language toggle |
+### 3b. Widget Virality — MEDIUM 🟢
 
-### 5b. Performance & Error Handling
-- [x] Profile widget update frequency — `notifyWidget()` triggers immediate updates
-- [x] Hindi UI toggle removed — system locale handles this natively (API 33+)
-- [x] Remove unnecessary exact alarm permissions from manifest
-- [x] Replace noon-default with timezone-aware default for astronomical calculations
+| # | Task | Status | Priority | Notes |
+|---|------|--------|----------|-------|
+| 1 | **Lock Screen Widget (API 33+)** | ⬜ | 🟢 Medium | Major iOS 16+ / Android 14+ trend |
+| 2 | Widget "screenshot reminder" | ⬜ | 🟢 Medium | Subtle CTA: "Long-press widget → screenshot → share" |
+| 3 | Widget configuration UI | ⬜ | 🟢 Medium | Let users choose what the widget shows |
+| 4 | Animated widget preview in app | ⬜ | 🔵 Low | Show how widget looks before adding to home screen |
 
-### 5c. Analytics — Firebase (Minimum Viable) 🟡
+### 3c. Social Loops — MEDIUM 🟢
 
-| # | Task | Status | Notes |
-|---|------|--------|-------|
-| 1 | Add `firebase-analytics` dependency | ✅ | `firebase-bom:33.12.0` + `firebase-analytics-ktx` added to `build.gradle.kts` |
-| 2 | Log onboarding funnel | ✅ | `AnalyticsManager` exposes `logOnboardingStep{1,2,3}Complete()` and `logOnboardingComplete()` |
-| 3 | Log paywall funnel | ✅ | `logPaywallShown()`, `logPaywallSubscribeTap(sku)`, `logPaywallDismiss()` |
-| 4 | Log share events | ✅ | `logShareInitiated(format)` with `format` parameter |
-| 5 | Log deep-link events | ✅ | `logDeepLinkReceived()`, `logDeepLinkProfileViewed()` |
-| 6 | Log premium conversion | ✅ | `logPurchaseComplete(sku)`, `logTrialStarted(sku)`, `logTrialConverted(sku)` |
+| # | Task | Status | Priority | Notes |
+|---|------|--------|----------|-------|
+| 1 | **Referral program** | ⬜ | 🟢 Medium | "Share Cosmic ID, get 1 month free" — both parties win |
+| 2 | **Cosmic Twins Discovery** | ⬜ | 🟢 Medium | Offline Rashi+Nakshatra matching; deferred from v2.0 |
+| 3 | **Group compatibility** | ⬜ | 🔵 Low | Compare 3+ friends; viral for friend groups |
+| 4 | **Instagram Story integration** | ⬜ | 🔵 Low | Direct share to Instagram Stories (if API allows) |
 
 ---
 
-## 6. Play Store Submission
+## Mission 4: Trust & Monetization — ACTIVE 🔥
 
-### 6a. Pre-build Version Bump 🔴
-- [x] **Bump `VERSION` file** → `2.0.0` ✅ 2026-05-22
-- [ ] **Bump `versionCode`** in `app/build.gradle.kts` → `8` (must be higher than v1.0.7's versionCode 7)
-- [ ] **Verify `versionName` resolves to `2.0.0`** after VERSION file update
+> **Goal:** Be the "Stellium of the age+astrology space" — ethical billing, transparent pricing, no trial traps.
 
----
+### 4a. Ethical Monetization — HIGH 🟡
 
-### 6b. Required Assets
-- [ ] App icon — 512 × 512 PNG (new cosmic/zodiac design)
-- [ ] Feature graphic — 1024 × 500 PNG
-- [ ] Phone screenshots — 5–8 portrait (showcasing onboarding, premium paywall, celebrity match, tabbed details)
-- [ ] Short description — max 80 characters
-- [ ] Full description — max 4 000 characters
-- [ ] Content rating questionnaire
-- [x] **Subscription pricing declaration in Play Console** | ✅ | `premium_monthly` (₹49) + `premium_yearly` (₹299) declared in Play Console |
-- [x] **"Subscription Terms" link in app settings** | ✅ | "Terms & Privacy" row in Settings → About links to privacy policy |
-- [x] **Privacy Policy URL in Play Console** | ✅ | `store_listing/privacy_policy.md` hosted at `https://willowvibe.com/agereveal/privacy` |
+| # | Task | Status | Priority | Notes |
+|---|------|--------|----------|-------|
+| 1 | **One-time lifetime SKU** | ⬜ | 🟡 High | `$49.99` — appeals to subscription-fatigued users; Stellium model |
+| 2 | **Tip jar / voluntary support** | ⬜ | 🟢 Medium | "Support the cosmos" — indie-friendly; loyal users pay extra |
+| 3 | **Referral rewards** | ⬜ | 🟢 Medium | Free month for referrer + referred |
+| 4 | **Family sharing support** | ⬜ | 🔵 Low | Share premium across family members |
+| 5 | **Regional pricing expansion** | ⬜ | 🟢 Medium | Southeast Asia (₹49 equivalent), LATAM, MENA |
 
-### 6c. Release Rollout
-1. **Internal testing** — verify real AdMob impressions, Play Billing test purchases, widget behaviour, notifications
-2. **Open testing** — gather reviews, iterate on paywall conversion
-3. **Production** — staged rollout 20% → 50% → 100%
+### 4b. Pricing Page Transparency — MEDIUM 🟢
 
----
+| # | Task | Status | Priority | Notes |
+|---|------|--------|----------|-------|
+| 1 | **"What's included" comparison table** | ⬜ | 🟢 Medium | Free vs Premium side-by-side in PaywallScreen |
+| 2 | **Cancellation instructions in app** | ⬜ | 🟢 Medium | "How to cancel" FAQ — builds trust |
+| 3 | **Trial end reminder notification** | ⬜ | 🟢 Medium | "Your trial ends in 2 days — here's what you'll lose" |
+| 4 | **Lifetime deal urgency** | ⬜ | 🔵 Low | Limited-time lifetime offer for launch |
 
-## 7. Infrastructure & Architecture Improvements (2026-05-22)
+### 4c. Store Listing & ASO — HIGH 🟡
 
-### 7a. Horoscope Engine Audit & Fixes ✅
+| # | Task | Status | Priority | Notes |
+|---|------|--------|----------|-------|
+| 1 | **App icon redesign** | ⬜ | 🟡 High | Cosmic/zodiac motif; move away from generic calculator look |
+| 2 | **Feature graphic (1024×500)** | ⬜ | 🟡 High | Play Store top banner |
+| 3 | **Screenshot refresh** | ✅ | 🟡 High | 5–8 screenshots at 1080×2400; onboarding, paywall, celebrity, widgets |
+| 4 | **Short description (80 chars)** | ⬜ | 🟢 Medium | "Your Cosmic ID: Age, Astrology & Numerology" |
+| 5 | **Full description (4000 chars)** | ⬜ | 🟢 Medium | SEO keywords: age calculator, kundli, nakshatra, compatibility |
+| 6 | **Video preview (30 sec)** | ⬜ | 🔵 Low | Hero counter + widget + share card in action |
+| 7 | **Content rating questionnaire** | ⬜ | 🟢 Medium | Play Console submission requirement |
 
-| # | Task | Status | Notes |
-|---|------|--------|-------|
-| 1 | Audit Western zodiac calculation engine | ✅ | AstronomicalCalculator uses Meeus Ch.25 for Sun (~0.01°), Ch.47 for Moon (~0.1°); Lahiri ayanamsa with secular quadratic term — accurate for sign/nakshatra level |
-| 2 | Audit Vedic calculation engine | ✅ | NakshatraCalculator (27 equal divisions), DashaCalculator (120-year Vimshottari cycle) — mathematically correct |
-| 3 | Audit Chinese calculation engine | ✅ | BaZiCalculator 五虎遁月 month stem rule correct; CNY_DATES lookup table 1900–2100 verified against known dates |
-| 4 | Fix Western zodiac inconsistency in compatibility | ✅ | ZodiacCompatibilityCalculator now uses astronomical ephemeris via getWesternSignIndex() instead of hardcoded date ranges — cusp dates now consistent |
-| 5 | Fix LunarCalendarConverter Throwable catch | ✅ | Changed to catch Exception instead of Throwable |
-| 6 | Remove dead julianDayNoon() code | ✅ | Replaced with julianDay(LocalDateTime) in the one caller |
+### 4d. Analytics & Attribution — MEDIUM 🟢
 
-### 7b. SharedPreferences Consolidation ✅
-
-| # | Task | Status | Notes |
-|---|------|--------|-------|
-| 1 | Add user profile keys to UserPreferencesRepository | ✅ | Added birth_date, birth_time, birth_location, user_name, notification_hour, fortune_date, fortune_json — all mirrored to calculator_prefs for widget/worker access |
-| 2 | Remove Context from CalculatorViewModel | ✅ | All prefs reads/writes now via UserPreferencesRepository suspend functions |
-| 3 | Remove Context from RemindersViewModel | ✅ | cachedUserBirthDate loaded via StateFlow; notification_hour persisted centrally |
-| 4 | Fix RemindersScreen direct SharedPreferences reads | ✅ | Now uses viewModel.cachedUserBirthDate.collectAsState() |
-
-### 7c. AI Integration Provision ✅
-
-| # | Task | Status | Notes |
-|---|------|--------|-------|
-| 1 | Create ai/ package | ✅ | ai/AiModels.kt, ai/AiService.kt, ai/NoOpAiServiceImpl.kt, ai/AiDiModule.kt |
-| 2 | Define AiService interface | ✅ | generateFortune(), generateCompatibilityInsight(), generateTransitForecast() — all suspend functions |
-| 3 | Create Hilt DI binding | ✅ | AiDiModule binds NoOpAiServiceImpl as default; swap to real AI backend without consumer changes |
+| # | Task | Status | Priority | Notes |
+|---|------|--------|----------|-------|
+| 1 | **Share event logging by card type** | ⬜ | 🟢 Medium | Which cards drive most organic traffic? |
+| 2 | **Widget interaction logging** | ⬜ | 🟢 Medium | Which widgets are most popular? |
+| 3 | **Paywall conversion funnel** | ✅ | 🟢 Medium | `logPaywallShown()`, `logPaywallSubscribeTap()` |
+| 4 | **Trial-to-paid conversion tracking** | ✅ | 🟢 Medium | `logTrialStarted()`, `logTrialConverted()` |
+| 5 | **Geo-segmented analytics** | ⬜ | 🟢 Medium | India vs US vs UK behavior differences |
+| 6 | **Churn reason survey** | ⬜ | 🔵 Low | Exit survey: "Why are you canceling?" |
 
 ---
 
-## 8. Phase 6 — Platform Ecosystem (Active Development)
+## Mission 5: Platform Ecosystem — PLANNED 📋
 
-### 8a. Cloud Backup 🔵
+> **Goal:** Expand beyond Android phones. Wearables, lock screen, iOS.
+
+### 5a. Wear OS Companion
+
+| # | Task | Status | Priority | Notes |
+|---|------|--------|----------|-------|
+| 1 | Create `app-wear/` module | ⬜ | 🔵 Low | Watch face + complication support |
+| 2 | Live seconds counter complication | ⬜ | 🔵 Low | Ultimate glanceable surface |
+| 3 | Next-birthday complication | ⬜ | 🔵 Low | Most useful watch data for reminders |
+| 4 | Dasha period glance | ⬜ | 🔵 Low | Vedic users want quick Mahadasha checks |
+
+### 5b. Cloud Backup & Sync
+
+| # | Task | Status | Priority | Notes |
+|---|------|--------|----------|-------|
+| 1 | Firebase Firestore dependency | ⬜ | 🔵 Low | `firebase-firestore-ktx` |
+| 2 | `CloudSyncRepository.kt` | ⬜ | 🔵 Low | Sync birthdays + preferences |
+| 3 | Google sign-in opt-in | ⬜ | 🔵 Low | Settings → "Sync to Cloud" |
+| 4 | Cross-device profile restore | ⬜ | 🔵 Low | New phone = instant profile transfer |
+
+### 5c. Lock Screen Widget
+
+| # | Task | Status | Priority | Notes |
+|---|------|--------|----------|-------|
+| 1 | API 33+ `WIDGET_FEATURE_RECONFIGURABLE` | ⬜ | 🔵 Low | Android 14+ trend |
+| 2 | Size-adjustable widget | ⬜ | 🔵 Low | User resizes on lock screen |
+
+### 5d. iOS Port (Long-Term)
+
+| # | Task | Status | Priority | Notes |
+|---|------|--------|----------|-------|
+| 1 | Tech stack decision | ⬜ | 🔵 Low | Flutter vs React Native vs native SwiftUI |
+| 2 | WidgetKit support | ⬜ | 🔵 Low | iOS 16+ home/lock screen widgets |
+| 3 | iOS share extensions | ⬜ | 🔵 Low | Share sheet integration |
+
+---
+
+## Mission 6: AI & Advanced Depth — DEFERRED ⏸️
+
+> **Goal:** Only pursue if genuinely personalized with full chart context. Not a "ChatGPT wrapper."
+
+### 6a. What We Will NOT Build
+
+| # | Feature | Why |
+|---|---------|-----|
+| 1 | **AI chatbot astrologer** | Users spot templated AI. Nebula saw 340% engagement lift but 30% faster churn. High dev cost, low retention. |
+| 2 | **Live astrologer chat** | Sanctuary has billing fraud complaints. Requires operational overhead. Not scalable for indie. |
+| 3 | **Face scan / brain age** | "How old am I?" face-scan app = 3.2★. Privacy concerns. Damages trust. |
+| 4 | **Weekly subscriptions** | RevenueCat: highest churn, lowest LTV in Lifestyle. |
+| 5 | **Complex Vedic chart rendering** | AstroSage's dense charts are unusable for beginners. Progressive disclosure wins. |
+| 6 | **Animated MP4 Export** | Deferred from v2.0. High dev cost (`MediaCodec` + `MediaMuxer`), uncertain ROI vs shareable PNG cards. |
+
+### 6b. What We MIGHT Build (With Strict Quality Gates)
+
+| # | Feature | Conditions | Priority |
+|---|---------|------------|----------|
+| 1 | **AI-powered daily fortune** | Must use full natal chart + real transits + genuine astrological reasoning. No templates. | ⏸️ v3.x |
+| 2 | **AI compatibility insights** | Must analyze synastry (planet-to-planet aspects) with real reasoning. | ⏸️ v3.x |
+| 3 | **AI transit forecasting** | Must use real ephemeris data and explain *why* for *this user*. | ⏸️ v3.x |
+
+---
+
+## Technical Debt & Infrastructure
+
+### Testing
 
 | # | Task | Status | Notes |
 |---|------|--------|-------|
-| 1 | Add Firebase Firestore dependency | ⬜ | `firebase-firestore-ktx` to `build.gradle.kts` |
-| 2 | Create `CloudSyncRepository.kt` | ⬜ | Sync saved birthdays, preferences; Google sign-in opt-in |
-| 3 | Add Cloud Sync UI toggle | ⬜ | Settings → Appearance → "Sync to Cloud" |
+| 1 | Unit tests for domain calculators | ✅ | 152+ tests passing |
+| 2 | UI tests (Compose) for CalculatorScreen | ✅ | Happy path + date validation |
+| 3 | Instrumented Room DAO tests | ✅ | `MigrationTestHelper` |
+| 4 | Billing tests with test SKUs | ⬜ | `BillingClient` test flow |
+| 5 | Deep-link intent-filter tests | ⬜ | `agereveal://profile/*` |
+| 6 | Appium E2E suite (`walkthrough.py`) | ✅ | Updated for v2.0; 14 screenshots |
 
-### 8b. Wear OS Companion 🔵
-
-| # | Task | Status | Notes |
-|---|------|--------|-------|
-| 1 | Create Wear OS module | ⬜ | `app-wear/` with watch face and complication support |
-| 2 | Live seconds counter complication | ⬜ | Show age in seconds on watch face |
-| 3 | Next-birthday complication | ⬜ | Days remaining until next birthday |
-
-### 8c. Lock Screen Widget 🔵
+### Performance & Error Handling
 
 | # | Task | Status | Notes |
 |---|------|--------|-------|
-| 1 | API 33+ widget feature | ⬜ | `AppWidgetProviderInfo.WIDGET_FEATURE_RECONFIGURABLE` |
-| 2 | Size adjustment support | ⬜ | User can resize widget on lock screen |
+| 1 | Profile widget update frequency | ✅ | `notifyWidget()` immediate updates |
+| 2 | Remove exact alarm permissions (unnecessary) | ✅ | Cleaned manifest |
+| 3 | Timezone-aware astronomical defaults | ✅ | `julianDay(LocalDateTime)` |
+| 4 | Firebase Analytics MVP | ✅ | Onboarding, paywall, share, deep-link, purchase events |
+| 5 | ProGuard/R8 obfuscation rules | ⬜ | Before production release |
 
-### 8d. iOS Port (Long-term) 🔵
-
-| # | Task | Status | Notes |
-|---|------|--------|-------|
-| 1 | Tech stack decision | ⬜ | Flutter vs React Native |
-| 2 | WidgetKit support | ⬜ | iOS 16+ complication support |
-| 3 | Cloud sync foundation | ⬜ | Firebase Firestore for iOS data sync |
-
-### 8e. Deferred from v2.0 🔵
+### Build & Release
 
 | # | Task | Status | Notes |
 |---|------|--------|-------|
-| 1 | Animated MP4 Export | ⬜ | 5-second Reels/TikTok video export (MediaCodec + MediaMuxer) |
-| 2 | Cosmic Twins Discovery | ⬜ | Offline Rashi+Nakshatra matching; dual share card |
-| 3 | WhatsApp Sticker Pack | ⬜ | ContentProvider with 12 sticker PNG files |
+| 1 | Bump `versionCode` → `8` | ⬜ | Must be higher than v1.0.7's `7` |
+| 2 | Verify `versionName` = `2.0.0` | ✅ | VERSION file updated |
+| 3 | Replace AdMob test IDs with production | ⬜ | Banner ID only |
+| 4 | Play Console subscription pricing declaration | ✅ | `premium_monthly` (₹49) + `premium_yearly` (₹299) |
+| 5 | Privacy Policy URL | ✅ | `willowvibe.com/agereveal/privacy` |
+
+---
+
+## Release Checklist
+
+### v2.1.0 — Vedic Supremacy (Target: 2026-06-30)
+
+- [ ] Ashtakoot / Guna Milan (36-point) compatibility
+- [ ] Mangal Dosha detection
+- [ ] Navamsa (D-9) chart (simple visual)
+- [ ] "Marriage Compatibility" dedicated flow
+- [ ] Hindi/Tamil/Telugu/Kannada string review for Vedic terms
+- [ ] Day + Hour Pillars (complete Four Pillars)
+- [ ] Day Master + Ten Gods analysis
+- [ ] Solar term boundary fixes
+
+### v2.2.0 — Viral Growth (Target: 2026-07-31)
+
+- [ ] Daily Fortune shareable card
+- [ ] Vedic Kundli shareable card
+- [ ] Lock Screen widget (API 33+)
+- [ ] Referral program ("Share Cosmic ID, get 1 month free")
+- [ ] Card watermark/branding
+- [ ] Widget configuration UI
+
+### v2.3.0 — Trust & Monetization (Target: 2026-08-31)
+
+- [ ] One-time lifetime SKU ($49.99)
+- [ ] Tip jar / voluntary support
+- [ ] "What's included" comparison table in PaywallScreen
+- [ ] Trial end reminder notification
+- [ ] Cancellation instructions in app
+- [ ] App icon redesign (cosmic/zodiac motif)
+- [ ] Store listing video preview
+- [ ] Regional pricing expansion (SEA, LATAM, MENA)
+
+### v3.0.0 — Platform Ecosystem (Target: 2026-Q4)
+
+- [ ] Wear OS module
+- [ ] Cloud backup (Firebase Firestore)
+- [ ] Lock screen widget (full)
+- [ ] iOS port decision + prototype
 
 ---
 
@@ -324,15 +420,15 @@ _Last updated: 2026-05-22 — v2.0.0 complete; Phase 6 (Platform Ecosystem) acti
 |---|---|---|
 | Billing | `*BillingManager.kt` | `BillingManager.kt` |
 | Onboarding | `Onboarding*.kt` | `OnboardingScreen.kt` |
-| Paywall | `Paywall*.kt` | `PaywallScreen.kt`, `PaywallViewModel.kt` |
+| Paywall | `Paywall*.kt` | `PaywallScreen.kt` |
 | Deep-link | `ProfileDeepLink*.kt` | `ProfileDeepLinkGenerator.kt` |
-| Video export | `VideoExport*.kt` | `VideoExportWorker.kt` |
 | Widgets | `*GlanceWidget.kt` | `SecondsCounterGlanceWidget.kt` |
 | Share generators | `draw*()` in `ShareCardGenerator.kt` | `drawStoryDarkCosmos()` |
-| Calculators | `*Calculator.kt` | `CelebrityMatchCalculator.kt`, `ManglikCalculator.kt` |
-| Compatibility | `*CompatibilityScorer.kt` | `ChineseCompatibilityScorer.kt`, `VedicCompatibilityScorer.kt` |
-| Data models | `data/model/*.kt` | `Celebrity.kt`, `AchievementBadge.kt` |
+| Calculators | `*Calculator.kt` | `CelebrityMatchCalculator.kt` |
+| Compatibility | `*CompatibilityScorer.kt` | `VedicCompatibilityScorer.kt` |
+| Vedic | `Vedic*.kt` | `VedicCompatibilityScorer.kt`, `ManglikCalculator.kt` |
+| Data models | `data/model/*.kt` | `Celebrity.kt`, `Milestone.kt` |
 | Repository | `data/repository/*.kt` | `BadgeRepository.kt` |
-| UI screens | `ui/screen/*.kt` | `OnboardingScreen.kt`, `CosmicMatchScreen.kt` |
-| ViewModels | `ui/viewmodel/*ViewModel.kt` | `OnboardingViewModel.kt` |
-| JSON assets | `assets/*.json` | `celebrities.json`, `indian_states_coords.json` |
+| UI screens | `ui/screen/*.kt` | `OnboardingScreen.kt` |
+| ViewModels | `ui/viewmodel/*ViewModel.kt` | `CalculatorViewModel.kt` |
+| JSON assets | `assets/*.json` | `celebrities.json` |
