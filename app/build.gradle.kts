@@ -191,6 +191,11 @@ dependencies {
     // DataStore for theme / user preferences
     implementation(libs.androidx.datastore.preferences)
 
+    // Chinese/Korean BaZi (四柱 / 사주) engine — 6tail/lunar-java
+    // Provides the four-pillar math (solar terms, true-solar-time, 조자시/야자시 sect)
+    // that BaZiCalculator and SajuKoreanCalculator build on.
+    implementation(libs.lunar)
+
     // Testing
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)

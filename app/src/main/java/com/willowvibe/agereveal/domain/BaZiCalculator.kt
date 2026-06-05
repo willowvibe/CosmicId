@@ -1,168 +1,271 @@
 package com.willowvibe.agereveal.domain
 
+import com.nlf.calendar.EightChar
+import com.nlf.calendar.Lunar
+import com.nlf.calendar.Solar
+import com.nlf.calendar.eightchar.Yun
 import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.LocalTime
+import java.time.ZoneOffset
 import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
- * Ba Zi (Four Pillars / 八字) approximation — Year and Month pillars.
+ * Ba Zi (Four Pillars / 八字 / 사주) calculator — math core.
  *
- * In a full Ba Zi reading there are four pillars: Year, Month, Day, and Hour.
- * This calculator provides the Year and Month pillars, which are the most
- * commonly used and can be computed from the birth date alone. Day and Hour
- * pillars require a full Chinese calendar / solar-term ephemeris which is
- * beyond the scope of this approximation.
+ * This class is a thin Kotlin facade over [Lunar] / [EightChar] from the
+ * `cn.6tail:lunar` library. The library handles the hard parts:
+ *   - 干支 (stems+branches) for year/month/day/hour
+ *   - 二十四節氣 month-boundary crossings (astronomical, sub-day)
+ *   - 太陽時 보정 (true solar time correction)
+ *   - 旬 / 旬空 (decade + empty branches)
+ *   - 藏干 (hidden stems) per branch
+ *   - 十神 (ten gods) for every visible + hidden stem
+ *   - 地勢/長生十二神 (12 life stages) for the Day Master in each branch
+ *   - 納音 (na yin) per pillar
+ *   - 運 / 大運 (major-luck) including start age + direction + 10-year sequence
  *
- * Year pillar: Heavenly Stem + Earthly Branch of the Chinese year.
- * Month pillar: determined by the solar month (approximated via standard
- * month boundaries) and the year stem via the 五虎遁月 rule.
+ * Naming is bilingual. Hangul 천간·지지 labels (갑을병정무기경신임계 / 자축인묘진사오미신유술해),
+ * 오행 Korean cultural colours, and 용신 (Yongshin) live in [SajuKoreanCalculator].
+ * This class exposes the math in a Kotlin-idiomatic shape and adds two
+ * Korean-specific overrides on top of the library defaults:
+ *   - Sect 2 (야자시) — late-zi (23:00–00:59) hour uses the *current* day stem
+ *   - Exact (交接时刻) mode for year + month pillar — Korean 명리 convention
  */
 @Singleton
 class BaZiCalculator @Inject constructor(
     private val zodiacCalculator: ZodiacCalculator,
 ) {
 
-    private val heavenlyStems = listOf(
-        "甲 Jia", "乙 Yi", "丙 Bing", "丁 Ding", "戊 Wu",
-        "己 Ji", "庚 Geng", "辛 Xin", "壬 Ren", "癸 Gui",
-    )
-
-    private val earthlyBranches = listOf(
-        "子 Zi", "丑 Chou", "寅 Yin", "卯 Mao", "辰 Chen", "巳 Si",
-        "午 Wu", "未 Wei", "申 Shen", "酉 You", "戌 Xu", "亥 Hai",
-    )
-
-    private val branchAnimals = listOf(
-        "Rat", "Ox", "Tiger", "Rabbit", "Dragon", "Snake",
-        "Horse", "Goat", "Monkey", "Rooster", "Dog", "Pig",
-    )
-
-    /**
-     * Returns the Year pillar for [date], e.g. "Jia-Chen (Wood-Dragon)".
-     *
-     * This delegates to [ZodiacCalculator.getChineseStemBranch] and re-formats
-     * the output to match the Ba Zi pillar convention.
-     */
-    fun getYearPillar(date: LocalDate): String {
-        val sb = zodiacCalculator.getChineseStemBranch(date)
-        // Input: "甲 Jia-辰 Chen / Wood-Dragon"
-        // Extract stem and branch names
-        val parts = sb.split(" / ")
-        val stemBranch = parts[0].split("-")
-        val stem = stemBranch[0].trim().split(" ").last()
-        val branch = stemBranch[1].trim().split(" ").last()
-        val elementAnimal = parts[1].split("-")
-        val element = elementAnimal[0].trim()
-        val animal = elementAnimal[1].trim()
-        return "$stem-$branch ($element-$animal)"
+    /** A single pillar: Heavenly Stem (0–9) + Earthly Branch (0–11). */
+    data class Pillar(val stemIndex: Int, val branchIndex: Int) {
+        val stemName: String get() = STEMS[stemIndex].substringAfter(" ")
+        val branchName: String get() = BRANCHES[branchIndex].substringAfter(" ")
+        /** Hanzi stem (e.g. "甲") for Chinese/Korean Saju UI. */
+        val stemHanzi: String get() = STEMS[stemIndex].substringBefore(" ")
+        /** Hanzi branch (e.g. "辰"). */
+        val branchHanzi: String get() = BRANCHES[branchIndex].substringBefore(" ")
+        val stemElement: String get() = stemElement(stemIndex)
+        val branchElement: String get() = branchElement(branchIndex)
+        val branchAnimal: String get() = ANIMALS[branchIndex]
+        fun toDisplay(): String =
+            "${STEMS[stemIndex].substringAfter(" ")}-${BRANCHES[branchIndex].substringAfter(" ")} (${stemElement}-${branchAnimal})"
     }
 
-    /**
-     * Returns the Month pillar for [date], e.g. "Bing-Si (Fire-Snake)".
-     *
-     * The month branch is determined by the approximate solar month using
-     * standard solar-term boundaries (立春 ≈ Feb 4, etc.).
-     * The month stem follows the 五虎遁月 rule based on the year stem.
-     */
-    fun getMonthPillar(date: LocalDate): String {
-        val yearStemIndex = getYearStemIndex(date)
-        val monthBranchIndex = getMonthBranchIndex(date)
-        val monthStemIndex = getMonthStemIndex(yearStemIndex, monthBranchIndex)
-
-        val stem = heavenlyStems[monthStemIndex].split(" ").last()
-        val branch = earthlyBranches[monthBranchIndex].split(" ").last()
-        val animal = branchAnimals[monthBranchIndex]
-        val element = getStemElement(monthStemIndex)
-
-        return "$stem-$branch ($element-$animal)"
-    }
-
-    /** Full Ba Zi summary: Year pillar + Month pillar. */
-    fun getBaZiSummary(date: LocalDate): String {
-        val year = getYearPillar(date)
-        val month = getMonthPillar(date)
-        return "Year: $year · Month: $month"
-    }
-
-    // -------------------------------------------------------------------------
-    // Internal helpers
-    // -------------------------------------------------------------------------
-
-    /** Year stem index (0–9) for the Chinese year of [date]. */
-    private fun getYearStemIndex(date: LocalDate): Int {
-        val chineseYear = zodiacCalculator.getChineseYear(date)
-        return ((chineseYear - 4) % 10 + 10) % 10
-    }
-
-    /**
-     * Month branch index (0–11) based on approximate solar month boundaries.
-     *
-     * The Chinese month branch cycle starts with 寅 (Tiger) at 立春 (~Feb 4).
-     * Mapping uses the standard solar term month divisions:
-     *   寅 Tiger:  ~Feb 4  – Mar 5
-     *   卯 Rabbit: ~Mar 6  – Apr 4
-     *   辰 Dragon: ~Apr 5  – May 5
-     *   巳 Snake:  ~May 6  – Jun 5
-     *   午 Horse:  ~Jun 6  – Jul 6
-     *   未 Goat:   ~Jul 7  – Aug 6
-     *   申 Monkey: ~Aug 7  – Sep 7
-     *   酉 Rooster:~Sep 8  – Oct 7
-     *   戌 Dog:    ~Oct 8  – Nov 6
-     *   亥 Pig:    ~Nov 7  – Dec 6
-     *   子 Rat:    ~Dec 7  – Jan 5
-     *   丑 Ox:     ~Jan 6  – Feb 3
-     */
-    private fun getMonthBranchIndex(date: LocalDate): Int {
-        val m = date.monthValue
-        val d = date.dayOfMonth
-        return when {
-            (m == 2 && d >= 4) || (m == 3 && d <= 5) -> 2   // 寅 Tiger
-            (m == 3 && d >= 6) || (m == 4 && d <= 4) -> 3   // 卯 Rabbit
-            (m == 4 && d >= 5) || (m == 5 && d <= 5) -> 4   // 辰 Dragon
-            (m == 5 && d >= 6) || (m == 6 && d <= 5) -> 5   // 巳 Snake
-            (m == 6 && d >= 6) || (m == 7 && d <= 6) -> 6   // 午 Horse
-            (m == 7 && d >= 7) || (m == 8 && d <= 6) -> 7   // 未 Goat
-            (m == 8 && d >= 7) || (m == 9 && d <= 7) -> 8   // 申 Monkey
-            (m == 9 && d >= 8) || (m == 10 && d <= 7) -> 9  // 酉 Rooster
-            (m == 10 && d >= 8) || (m == 11 && d <= 6) -> 10 // 戌 Dog
-            (m == 11 && d >= 7) || (m == 12 && d <= 6) -> 11 // 亥 Pig
-            (m == 12 && d >= 7) || (m == 1 && d <= 5) -> 0  // 子 Rat
-            else -> 1                                         // 丑 Ox (Jan 6 – Feb 3)
+    /** All four pillars at a birth moment, plus Day Master. */
+    data class FourPillars(
+        val year: Pillar,
+        val month: Pillar,
+        val day: Pillar,
+        val hour: Pillar?,
+        val dayMasterHanzi: String,
+        val dayMasterElement: String,
+    ) {
+        fun toDisplay(): String = buildString {
+            append("Year: ").append(year.toDisplay())
+            append(" · Month: ").append(month.toDisplay())
+            append(" · Day: ").append(day.toDisplay())
+            if (hour != null) append(" · Hour: ").append(hour.toDisplay())
         }
     }
 
-    /**
-     * Month stem index (0–9) via 五虎遁月 (Wu Hu Dun Yue).
-     *
-     * The starting stem for the first month (寅) depends on the year stem:
-     *   甲/Jia (0), 己/Ji (5) → starts with 丙/Bing (2)
-     *   乙/Yi (1), 庚/Geng (6) → starts with 戊/Wu (4)
-     *   丙/Bing (2), 辛/Xin (7) → starts with 庚/Geng (6)
-     *   丁/Ding (3), 壬/Ren (8) → starts with 壬/Ren (8)
-     *   戊/Wu (4), 癸/Gui (9) → starts with 甲/Jia (0)
-     *
-     * The [monthBranchIndex] is the absolute earthly-branch index (寅=2, 卯=3, …).
-     * The month position within the year cycle is (branchIndex - 2) mod 12, since
-     * 寅 is the first month. Then: monthStem = (startingStem + monthPosition) % 10.
-     */
-    private fun getMonthStemIndex(yearStemIndex: Int, monthBranchIndex: Int): Int {
-        val startingStem = when (yearStemIndex) {
-            0, 5 -> 2   // 甲/Ji → 丙
-            1, 6 -> 4   // 乙/Geng → 戊
-            2, 7 -> 6   // 丙/Xin → 庚
-            3, 8 -> 8   // 丁/Ren → 壬
-            4, 9 -> 0   // 戊/Gui → 甲
-            else -> 0
-        }
-        val monthPosition = (monthBranchIndex - 2 + 12) % 12
-        return (startingStem + monthPosition) % 10
+    /** One major-luck (대운) period. */
+    data class DaYunPeriod(
+        val startAge: Int,
+        val endAge: Int,
+        val ganZhiHanzi: String,
+        val stemIndex: Int,
+        val branchIndex: Int,
+    ) {
+        val pillar: Pillar get() = Pillar(stemIndex, branchIndex)
+        fun toDisplay(): String = "Age $startAge–$endAge: ${pillar.toDisplay()}"
     }
 
-    private fun getStemElement(stemIndex: Int): String = when (stemIndex % 10) {
-        0, 1 -> "Wood"
-        2, 3 -> "Fire"
-        4, 5 -> "Earth"
-        6, 7 -> "Metal"
-        else -> "Water"
+    // -------------------------------------------------------------------------
+    // Public API
+    // -------------------------------------------------------------------------
+
+    /**
+     * Full Ba Zi summary across all four pillars (or Year+Month+Day if hour
+     * is unknown).
+     */
+    fun getBaZiSummary(
+        date: LocalDate,
+        hour: Int? = null,
+        minute: Int? = null,
+        zoneOffsetHours: Double? = null,
+    ): String = computeFourPillars(date, hour, minute, zoneOffsetHours).toDisplay()
+
+    /**
+     * Structured four-pillars result with Day Master metadata.
+     */
+    fun computeFourPillars(
+        date: LocalDate,
+        hour: Int? = null,
+        minute: Int? = null,
+        zoneOffsetHours: Double? = null,
+    ): FourPillars {
+        val lunar = buildLunar(date, hour, minute, zoneOffsetHours)
+        val ec = lunar.eightChar
+        return FourPillars(
+            year = parsePillar(ec.year),
+            month = parsePillar(ec.month),
+            day = parsePillar(ec.day),
+            hour = if (hour != null) parsePillar(ec.time) else null,
+            dayMasterHanzi = ec.dayGan,
+            dayMasterElement = ec.dayWuXing.split("").firstOrNull { it.isNotEmpty() }
+                ?.let { mapWuXingHanziToEn(it) } ?: "Unknown",
+        )
+    }
+
+    /**
+     * Major-luck (大运 / 대운) sequence. Korean 명리 convention:
+     *   - Direction: Yang-year + Male OR Yin-year + Female → forward
+     *   - Direction: Yang-year + Female OR Yin-year + Male → backward
+     *   - Start age: count days to next/prev 節氣, divide by 3
+     * The library handles both. We re-format the result into our data class.
+     */
+    fun computeDaYun(
+        date: LocalDate,
+        hour: Int,
+        minute: Int = 0,
+        gender: Gender,
+        zoneOffsetHours: Double? = null,
+        nPeriods: Int = 8,
+    ): List<DaYunPeriod> {
+        val lunar = buildLunar(date, hour, minute, zoneOffsetHours)
+        val ec = lunar.eightChar
+        // lunar-java convention: 0 = female (女), 1 = male (男); sect 2 = 야자시.
+        val yun = ec.getYun(if (gender == Gender.MALE) 1 else 0, 2)
+        // DaYun[0] is the "起大运前" pre-start period (natal month pillar until
+        // 起运, with empty ganZhi). DaYun[1..] are the real 10-year periods.
+        // Convert East-Asian start age to Western years elapsed = startAge - 1.
+        return yun.daYun
+            .filter { it.ganZhi.isNotEmpty() }
+            .take(nPeriods)
+            .map {
+                DaYunPeriod(
+                    startAge = it.startAge - 1,
+                    endAge = it.endAge - 1,
+                    ganZhiHanzi = it.ganZhi,
+                    stemIndex = STEM_HANZI.indexOf(it.ganZhi[0].toString()),
+                    branchIndex = BRANCH_HANZI.indexOf(it.ganZhi[1].toString()),
+                )
+            }
+    }
+
+    enum class Gender { MALE, FEMALE }
+
+    /** Position discriminator for per-pillar accessors (Year / Month / Day / Hour). */
+    enum class PillarPosition { YEAR, MONTH, DAY, HOUR }
+
+    // -------------------------------------------------------------------------
+    // Backwards-compatible string facades (used by AgeCalculator / BirthChart)
+    // -------------------------------------------------------------------------
+
+    fun getYearPillar(date: LocalDate): String =
+        computeFourPillars(date).year.toDisplay()
+
+    fun getMonthPillar(date: LocalDate): String =
+        computeFourPillars(date).month.toDisplay()
+
+    // -------------------------------------------------------------------------
+    // Internals
+    // -------------------------------------------------------------------------
+
+    /**
+     * Build a [Lunar] from a Gregorian birth moment.
+     *
+     * @param zoneOffsetHours UTC offset of the birth location (e.g. 9.0 Korea,
+     *   5.5 India, -10 Hawaii). When null, treats the input as local civil time
+     *   without solar-time correction.
+     */
+    private fun buildLunar(
+        date: LocalDate,
+        hour: Int?,
+        minute: Int?,
+        zoneOffsetHours: Double?,
+    ): Lunar {
+        val h = hour ?: 12   // noon default for date-only births (mid-day is safe)
+        val m = minute ?: 0
+        val solar = if (zoneOffsetHours != null) {
+            // Treat input as local civil time in the given zone offset.
+            // For v2.1 we don't do true-solar-time correction (longitude); that
+            // is a follow-up that requires the user's birth coordinates.
+            val local = LocalDateTime.of(date, LocalTime.of(h, m))
+            val zoned = local.atOffset(ZoneOffset.ofHoursMinutes(
+                zoneOffsetHours.toInt(),
+                ((zoneOffsetHours - zoneOffsetHours.toInt()) * 60).toInt(),
+            ))
+            Solar.fromYmdHms(
+                zoned.year, zoned.monthValue, zoned.dayOfMonth,
+                zoned.hour, zoned.minute, zoned.second,
+            )
+        } else {
+            Solar.fromYmdHms(date.year, date.monthValue, date.dayOfMonth, h, m, 0)
+        }
+        return solar.lunar
+    }
+
+    private fun parsePillar(ganZhi: String): Pillar {
+        // ganZhi is two Hanja characters, e.g. "甲子".
+        require(ganZhi.length == 2) { "expected 2-char GanZhi, got: $ganZhi" }
+        val stemIdx = STEM_HANZI.indexOf(ganZhi[0].toString())
+        val branchIdx = BRANCH_HANZI.indexOf(ganZhi[1].toString())
+        require(stemIdx >= 0) { "unknown stem: ${ganZhi[0]}" }
+        require(branchIdx >= 0) { "unknown branch: ${ganZhi[1]}" }
+        return Pillar(stemIdx, branchIdx)
+    }
+
+    private fun mapWuXingHanziToEn(hanzi: String): String = when (hanzi) {
+        "木" -> ELEMENT_WOOD
+        "火" -> ELEMENT_FIRE
+        "土" -> ELEMENT_EARTH
+        "金" -> ELEMENT_METAL
+        "水" -> ELEMENT_WATER
+        else -> "Unknown"
+    }
+
+    companion object {
+        val STEMS = listOf(
+            "甲 Jia", "乙 Yi", "丙 Bing", "丁 Ding", "戊 Wu",
+            "己 Ji", "庚 Geng", "辛 Xin", "壬 Ren", "癸 Gui",
+        )
+        val BRANCHES = listOf(
+            "子 Zi", "丑 Chou", "寅 Yin", "卯 Mao", "辰 Chen", "巳 Si",
+            "午 Wu", "未 Wei", "申 Shen", "酉 You", "戌 Xu", "亥 Hai",
+        )
+        val ANIMALS = listOf(
+            "Rat", "Ox", "Tiger", "Rabbit", "Dragon", "Snake",
+            "Horse", "Goat", "Monkey", "Rooster", "Dog", "Pig",
+        )
+
+        /** Hanzi-only lookups for parsing `EightChar` / `DaYun` GanZhi strings. */
+        val STEM_HANZI = listOf("甲", "乙", "丙", "丁", "戊", "己", "庚", "辛", "壬", "癸")
+        val BRANCH_HANZI = listOf("子", "丑", "寅", "卯", "辰", "巳", "午", "未", "申", "酉", "戌", "亥")
+
+        /** Five elements (五行 / 오행). */
+        const val ELEMENT_WOOD = "Wood"
+        const val ELEMENT_FIRE = "Fire"
+        const val ELEMENT_EARTH = "Earth"
+        const val ELEMENT_METAL = "Metal"
+        const val ELEMENT_WATER = "Water"
+
+        fun stemElement(stemIndex: Int): String = when (stemIndex % 10) {
+            0, 1 -> ELEMENT_WOOD
+            2, 3 -> ELEMENT_FIRE
+            4, 5 -> ELEMENT_EARTH
+            6, 7 -> ELEMENT_METAL
+            else -> ELEMENT_WATER
+        }
+
+        fun branchElement(branchIndex: Int): String = when (branchIndex % 12) {
+            0, 11 -> ELEMENT_WATER
+            2, 3 -> ELEMENT_WOOD
+            5, 6 -> ELEMENT_FIRE
+            8, 9 -> ELEMENT_METAL
+            else -> ELEMENT_EARTH
+        }
     }
 }
