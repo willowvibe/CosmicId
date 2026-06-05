@@ -18,6 +18,22 @@ _Last updated: 2026-05-24 — Market research applied. Roadmap restructured into
 | 0.8 | **No AI chatbot (for now)** | **Deferred to v3.x** | Users spot templated AI immediately. Only build if genuinely personal with full chart context. |
 | 0.9 | **India-first, US/UK-second** | **Market priority** | India = 1.5B TAM, lowest CAC, proven demand. AstroSage has 80M downloads but dated UX. |
 | 0.10 | **Widget-first virality** | **Core UA strategy** | Every widget screenshot is free organic marketing. Every shareable card is a free ad. |
+| 0.11 | **East-Asian pillar = Korean Saju (사주)**, not Chinese Ba Zi | **Strategic** | Same Four Pillars math + Hangul 천간/지지 + 대운 + 오행 + 용신 + K-fandom audience. `BaZiCalculator.kt` retained as Day/Hour pillar data path; `SajuKoreanCalculator.kt` owns the Korean naming + Daeun layer. |
+
+---
+
+## Mission Status Index
+
+| # | Mission | Status | Target |
+|---|---------|--------|--------|
+| 1 | Cosmic Identity Core | ✅ Complete | v2.0 (shipped 2026-05-22) |
+| 2 | Vedic Supremacy | 🔥 Active | v2.1 (2026-06-30) — secondary |
+| 3 | Viral Growth Engine | 🔥 Active | v2.2 (2026-07-31) |
+| 4 | Trust & Monetization | 🔥 Active | v2.3 (2026-08-31) |
+| 5 | Platform Ecosystem | 📋 Planned | v3.0 (2026-Q4) |
+| 6 | AI & Advanced Depth | ⏸️ Deferred | v3.x (2027+) |
+| 7 | **Korean Saju Supremacy** | 🔥 **Active** | **v2.1 (2026-06-30) — primary** |
+| 8 | **Portfolio Readiness** | 🔥 **Active** | **4-week parallel sprint — ongoing** |
 
 ---
 
@@ -41,7 +57,7 @@ _Last updated: 2026-05-24 — Market research applied. Roadmap restructured into
 |---|------|--------|-------|
 | 1 | **Western** — Sun sign, Moon sign, Rising (Lagna), planetary positions | ✅ | Meeus ephemeris, Lahiri ayanamsa |
 | 2 | **Vedic** — Rashi, Nakshatra, Pada, Lord, Dasha | ✅ | 27 Nakshatras, Vimshottari Dasha |
-| 3 | **Chinese** — Ba Zi (Year/Month/Day Pillar), Stem-Branch, Zodiac animal | ✅ | `BaZiCalculator.kt` with CNY lookup table |
+| 3 | **Korean Saju (사주)** — 천간/지지 in Hangul, Four Pillars, 대운 (Daeun), 오행 (Five Element), 용신 (Yongshin) | ⏳ v2.1 | `BaZiCalculator.kt` (Day/Hour pillar data path) + new `SajuKoreanCalculator.kt` (Korean naming + Daeun layer) |
 | 4 | **Numerology** — Life Path, Expression, Soul Urge, Personality | ✅ | Pythagorean numerology |
 | 5 | Tabbed `DetailsUnlockScreen` (Overview | Western | Vedic | Chinese) | ✅ | Progressive disclosure; premium gates depth |
 
@@ -105,6 +121,7 @@ _Last updated: 2026-05-24 — Market research applied. Roadmap restructured into
 | 8 | Free trial UX chip | ✅ | "N days left" in CalculatorScreen header |
 | 9 | AdMob banner (free tier only) | ✅ | Test IDs; production swap pending |
 | 10 | **One-time lifetime SKU** | ⬜ | `$49.99` — appeals to subscription-fatigued users |
+| 11 | **Korean Saju Premium Unlock IAP** (one-time) | ⬜ v2.1 | `korean_saju_unlock` — ₹149 / $2.99 — K-fandom one-time IAP |
 
 ### 1h. Social & Viral
 
@@ -374,16 +391,29 @@ _Last updated: 2026-05-24 — Market research applied. Roadmap restructured into
 
 ## Release Checklist
 
-### v2.1.0 — Vedic Supremacy (Target: 2026-06-30)
+### v2.1.0 — Korean Saju Supremacy + Vedic Depth (Target: 2026-06-30)
 
+**Korean Saju (Mission 7) — primary:**
+- [ ] `SajuKoreanCalculator.kt` created (Hangul 천간/지지 + 대운)
+- [ ] Day + Hour Pillars (complete Four Pillars)
+- [ ] Day Master + Ten Gods analysis
+- [ ] Solar term boundary fixes (절기, astronomical)
+- [ ] 대운 (Daeun) 10-year luck cycle calculator
+- [ ] 오행 (Five Element) balance chart
+- [ ] 오행 balance shareable card (radar/bar)
+- [ ] 용신 (Yongshin) rule-based suggestion card
+- [ ] DetailsUnlockScreen — "Korean Saju" tab (replaces "Chinese")
+- [ ] Noto Sans KR typography in Compose
+- [ ] `korean_saju_unlock` IAP live (₹149 / $2.99)
+- [ ] Korean locale strings (`values-ko/`) for Saju UI
+- [ ] 사주 궁합 (Korean Saju compatibility) scoring
+
+**Vedic (Mission 2) — secondary:**
 - [ ] Ashtakoot / Guna Milan (36-point) compatibility
 - [ ] Mangal Dosha detection
 - [ ] Navamsa (D-9) chart (simple visual)
 - [ ] "Marriage Compatibility" dedicated flow
 - [ ] Hindi/Tamil/Telugu/Kannada string review for Vedic terms
-- [ ] Day + Hour Pillars (complete Four Pillars)
-- [ ] Day Master + Ten Gods analysis
-- [ ] Solar term boundary fixes
 
 ### v2.2.0 — Viral Growth (Target: 2026-07-31)
 
@@ -414,6 +444,36 @@ _Last updated: 2026-05-24 — Market research applied. Roadmap restructured into
 
 ---
 
+## Mission 8: Portfolio Readiness — ACTIVE 🔥 (parallel sprint)
+
+> **Goal:** Turn Cosmic ID from "impressive app" into "client-pitching pre-call sales material." Per 2026-06-05 research report. Runs in parallel with Mission 7 — does **not** block Korean Saju work.
+
+### 8a. Ship & Surface (Week 1)
+
+| # | Task | Status | Notes |
+|---|------|--------|-------|
+| 1 | Add 4–6 real UI screenshots to `/screenshots/` | ⬜ | Portfolio repos without screenshots look abandoned |
+| 2 | Replace AdMob test IDs with production banner ID | ⬜ | Required before Play Store push (see `§1`) |
+| 3 | Push to Play Store as "Early Access" | ⬜ | Even beta visibility beats in-development |
+| 4 | Rewrite README — align v1.0 / v2.0 / beta status | ⬜ | Currently contradictory: README says v1.0 launched April 2026 but app is in development |
+
+### 8b. UI Tests (Week 3)
+
+| # | Task | Status | Notes |
+|---|------|--------|-------|
+| 1 | 3–5 Compose UI tests on onboarding flow | ⬜ | Clients who review repos check this |
+| 2 | 1–2 Compose UI tests on CalculatorScreen | ⬜ | Hero counter + date validation happy path |
+
+### 8c. Cross-Platform Demo (Week 4)
+
+| # | Task | Status | Notes |
+|---|------|--------|-------|
+| 1 | Tech stack decision: Next.js vs React | ⬜ | Breaks the "Android-only" perception for web/SaaS clients |
+| 2 | REST API for astro output (Kotlin/Spring or Ktor backend) | ⬜ | Reuses `BaZiCalculator`, `SajuKoreanCalculator`, `ZodiacCalculator` |
+| 3 | Vercel-hosted demo page | ⬜ | Free tier; pre-call sales material |
+
+---
+
 ## Appendix: File Naming Conventions
 
 | Feature Area | File Prefix | Example |
@@ -424,9 +484,10 @@ _Last updated: 2026-05-24 — Market research applied. Roadmap restructured into
 | Deep-link | `ProfileDeepLink*.kt` | `ProfileDeepLinkGenerator.kt` |
 | Widgets | `*GlanceWidget.kt` | `SecondsCounterGlanceWidget.kt` |
 | Share generators | `draw*()` in `ShareCardGenerator.kt` | `drawStoryDarkCosmos()` |
-| Calculators | `*Calculator.kt` | `CelebrityMatchCalculator.kt` |
-| Compatibility | `*CompatibilityScorer.kt` | `VedicCompatibilityScorer.kt` |
+| Calculators | `*Calculator.kt` | `CelebrityMatchCalculator.kt`, `SajuKoreanCalculator.kt` |
+| Compatibility | `*CompatibilityScorer.kt` | `VedicCompatibilityScorer.kt`, `SajuKoreanCompatibilityScorer.kt` |
 | Vedic | `Vedic*.kt` | `VedicCompatibilityScorer.kt`, `ManglikCalculator.kt` |
+| Korean Saju | `SajuKorean*.kt` | `SajuKoreanCalculator.kt`, `SajuKoreanCompatibilityScorer.kt` |
 | Data models | `data/model/*.kt` | `Celebrity.kt`, `Milestone.kt` |
 | Repository | `data/repository/*.kt` | `BadgeRepository.kt` |
 | UI screens | `ui/screen/*.kt` | `OnboardingScreen.kt` |

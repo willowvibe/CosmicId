@@ -6,13 +6,15 @@ Quick-start guide for Claude Code sessions on the Cosmic ID (formerly AgeReveal)
 
 ## What This Is
 
-Cosmic ID is a native Android app (Kotlin + Jetpack Compose) that calculates your exact age in real time and enriches it with astrological insights, shareable cards, milestone tracking, saved birthday reminders, and home screen widgets. Currently **v2.0**.
+Cosmic ID is a native Android app (Kotlin + Jetpack Compose) that calculates your exact age in real time and enriches it with astrological insights across **Western + Vedic + Korean Saju (사주)**, shareable cards, milestone tracking, saved birthday reminders, and home screen widgets. Currently **v2.0**.
 
 **Display name:** Cosmic ID  
 **Package ID:** `com.willowvibe.cosmicid` (namespace remains `com.willowvibe.agereveal` for source compatibility)  
 **Min SDK:** 26 (API 21–25 via core library desugaring)  
 **Compile SDK:** 36  
 **Supported locales:** en, hi, ta, te, kn, ko, vi, zh-Hans (system-level per-app language on Android 13+)
+
+**Strategic positioning (v2.1+):** the only tri-system app in the Play Store. **Korean Saju** is the East-Asian pillar (not Chinese Ba Zi) — targeted at K-drama / K-pop / K-diaspora audiences with 천간·지지 in Hangul, 대운 (Daeun) luck periods, 오행 balance chart, and 용신 (Yongshin) suggestion. `BaZiCalculator.kt` remains for the Day/Hour pillar data path but is rendered through the Korean Saju UI; a separate **`SajuKoreanCalculator.kt`** owns the Korean naming layer + Daeun logic. See `roadmap.md` Mission 7 — Korean Saju Supremacy.
 
 ---
 
@@ -99,7 +101,7 @@ Cosmic ID is a native Android app (Kotlin + Jetpack Compose) that calculates you
 - `CompatibilityScreen.kt` — Zodiac compatibility; two-person comparison; deep-link auto-fill
 - `RemindersScreen.kt` — Saved birthdays list, AddBirthday bottom sheet, FAB
 - `LifeTimelineScreen.kt` — Milestone timeline
-- `DetailsUnlockScreen.kt` — Tabbed astrology details (Overview | Western | Vedic | Chinese); premium-gated deep content
+- `DetailsUnlockScreen.kt` — Tabbed astrology details (Overview | Western | Vedic | Korean Saju); premium-gated deep content
 - `PaywallScreen.kt` — Subscription tiers (monthly/yearly); restore purchases CTA
 - `SettingsScreen.kt` — Theme, accent color, notifications, export CSV, clear all, language → system settings
 - `BadgeScreen.kt` — Unlocked achievement badges
@@ -121,7 +123,8 @@ Cosmic ID is a native Android app (Kotlin + Jetpack Compose) that calculates you
 - `AgeCalculator.kt` — Core age + milestone logic
 - `AgePercentileCalculator.kt` — Age percentile vs global population
 - `AstronomicalCalculator.kt` — Sun/Moon sidereal positions
-- `BaZiCalculator.kt` — Four Pillars of Destiny (Ba Zi)
+- `BaZiCalculator.kt` — Four Pillars of Destiny (Ba Zi) — Day/Hour pillar math; consumed by `SajuKoreanCalculator.kt` for the Korean Saju UI layer
+- `SajuKoreanCalculator.kt` — **Korean Saju (사주) layer** — 천간/지지 in Hangul, 대운 (Daeun 10-year luck periods), 오행 balance, 용신 (Yongshin) rule-based suggestion. Distinct from `BaZiCalculator.kt`; do not collapse.
 - `BadgeDefinitions.kt` — Achievement badge definitions
 - `CalendarExport.kt` — Calendar event export
 - `CelebrityMatchCalculator.kt` — Load `celebrities.json`, match by month+day, return top N matches
@@ -130,7 +133,7 @@ Cosmic ID is a native Android app (Kotlin + Jetpack Compose) that calculates you
 - `EphemerisSnapshot.kt` — Current planetary snapshot
 - `GenerationCalculator.kt` — Generational cohort (Gen Z, Millennial, etc.)
 - `LifeStatsCalculator.kt` — Life statistics dashboard
-- `LunarCalendarConverter.kt` — Gregorian to Chinese lunar calendar (uses android.icu)
+- `LunarCalendarConverter.kt` — Gregorian to Chinese lunar calendar (uses android.icu); also reused for Korean lunar/sexagenary calculations
 - `MoonPhaseCalculator.kt` — Moon phase and illumination
 - `NakshatraCalculator.kt` — 27 lunar mansions + Pada
 - `ParallelUniverseGenerator.kt` — "What if" age in different historical eras
@@ -138,10 +141,10 @@ Cosmic ID is a native Android app (Kotlin + Jetpack Compose) that calculates you
 - `ProfileDeepLinkGenerator.kt` — `agereveal://profile/[data]` encode/decode
 - `RelationshipType.kt` — Compatibility relationship types
 - `RetirementCalculator.kt` — Retirement stats
-- `ShareCardGenerator.kt` — Bitmap card renderer (has Android graphics imports)
+- `ShareCardGenerator.kt` — Bitmap card renderer (has Android graphics imports); add `drawSajuKoreanBalanceCard()` for 오행 shareable
 - `TimeRemainingCalculator.kt` — Time-remaining-until-target-age stats
 - `ZodiacCalculator.kt` — Western, Vedic Rashi, Chinese Zodiac + Stem-Branch; `getWesternSignIndex()` for compatibility use
-- `ZodiacCompatibilityCalculator.kt` — Western + Chinese compatibility scoring
+- `ZodiacCompatibilityCalculator.kt` — Western + Korean Saju compatibility scoring (composite: Western 50% + Korean 50% for the unified K-content audience; Vedic is a separate flow via `VedicCompatibilityScorer`)
 
 ### Billing
 - `BillingManager.kt` — Google Play Billing 7+ wrapper; SKU `premium_monthly` (₹49) + `premium_yearly` (₹299); 7-day free trial; purchase acknowledge + DataStore sync
@@ -262,7 +265,7 @@ The project includes an Appium E2E suite in `screenshots/walkthrough.py`. Update
 - Billing error handling with human-readable messages
 - Restore purchases flow (PaywallScreen + Settings)
 - Progressive disclosure UI (hero counter + rotating highlight + DetailsUnlockScreen tabs)
-- Tabbed DetailsUnlockScreen (Overview | Western | Vedic | Chinese)
+- Tabbed DetailsUnlockScreen (Overview | Western | Vedic | Korean Saju)
 - CalculatorScreen refresh button
 - Firebase Analytics MVP (onboarding, paywall, share, deep-link, purchase events)
 - Daily fortune push notifications
@@ -271,11 +274,18 @@ The project includes an Appium E2E suite in `screenshots/walkthrough.py`. Update
 - Cosmic Year Report notification
 - 7-day free trial grace period tracking
 
+**Planned for v2.1 (Korean Saju Supremacy):**
+- `SajuKoreanCalculator.kt` — 천간/지지 in Hangul, 대운 (Daeun 10-year luck periods), 오행 (Five Element) balance, 용신 (Yongshin) rule-based suggestion
+- Korean Saju Premium Unlock IAP (one-time ₹149, K-fandom targeting)
+- 오행 balance shareable card (radar/bar chart, Gen Z-friendly)
+- DetailsUnlockScreen "Korean Saju" tab replacing "Chinese" tab
+
 **v2.0 audit fixes (2026-05-22):**
 - Western compatibility now uses astronomical ephemeris (not hardcoded date ranges)
 - SharedPreferences consolidated into UserPreferencesRepository with DataStore mirroring
 - ViewModels cleansed of direct Context references
 - Horoscope engines audited (Western/Vedic/Chinese — all mathematically sound)
+- **Korean Saju (사주) layer** planned for v2.1 — distinct from Ba Zi, Hangul 천간·지지, 대운, 오행, 용신 (see `roadmap.md` Mission 7)
 
 **Package ID:** `com.willowvibe.cosmicid` (applicationId changed; namespace `com.willowvibe.agereveal` kept for source compatibility)  
 **Display name:** Cosmic ID  
