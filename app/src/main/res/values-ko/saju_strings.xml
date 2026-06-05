@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Korean Saju (사주) UI strings — consumed by DetailsUnlockScreen
+    Korean Saju tab (Task #6) and the CalculatorScreen Saju summary
+    card. Names match the `SajuKoreanCalculator` domain model
+    so copy-pasting a model field name to a stringResource key
+    is a 1:1 mapping.
+
+    Conventions:
+      - Display name uses Hangul with Hanji in parentheses: 갑(甲)
+      - For user-facing labels, use the most common Korean reading
+        (e.g. "용신" not "용신(Yongshin)"; Hanji is dropped in body copy).
+      - End every sentence with the appropriate Korean sentence-ender
+        (습니다 / 요 / 해요 / etc).
+-->
+<resources>
+    <!-- Tab / section titles -->
+    <string name="saju_tab_title">사주 (四柱)</string>
+    <string name="saju_tab_subtitle">한국 명리학 — 사주팔자 분석</string>
+
+    <!-- Pillar labels (Hangul with Hanji in parens) -->
+    <string name="saju_year_pillar">년주 (年柱)</string>
+    <string name="saju_month_pillar">월주 (月柱)</string>
+    <string name="saju_day_pillar">일주 (日柱)</string>
+    <string name="saju_hour_pillar">시주 (時柱)</string>
+
+    <!-- Day master -->
+    <string name="saju_day_master">일간 (日干)</string>
+    <string name="saju_day_master_label">일간: %1$s</string>
+
+    <!-- Ten Gods (십신) labels -->
+    <string name="saju_ten_god_bijeon">비견 (比肩)</string>
+    <string name="saju_ten_god_geopjae">겁재 (劫財)</string>
+    <string name="saju_ten_god_siksin">식신 (食神)</string>
+    <string name="saju_ten_god_sanggwan">상관 (傷官)</string>
+    <string name="saju_ten_god_pyeonjae">편재 (偏財)</string>
+    <string name="saju_ten_god_jeongjae">정재 (正財)</string>
+    <string name="saju_ten_god_pyeonggwan">편관 (偏官, 칠살)</string>
+    <string name="saju_ten_god_jeonggwan">정관 (正官)</string>
+    <string name="saju_ten_god_pyeonin">편인 (偏印)</string>
+    <string name="saju_ten_god_jeongin">정인 (正印)</string>
+
+    <!-- 12 Life Stages (장생12신) — only the most culturally significant are listed -->
+    <string name="saju_stage_jangsaeng">장생 — 새로운 시작</string>
+    <string name="saju_stage_mokyok">목욕 — 감정적 기복</string>
+    <string name="saju_stage_gwanddae">관대 — 사회적 성장</string>
+    <string name="saju_stage_geonrok">건록 — 안정과 풍요</string>
+    <string name="saju_stage_jewang">제왕 — 최고의 절정</string>
+    <string name="saju_stage_soe">쇠 — 약화 시작</string>
+    <string name="saju_stage_byeong">병 — 쇠약기</string>
+    <string name="saju_stage_sa">사 — 위기</string>
+    <string name="saju_stage_myo">묘 — 잠재</string>
+    <string name="saju_stage_jeol">절 — 끝맺음</string>
+    <string name="saju_stage_tae">태 — 잉태</string>
+    <string name="saju_stage_yang">양 — 양육</string>
+
+    <!-- 오행 (Five Elements) section -->
+    <string name="saju_o_haeng_title">오행 (五行) 분석</string>
+    <string name="saju_o_haeng_subtitle">사주 원소의 균형</string>
+    <string name="saju_o_haeng_wood">목(木) — 성장·유연</string>
+    <string name="saju_o_haeng_fire">화(火) — 열정·빛</string>
+    <string name="saju_o_haeng_earth">토(土) — 안정·중심</string>
+    <string name="saju_o_haeng_metal">금(金) — 결단·청명</string>
+    <string name="saju_o_haeng_water">수(水) — 지혜·유동</string>
+    <string name="saju_o_haeng_count_format">%1$s: %2$d</string>
+    <string name="saju_o_haeng_dominant_format">가장 강한 기운: %1$s (%2$d)</string>
+    <string name="saju_o_haeng_weakest_format">가장 약한 기운: %1$s (%2$d)</string>
+
+    <!-- 용신 (Yongshin) suggestion card -->
+    <string name="saju_yongshin_title">용신 (用神) 추천</string>
+    <string name="saju_yongshin_subtitle">당신에게 유리한 오행</string>
+    <string name="saju_yongshin_strong">일간이 신강 (强) 합니다</string>
+    <string name="saju_yongshin_weak">일간이 신약 (弱) 합니다</string>
+    <string name="saju_yongshin_favourable_format">용신: %1$s</string>
+    <string name="saju_yongshin_unfavourable_format">기신: %1$s</string>
+    <string name="saju_yongshin_color_format">행운의 색: %1$s</string>
+    <string name="saju_yongshin_direction_format">행운의 방위: %1$s</string>
+    <string name="saju_yongshin_season_format">활성 계절: %1$s</string>
+    <string name="saju_yongshin_actions_title">추천 활동</string>
+    <string name="saju_yongshin_reasoning_label">해설</string>
+
+    <!-- 대운 (Daeun) 10-year luck cycle section -->
+    <string name="saju_daeun_title">대운 (大運) 흐름</string>
+    <string name="saju_daeun_subtitle">10년 주기의 운세</string>
+    <string name="saju_daeun_period_format">%1$d–%2$d세: %3$s</string>
+    <string name="saju_daeun_current_format">현재 %1$d–%2$d세 대운 중</string>
+    <string name="saju_daeun_forward">순행 (順行)</string>
+    <string name="saju_daeun_backward">역행 (逆行)</string>
+    <string name="saju_daeun_direction_label">대운 진행 방향</string>
+    <string name="saju_daeun_requires_birth_time">대운 계산은 출생 시간이 필요해요.</string>
+
+    <!-- Hidden stems (지장간) -->
+    <string name="saju_hidden_stems">지장간 (支藏干)</string>
+    <string name="saju_hidden_stem_main">본기</string>
+    <string name="saju_hidden_stem_middle">중기</string>
+    <string name="saju_hidden_stem_residual">여기</string>
+
+    <!-- Na Yin (납음) -->
+    <string name="saju_na_yin">납음 (納音)</string>
+
+    <!-- Animal names (쥐 소 호랑이 토끼 용 뱀 말 양 원숭이 닭 개 돼지) -->
+    <string name="saju_animal_rat">쥐 (子)</string>
+    <string name="saju_animal_ox">소 (丑)</string>
+    <string name="saju_animal_tiger">호랑이 (寅)</string>
+    <string name="saju_animal_rabbit">토끼 (卯)</string>
+    <string name="saju_animal_dragon">용 (辰)</string>
+    <string name="saju_animal_snake">뱀 (巳)</string>
+    <string name="saju_animal_horse">말 (午)</string>
+    <string name="saju_animal_goat">양 (未)</string>
+    <string name="saju_animal_monkey">원숭이 (申)</string>
+    <string name="saju_animal_rooster">닭 (酉)</string>
+    <string name="saju_animal_dog">개 (戌)</string>
+    <string name="saju_animal_pig">돼지 (亥)</string>
+
+    <!-- Paywall / unlock messaging for the Saju tab (Task #12) -->
+    <string name="saju_unlock_title">한국 사주 심화 분석</string>
+    <string name="saju_unlock_subtitle">오행 균형, 용신, 대운 흐름을 자세히 확인하세요</string>
+    <string name="saju_unlock_cta">사주 분석 잠금 해제</string>
+    <string name="saju_unlock_already">사주 분석이 잠금 해제되었습니다</string>
+
+    <!-- Compatibility (사주 궁합) — Task #8 -->
+    <string name="saju_compatibility_title">사주 궁합</string>
+    <string name="saju_compatibility_subtitle">두 사람의 사주로 본 인연</string>
+    <string name="saju_compatibility_score_format">궁합 %1$d점</string>
+    <string name="saju_compatibility_excellent">천생연분</string>
+    <string name="saju_compatibility_good">좋은 인연</string>
+    <string name="saju_compatibility_fair">보통</string>
+    <string name="saju_compatibility_challenging">노력이 필요해요</string>
+    <string name="saju_compatibility_format">%1$s 와(과) %2$s 의 사주 궁합</string>
+
+    <!-- Empty / error states -->
+    <string name="saju_birth_time_required">정확한 사주 분석을 위해 출생 시간을 입력해 주세요.</string>
+    <string name="saju_birth_time_optional">출생 시간을 모르면 연·월·일주만 표시됩니다.</string>
+    <string name="saju_loading">사주를 분석하고 있어요…</string>
+    <string name="saju_error">사주 정보를 가져올 수 없어요. 다시 시도해 주세요.</string>
+
+    <!-- Footer / disclaimer -->
+    <string name="saju_disclaimer">사주 분석은 전통 명리학 해석이며, 참고용입니다. 인생의 결정은 본인의 판단으로 내려주세요.</string>
+    <string name="saju_share_subject">내 사주 분석</string>
+    <string name="saju_share_body_format">내 사주: %1$s 일간. %2$s</string>
+</resources>
