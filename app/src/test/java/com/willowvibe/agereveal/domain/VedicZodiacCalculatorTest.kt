@@ -1,6 +1,8 @@
 package com.willowvibe.agereveal.domain
 
+import com.willowvibe.agereveal.data.model.GeoLocation
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -71,5 +73,28 @@ class VedicZodiacCalculatorTest {
         // Without location, we fall back to the equatorial approximation.
         val asc = calculator.getApproximateAscendant(LocalDate.of(1990, 6, 15), LocalTime.of(12, 0), ZoneOffset.UTC)
         assertTrue("Ascendant should be a non-empty rashi name: '$asc'", asc.isNotBlank())
+    }
+
+    @Test
+    fun `getTropicalAscendantSign returns Western sign name for J2000 epoch`() {
+        val western = WesternZodiacCalculator(astronomy)
+        val zodiac = ZodiacCalculator(astronomy)
+
+        // 2000-01-01 12:00 UTC, Greenwich
+        val birthDate = LocalDate.of(2000, 1, 1)
+        val birthTime = LocalTime.of(12, 0)
+        val zoneOffset = ZoneOffset.UTC
+        val location = GeoLocation(latitude = 51.4779, longitude = -0.0015) // Greenwich
+
+        val tropical = calculator.getTropicalAscendantSign(birthDate, birthTime, zoneOffset, location)
+        val tropicalIdx = ((astronomy.exactAscendantLongitude(
+            astronomy.julianDay(birthDate.atTime(birthTime).atOffset(zoneOffset).toLocalDateTime()),
+            location.latitude, location.longitude
+        ) / 30.0).toInt() % 12 + 12) % 12
+        val expected = western.getSignName(tropicalIdx)
+
+        assertEquals(expected, tropical)
+        // Sanity: tropical and sidereal differ by ~24° (Lahiri ayanamsa)
+        assertNotEquals(zodiac.getApproximateAscendant(birthDate, birthTime, zoneOffset, location), tropical)
     }
 }
