@@ -25,6 +25,9 @@ import javax.inject.Singleton
  *   - 地勢/長生十二神 (12 life stages) for the Day Master in each branch
  *   - 納音 (na yin) per pillar
  *   - 運 / 大運 (major-luck) including start age + direction + 10-year sequence
+ *   - Month-pillar boundaries (e.g. 驚蟄 / 경칩) are computed astronomically by
+ *     `Lunar` via `getJieQi()` against the 24 solar terms. No hardcoded date
+ *     tables — see BUG-080 (verified safe 2026-06-06).
  *
  * Naming is bilingual. Hangul 천간·지지 labels (갑을병정무기경신임계 / 자축인묘진사오미신유술해),
  * 오행 Korean cultural colours, and 용신 (Yongshin) live in [SajuKoreanCalculator].
