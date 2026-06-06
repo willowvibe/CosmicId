@@ -3,6 +3,7 @@ package com.willowvibe.agereveal.domain
 import com.willowvibe.agereveal.data.model.AgeResult
 import com.willowvibe.agereveal.data.model.GeoLocation
 import com.willowvibe.agereveal.data.model.Milestone
+import com.willowvibe.agereveal.domain.model.CelestialBody
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.Period
@@ -26,6 +27,8 @@ class AgeCalculator @Inject constructor(
     private val percentileCalculator: AgePercentileCalculator,
     private val parallelUniverseGenerator: ParallelUniverseGenerator,
     private val planetaryDignityCalculator: PlanetaryDignityCalculator,
+    private val birthChartSubChart: BirthChartSubChart, // Phase E
+    private val astronomicalCalculator: AstronomicalCalculator, // Phase E — for jd
 ) {
 
     /**
@@ -62,6 +65,38 @@ class AgeCalculator @Inject constructor(
         val daysToNextBirthday = ChronoUnit.DAYS.between(today, nextBirthday)
         val percentileResult = if (includeUnlocked) percentileCalculator.calculate(period.years) else null
 
+        // Phase E: compute planet longitudes + JD once for the sub-chart trio
+        val (planetLongitudes, jd) = if (includeUnlocked) {
+            computePlanetLongitudesAndJd(birthDate, birthTime, zoneOffset)
+        } else emptyMap<CelestialBody, Double>() to 0.0
+
+        // Phase E: snapshot for siderealMoonLongitude lookup
+        val snapshot = if (includeUnlocked) {
+            astronomicalCalculator.snapshot(birthDate, birthTime, zoneOffset)
+        } else null
+
+        // Phase E: BirthChartSubChart trio
+        val subCharts = if (includeUnlocked && snapshot != null) {
+            birthChartSubChart.compute(
+                siderealMoonLongitude = snapshot.siderealMoonLongitude,
+                planetLongitudes = planetLongitudes,
+                jd = jd,
+            )
+        } else null
+
+        // Phase E: Dasha detail (uses the existing dashaCalculator injection)
+        val dashaDetail = if (includeUnlocked) {
+            runCatching { dashaCalculator.getDashaDetail(birthDate, birthTime, zoneOffset) }
+                .getOrNull()
+        } else null
+
+        // Phase E: tropical ascendant (only with location)
+        val tropicalAscendant = if (includeUnlocked && location != null) {
+            runCatching {
+                zodiacCalculator.getTropicalAscendantSign(birthDate, birthTime, zoneOffset, location)
+            }.getOrNull()
+        } else null
+
         return AgeResult(
             birthDate = birthDate,
             birthTime = birthTime,
@@ -92,15 +127,73 @@ class AgeCalculator @Inject constructor(
                 val longitudes = zodiacCalculator.getPlanetLongitudes(birthDate, birthTime, zoneOffset)
                 planetaryDignityCalculator.computeDignities(longitudes)
             } else emptyList(),
-            dashaInfo = if (includeUnlocked) dashaCalculator.getDashaInfo(birthDate, birthTime, zoneOffset) else "",
+            dashaDetail = dashaDetail,
             baZiInfo = if (includeUnlocked) baZiCalculator.getBaZiSummary(birthDate) else "",
             lunarBirthday = if (includeUnlocked) lunarConverter.toLunarString(birthDate) else "",
             estimatedHeartbeats = if (includeUnlocked) estimateHeartbeats(totalMinutes) else 0L,
             globalPercentile = percentileResult?.percentileText ?: "",
             sharedBirthDateEstimate = percentileResult?.sharedBirthDateEstimate ?: "",
             parallelUniverses = if (includeUnlocked) parallelUniverseGenerator.generate(birthDate, today) else emptyList(),
+            // Phase E fields
+            nakshatraMetadata = subCharts?.nakshatraMetadata,
+            navamsaChart = subCharts?.navamsaChart,
+            planetaryAspects = subCharts?.planetaryAspects ?: emptyList(),
+            tropicalAscendant = tropicalAscendant,
             isExact = birthTime != null,
         )
+    }
+
+    // ---------------------------------------------------------------------------
+    // Phase E helper: compute planet longitudes + JD once, used by sub-chart trio
+    // ---------------------------------------------------------------------------
+
+    /**
+     * Build a map of celestial body → sidereal longitude for the 10 bodies we
+     * surface (Sun, Moon, Mercury..Pluto). Returns the JD alongside so callers
+     * can pass it to [com.willowvibe.agereveal.domain.AspectCalculator].
+     *
+     * Mirrors the loop in [com.willowvibe.agereveal.domain.model.BirthChart.compute].
+     * Rahu/Ketu are excluded — not needed for aspects or navamsa today.
+     */
+    private fun computePlanetLongitudesAndJd(
+        birthDate: LocalDate,
+        birthTime: LocalTime?,
+        zoneOffset: ZoneOffset?,
+    ): Pair<Map<CelestialBody, Double>, Double> {
+        val localDateTime = birthTime?.let { bt -> birthDate.atTime(bt) } ?: birthDate.atStartOfDay()
+        val utDateTime = zoneOffset?.let {
+            localDateTime.atOffset(it).withOffsetSameInstant(ZoneOffset.UTC).toLocalDateTime()
+        } ?: localDateTime
+        val jd = astronomicalCalculator.julianDay(utDateTime)
+        val snap = astronomicalCalculator.snapshot(birthDate, birthTime, zoneOffset)
+        val ayanamsa = snap.ayanamsa
+
+        val longitudes = mutableMapOf<CelestialBody, Double>()
+        for (body in CelestialBody.all) {
+            when (body) {
+                CelestialBody.SUN -> longitudes[body] = snap.siderealSunLongitude
+                CelestialBody.MOON -> longitudes[body] = snap.siderealMoonLongitude
+                CelestialBody.RAHU, CelestialBody.KETU -> {
+                    // Lunar nodes not used by sub-chart trio; skip.
+                }
+                else -> {
+                    val planet = when (body) {
+                        CelestialBody.MERCURY -> AstronomicalCalculator.Planet.MERCURY
+                        CelestialBody.VENUS -> AstronomicalCalculator.Planet.VENUS
+                        CelestialBody.MARS -> AstronomicalCalculator.Planet.MARS
+                        CelestialBody.JUPITER -> AstronomicalCalculator.Planet.JUPITER
+                        CelestialBody.SATURN -> AstronomicalCalculator.Planet.SATURN
+                        CelestialBody.URANUS -> AstronomicalCalculator.Planet.URANUS
+                        CelestialBody.NEPTUNE -> AstronomicalCalculator.Planet.NEPTUNE
+                        CelestialBody.PLUTO -> AstronomicalCalculator.Planet.PLUTO
+                        else -> error("Unhandled body: $body")
+                    }
+                    val tropical = astronomicalCalculator.planetLongitude(jd, planet)
+                    longitudes[body] = ((tropical - ayanamsa) % 360.0 + 360.0) % 360.0
+                }
+            }
+        }
+        return longitudes to jd
     }
 
     // ---------------------------------------------------------------------------

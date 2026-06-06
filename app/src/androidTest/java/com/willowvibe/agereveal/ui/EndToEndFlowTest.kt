@@ -77,7 +77,17 @@ class EndToEndFlowTest {
             "Jupiter" to "Aries",
             "Saturn" to "Capricorn",
         ),
-        dashaInfo = "Jupiter Mahadasha · Saturn Antardasha",
+        dashaDetail = com.willowvibe.agereveal.domain.DashaInfo(
+            mahadasha = com.willowvibe.agereveal.domain.DashaPeriod(
+                lord = "Jupiter", totalYears = 16.0, yearsElapsed = 8.0, yearsRemaining = 8.0,
+            ),
+            antardasha = com.willowvibe.agereveal.domain.DashaPeriod(
+                lord = "Saturn", totalYears = 2.53, yearsElapsed = 1.0, yearsRemaining = 1.53,
+            ),
+            pratyantar = com.willowvibe.agereveal.domain.DashaPeriod(
+                lord = "Mercury", totalYears = 0.36, yearsElapsed = 0.1, yearsRemaining = 0.26,
+            ),
+        ),
         baZiInfo = "Year: Geng-Wu (Metal-Horse) · Month: Ren-Wu (Water-Horse)",
         estimatedHeartbeats = 1_296_000_000,
         isExact = true,
