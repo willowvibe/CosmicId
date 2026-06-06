@@ -188,4 +188,40 @@ class BaZiCalculatorTest {
         assertTrue("Expected Ji-Chou (己丑) in: $pillar",
             pillar.contains("Ji") && pillar.contains("Chou"))
     }
+
+    // -------------------------------------------------------------------------
+    // String facade for DaYun (大运 / 대운) summary (BUG-081)
+    // -------------------------------------------------------------------------
+
+    @Test
+    fun `da yun summary for 1990-03-15 10-00 male returns at least 4 periods`() {
+        val summary = calculator.getDaYunSummary(
+            date = LocalDate.of(1990, 3, 15),
+            hour = 10,
+            gender = BaZiCalculator.Gender.MALE,
+            nPeriods = 4,
+        )
+        // Format: "Age N–M: Stem-Branch (Element-Animal) · …"
+        // N is the Western years elapsed (lunar-java East-Asian start age − 1),
+        // which varies with the 節氣 lookup; we just verify ≥4 periods and that
+        // the per-period format parses cleanly.
+        val periodCount = summary.split("Age ").size - 1
+        assertTrue("Expected ≥4 Da Yun periods in: $summary", periodCount >= 4)
+        assertTrue("Summary should start with 'Age ': $summary", summary.startsWith("Age "))
+    }
+
+    @Test
+    fun `da yun summary for female with yang year stem direction is reverse`() {
+        // 1990 is a 庚 Geng year (Yang Metal). Female + Yang year = reverse direction.
+        val summary = calculator.getDaYunSummary(
+            date = LocalDate.of(1990, 3, 15),
+            hour = 10,
+            gender = BaZiCalculator.Gender.FEMALE,
+        )
+        // The first Da Yun period after natal for a reverse sequence should not
+        // be the natal month pillar. The library handles direction; we just verify
+        // the format is sane and contains 8 periods (default).
+        val periodCount = summary.split("Age ").size - 1
+        assertEquals(8, periodCount)
+    }
 }

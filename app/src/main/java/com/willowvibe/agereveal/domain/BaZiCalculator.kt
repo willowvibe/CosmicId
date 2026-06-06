@@ -185,6 +185,16 @@ class BaZiCalculator @Inject constructor(
         .hour?.toDisplay()
         ?: error("Hour pillar unavailable for $date $hour:$minute (no birth time)")
 
+    fun getDaYunSummary(
+        date: LocalDate,
+        hour: Int,
+        minute: Int = 0,
+        gender: Gender,
+        zoneOffsetHours: Double? = null,
+        nPeriods: Int = 8,
+    ): String = computeDaYun(date, hour, minute, gender, zoneOffsetHours, nPeriods)
+        .joinToString(" · ") { it.toDisplay() }
+
     // -------------------------------------------------------------------------
     // Internals
     // -------------------------------------------------------------------------
