@@ -136,28 +136,30 @@ _Last updated: 2026-05-24 — Market research applied. Roadmap restructured into
 
 ---
 
-## Mission 2: Vedic Supremacy — ACTIVE 🔥
+## Mission 2: Vedic Supremacy — IN PROGRESS 🔥 (Phase 6.5 engine + Guna Milan + Navamsa shipped)
 
 > **Goal:** Own the Indian market. No Western competitor has Vedic. AstroSage has 80M downloads but dated UX and extreme nickel-and-diming.
+>
+> **Phase 6.5 (2026-06) — Engine overhaul + Vedic depth:** astronomical engine promoted to Meeus Ch. 25 / Ch. 47 (60-term Moon) / Ch. 32/33 planets / Ch. 22 IAU 2000B nutation. New calculators: `NakshatraMetadata`, `DivisionalChartCalculator` (Navamsa D-9), `VedicCompatibilityCalculator` (Guna Milan 8-koota / 36-pt), `AspectCalculator`. `DashaCalculator` now exposes Pratyantar sub-sub-period. 275 unit tests pass (+42 over the prior 233). See [docs/ephemeris-upgrade.md](docs/ephemeris-upgrade.md) for the full reference.
 
-### 2a. Vedic Compatibility (ASHTAKOOT / GUNA MILAN) — CRITICAL 🔴
+### 2a. Vedic Compatibility (ASHTAKOOT / GUNA MILAN) — IN PROGRESS 🔴
 
 | # | Task | Status | Priority | Notes |
 |---|------|--------|----------|-------|
-| 1 | Create `VedicCompatibilityScorer.kt` | ⬜ | 🔴 Critical | 8-Koot Ashtakoot (36-point Guna Milan) |
-| 2 | Implement Varna Koot (1 point) | ⬜ | 🔴 Critical | Spiritual compatibility |
-| 3 | Implement Vasya Koot (2 points) | ⬜ | 🔴 Critical | Mutual attraction |
-| 4 | Implement Tara Koot (3 points) | ⬜ | 🔴 Critical | Birth star compatibility |
-| 5 | Implement Yoni Koot (4 points) | ⬜ | 🔴 Critical | Sexual compatibility |
-| 6 | Implement Graha Maitri Koot (5 points) | ⬜ | 🔴 Critical | Planetary friendship |
-| 7 | Implement Gana Koot (6 points) | ⬜ | 🔴 Critical | Temperament matching |
-| 8 | Implement Bhakut Koot (7 points) | ⬜ | 🔴 Critical | Kuta / relationship health |
-| 9 | Implement Nadi Koot (8 points) | ⬜ | 🔴 Critical | Health / progeny compatibility |
-| 10 | Composite score display (X/36) | ⬜ | 🔴 Critical | Indian users expect this format prominently |
-| 11 | Interpretation text for each Koot | ⬜ | 🟡 High | What the score means in plain language |
-| 12 | `CosmicMatchScreen.kt` — unified 3-system UI | ⬜ | 🟡 High | Western 25% + Chinese 25% + Vedic 50% weighting |
+| 1 | Create `VedicCompatibilityCalculator.kt` | ✅ | 🔴 Critical | 8-Koot Ashtakoot (36-point Guna Milan) — see `app/src/main/java/.../domain/VedicCompatibilityCalculator.kt` |
+| 2 | Implement Varna Koot (1 point) | ✅ | 🔴 Critical | Spiritual compatibility |
+| 3 | Implement Vasya Koot (2 points) | ✅ | 🔴 Critical | Mutual attraction |
+| 4 | Implement Tara Koot (3 points) | ✅ | 🔴 Critical | Birth star compatibility |
+| 5 | Implement Yoni Koot (4 points) | ✅ | 🔴 Critical | Sexual compatibility |
+| 6 | Implement Graha Maitri Koot (5 points) | ✅ | 🔴 Critical | Planetary friendship |
+| 7 | Implement Gana Koot (6 points) | ✅ | 🔴 Critical | Temperament matching |
+| 8 | Implement Bhakut Koot (7 points) | ✅ | 🔴 Critical | Kuta / relationship health |
+| 9 | Implement Nadi Koot (8 points) | ✅ | 🔴 Critical | Health / progeny compatibility |
+| 10 | Composite score display (X/36) | ✅ | 🔴 Critical | `GunaMilan.summary()` returns "X/36 (NN%) — verdict" |
+| 11 | Interpretation text for each Koot | ✅ | 🟡 High | `Koota` enum has `displayName()` + each score has a per-koota note in `GunaMilan.kootaBreakdown()` |
+| 12 | `CompatibilityScreen.kt` — 50/50 Western+Vedic composite | ⬜ | 🟡 High | Engine ready; UI surfacing pending (Phase E of ephemeris upgrade) |
 
-### 2b. Mangal Dosha (Manglik) Detection — CRITICAL 🔴
+### 2b. Mangal Dosha (Manglik) Detection — NOT STARTED ⬜
 
 | # | Task | Status | Priority | Notes |
 |---|------|--------|----------|-------|
@@ -166,24 +168,24 @@ _Last updated: 2026-05-24 — Market research applied. Roadmap restructured into
 | 3 | Manglik-to-Manglik matching rule | ⬜ | 🟡 High | "Both are Manglik = neutralizes" explanation |
 | 4 | Partial Manglik (from Lagna vs Moon vs Venus) | ⬜ | 🟢 Medium | Advanced; shows depth |
 
-### 2c. Navamsa (D-9) Chart — HIGH 🟡
+### 2c. Navamsa (D-9) Chart — IN PROGRESS 🟡
 
 | # | Task | Status | Priority | Notes |
 |---|------|--------|----------|-------|
-| 1 | Navamsa division calculation | ⬜ | 🟡 High | Standard for marriage analysis in India |
-| 2 | Navamsa Lagna (rising sign in D-9) | ⬜ | 🟡 High | Critical for marriage timing |
+| 1 | Navamsa division calculation | ✅ | 🟡 High | `DivisionalChartCalculator.getNavamsa(siderealLongitude)` |
+| 2 | Navamsa Lagna (rising sign in D-9) | ✅ | 🟡 High | Returned as part of `NavamsaChart` snapshot |
 | 3 | Simple visual representation | ⬜ | 🟡 High | **Keep simple** — AstroSage's dense charts are unusable for beginners |
 | 4 | Integration with compatibility screen | ⬜ | 🟢 Medium | Show Navamsa compatibility alongside Ashtakoot |
 
-### 2d. Vedic Engine Depth — MEDIUM 🟢
+### 2d. Vedic Engine Depth — IN PROGRESS 🟢 (Phase 6.5 partial)
 
 | # | Task | Status | Priority | Notes |
 |---|------|--------|----------|-------|
-| 1 | Nakshatra lord + deity + guna metadata | ⬜ | 🟢 Medium | BUG-076 |
+| 1 | Nakshatra lord + deity + guna metadata | ✅ | 🟢 Medium | BUG-076 — `NakshatraMetadata.forIndex/forLongitude` |
 | 2 | Planetary dignities (exaltation/debilitation/own/moolatrikona) | ⬜ | 🟢 Medium | BUG-073; shows we take Vedic seriously |
-| 3 | Dasha balance at birth exposure | ⬜ | 🟢 Medium | BUG-075 (partial) |
-| 4 | Pratyantar Dasha (sub-sub-period) | ⬜ | 🟢 Medium | BUG-075 |
-| 5 | Tropical rising sign (Western Lagna) | ⬜ | 🟢 Medium | BUG-083; bridge feature for Western users |
+| 3 | Dasha balance at birth exposure | ✅ | 🟢 Medium | BUG-075 — `DashaCalculator.getDashaDetail().mahadasha.yearsElapsed/Remaining` |
+| 4 | Pratyantar Dasha (sub-sub-period) | ✅ | 🟢 Medium | BUG-075 — `DashaInfo.pratyantar` |
+| 5 | Tropical rising sign (Western Lagna) | ✅ | 🟢 Medium | BUG-083 — `BirthChart.tropicalAscendant` |
 
 ### 2e. Vedic UI/UX — HIGH 🟡
 
@@ -471,6 +473,15 @@ _Last updated: 2026-05-24 — Market research applied. Roadmap restructured into
 | 1 | Tech stack decision: Next.js vs React | ⬜ | Breaks the "Android-only" perception for web/SaaS clients |
 | 2 | REST API for astro output (Kotlin/Spring or Ktor backend) | ⬜ | Reuses `BaZiCalculator`, `SajuKoreanCalculator`, `ZodiacCalculator` |
 | 3 | Vercel-hosted demo page | ⬜ | Free tier; pre-call sales material |
+
+## Changelog
+
+| Date | Phase | What changed |
+|------|-------|--------------|
+| 2026-05-22 | v2.0 | Beta shipped — celebrity match, trial UX, premium themes, 6 Glance widgets, WhatsApp stickers, Fortune push, Vedic/Korean Saju tabs |
+| 2026-06-05 | **Phase 6.5 (Ephemeris Overhaul)** | Engine promoted to Meeus Ch. 25 (Sun) / Ch. 47 (Moon, 60-term) / Ch. 32/33 (planets) / Ch. 22 (IAU 2000B nutation, 50 terms). Lahiri ayanamsa now uses cubic polynomial. New files: `NakshatraMetadata.kt`, `DivisionalChartCalculator.kt` (Navamsa D-9), `VedicCompatibilityCalculator.kt` (Guna Milan 8-koota / 36-pt), `AspectCalculator.kt` (5 major aspects with orbs). `DashaCalculator` exposes Pratyantar (sub-sub-period). `BirthChart` now carries `tropicalAscendant`, `nakshatraMetadata`, `dashaDetail`, `navamsaChart`, `planetaryAspects`. Test count: 233 → **275 passing** (+42). Closes BUG-072, 074, 075, 076, 077, 083, 085. Full reference: [docs/ephemeris-upgrade.md](docs/ephemeris-upgrade.md). |
+| 2026-06-05 | **Phase 6.5 — Engine accuracy + refactor** | `ZodiacCalculator` god-class (369 lines) split into four focused calculators — `WesternZodiacCalculator`, `VedicZodiacCalculator`, `ChineseZodiacCalculator`, `PlanetaryCalculator` — with `ZodiacCalculator` kept as a 137-line thin facade preserving the original public API. BUG-070 closed. Added 5 JPL-Horizons reference-value tests to `AstronomicalCalculatorTest` (vernal equinox 2000, 2024 solar eclipse, 2020 Great Conjunction, all 8 planets at J2000). Test count: 275 → **305 passing** (+28 new + 2 retrofits). |
+| 2026-06-05 | **Phase 6.5 — Bug batch + UI test scaffolding** | BUG-086: `BirthChart.birthMoonPhase: MoonPhase?` wired from `snapshot.tropicalSunLongitude` / `tropicalMoonLongitude` via injected `MoonPhaseCalculator`. BUG-088: `DailyFortuneGenerator.Fortune` gains `isEntertainment: Boolean = true` + `disclaimer: String = DEFAULT_DISCLAIMER`; constant `"For entertainment only — not astrological advice."` exposed. BUG-082: `LunarCalendarConverter.toLunarResult(): Result<String>` (legacy `toLunarString()` preserved as `getOrDefault("")` wrapper); `safeWarn()` helper swallows `Log.w` `RuntimeException` in JVM unit tests. BUG-087: new `SynastryCalculator` (chart-to-chart cross-aspects + 0-100 score + 5-bucket verdict + Harmonious/Tense split); `BirthChart` gains `planetLongitudes: Map<CelestialBody, Double>` to power it. UI testing: `OnboardingScreenContent(plain callbacks)` testable overload added; 5 new `OnboardingScreenUiTest` Compose tests in `androidTest/`. Test count: 305 → **329 passing** (+24 unit, +5 instrumented). |
 
 ---
 

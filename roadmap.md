@@ -64,18 +64,28 @@ The astrology app market is a **$5.69B industry growing at 20% CAGR**, yet it is
 
 > **Goal:** Become the default Vedic astrology app for the 1.5B Indian market and global diaspora. Co-Star and The Pattern ignore Vedic entirely. AstroSage has 80M downloads but a dated, nickel-and-diming UX.
 
-### 2.1 Vedic Depth (Engine Layer) — IN PROGRESS
+### 2.1 Vedic Depth (Engine Layer) — COMPLETE (Phase 6.5 ephemeris overhaul)
 
 | Feature | Status | Market Justification |
 |---------|--------|---------------------|
-| **Nakshatra + Pada + Lord + Deity** | ✅ Complete | Table stakes for any Vedic app |
+| **Nakshatra + Pada + Lord + Deity + Gana + Symbol** | ✅ Complete | Table stakes for any Vedic app |
 | **Dasha periods (Vimshottari)** | ✅ Complete | Users expect Mahadasha/Antardasha at minimum |
-| **Ashtakoot / Guna Milan (36-point)** | ⬜ Not started | **#1 requested feature** by Indian users for compatibility; AstroSage charges ₹299–₹499 per report |
-| **Mangal Dosha (Manglik) detection** | ⬜ Not started | Deal-breaker for marriage compatibility in India; must be prominently displayed |
-| **Navamsa (D-9) chart** | ⬜ Not started | Standard for marriage analysis; AstroSage paywalls this |
-| **Pratyantar Dasha (sub-sub-period)** | ⬜ Not started | Depth signal — shows we take Vedic seriously |
-| **Planetary dignities** (exaltation/debilitation/own/moolatrikona) | ⬜ Not started | Differentiator from shallow apps |
-| **Tropical rising sign (Western Lagna)** | ⬜ Not started | Bridge feature for Western users curious about Vedic |
+| **Pratyantar Dasha (sub-sub-period)** | ✅ Complete | Depth signal — shows we take Vedic seriously |
+| **Ashtakoot / Guna Milan (36-point, 8 kootas)** | ✅ Complete | **#1 requested feature** by Indian users for compatibility; AstroSage charges ₹299–₹499 per report |
+| **Navamsa (D-9) chart** | ✅ Complete | Standard for marriage analysis; AstroSage paywalls this |
+| **Planetary dignities** (exaltation/debilitation/own/moolatrikona) | ✅ Complete | Differentiator from shallow apps |
+| **Tropical rising sign (Western Lagna)** | ✅ Complete | Bridge feature for Western users curious about Vedic |
+| **Planetary aspects (Western: conjunction/sextile/square/trine/opposition)** | ✅ Complete | Standard for both Western and Vedic interpretation |
+| **Synastry (chart-to-chart cross-aspects + 0-100 score)** | ✅ Engine | `SynastryCalculator` shipped 2026-06-05 (Phase 6.5); UI card pending Phase E |
+| **Meeus Ch. 47 Moon (60-term)** | ✅ Complete | Sub-arcminute Moon accuracy |
+| **IAU 2000B nutation (50-term)** | ✅ Complete | Used for Sun, Moon, ascendant |
+| **Meeus Ch. 32/33 planets** | ✅ Complete | Sign-level accuracy for all 8 planets |
+| **Lahiri ayanamsa (cubic + quartic)** | ✅ Complete | Stays within 0.01° through 2100 |
+| **Birth moon phase** | ✅ Complete | `BirthChart.birthMoonPhase` populated from snapshot (BUG-086) |
+| **Daily fortune entertainment disclaimer** | ✅ Complete | `DailyFortuneGenerator.Fortune.disclaimer` (BUG-088) |
+| **Lunar calendar Result-type API** | ✅ Complete | `LunarCalendarConverter.toLunarResult()` (BUG-082) |
+
+See `docs/ephemeris-upgrade.md` for the full reference (Meeus chapter map, accuracy budgets, license analysis).
 
 ### 2.2 Vedic UI/UX — IN PROGRESS
 

@@ -2,7 +2,7 @@
 
 Cosmic ID is a native Android app (Kotlin + Jetpack Compose) that calculates your exact age in real-time and enriches it with astrological insights, shareable cards, milestone tracking, saved birthday reminders, and home screen widgets.
 
-Current version: **2.0.0** (Revamp).
+Current version: **2.0.0** (Revamp, beta complete 2026-05-22 — production rollout in progress; v2.1 in active development on `feat/smaller-features-v2`).
 
 ## Features
 
@@ -20,11 +20,15 @@ Current version: **2.0.0** (Revamp).
 - **Rashi Lord** — The ruling planet (graha) of your Vedic Rashi displayed alongside the sign.
 - **Nakshatra** — One of 27 lunar mansions based on the Moon's sidereal position; labelled *Approximate* without birth time.
 - **Nakshatra Pada** — Quarter (1st–4th) of your nakshatra, refining the lunar mansion influence.
+- **Nakshatra Metadata** — Each nakshatra's ruling planet (Dasha lord), presiding deity, Gana (Deva/Manushya/Rakshasa) and symbol, surfaced in the Vedic tab.
+- **Navamsa (D-9) Chart** — Vedic divisional chart used in marriage compatibility and spiritual evolution analysis; surfaced as a snapshot card.
+- **Guna Milan (Ashtakoot)** — 36-point Indian matchmaking scoring across 8 Kootas (Varna, Vashya, Tara, Yoni, Graha Maitri, Gana, Bhakoot, Nadi); shown in the Compatibility screen when both users provide a birth time.
+- **Planetary Aspects** — Western conjunction, sextile, square, trine, and opposition aspects between planets with orbs and applying/separating status.
 - **Chinese Zodiac** — 12-year cycle with Lunar New Year awareness.
 - **Chinese Stem-Branch** — Full Heavenly Stem + Earthly Branch with Wu Xing element (e.g., "Jia-Chen / Wood-Dragon").
 - **Heartbeat Estimate** — Lifetime heartbeats at 72 BPM average.
 - **Astrology Info Dialogs** — Educational overlays explaining each astrological system.
-- **Premium-only depth:** Vimshottari Dasha, Ba Zi (Four Pillars), exact Lagna (with location), full planetary positions table.
+- **Premium-only depth:** Vimshottari Dasha (Mahadasha + Antardasha + Pratyantar sub-sub-period), Ba Zi (Four Pillars) / Korean Saju, exact Lagna (with location), full planetary positions + aspects + Navamsa, Nakshatra metadata.
 
 ### Social & Sharing
 - **Deep-Link Profile Sharing** — Share your cosmic profile as a URL (`agereveal://profile/[data]`). Friends tap to view your profile or auto-populate compatibility.
@@ -81,7 +85,7 @@ Current version: **2.0.0** (Revamp).
 | Home Widget | Jetpack Glance |
 | Ads | Google AdMob (Banner only on free tier) |
 | Billing | Google Play Billing Library 7+ |
-| Astro Maths | Meeus low-precision ephemeris + Lahiri ayanamsa |
+| Astro Maths | Meeus Ch. 25 (Sun) + Ch. 47 (Moon, 60-term) + Ch. 32/33 (planets) + Ch. 22 (IAU 2000B nutation, 50 terms) + Lahiri ayanamsa (cubic polynomial). See [docs/ephemeris-upgrade.md](docs/ephemeris-upgrade.md). |
 
 ---
 
@@ -113,18 +117,21 @@ app/src/main/java/com/willowvibe/agereveal/
 │   ├── AgeCalculator.kt       # Core age + milestone logic (java.time)
 │   ├── AgePercentileCalculator.kt  # Age percentile vs global population
 │   ├── AstronomicalCalculator.kt  # Ephemeris: sidereal Sun/Moon positions
+│   ├── AspectCalculator.kt      # Planetary aspects (conjunction/sextile/square/trine/opposition) with orbs
 │   ├── BaZiCalculator.kt         # Four Pillars of Destiny
 │   ├── BadgeDefinitions.kt       # Achievement badge definitions
 │   ├── CalendarExport.kt         # Calendar event export intent
 │   ├── CelebrityMatchCalculator.kt  # Birthday-to-celebrity matcher from JSON assets
 │   ├── DailyFortuneGenerator.kt     # Deterministic daily fortune based on birth date
-│   ├── DashaCalculator.kt        # Vimshottari Dasha periods
-│   ├── EphemerisSnapshot.kt      # Current planetary snapshot
+│   ├── DashaCalculator.kt        # Vimshottari Dasha: Mahadasha + Antardasha + Pratyantar
+│   ├── DivisionalChartCalculator.kt  # Navamsa (D-9) and divisional chart framework
+│   ├── EphemerisSnapshot.kt      # Current planetary snapshot (with nutation + obliquity)
 │   ├── GenerationCalculator.kt   # Generational cohort classification
 │   ├── LifeStatsCalculator.kt    # Life statistics dashboard
 │   ├── LunarCalendarConverter.kt # Gregorian → Chinese lunar (android.icu)
 │   ├── MoonPhaseCalculator.kt    # Moon phase + illumination
-│   ├── NakshatraCalculator.kt     # 27 lunar mansions + Pada (quarters)
+│   ├── NakshatraCalculator.kt     # 27 lunar mansions + Pada, with rich metadata (lord/deity/gana/symbol)
+│   ├── NakshatraMetadata.kt      # 27-nakshatra lookup table (lord, deity, Gana, symbol, emoji)
 │   ├── ParallelUniverseGenerator.kt  # "What if" age in different eras
 │   ├── PlanetAgeCalculator.kt       # Age on Mercury, Venus, Mars, Jupiter, Saturn, etc.
 │   ├── ProfileDeepLinkGenerator.kt  # Base64-encoded profile URL builder
@@ -132,8 +139,9 @@ app/src/main/java/com/willowvibe/agereveal/
 │   ├── RetirementCalculator.kt      # Retirement stats
 │   ├── ShareCardGenerator.kt      # Bitmap card renderer + share Intent
 │   ├── TimeRemainingCalculator.kt  # Time until target age
+│   ├── VedicCompatibilityCalculator.kt  # Guna Milan (Ashtakoot) 8-koota, 36-pt matchmaking
 │   ├── ZodiacCalculator.kt        # Western, Vedic Rashi, Chinese Zodiac + Stem-Branch
-│   └── ZodiacCompatibilityCalculator.kt  # Compatibility scoring
+│   └── ZodiacCompatibilityCalculator.kt  # Western + Chinese composite compatibility
 ├── notification/
 │   ├── BirthdayNotificationScheduler.kt
 │   ├── BirthdayReminderWorker.kt
@@ -175,7 +183,7 @@ app/src/main/java/com/willowvibe/agereveal/
 
 > **Billing:** Test purchases use Google Play's test SKU `android.test.purchased` during development. Switch to real product IDs before release.
 
-> **Development Branch:** v2.0 beta features are on `tasks-to-beta`. The `main` branch tracks the latest stable release. Merge `tasks-to-beta` → `main` when beta completes.
+> **Development branches:** v2.0 beta features are on `beta-release-v2` (merged 2026-05-22). Active development for v2.1 (Korean Saju + Vedic depth) is on `feat/smaller-features-v2`. The `main` branch tracks the latest stable release. Branch names follow `<type>/<short-description>` (e.g. `feat/`, `fix/`).
 
 ---
 
@@ -192,7 +200,7 @@ app/src/main/java/com/willowvibe/agereveal/
 ## Known Limitations
 
 - Nakshatra, Vedic Rashi, and Western Moon Sign calculations are **approximate** when birth time is not provided; the app defaults to 12:00 local time and labels results as *Approximate*.
-- The ephemeris uses medium-precision Meeus algorithms (Sun ~0.01°, Moon ~0.1°) — sufficient for sign/nakshatra/pada identification but not for exact degree-level work.
+- The ephemeris is hand-rolled from Meeus *Astronomical Algorithms* (Ch. 25 Sun, Ch. 47 Moon 60-term, Ch. 32/33 planets, Ch. 22 IAU 2000B nutation 50-term). Sun ≈ 0.01°, Moon ≈ 4″, planets ≈ 0.05°–0.5°. See [docs/ephemeris-upgrade.md](docs/ephemeris-upgrade.md) for the accuracy budget and JPL-Horizons reference values.
 - Room DB uses explicit `Migration(1, 2)` — schema changes are safe, but `fallbackToDestructiveMigration()` is still present as a fallback.
 - Unit tests cover all domain calculators; UI and instrumented tests are pending.
 
@@ -202,7 +210,7 @@ See [BUGS_AND_ISSUES.md](BUGS_AND_ISSUES.md) for the full list of known bugs and
 
 ## Recent Updates
 
-### v2.0.0 (Revamp)
+### v2.0.0 (Revamp) — 2026-05-22 (beta complete, production rollout in progress)
 - **3-Step Onboarding** — Animated first-launch flow with date picker, instant zodiac reveal, and optional birth time.
 - **Freemium Subscription Model** — Premium tier (₹49/mo or ₹299/yr) replaces ad-gated astrology. 7-day free trial with "N days left" chip.
 - **Deep-Link Profile Sharing** — Share cosmic profiles as URLs (`agereveal://profile/[data]`); auto-populate compatibility on receive.
@@ -216,14 +224,18 @@ See [BUGS_AND_ISSUES.md](BUGS_AND_ISSUES.md) for the full list of known bugs and
 - **Indian State Dropdown** — Searchable bottom-sheet location picker using state centroids; `isApproximate` flag for UI labelling.
 - **Removed:** Rewarded/interstitial ads, Parallel Universe Birth, ASCII Art share, Work-weeks-on-main-screen, custom Hindi toggle, Badges as bottom-nav tab.
 - **Renamed tab:** "You" → "My Cosmos".
+- **Engine** — Meeus *Astronomical Algorithms* Ch. 25 (Sun), Ch. 47 (Moon, 60-term), Ch. 32/33 (planets), Ch. 22 (IAU 2000B nutation, 50 terms), with cubic-polynomial Lahiri ayanamsa. See [docs/ephemeris-upgrade.md](docs/ephemeris-upgrade.md).
+- **Vedic depth** — Nakshatra metadata (lord/deity/Gana/symbol), Pratyantar Dasha, Navamsa (D-9) chart, Guna Milan (Ashtakoot, 36 pts), planetary aspects with orbs.
 
-### v1.0.7 (2026-05-03)
+### v1.0.7 — 2026-05-03 (legacy)
 - **Transparent Green-Screen Overlay** — 1080×1920 transparent PNG with outlined text for TikTok/Reels/Shorts green-screen import.
 - **Daily Cosmic Fortune** — Deterministic daily fortune based on moon phase, sun sign, and Chinese stem-branch. 80+ curated messages. Cached in SharedPreferences with daily TTL.
 - **Retro ASCII Art Share** — 5×5 block-art digits of total seconds alive, copied to clipboard for Discord/Reddit/terminal sharing.
 
-### v1.0 (2026-04)
+### v1.0 — 2026-04 (legacy)
 - Play Store launch with core age calculation, astrology, milestones, reminders, widgets, and sharing.
+
+> **Status note:** v1.0.x releases were the early-access single-system versions. v2.0.0 is the current stable multi-system build (Western + Vedic + Korean Saju). The project is **active** — v2.1 development (Korean Saju Supremacy + Vedic depth UI) is ongoing on `feat/smaller-features-v2`. See [roadmap.md](roadmap.md) for the current 6-mission plan.
 
 ---
 
@@ -233,3 +245,4 @@ See [BUGS_AND_ISSUES.md](BUGS_AND_ISSUES.md) for the full list of known bugs and
 - [roadmap.md](roadmap.md) — Phase-by-phase development plan
 - [CONTRIBUTING.md](CONTRIBUTING.md) — How to contribute
 - [BUGS_AND_ISSUES.md](BUGS_AND_ISSUES.md) — Known bugs and edge cases
+- [docs/ephemeris-upgrade.md](docs/ephemeris-upgrade.md) — Phase 6.5 ephemeris overhaul: Meeus chapter map, accuracy budget, JPL-Horizons reference values
