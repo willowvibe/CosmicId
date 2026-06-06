@@ -65,17 +65,14 @@ class AgeCalculator @Inject constructor(
         val daysToNextBirthday = ChronoUnit.DAYS.between(today, nextBirthday)
         val percentileResult = if (includeUnlocked) percentileCalculator.calculate(period.years) else null
 
-        // Phase E: compute planet longitudes + JD once for the sub-chart trio
         val (planetLongitudes, jd) = if (includeUnlocked) {
             computePlanetLongitudesAndJd(birthDate, birthTime, zoneOffset)
         } else emptyMap<CelestialBody, Double>() to 0.0
 
-        // Phase E: snapshot for siderealMoonLongitude lookup
         val snapshot = if (includeUnlocked) {
             astronomicalCalculator.snapshot(birthDate, birthTime, zoneOffset)
         } else null
 
-        // Phase E: BirthChartSubChart trio
         val subCharts = if (includeUnlocked && snapshot != null) {
             birthChartSubChart.compute(
                 siderealMoonLongitude = snapshot.siderealMoonLongitude,
@@ -84,13 +81,11 @@ class AgeCalculator @Inject constructor(
             )
         } else null
 
-        // Phase E: Dasha detail (uses the existing dashaCalculator injection)
         val dashaDetail = if (includeUnlocked) {
             runCatching { dashaCalculator.getDashaDetail(birthDate, birthTime, zoneOffset) }
                 .getOrNull()
         } else null
 
-        // Phase E: tropical ascendant (only with location)
         val tropicalAscendant = if (includeUnlocked && location != null) {
             runCatching {
                 zodiacCalculator.getTropicalAscendantSign(birthDate, birthTime, zoneOffset, location)

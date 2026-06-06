@@ -16,6 +16,8 @@ import androidx.compose.ui.unit.dp
 import com.willowvibe.agereveal.data.model.AgeResult
 import com.willowvibe.agereveal.data.model.Milestone
 import com.willowvibe.agereveal.domain.AgeInfo
+import com.willowvibe.agereveal.domain.DashaInfo
+import com.willowvibe.agereveal.domain.DashaPeriod
 import com.willowvibe.agereveal.domain.CompatibilityResult
 import com.willowvibe.agereveal.domain.RelationshipType
 import com.willowvibe.agereveal.ui.screen.AgeComparisonCard
@@ -77,14 +79,14 @@ class EndToEndFlowTest {
             "Jupiter" to "Aries",
             "Saturn" to "Capricorn",
         ),
-        dashaDetail = com.willowvibe.agereveal.domain.DashaInfo(
-            mahadasha = com.willowvibe.agereveal.domain.DashaPeriod(
+        dashaDetail = DashaInfo(
+            mahadasha = DashaPeriod(
                 lord = "Jupiter", totalYears = 16.0, yearsElapsed = 8.0, yearsRemaining = 8.0,
             ),
-            antardasha = com.willowvibe.agereveal.domain.DashaPeriod(
+            antardasha = DashaPeriod(
                 lord = "Saturn", totalYears = 2.53, yearsElapsed = 1.0, yearsRemaining = 1.53,
             ),
-            pratyantar = com.willowvibe.agereveal.domain.DashaPeriod(
+            pratyantar = DashaPeriod(
                 lord = "Mercury", totalYears = 0.36, yearsElapsed = 0.1, yearsRemaining = 0.26,
             ),
         ),

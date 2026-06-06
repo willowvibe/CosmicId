@@ -232,8 +232,15 @@ class AgeCalculatorTest {
             includeUnlocked = true,
         )
         assertNotNull(result.dashaDetail)
-        // dashaInfo is derived from dashaDetail.summary()
-        assertEquals(result.dashaDetail!!.summary(), result.dashaInfo)
+        // Back-compat contract: dashaInfo must equal dashaDetail.summary()
+        // and produce a stable, human-readable string the same way the old
+        // dashaCalculator.getDashaInfo() did. Asserting a concrete string
+        // (rather than the tautological dashaDetail.summary() == dashaInfo)
+        // catches a future refactor that breaks the contract.
+        assertEquals(
+            "Saturn Mahadasha · Jupiter Antardasha · Sun Pratyantar",
+            result.dashaInfo,
+        )
         assertTrue(result.dashaInfo.isNotEmpty())
     }
 
