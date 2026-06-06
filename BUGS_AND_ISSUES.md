@@ -572,29 +572,31 @@ This document tracks known bugs, edge cases, and fragile areas in the codebase. 
 
 ### Chinese Engine Gaps
 
-#### 🟡 BUG-078 — Missing Day and Hour Pillars (Full BaZi)
-**Severity:** Medium (feature incomplete)
+#### 🟢 BUG-078 — Missing Day and Hour Pillars (Full BaZi) [Closed 2026-06-06]
+**Severity:** Medium (feature incomplete) — RESOLVED
 **File:** `domain/BaZiCalculator.kt`
-**Description:** Only Year and Month pillars are computed. A proper BaZi (八字 / Four Pillars) reading requires all four: Year, Month, Day, and Hour. The Day Pillar's Heavenly Stem (日主 / Day Master) is the single most important element — it represents the self and is the reference point for all Ten Gods analysis. The code comment acknowledges this gap: "Day and Hour pillars require a full Chinese calendar / solar-term ephemeris which is beyond the scope of this approximation."
-**Recommended fix:** Compute Day Stem from Julian Day offset (day stem = (JD + 11) % 10, day branch = (JD + 1) % 12). Hour branch from birth hour in 2-hour blocks. This requires no new ephemeris — only the birth date/time.
+**Description:** Only Year and Month pillars were exposed via string facades. The structured `FourPillars` data class already contained `day` and `hour` (populated by `Lunar` / `EightChar` from `cn.6tail:lunar:1.7.7`), but `getDayPillar(date)` and `getHourPillar(date, hour)` back-compat string facades were missing.
+**Fix applied (2026-06-06):** Added `getDayPillar(date: LocalDate): String` and `getHourPillar(date, hour, minute=0, zoneOffsetHours=null): String` back-compat string facades, parallel to the existing `getYearPillar` / `getMonthPillar`. `getHourPillar` throws `error("Hour pillar unavailable ...")` if the birth time is missing. 2 new unit tests in `BaZiCalculatorTest.kt` lock the Sruthi reference case (1993-12-11 02:45 IST → 丙寅 Day, 己丑 Hour — cross-verified against `EightChar.day` and `EightChar.time` in lunar-java v1.7.7).
 
-#### 🟡 BUG-079 — No Day Master or Ten Gods Analysis
-**Severity:** Medium (feature incomplete — depends on BUG-078)
+#### 🟢 BUG-079 — No Day Master or Ten Gods Analysis [Closed 2026-06-06]
+**Severity:** Medium (feature incomplete) — RESOLVED
 **File:** `domain/BaZiCalculator.kt`
-**Description:** Without the Day Master, Ten Gods (十神) relationships cannot be computed. Ten Gods describe how every other stem in the chart relates to the Day Master (e.g., 正官 Direct Officer, 正财 Direct Wealth, 食神 Eating God). This is the core interpretive framework of BaZi.
-**Recommended fix:** After BUG-078 is resolved, add `TenGodsCalculator` that maps stem-to-stem relationships (Same, Producing, Controlling, Produced by, Controlled by) × yin/yang polarity → Ten God type.
+**Description:** Day Master was already exposed via `FourPillars.dayMasterHanzi` and `dayMasterElement` (from lunar-java's `getDayGan` / `getDayWuXing`). Ten Gods (十神) relationships across the chart were not surfaced in the math layer; `SajuKoreanCalculator.KoreanPillar.tenGod` and `branchTenGods` carried the lunar-java output but no UI consumer ever read them.
+**Fix applied (2026-06-06):** Added a new `TenGods` data class on `BaZiCalculator.FourPillars` (8 fields: 4 visible-stem labels + 4 hidden-stem lists, all populated from lunar-java's authoritative `getXxxShiShenGan` / `getXxxShiShenZhi`). 2 new unit tests verify the structure and lock the Sruthi reference case (1993-12-11 02:45 IST → Day Master 丙, year-stem 십신 正官, month-stem 偏印, day-stem 日主, hour-stem 伤官). The UI surfacing ships in the same batch as `SajuTenGodsCard` (see `DetailsUnlockScreen.KoreanSajuTab`). 19 BaZiCalculator + 17 SajuKoreanCalculator unit tests pass; 347 total unit tests pass; 0 regressions.
 
-#### 🟡 BUG-080 — Month Pillar Uses Hardcoded Solar Term Dates
-**Severity:** Medium (accuracy)
-**File:** `domain/BaZiCalculator.kt` (lines 115–131)
-**Description:** `getMonthBranchIndex()` uses fixed Gregorian date boundaries (e.g., 立春 ≈ Feb 4) for solar term divisions. Actual solar terms can shift by ±1 day depending on the year and leap cycles. On boundary dates, the Month Pillar can be wrong.
-**Recommended fix:** Replace hardcoded date ranges with astronomical solar term computation (the Sun's tropical longitude crossing multiples of 15°). This requires computing the exact moment the Sun enters each 15° segment, which can be done with the existing `sunLongitude()` function using bisection.
+**Label vocabulary note (discovered during this fix):** lunar-java v1.7.7 returns the **Chinese** 십신 labels (正官, 偏印, 日主, 伤官, 正财, 比肩, 食神, etc.) — NOT Korean Hangul (정관, 편인, 비견, 식신). The previous `SajuKoreanCalculator.TEN_GOD_NAMES` map (line 115) is keyed by Korean strings and is **dead code** — no consumer ever reads it. The stale comment at `SajuKoreanCalculator.kt:480` (`// 십신 names in lunar-java are already Korean (비견, 식신, …).`) is also wrong. Both should be cleaned up in a follow-up; the new `SajuTenGodsCard` will need a small Chinese→Korean remap (string resources `saju_ten_god_*` in `values-ko/saju_strings.xml` already exist for the 10 standard 십신 + the day-master variant).
 
-#### 🟡 BUG-081 — No Luck Pillars (大运 / Da Yun)
-**Severity:** Low (feature gap)
+#### ✅ BUG-080 — Month Pillar Uses Hardcoded Solar Term Dates [Verified safe 2026-06-06]
+**Severity:** Medium (accuracy) — RESOLVED (not a bug)
+**File:** `domain/BaZiCalculator.kt` (was thought to use hardcoded dates; does not)
+**Description:** Bug entry stated that `getMonthBranchIndex()` uses fixed Gregorian date boundaries (e.g., 立春 ≈ Feb 4) for solar term divisions.
+**Verification:** The current `BaZiCalculator.computeFourPillars()` delegates entirely to `Lunar` / `EightChar` from `cn.6tail:lunar:1.7.7`. `Lunar` computes month-pillar boundaries via `getJieQi()` against the 24 astronomical solar terms (Sun entering multiples of 15° ecliptic longitude), not against hardcoded Gregorian dates. The original bug description referred to an earlier version of the file. No code change required; a clarifying KDoc comment was added to the file header. 19 existing BaZi + 17 existing SajuKorean unit tests continue to pass with reference dates spanning 1970–2050.
+
+#### 🟢 BUG-081 — No Luck Pillars (大运 / Da Yun) [Closed 2026-06-06]
+**Severity:** Low (feature gap) — RESOLVED
 **File:** `domain/BaZiCalculator.kt`
-**Description:** BaZi timing uses 10-year luck pillars (大运) that determine which element/animal energy dominates each decade of life. The calculation depends on gender, year stem yin/yang, and birth month — all available data. This is fundamental to BaZi forecasting.
-**Recommended fix:** Add `LuckPillarCalculator` with gender parameter. Compute starting age (3–8 years depending on birth date proximity to next/prev solar term), then generate 10-year pillar sequence using the same stem-branch cycling logic.
+**Description:** Bug entry stated that BaZi timing (大运) — the 10-year luck pillars that determine which element/animal energy dominates each decade of life — was not computed.
+**Fix applied (2026-06-06):** `computeDaYun(date, hour, minute, gender, zoneOffsetHours, nPeriods)` was already implemented with the correct Korean 명리 convention (Yang-year + Male OR Yin-year + Female → forward; opposite → backward; start age = days-to-next-or-prev 節氣 ÷ 3, then converted to Western years elapsed via `startAge - 1`). The 10-year luck-pillar sequence has been exposed to the UI since Phase 6.5 via `SajuKoreanCalculator.computeChart().daeun` and rendered in `DetailsUnlockScreen.SajuDaeunTimelineCard`. This batch adds the `getDaYunSummary(date, hour, minute, gender, zoneOffsetHours, nPeriods): String` back-compat facade (parallel to `getYearPillar` etc.) so other call sites can consume the formatted display string without going through the structured `DaYunPeriod` list. 2 new unit tests verify the format and 8-period default for a female + Yang-year combination.
 
 #### ✅ BUG-082 — LunarCalendarConverter Silent Empty-String Fallback
 **Severity:** Low (UX)
