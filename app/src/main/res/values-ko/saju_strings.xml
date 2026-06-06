@@ -40,6 +40,14 @@
     <string name="saju_ten_god_pyeonin">편인 (偏印)</string>
     <string name="saju_ten_god_jeongin">정인 (正印)</string>
 
+    <!-- Ten Gods (십신) card -->
+    <string name="saju_ten_gods_title">십신 (十神) 분석</string>
+    <string name="saju_ten_gods_subtitle">사주 내 천간과 지장간의 십신 관계</string>
+    <string name="saju_ten_gods_visible_stem_label">천간 십신</string>
+    <string name="saju_ten_gods_hidden_stem_label">지장간 십신</string>
+    <string name="saju_ten_gods_no_hour">시주를 알 수 없어 시주는 표시되지 않습니다</string>
+    <string name="saju_ten_gods_day_master">일주 (일간)</string>
+
     <!-- 12 Life Stages (장생12신) — only the most culturally significant are listed -->
     <string name="saju_stage_jangsaeng">장생 — 새로운 시작</string>
     <string name="saju_stage_mokyok">목욕 — 감정적 기복</string>

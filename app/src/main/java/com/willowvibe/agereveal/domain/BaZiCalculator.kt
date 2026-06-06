@@ -25,6 +25,9 @@ import javax.inject.Singleton
  *   - 地勢/長生十二神 (12 life stages) for the Day Master in each branch
  *   - 納音 (na yin) per pillar
  *   - 運 / 大運 (major-luck) including start age + direction + 10-year sequence
+ *   - Month-pillar boundaries (e.g. 驚蟄 / 경칩) are computed astronomically by
+ *     `Lunar` via `getJieQi()` against the 24 solar terms. No hardcoded date
+ *     tables — see BUG-080 (verified safe 2026-06-06).
  *
  * Naming is bilingual. Hangul 천간·지지 labels (갑을병정무기경신임계 / 자축인묘진사오미신유술해),
  * 오행 Korean cultural colours, and 용신 (Yongshin) live in [SajuKoreanCalculator].
@@ -53,7 +56,7 @@ class BaZiCalculator @Inject constructor(
             "${STEMS[stemIndex].substringAfter(" ")}-${BRANCHES[branchIndex].substringAfter(" ")} (${stemElement}-${branchAnimal})"
     }
 
-    /** All four pillars at a birth moment, plus Day Master. */
+    /** All four pillars at a birth moment, plus Day Master and Ten Gods. */
     data class FourPillars(
         val year: Pillar,
         val month: Pillar,
@@ -61,6 +64,7 @@ class BaZiCalculator @Inject constructor(
         val hour: Pillar?,
         val dayMasterHanzi: String,
         val dayMasterElement: String,
+        val tenGods: TenGods,
     ) {
         fun toDisplay(): String = buildString {
             append("Year: ").append(year.toDisplay())
@@ -68,6 +72,32 @@ class BaZiCalculator @Inject constructor(
             append(" · Day: ").append(day.toDisplay())
             if (hour != null) append(" · Hour: ").append(hour.toDisplay())
         }
+    }
+
+    /**
+     * Ten Gods (十神 / 십신) for every visible + hidden stem across the 4 pillars,
+     * relative to the Day Master.
+     *
+     * **Label vocabulary:** lunar-java v1.7.7 returns the *Chinese* 십신
+     * labels (e.g. "正官", "偏印", "日主", "伤官") — not Korean Hangul
+     * (e.g. "정관", "편인", "비견"). For Korean Hangul remapping, the
+     * SajuKoreanCalculator owns that presentation layer.
+     *
+     * One visible-stem label per pillar + one hidden-stem label per hidden
+     * stem within each branch. Use [hasHour] to know whether `hourStem` /
+     * `hourBranch` are populated.
+     */
+    data class TenGods(
+        val yearStem: String?,
+        val monthStem: String?,
+        val dayStem: String?,
+        val hourStem: String?,
+        val yearBranch: List<String>,
+        val monthBranch: List<String>,
+        val dayBranch: List<String>,
+        val hourBranch: List<String>,
+    ) {
+        val hasHour: Boolean get() = hourStem != null
     }
 
     /** One major-luck (대운) period. */
@@ -116,6 +146,16 @@ class BaZiCalculator @Inject constructor(
             dayMasterHanzi = ec.dayGan,
             dayMasterElement = ec.dayWuXing.split("").firstOrNull { it.isNotEmpty() }
                 ?.let { mapWuXingHanziToEn(it) } ?: "Unknown",
+            tenGods = TenGods(
+                yearStem = ec.yearShiShenGan.takeIf { it.isNotEmpty() },
+                monthStem = ec.monthShiShenGan.takeIf { it.isNotEmpty() },
+                dayStem = ec.dayShiShenGan.takeIf { it.isNotEmpty() },
+                hourStem = if (hour != null) ec.timeShiShenGan.takeIf { it.isNotEmpty() } else null,
+                yearBranch = ec.yearShiShenZhi,
+                monthBranch = ec.monthShiShenZhi,
+                dayBranch = ec.dayShiShenZhi,
+                hourBranch = if (hour != null) ec.timeShiShenZhi else emptyList(),
+            ),
         )
     }
 
@@ -169,6 +209,28 @@ class BaZiCalculator @Inject constructor(
 
     fun getMonthPillar(date: LocalDate): String =
         computeFourPillars(date).month.toDisplay()
+
+    fun getDayPillar(date: LocalDate): String =
+        computeFourPillars(date).day.toDisplay()
+
+    fun getHourPillar(
+        date: LocalDate,
+        hour: Int,
+        minute: Int = 0,
+        zoneOffsetHours: Double? = null,
+    ): String = computeFourPillars(date, hour, minute, zoneOffsetHours)
+        .hour?.toDisplay()
+        ?: error("Hour pillar unavailable for $date $hour:$minute (no birth time)")
+
+    fun getDaYunSummary(
+        date: LocalDate,
+        hour: Int,
+        minute: Int = 0,
+        gender: Gender,
+        zoneOffsetHours: Double? = null,
+        nPeriods: Int = 8,
+    ): String = computeDaYun(date, hour, minute, gender, zoneOffsetHours, nPeriods)
+        .joinToString(" · ") { it.toDisplay() }
 
     // -------------------------------------------------------------------------
     // Internals
