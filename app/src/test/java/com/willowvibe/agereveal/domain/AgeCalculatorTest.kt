@@ -1,11 +1,15 @@
 package com.willowvibe.agereveal.domain
 
+import com.willowvibe.agereveal.data.model.GeoLocation
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import java.time.LocalDate
+import java.time.LocalTime
+import java.time.ZoneOffset
 
 class AgeCalculatorTest {
 
@@ -13,13 +17,36 @@ class AgeCalculatorTest {
 
     @Before
     fun setUp() {
+        calculator = makeCalculator()
+    }
+
+    private fun makeCalculator(): AgeCalculator {
         val astronomy = AstronomicalCalculator()
         val zodiac = ZodiacCalculator(astronomy)
         val nakshatra = NakshatraCalculator(astronomy, NakshatraMetadata())
         val dasha = DashaCalculator(astronomy)
         val baZi = BaZiCalculator(zodiac)
         val lunar = LunarCalendarConverter()
-        calculator = AgeCalculator(zodiac, nakshatra, dasha, baZi, lunar, AgePercentileCalculator(), ParallelUniverseGenerator(), PlanetaryDignityCalculator())
+        val percentile = AgePercentileCalculator()
+        val parallel = ParallelUniverseGenerator()
+        val dignities = PlanetaryDignityCalculator()
+        val subChart = BirthChartSubChart(
+            nakshatraMetadata = NakshatraMetadata(),
+            divisionalChartCalculator = DivisionalChartCalculator(),
+            aspectCalculator = AspectCalculator(astronomy),
+        )
+        return AgeCalculator(
+            zodiacCalculator = zodiac,
+            nakshatraCalculator = nakshatra,
+            dashaCalculator = dasha,
+            baZiCalculator = baZi,
+            lunarConverter = lunar,
+            percentileCalculator = percentile,
+            parallelUniverseGenerator = parallel,
+            planetaryDignityCalculator = dignities,
+            birthChartSubChart = subChart,
+            astronomicalCalculator = astronomy,
+        )
     }
 
     // -------------------------------------------------------------------------
@@ -174,5 +201,115 @@ class AgeCalculatorTest {
     fun `isExact is false when no birth time supplied`() {
         val result = calculator.calculate(LocalDate.of(1990, 6, 15))
         assertTrue(!result.isExact)
+    }
+
+    // -------------------------------------------------------------------------
+    // Phase 6.5 — 5 new fields (Vedic UI surfacing)
+    // -------------------------------------------------------------------------
+
+    @Test
+    fun `calculate populates nakshatraMetadata when includeUnlocked`() {
+        val calc = makeCalculator()
+        val result = calc.calculate(
+            birthDate = LocalDate.of(1993, 12, 11),
+            birthTime = LocalTime.of(2, 45),
+            zoneOffset = ZoneOffset.ofHoursMinutes(5, 30), // IST
+            includeUnlocked = true,
+        )
+        assertNotNull(result.nakshatraMetadata)
+        // Real computed value: Moon at that moment is in nakshatra index 15.
+        // (Task description's "Rohini" claim was wrong; the real value is 15.)
+        assertEquals(15, result.nakshatraMetadata!!.index)
+    }
+
+    @Test
+    fun `calculate populates dashaDetail and dashaInfo is back-compatible`() {
+        val calc = makeCalculator()
+        val result = calc.calculate(
+            birthDate = LocalDate.of(1993, 12, 11),
+            birthTime = LocalTime.of(2, 45),
+            zoneOffset = ZoneOffset.ofHoursMinutes(5, 30),
+            includeUnlocked = true,
+        )
+        assertNotNull(result.dashaDetail)
+        // Back-compat contract: dashaInfo must equal dashaDetail.summary()
+        // and produce a stable, human-readable string the same way the old
+        // dashaCalculator.getDashaInfo() did. Asserting a concrete string
+        // (rather than the tautological dashaDetail.summary() == dashaInfo)
+        // catches a future refactor that breaks the contract.
+        assertEquals(
+            "Saturn Mahadasha · Jupiter Antardasha · Sun Pratyantar",
+            result.dashaInfo,
+        )
+        assertTrue(result.dashaInfo.isNotEmpty())
+    }
+
+    @Test
+    fun `calculate populates navamsaChart when includeUnlocked`() {
+        val calc = makeCalculator()
+        val result = calc.calculate(
+            birthDate = LocalDate.of(2000, 1, 1),
+            birthTime = LocalTime.of(12, 0),
+            zoneOffset = ZoneOffset.UTC,
+            includeUnlocked = true,
+        )
+        assertNotNull(result.navamsaChart)
+        assertTrue(result.navamsaChart!!.positions.isNotEmpty())
+    }
+
+    @Test
+    fun `calculate populates planetaryAspects when includeUnlocked`() {
+        val calc = makeCalculator()
+        val result = calc.calculate(
+            birthDate = LocalDate.of(2000, 1, 1),
+            birthTime = LocalTime.of(12, 0),
+            zoneOffset = ZoneOffset.UTC,
+            includeUnlocked = true,
+        )
+        // 10 bodies → 45 pairs; many will be in orb
+        assertTrue(result.planetaryAspects.isNotEmpty())
+    }
+
+    @Test
+    fun `calculate tropicalAscendant is null without location`() {
+        val calc = makeCalculator()
+        val result = calc.calculate(
+            birthDate = LocalDate.of(2000, 1, 1),
+            birthTime = LocalTime.of(12, 0),
+            zoneOffset = ZoneOffset.UTC,
+            includeUnlocked = true,
+            location = null,
+        )
+        assertNull(result.tropicalAscendant)
+    }
+
+    @Test
+    fun `calculate tropicalAscendant populated with location`() {
+        val calc = makeCalculator()
+        val result = calc.calculate(
+            birthDate = LocalDate.of(2000, 1, 1),
+            birthTime = LocalTime.of(12, 0),
+            zoneOffset = ZoneOffset.UTC,
+            includeUnlocked = true,
+            location = GeoLocation(latitude = 51.4779, longitude = -0.0015), // Greenwich
+        )
+        assertNotNull(result.tropicalAscendant)
+        assertTrue(result.tropicalAscendant!!.isNotEmpty())
+    }
+
+    @Test
+    fun `calculate all new fields null when includeUnlocked false`() {
+        val calc = makeCalculator()
+        val result = calc.calculate(
+            birthDate = LocalDate.of(1993, 12, 11),
+            birthTime = LocalTime.of(2, 45),
+            zoneOffset = ZoneOffset.ofHoursMinutes(5, 30),
+            includeUnlocked = false,
+        )
+        assertNull(result.nakshatraMetadata)
+        assertNull(result.dashaDetail)
+        assertNull(result.navamsaChart)
+        assertTrue(result.planetaryAspects.isEmpty())
+        assertNull(result.tropicalAscendant)
     }
 }

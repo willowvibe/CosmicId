@@ -22,7 +22,8 @@ import javax.inject.Singleton
  * the published Lahiri ephemeris).
  */
 @Singleton
-class NakshatraMetadata @Inject constructor() {
+// open for BirthChartSubChart exception-isolation test; do not subclass in production.
+open class NakshatraMetadata @Inject constructor() {
 
     /**
      * Look up the metadata for a nakshatra by its [index] in 0..26.
@@ -36,7 +37,7 @@ class NakshatraMetadata @Inject constructor() {
      * Look up the metadata for the nakshatra containing a given sidereal longitude
      * (0..360). Returns the same fields as [forIndex].
      */
-    fun forLongitude(siderealLongitude: Double): NakshatraData {
+    open fun forLongitude(siderealLongitude: Double): NakshatraData {
         val arc = 360.0 / 27.0
         val idx = ((siderealLongitude / arc).toInt() % 27 + 27) % 27
         return forIndex(idx)

@@ -104,6 +104,14 @@ class ZodiacCalculator @Inject constructor(
         location: GeoLocation? = null,
     ): String = vedic.getApproximateAscendant(birthDate, birthTime, zoneOffset, location)
 
+    /** Tropical (Western) ascendant sign name. Mirrors `BirthChart.tropicalAscendant`. */
+    fun getTropicalAscendantSign(
+        birthDate: LocalDate,
+        birthTime: LocalTime? = null,
+        zoneOffset: ZoneOffset? = null,
+        location: GeoLocation? = null,
+    ): String = vedic.getTropicalAscendantSign(birthDate, birthTime, zoneOffset, location)
+
     // ---------------------------------------------------------------------------
     // Planets — delegates to PlanetaryCalculator
     // ---------------------------------------------------------------------------

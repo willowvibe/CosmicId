@@ -75,11 +75,18 @@ import com.willowvibe.agereveal.ui.theme.KoreanFamily
 import kotlinx.coroutines.launch
 import com.willowvibe.agereveal.data.model.AgeResult
 import com.willowvibe.agereveal.data.model.Milestone
+import com.willowvibe.agereveal.domain.Aspect
+import com.willowvibe.agereveal.domain.AspectType
 import com.willowvibe.agereveal.domain.AstronomicalCalculator
+import com.willowvibe.agereveal.domain.DashaInfo
+import com.willowvibe.agereveal.domain.DashaPeriod
 import com.willowvibe.agereveal.domain.GenerationCalculator
 import com.willowvibe.agereveal.domain.LifeStatsCalculator
 import com.willowvibe.agereveal.domain.MoonPhaseCalculator
+import com.willowvibe.agereveal.domain.NakshatraData
+import com.willowvibe.agereveal.domain.NavamsaChart
 import com.willowvibe.agereveal.domain.PlanetAgeCalculator
+import com.willowvibe.agereveal.domain.model.CelestialBody
 import com.willowvibe.agereveal.ui.theme.SerifFamily
 import com.willowvibe.agereveal.ui.theme.WarmAmber
 import com.willowvibe.agereveal.ui.theme.WarmBlack
@@ -221,7 +228,11 @@ fun DetailsUnlockScreen(
                                 hasLocation = uiState.location != null,
                             )
                             1 -> WesternTab(result = result)
-                            2 -> VedicTab(result = result, hasLocation = uiState.location != null)
+                            2 -> VedicTab(
+                                result = result,
+                                hasLocation = uiState.location != null,
+                                hasBirthTime = uiState.birthTime != null,
+                            )
                             3 -> KoreanSajuTab(viewModel = viewModel, hasBirthTime = uiState.birthTime != null)
                         }
                     }
@@ -342,7 +353,7 @@ private fun WesternTab(result: AgeResult) {
 }
 
 @Composable
-private fun VedicTab(result: AgeResult, hasLocation: Boolean) {
+private fun VedicTab(result: AgeResult, hasLocation: Boolean, hasBirthTime: Boolean) {
     Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
         if (result.planetDignities.isNotEmpty()) {
             PlanetDignityCard(dignities = result.planetDignities)
@@ -367,20 +378,14 @@ private fun VedicTab(result: AgeResult, hasLocation: Boolean) {
             }
         }
 
-        if (result.nakshatra.isNotEmpty()) {
-            AgeCard {
-                AgeLabel(text = "NAKSHATRA")
-                Spacer(Modifier.height(6.dp))
-                AgeValue(text = result.nakshatra)
-                if (result.nakshatraPada.isNotEmpty()) {
-                    Spacer(Modifier.height(4.dp))
-                    AgeBody(text = "Pada: ${result.nakshatraPada}")
-                }
-                if (result.tithi.isNotEmpty()) {
-                    Spacer(Modifier.height(4.dp))
-                    AgeBody(text = "Tithi: ${result.tithi}")
-                }
-            }
+        if (result.nakshatraMetadata != null) {
+            AgeResultNakshatraCard(
+                metadata = result.nakshatraMetadata,
+                name = result.nakshatra,
+                padaName = result.nakshatraPada,
+                tithi = result.tithi,
+                isApprox = !hasBirthTime,
+            )
         }
 
         if (result.approximateAscendant.isNotEmpty()) {
@@ -388,14 +393,28 @@ private fun VedicTab(result: AgeResult, hasLocation: Boolean) {
                 val label = if (hasLocation) "LAGNA (ASCENDANT)" else "LAGNA (APPROXIMATE)"
                 AgeLabel(text = label)
                 Spacer(Modifier.height(6.dp))
-                AgeValue(text = result.approximateAscendant)
+                if (hasLocation && !result.tropicalAscendant.isNullOrEmpty()) {
+                    // Two-row layout: tropical (Western) + sidereal (Vedic)
+                    AgeBody(text = "Tropical: ${result.tropicalAscendant}")
+                    Spacer(Modifier.height(4.dp))
+                    AgeValue(text = "Sidereal: ${result.approximateAscendant}")
+                } else {
+                    // Approximate-only (no location)
+                    AgeValue(text = result.approximateAscendant)
+                }
             }
         }
 
-        if (result.dashaInfo.isNotEmpty()) {
-            AgeCard {
-                DashaRow(result.dashaInfo)
-            }
+        if (result.dashaDetail != null) {
+            AgeResultDashaTreeCard(detail = result.dashaDetail)
+        }
+
+        if (result.navamsaChart != null) {
+            NavamsaSnapshotCard(chart = result.navamsaChart)
+        }
+
+        if (result.planetaryAspects.isNotEmpty()) {
+            PlanetaryAspectsCard(aspects = result.planetaryAspects)
         }
     }
 }
@@ -1901,4 +1920,197 @@ internal fun moonPhaseHint(month: Int): String = when (month) {
     7, 8 -> "new moon season"
     9, 10 -> "waxing gibbous moon"
     else -> "waning crescent moon"
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Vedic tab — Phase 6.5 enrichment sub-composables
+// ─────────────────────────────────────────────────────────────────────────────
+
+private enum class DashaSize { M, A, P }
+
+@Composable
+internal fun AgeResultNakshatraCard(
+    metadata: NakshatraData,
+    name: String,
+    padaName: String,
+    tithi: String,
+    isApprox: Boolean,
+) {
+    AgeCard {
+        AgeLabel(text = if (isApprox) "NAKSHATRA (APPROXIMATE)" else "NAKSHATRA")
+        Spacer(Modifier.height(6.dp))
+        AgeValue(text = if (name.isNotEmpty()) name else metadata.name)
+        Spacer(Modifier.height(2.dp))
+        AgeBody(text = "${metadata.symbolEmoji} ${metadata.symbol}", color = WarmInkDim)
+        if (padaName.isNotEmpty()) {
+            Spacer(Modifier.height(4.dp))
+            AgeBody(text = padaName)
+        }
+        if (tithi.isNotEmpty()) {
+            Spacer(Modifier.height(4.dp))
+            AgeBody(text = "Tithi: $tithi")
+        }
+        Spacer(Modifier.height(8.dp))
+        AgeBody(text = "Lord: ${metadata.lord.displayName}")
+        AgeBody(text = "Deity: ${metadata.deity}")
+        AgeBody(text = "Gana: ${metadata.ganaHangul.split(" ")[0]}")
+    }
+}
+
+@Composable
+internal fun AgeResultDashaTreeCard(detail: DashaInfo) {
+    AgeCard {
+        AgeLabel(text = "DASHA")
+        Spacer(Modifier.height(8.dp))
+        DashaTreeRow(period = detail.mahadasha, size = DashaSize.M)
+        Spacer(Modifier.height(6.dp))
+        DashaTreeRow(period = detail.antardasha, size = DashaSize.A)
+        Spacer(Modifier.height(4.dp))
+        DashaTreeRow(period = detail.pratyantar, size = DashaSize.P)
+    }
+}
+
+@Composable
+private fun DashaTreeRow(period: DashaPeriod, size: DashaSize) {
+    val (fontFamily, fontSize, fontWeight) = when (size) {
+        DashaSize.M -> Triple(SerifFamily, 22.sp, FontWeight.Bold)
+        DashaSize.A -> Triple(SerifFamily, 18.sp, FontWeight.Normal)
+        DashaSize.P -> Triple(FontFamily.Default, 14.sp, FontWeight.Normal)
+    }
+    val sizeLabel = when (size) {
+        DashaSize.M -> "MAHADASHA"
+        DashaSize.A -> "ANTARDASHA"
+        DashaSize.P -> "PRATYANTAR"
+    }
+    Column {
+        AgeBody(text = sizeLabel, color = WarmInkMute)
+        Text(
+            text = "${period.lord} · ${"%.1f".format(period.yearsRemaining)}y remaining",
+            fontFamily = fontFamily,
+            fontSize = fontSize,
+            fontWeight = fontWeight,
+            color = WarmInk,
+        )
+    }
+}
+
+@Composable
+internal fun NavamsaSnapshotCard(chart: NavamsaChart) {
+    AgeCard {
+        AgeLabel(text = "NAVARMSA (D-9)")
+        Spacer(Modifier.height(6.dp))
+
+        // D-9 ascendant: we don't compute it explicitly in NavamsaChart, but
+        // the Lagna ascendant maps to its own rashi — for now show the most
+        // populated rashi as the "headline" D-9 rashi.
+        val topOccupant = chart.rashiOccupancy.maxByOrNull { it.value.size }
+        if (topOccupant != null) {
+            val rashiIndex = topOccupant.key
+            val bodies = topOccupant.value
+            val rashiName = bodies.firstOrNull()?.let { _ -> "Rashi $rashiIndex" } ?: "—"
+            Spacer(Modifier.height(4.dp))
+            AgeBody(text = "Most populated rashi: $rashiName")
+        }
+
+        Spacer(Modifier.height(8.dp))
+        AgeBody(text = "PLANETARY DISTRIBUTION", color = WarmInkMute)
+        Spacer(Modifier.height(4.dp))
+
+        val topRows = chart.rashiOccupancy.entries
+            .sortedByDescending { it.value.size }
+            .take(5)
+        if (topRows.isEmpty()) {
+            AgeBody(text = "—")
+        } else {
+            topRows.forEach { (rashiIndex, bodies) ->
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        text = "Rashi $rashiIndex",
+                        fontFamily = SerifFamily,
+                        fontSize = 14.sp,
+                        color = WarmInk,
+                        modifier = Modifier.width(96.dp),
+                    )
+                    Text(
+                        text = bodies.joinToString(", ") { it.displayName },
+                        fontSize = 14.sp,
+                        color = WarmInkDim,
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+internal fun PlanetaryAspectsCard(aspects: List<Aspect>) {
+    val (harmonious, tense) = groupAspectsByTone(aspects)
+    AgeCard {
+        AgeLabel(text = "PLANETARY ASPECTS")
+        Spacer(Modifier.height(8.dp))
+
+        if (harmonious.isEmpty() && tense.isEmpty()) {
+            AgeBody(text = "No major aspects in orb", color = WarmInkMute)
+        } else {
+            if (harmonious.isNotEmpty()) {
+                AgeBody(text = "HARMONIOUS", color = WarmInkMute)
+                Spacer(Modifier.height(4.dp))
+                harmonious.take(5).forEach { aspect ->
+                    AspectRow(aspect = aspect)
+                }
+                Spacer(Modifier.height(8.dp))
+            }
+            if (tense.isNotEmpty()) {
+                AgeBody(text = "TENSE", color = WarmInkMute)
+                Spacer(Modifier.height(4.dp))
+                tense.take(5).forEach { aspect ->
+                    AspectRow(aspect = aspect)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun AspectRow(aspect: Aspect) {
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = "${aspect.planet1.displayName} ${aspect.type.symbol} ${aspect.planet2.displayName}",
+            fontSize = 14.sp,
+            color = WarmInk,
+            modifier = Modifier.weight(1f),
+        )
+        Text(
+            text = "${"%.1f".format(aspect.orb)}° ${if (aspect.applying) "→" else "←"}",
+            fontSize = 13.sp,
+            color = WarmInkMute,
+        )
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Vedic tab — display helpers
+// ─────────────────────────────────────────────────────────────────────────────
+
+private fun groupAspectsByTone(aspects: List<Aspect>): Pair<List<Aspect>, List<Aspect>> {
+    val harmonious = mutableListOf<Aspect>()
+    val tense = mutableListOf<Aspect>()
+    for (aspect in aspects) {
+        when (aspect.type) {
+            AspectType.TRINE, AspectType.SEXTILE -> harmonious.add(aspect)
+            AspectType.SQUARE, AspectType.OPPOSITION -> tense.add(aspect)
+            AspectType.CONJUNCTION -> {
+                if (aspect.orb <= 4.0) harmonious.add(aspect) else tense.add(aspect)
+            }
+        }
+    }
+    harmonious.sortBy { it.orb }
+    tense.sortBy { it.orb }
+    return harmonious to tense
 }

@@ -33,7 +33,23 @@ class AgeCalculatorBirthTimeTest {
         val dasha = DashaCalculator(astronomy)
         val baZi = BaZiCalculator(zodiac)
         val lunar = LunarCalendarConverter()
-        calculator = AgeCalculator(zodiac, nakshatra, dasha, baZi, lunar, AgePercentileCalculator(), ParallelUniverseGenerator(), PlanetaryDignityCalculator())
+        val subChart = BirthChartSubChart(
+            nakshatraMetadata = NakshatraMetadata(),
+            divisionalChartCalculator = DivisionalChartCalculator(),
+            aspectCalculator = AspectCalculator(astronomy),
+        )
+        calculator = AgeCalculator(
+            zodiacCalculator = zodiac,
+            nakshatraCalculator = nakshatra,
+            dashaCalculator = dasha,
+            baZiCalculator = baZi,
+            lunarConverter = lunar,
+            percentileCalculator = AgePercentileCalculator(),
+            parallelUniverseGenerator = ParallelUniverseGenerator(),
+            planetaryDignityCalculator = PlanetaryDignityCalculator(),
+            birthChartSubChart = subChart,
+            astronomicalCalculator = astronomy,
+        )
     }
 
     @Test

@@ -130,5 +130,40 @@ class VedicZodiacCalculator @Inject constructor(
         return if (posInSign < 1.0 || posInSign > 29.0) "$name ⚠ Cusp" else name
     }
 
+    /**
+     * Tropical (Western) ascendant sign name — the same ascendant longitude
+     * used by [getApproximateAscendant] but mapped through the Western
+     * (tropical) sign list rather than the sidereal Rashi list. Mirrors
+     * `BirthChart.tropicalAscendant` (BUG-083, Phase 6.5) for the
+     * `AgeResult` data path.
+     *
+     * Returns "—" if the longitude is indeterminate (defensive; not expected
+     * in practice).
+     */
+    fun getTropicalAscendantSign(
+        birthDate: LocalDate,
+        birthTime: LocalTime? = null,
+        zoneOffset: ZoneOffset? = null,
+        location: GeoLocation? = null,
+    ): String {
+        val localDateTime = birthTime?.let { bt -> birthDate.atTime(bt) } ?: birthDate.atTime(12, 0)
+        val utDateTime = zoneOffset?.let {
+            localDateTime.atOffset(it).withOffsetSameInstant(ZoneOffset.UTC).toLocalDateTime()
+        } ?: localDateTime
+        val jd = astronomy.julianDay(utDateTime)
+
+        val tropicalAsc = if (location != null) {
+            astronomy.exactAscendantLongitude(jd, location.latitude, location.longitude)
+        } else {
+            astronomy.approximateAscendantLongitude(jd)
+        }
+        val norm = norm360(tropicalAsc)
+        val signIndex = ((norm / 30.0).toInt() % 12 + 12) % 12
+        val western = WesternZodiacCalculator(astronomy)
+        val name = western.getSignName(signIndex).takeIf { it.isNotEmpty() } ?: "—"
+        val posInSign = norm % 30.0
+        return if (posInSign < 1.0 || posInSign > 29.0) "$name ⚠ Cusp" else name
+    }
+
     private fun norm360(x: Double): Double = ((x % 360.0) + 360.0) % 360.0
 }
