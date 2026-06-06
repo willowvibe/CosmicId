@@ -512,6 +512,9 @@ private fun KoreanSajuTab(
         // 2) Four Pillars card (always visible)
         SajuFourPillarsCard(chart = chart, hasBirthTime = hasBirthTime)
 
+        // 2.5) 십신 (Ten Gods) — always visible (basic BaZi concept, not premium)
+        SajuTenGodsCard(chart = chart)
+
         if (!unlocked) {
             // Premium-gate: 오행 / 용신 / 대운 are behind the korean_saju_unlock IAP
             SajuUnlockTeaserCard()
@@ -654,6 +657,131 @@ private fun SajuFourPillarsCard(
                     pillar = chart.hour,
                 )
             }
+        }
+    }
+}
+
+@Composable
+internal fun SajuTenGodsCard(chart: SajuKoreanCalculator.SajuChart) {
+    // Resource-name -> string resolver: [SajuKoreanCalculator.SHI_SHEN_ZH_TO_RES_KEY]
+    // stores resource names (e.g. "saju_ten_god_bijeon") so the map lives
+    // in the pure-domain layer without depending on the Android R class.
+    // Resolve at compose time via [LocalContext].
+    val context = androidx.compose.ui.platform.LocalContext.current
+    fun resNameToString(name: String?): String? {
+        if (name == null) return null
+        val id = context.resources.getIdentifier(name, "string", context.packageName)
+        return if (id != 0) context.getString(id) else null
+    }
+
+    // Build the row list (one per pillar). Day pillar's visible stem is the
+    // Day Master itself — it has no 십신 relationship to itself, so we
+    // render a "Day Master" label (via saju_ten_gods_day_master) rather
+    // than a 십신 string for that row.
+    val dayPillarLabel = stringResource(R.string.saju_day_pillar)
+    val rows = buildList {
+        add(
+            Triple(
+                stringResource(R.string.saju_year_pillar),
+                chart.year,
+                chart.year.tenGod,
+            ),
+        )
+        add(
+            Triple(
+                stringResource(R.string.saju_month_pillar),
+                chart.month,
+                chart.month.tenGod,
+            ),
+        )
+        // Day pillar: visible-stem 십신 is null (no 십신 to itself).
+        add(Triple(dayPillarLabel, chart.day, null))
+        if (chart.hour != null) {
+            add(
+                Triple(
+                    stringResource(R.string.saju_hour_pillar),
+                    chart.hour,
+                    chart.hour.tenGod,
+                ),
+            )
+        }
+    }
+    AgeCard {
+        AgeLabel(text = stringResource(R.string.saju_ten_gods_title))
+        Spacer(Modifier.height(4.dp))
+        AgeBody(
+            text = stringResource(R.string.saju_ten_gods_subtitle),
+            color = WarmInkMute,
+        )
+        Spacer(Modifier.height(12.dp))
+        // Two-column header row
+        Row(modifier = Modifier.fillMaxWidth()) {
+            AgeBody(
+                text = stringResource(R.string.saju_ten_gods_visible_stem_label),
+                color = WarmInkMute,
+                modifier = Modifier.weight(1.5f),
+            )
+            AgeBody(
+                text = stringResource(R.string.saju_ten_gods_hidden_stem_label),
+                color = WarmInkMute,
+                modifier = Modifier.weight(2f),
+            )
+        }
+        Spacer(Modifier.height(4.dp))
+
+        // Per-pillar rows. For each row, look up the Chinese 십신 label
+        // (lunar-java returns simplified Chinese) in
+        // [SajuKoreanCalculator.SHI_SHEN_ZH_TO_RES_KEY] and resolve to
+        // the Korean string resource. Falls back to the raw Chinese
+        // string if the map doesn't have an entry.
+        for ((pillarLabel, pillar, visibleShiShenZh) in rows) {
+            val visibleKorean = when {
+                pillarLabel == dayPillarLabel ->
+                    stringResource(R.string.saju_ten_gods_day_master)
+                visibleShiShenZh == null -> "—"
+                else -> resNameToString(
+                    SajuKoreanCalculator.SHI_SHEN_ZH_TO_RES_KEY[visibleShiShenZh],
+                ) ?: visibleShiShenZh
+            }
+            val hiddenKorean = pillar.branchTenGods
+                .mapNotNull { zh ->
+                    resNameToString(SajuKoreanCalculator.SHI_SHEN_ZH_TO_RES_KEY[zh]) ?: zh
+                }
+                .joinToString(" · ")
+                .ifEmpty { "—" }
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                AgeBody(
+                    text = pillarLabel,
+                    modifier = Modifier.weight(1.5f),
+                )
+                AgeBody(
+                    text = visibleKorean,
+                    color = WarmInk,
+                    modifier = Modifier.weight(2f),
+                )
+            }
+            if (pillar.branchTenGods.isNotEmpty()) {
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(start = 12.dp, bottom = 4.dp),
+                ) {
+                    AgeBody(
+                        text = "→ $hiddenKorean",
+                        color = WarmInkMute,
+                        modifier = Modifier.weight(1f),
+                    )
+                }
+            }
+        }
+
+        if (chart.hour == null) {
+            Spacer(Modifier.height(8.dp))
+            AgeBody(
+                text = stringResource(R.string.saju_ten_gods_no_hour),
+                color = WarmInkMute,
+            )
         }
     }
 }

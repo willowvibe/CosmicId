@@ -125,6 +125,34 @@ class SajuKoreanCalculator @Inject constructor(
             "정인" to "Direct Resource (正印)",
         )
 
+        /**
+         * Chinese 십신 label → `saju_ten_god_*` string-resource key.
+         *
+         * lunar-java v1.7.7 returns the *Chinese* 십신 labels (e.g. "正官",
+         * "偏印", "伤官", "日主") on `ec.{year,month,day,time}ShiShenGan` —
+         * NOT the Korean Hangul names. The UI layer remaps to the existing
+         * `values-ko/saju_strings.xml` keys via this map.
+         *
+         * Special case: "日主" means "Day Master" (the day stem compared to
+         * itself has no 십신 relationship) and is rendered as a special
+         * "일간" / day-master label by the UI rather than via this map.
+         *
+         * Note: lunar-java uses simplified Chinese (偏财, 劫财, 正财) for
+         * these labels; the resource keys are the same regardless.
+         */
+        val SHI_SHEN_ZH_TO_RES_KEY: Map<String, String> = mapOf(
+            "比肩" to "saju_ten_god_bijeon",
+            "劫财" to "saju_ten_god_geopjae",
+            "食神" to "saju_ten_god_siksin",
+            "伤官" to "saju_ten_god_sanggwan",
+            "偏财" to "saju_ten_god_pyeonjae",
+            "正财" to "saju_ten_god_jeongjae",
+            "偏官" to "saju_ten_god_pyeonggwan",
+            "正官" to "saju_ten_god_jeonggwan",
+            "偏印" to "saju_ten_god_pyeonin",
+            "正印" to "saju_ten_god_jeongin",
+        )
+
         // -------------------------------------------------------------------------
         // 12 life stages (장생12신)
         // -------------------------------------------------------------------------

@@ -34,6 +34,14 @@
     <string name="saju_ten_god_pyeonin">Indirect Seal (偏印)</string>
     <string name="saju_ten_god_jeongin">Direct Seal (正印)</string>
 
+    <!-- Ten Gods (십신) card -->
+    <string name="saju_ten_gods_title">Ten Gods (十神) Analysis</string>
+    <string name="saju_ten_gods_subtitle">Stem and branch ten-god relationships</string>
+    <string name="saju_ten_gods_visible_stem_label">Visible stem</string>
+    <string name="saju_ten_gods_hidden_stem_label">Hidden stems</string>
+    <string name="saju_ten_gods_no_hour">Hour pillar is not available without birth time</string>
+    <string name="saju_ten_gods_day_master">Day Master</string>
+
     <!-- 12 Life Stages -->
     <string name="saju_stage_jangsaeng">Birth — new beginnings</string>
     <string name="saju_stage_mokyok">Bath — emotional swings</string>
