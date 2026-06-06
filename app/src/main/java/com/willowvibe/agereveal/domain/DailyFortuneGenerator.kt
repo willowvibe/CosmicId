@@ -27,6 +27,13 @@ class DailyFortuneGenerator @Inject constructor(
         val stemBranch: String,
         val luckyNumber: Int,
         val luckyColor: String,
+        // BUG-088: Honest disclaimer. Fortunes reference "Mars energy," "your
+        // 10th house," "Saturn testing your patience" etc., but the underlying
+        // transits are not actually computed against the user's birth chart.
+        // The flag + disclaimer let the UI surface "for entertainment only"
+        // without diluting the message body.
+        val isEntertainment: Boolean = true,
+        val disclaimer: String = DEFAULT_DISCLAIMER,
     )
 
     fun generate(birthDate: LocalDate, today: LocalDate = LocalDate.now()): Fortune {
@@ -103,6 +110,16 @@ class DailyFortuneGenerator @Inject constructor(
     )
 
     companion object {
+        /**
+         * Standard "for entertainment only" disclaimer surfaced in the UI.
+         *
+         * The 80+ curated messages reference transits ("Mars energy," "Saturn
+         * testing patience," "your 10th house buzzing") that are not computed
+         * against the user's birth chart — see BUG-088. The disclaimer keeps
+         * the messages fun without misleading astrology-literate users.
+         */
+        const val DEFAULT_DISCLAIMER = "For entertainment only — not astrological advice."
+
         // Curated fortune pool — 80+ messages mixing astrology, motivation, and Gen Z voice
         val messages = listOf(
             "The New Moon is a blank canvas — plant a seed (literally or metaphorically).",

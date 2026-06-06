@@ -36,7 +36,7 @@ class DashaCalculatorTest {
         val knownLords = listOf("Ketu", "Venus", "Sun", "Moon", "Mars", "Rahu", "Jupiter", "Saturn", "Mercury")
         val parts = info.split(" · ", " ")
         for (part in parts) {
-            if (part == "Mahadasha" || part == "Antardasha") continue
+            if (part in setOf("Mahadasha", "Antardasha", "Pratyantar", "")) continue
             assertTrue("Unknown lord token '$part' in: $info", knownLords.any { part.contains(it) })
         }
     }
@@ -102,5 +102,47 @@ class DashaCalculatorTest {
         }
         val expected = setOf("Ketu", "Venus", "Sun", "Moon", "Mars", "Rahu", "Jupiter", "Saturn", "Mercury")
         assertTrue("Expected all 9 lords as Mahadasha, missing: ${expected - seen}", seen.containsAll(expected))
+    }
+
+    // -------------------------------------------------------------------------
+    // Structured form (Phase 6.5: Pratyantar Dasha added)
+    // -------------------------------------------------------------------------
+
+    @Test
+    fun `structured DashaInfo contains Mahadasha Antardasha and Pratyantar`() {
+        val info = calculator.getDashaDetail(LocalDate.of(1990, 6, 15), today = LocalDate.of(2020, 1, 1))
+        assertTrue("Mahadasha has a lord", info.mahadasha.lord.isNotBlank())
+        assertTrue("Antardasha has a lord", info.antardasha.lord.isNotBlank())
+        assertTrue("Pratyantar has a lord", info.pratyantar.lord.isNotBlank())
+    }
+
+    @Test
+    fun `Mahadasha years elapsed plus remaining equals total`() {
+        val info = calculator.getDashaDetail(LocalDate.of(1990, 6, 15), today = LocalDate.of(2020, 1, 1))
+        val maha = info.mahadasha
+        assertTrue(
+            "Mahadasha elapsed (${maha.yearsElapsed}) + remaining (${maha.yearsRemaining}) should ≈ total (${maha.totalYears}); got diff ${kotlin.math.abs((maha.yearsElapsed + maha.yearsRemaining) - maha.totalYears)}",
+            kotlin.math.abs((maha.yearsElapsed + maha.yearsRemaining) - maha.totalYears) < 0.01,
+        )
+    }
+
+    @Test
+    fun `Pratyantar is a sub-period of the Antardasha`() {
+        val info = calculator.getDashaDetail(LocalDate.of(1990, 6, 15), today = LocalDate.of(2020, 1, 1))
+        // Pratyantar total years = Antardasha total years * (sub-lord fraction of 120y).
+        // Sanity check: pratyantar total < antardasha total (because sub-lord fraction < 1).
+        assertTrue(
+            "Pratyantar (${info.pratyantar.totalYears}y) should be < Antardasha (${info.antardasha.totalYears}y)",
+            info.pratyantar.totalYears < info.antardasha.totalYears,
+        )
+    }
+
+    @Test
+    fun `DashaInfo summary contains all three level names`() {
+        val info = calculator.getDashaDetail(LocalDate.of(1990, 6, 15), today = LocalDate.of(2020, 1, 1))
+        val s = info.summary()
+        assertTrue("Summary contains Mahadasha: $s", s.contains("Mahadasha"))
+        assertTrue("Summary contains Antardasha: $s", s.contains("Antardasha"))
+        assertTrue("Summary contains Pratyantar: $s", s.contains("Pratyantar"))
     }
 }

@@ -290,6 +290,7 @@ class SajuKoreanCalculator @Inject constructor(
         val status: String,            // "신강" or "신약" (Hangul label)
         val isStrong: Boolean,
         val favourableElementEn: String,
+        val unfavourableElementEn: String,
         val favourableElementHangul: String,
         val favourableElementHanja: String,
         val favourableColorHex: Long,  // Korean cultural colour for the element
@@ -416,6 +417,7 @@ class SajuKoreanCalculator @Inject constructor(
             status = statusHangul,
             isStrong = sug.isStrong,
             favourableElementEn = fav,
+            unfavourableElementEn = sug.unfavourable,
             favourableElementHangul = elementHangul,
             favourableElementHanja = elementHanja,
             favourableColorHex = colorHex,

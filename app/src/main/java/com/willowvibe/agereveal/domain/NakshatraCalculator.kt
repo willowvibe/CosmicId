@@ -1,5 +1,6 @@
 package com.willowvibe.agereveal.domain
 
+import com.willowvibe.agereveal.domain.model.CelestialBody
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.ZoneOffset
@@ -17,34 +18,24 @@ import javax.inject.Singleton
 @Singleton
 class NakshatraCalculator @Inject constructor(
     private val astronomy: AstronomicalCalculator,
+    private val metadata: NakshatraMetadata,
 ) {
 
     private val nakshatraArc = 360.0 / 27.0  // 13°20'
-
-    private val nakshatraNames = listOf(
-        "Ashwini (अश्विनी)", "Bharani (भरणी)", "Krittika (कृत्तिका)",
-        "Rohini (रोहिणी)", "Mrigashira (मृगशिरा)", "Ardra (आर्द्रा)",
-        "Punarvasu (पुनर्वसु)", "Pushya (पुष्य)", "Ashlesha (आश्लेषा)",
-        "Magha (मघा)", "Purva Phalguni (पूर्व फाल्गुनी)", "Uttara Phalguni (उत्तर फाल्गुनी)",
-        "Hasta (हस्त)", "Chitra (चित्रा)", "Swati (स्वाति)",
-        "Vishakha (विशाखा)", "Anuradha (अनुराधा)", "Jyeshtha (ज्येष्ठा)",
-        "Moola (मूला)", "Purva Ashadha (पूर्वाषाढ़ा)", "Uttara Ashadha (उत्तराषाढ़ा)",
-        "Shravana (श्रवण)", "Dhanishtha (धनिष्ठा)", "Shatabhisha (शतभिषा)",
-        "Purva Bhadrapada (पूर्व भाद्रपद)", "Uttara Bhadrapada (उत्तर भाद्रपद)", "Revati (रेवती)",
-    )
 
     fun getNakshatra(
         birthDate: LocalDate,
         birthTime: LocalTime? = null,
         zoneOffset: ZoneOffset? = null,
     ): String {
-        val snapshot = astronomy.snapshot(birthDate, birthTime, zoneOffset)
-        val longitude = snapshot.siderealMoonLongitude
-        val index = ((longitude / nakshatraArc).toInt() % 27 + 27) % 27
-        val name = nakshatraNames[index]
-        val posInNakshatra = longitude % nakshatraArc
+        val details = getNakshatraDetails(birthDate, birthTime, zoneOffset)
+        val posInNakshatra = details.positionInNakshatra
         // Within 1° of a nakshatra boundary — Moon moves ~13°/day, so 1° ≈ 2 hours of travel
-        return if (posInNakshatra < 1.0 || posInNakshatra > (nakshatraArc - 1.0)) "$name ⚠ Cusp" else name
+        return if (posInNakshatra < 1.0 || posInNakshatra > (nakshatraArc - 1.0)) {
+            "${details.name} ⚠ Cusp"
+        } else {
+            details.name
+        }
     }
 
     /** Returns the nakshatra with its pada (quarter), e.g. "Rohini — 2nd Pada". */
@@ -53,18 +44,53 @@ class NakshatraCalculator @Inject constructor(
         birthTime: LocalTime? = null,
         zoneOffset: ZoneOffset? = null,
     ): String {
+        val details = getNakshatraDetails(birthDate, birthTime, zoneOffset)
+        return "${details.name} — ${details.padaName()}"
+    }
+
+    /**
+     * Full metadata for the Moon's current nakshatra — used by DetailsUnlockScreen
+     * and by the Dasha calculator (which needs [NakshatraData.lord] to seed Vimshottari).
+     */
+    fun getNakshatraDetails(
+        birthDate: LocalDate,
+        birthTime: LocalTime? = null,
+        zoneOffset: ZoneOffset? = null,
+    ): NakshatraDetails {
         val snapshot = astronomy.snapshot(birthDate, birthTime, zoneOffset)
         val longitude = snapshot.siderealMoonLongitude
         val nakshatraIndex = ((longitude / nakshatraArc).toInt() % 27 + 27) % 27
         val posInNakshatra = longitude % nakshatraArc
         val padaIndex = (posInNakshatra / (nakshatraArc / 4.0)).toInt().coerceIn(0, 3)
-        val name = nakshatraNames[nakshatraIndex]
-        val pada = when (padaIndex) {
-            0 -> "1st Pada"
-            1 -> "2nd Pada"
-            2 -> "3rd Pada"
-            else -> "4th Pada"
-        }
-        return "$name — $pada"
+        val data = metadata.forIndex(nakshatraIndex)
+        return NakshatraDetails(
+            data = data,
+            padaIndex = padaIndex,
+            positionInNakshatra = posInNakshatra,
+            siderealMoonLongitude = longitude,
+        )
+    }
+}
+
+/**
+ * Result of resolving a Moon's position to its nakshatra — data + calculated padas
+ * + the raw longitude and position within the mansion. The [positionInNakshatra]
+ * is exposed so the UI can draw a progress bar.
+ */
+data class NakshatraDetails(
+    val data: NakshatraData,
+    val padaIndex: Int,
+    val positionInNakshatra: Double,
+    val siderealMoonLongitude: Double,
+) {
+    val name: String get() = data.name
+    val lord: CelestialBody get() = data.lord
+
+    /** Display name of the current pada (quarter of the nakshatra). */
+    fun padaName(): String = when (padaIndex) {
+        0 -> "1st Pada"
+        1 -> "2nd Pada"
+        2 -> "3rd Pada"
+        else -> "4th Pada"
     }
 }

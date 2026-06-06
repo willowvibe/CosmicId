@@ -13,6 +13,32 @@ enum class CelestialBody(
     val meanPerihelionAU: Double?,
 ) {
     /**
+     * The Sun — the centre of the solar system.
+     * Orbital period: 0 (we sit on it); orbital "elements" are null because we
+     * observe the Sun's apparent motion from Earth, not its orbit.
+     */
+    SUN(
+        displayName = "Sun",
+        emoji = "☀️",
+        orbitalPeriodEarthYears = null,
+        meanAphelionAU = null,
+        meanPerihelionAU = null,
+    ),
+
+    /**
+     * The Moon — Earth's only natural satellite.
+     * No heliocentric orbital elements (orbits Earth, not the Sun). Treated as
+     * a body in Vedic astrology (Vimshottari Dasha sequence includes it).
+     */
+    MOON(
+        displayName = "Moon",
+        emoji = "🌙",
+        orbitalPeriodEarthYears = null,
+        meanAphelionAU = null,
+        meanPerihelionAU = null,
+    ),
+
+    /**
      * Mercury - innermost planet.
      * Orbital period: 0.2408 years
      * Aphelion: 0.4667 AU, Perihelion: 0.3075 AU
@@ -114,6 +140,34 @@ enum class CelestialBody(
         orbitalPeriodEarthYears = 248.0,
         meanAphelionAU = 49.31,
         meanPerihelionAU = 29.66,
+    ),
+
+    /**
+     * Rahu - the North (ascending) lunar node.
+     * A mathematical point (not a body). Used as a Nakshatra lord in Vedic astrology
+     * (Vimshottari Dasha sequence) and in Yogini / Kaala Dasha systems. No orbital
+     * elements because it has no physical body.
+     */
+    RAHU(
+        displayName = "Rahu",
+        emoji = "🐉",
+        orbitalPeriodEarthYears = null,
+        meanAphelionAU = null,
+        meanPerihelionAU = null,
+    ),
+
+    /**
+     * Ketu - the South (descending) lunar node.
+     * A mathematical point diametrically opposite Rahu on the ecliptic. Used as a
+     * Nakshatra lord in Vedic astrology (Vimshottari Dasha sequence). No orbital
+     * elements because it has no physical body.
+     */
+    KETU(
+        displayName = "Ketu",
+        emoji = "🐲",
+        orbitalPeriodEarthYears = null,
+        meanAphelionAU = null,
+        meanPerihelionAU = null,
     );
 
     companion object {
