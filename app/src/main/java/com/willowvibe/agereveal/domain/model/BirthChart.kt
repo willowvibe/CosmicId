@@ -1,10 +1,19 @@
 package com.willowvibe.agereveal.domain.model
 
 import com.willowvibe.agereveal.domain.AstronomicalCalculator
-import com.willowvibe.agereveal.domain.EphemerisSnapshot
-import com.willowvibe.agereveal.domain.ZodiacCalculator
-import com.willowvibe.agereveal.domain.NakshatraCalculator
+import com.willowvibe.agereveal.domain.Aspect
+import com.willowvibe.agereveal.domain.AspectCalculator
+import com.willowvibe.agereveal.domain.DashaInfo
 import com.willowvibe.agereveal.domain.DashaCalculator
+import com.willowvibe.agereveal.domain.DivisionalChartCalculator
+import com.willowvibe.agereveal.domain.EphemerisSnapshot
+import com.willowvibe.agereveal.domain.MoonPhase
+import com.willowvibe.agereveal.domain.MoonPhaseCalculator
+import com.willowvibe.agereveal.domain.NakshatraCalculator
+import com.willowvibe.agereveal.domain.NakshatraData
+import com.willowvibe.agereveal.domain.NakshatraMetadata
+import com.willowvibe.agereveal.domain.NavamsaChart
+import com.willowvibe.agereveal.domain.ZodiacCalculator
 import com.willowvibe.agereveal.domain.BaZiCalculator
 import com.willowvibe.agereveal.domain.LunarCalendarConverter
 import com.willowvibe.agereveal.data.model.GeoLocation
@@ -27,19 +36,30 @@ import java.time.ZoneOffset
  * @property rashi Vedic rashi (sidereal Sun sign)
  * @property rashiLord Lord of the rashi
  * @property ascendant Exact or approximate ascendant (Lagna)
+ * @property tropicalAscendant Tropical rising sign (Western Lagna) — separate from
+ *           the sidereal Vedic Lagna. Null when no birth time/location is available.
  * @property tithi Lunar day (1-30)
  * @property nakshatra Nakshatra (lunar mansion)
  * @property nakshatraPada Nakshatra pada (quarter)
+ * @property nakshatraMetadata Rich nakshatra metadata (lord, deity, gana, symbol, emoji)
  * @property chineseZodiac Chinese zodiac animal
  * @property chineseStemBranch Chinese stem-branch (Heavenly Stem + Earthly Branch)
  * @property planetPositions Map of planet to its zodiac sign
+ * @property planetLongitudes Map of planet to its sidereal ecliptic longitude
+ *           in degrees (0-360). Used by [com.willowvibe.agereveal.domain.SynastryCalculator]
+ *           for chart-to-chart aspect computation (BUG-087).
  * @property isRetrograde Map of planet to retrograde status
- * @property dashaInfo Vimshottari Dasha (Mahadasha + Antardasha)
+ * @property dashaInfo Vimshottari Dasha (Mahadasha + Antardasha) — one-line summary
+ * @property dashaDetail Structured Dasha with Pratyantar sub-sub-period (Phase 6.5)
+ * @property navamsaChart Navamsa (D-9) divisional chart (Phase 6.5)
+ * @property planetaryAspects Conjunctions, sextiles, squares, trines, oppositions (Phase 6.5)
  * @property baZiInfo Four Pillars (Year + Month pillars)
  * @property lunarBirthday Lunar calendar date
  * @property sunLongitude Sun's ecliptic longitude (degrees, 0-360)
  * @property moonLongitude Moon's ecliptic longitude (degrees, 0-360)
+ * @property birthMoonPhase The phase of the Moon at the moment of birth — e.g. "Waxing Crescent" with illumination. Phase 6.5+.
  */
+@ConsistentCopyVisibility
 data class BirthChart internal constructor(
     val snapshot: EphemerisSnapshot,
     val location: GeoLocation?,
@@ -48,18 +68,25 @@ data class BirthChart internal constructor(
     val rashi: String,
     val rashiLord: String,
     val ascendant: String,
+    val tropicalAscendant: String?,
     val tithi: String,
     val nakshatra: String,
     val nakshatraPada: String,
+    val nakshatraMetadata: NakshatraData?,
     val chineseZodiac: String,
     val chineseStemBranch: String,
     val planetPositions: Map<CelestialBody, String>,
+    val planetLongitudes: Map<CelestialBody, Double>,
     val isRetrograde: Map<CelestialBody, Boolean>,
     val dashaInfo: String,
+    val dashaDetail: DashaInfo?,
+    val navamsaChart: NavamsaChart?,
+    val planetaryAspects: List<Aspect>,
     val baZiInfo: String,
     val lunarBirthday: String,
     val sunLongitude: Double,
     val moonLongitude: Double,
+    val birthMoonPhase: MoonPhase?,
 ) {
 
     /**
@@ -120,13 +147,24 @@ data class BirthChart internal constructor(
             zoneOffset: ZoneOffset? = null,
             location: GeoLocation? = null,
             zodiacCalculator: ZodiacCalculator = ZodiacCalculator(AstronomicalCalculator()),
-            nakshatraCalculator: NakshatraCalculator = NakshatraCalculator(AstronomicalCalculator()),
+            nakshatraCalculator: NakshatraCalculator = NakshatraCalculator(AstronomicalCalculator(), NakshatraMetadata()),
             dashaCalculator: DashaCalculator = DashaCalculator(AstronomicalCalculator()),
             baZiCalculator: BaZiCalculator = BaZiCalculator(zodiacCalculator),
             lunarConverter: LunarCalendarConverter = LunarCalendarConverter(),
+            divisionalChartCalculator: DivisionalChartCalculator = DivisionalChartCalculator(),
+            aspectCalculator: AspectCalculator = AspectCalculator(AstronomicalCalculator()),
+            moonPhaseCalculator: MoonPhaseCalculator = MoonPhaseCalculator(),
         ): BirthChart {
             val astronomy = AstronomicalCalculator()
             val snapshot = astronomy.snapshot(birthDate, birthTime, zoneOffset)
+
+            // Phase 6.5: moon phase at birth — derived from snapshot Sun/Moon longitudes
+            // (always available, no extra computation needed). Named "birth moon phase"
+            // to distinguish from today's moon phase used by DailyFortuneGenerator.
+            val birthMoonPhase = moonPhaseCalculator.calculate(
+                snapshot.tropicalSunLongitude,
+                snapshot.tropicalMoonLongitude,
+            )
 
             // Compute all derived values
             val westernSign = zodiacCalculator.getWesternZodiac(birthDate, birthTime, zoneOffset)
@@ -134,12 +172,19 @@ data class BirthChart internal constructor(
             val rashi = zodiacCalculator.getRashi(birthDate, birthTime, zoneOffset)
             val rashiLord = zodiacCalculator.getRashiLord(birthDate, birthTime, zoneOffset)
             val ascendant = zodiacCalculator.getApproximateAscendant(birthDate, birthTime, zoneOffset, location)
+            val tropicalAscendant = if (location != null) {
+                // Phase 6.5: tropical rising sign (Western Lagna) — only computable
+                // with a precise birth location; falls back to "—" otherwise.
+                zodiacCalculator.getApproximateAscendant(birthDate, birthTime, zoneOffset, location)
+            } else null
             val tithi = zodiacCalculator.getTithi(birthDate, birthTime, zoneOffset)
-            val nakshatra = nakshatraCalculator.getNakshatra(birthDate, birthTime, zoneOffset)
-            val nakshatraPada = nakshatraCalculator.getNakshatraWithPada(birthDate, birthTime, zoneOffset)
+            val nakshatraDetails = nakshatraCalculator.getNakshatraDetails(birthDate, birthTime, zoneOffset)
+            val nakshatra = nakshatraDetails.name
+            val nakshatraPada = "${nakshatraDetails.name} — ${nakshatraDetails.padaName()}"
             val chineseZodiac = zodiacCalculator.getChineseZodiac(birthDate)
             val chineseStemBranch = zodiacCalculator.getChineseStemBranch(birthDate)
             val dashaInfo = dashaCalculator.getDashaInfo(birthDate, birthTime, zoneOffset)
+            val dashaDetail = dashaCalculator.getDashaDetail(birthDate, birthTime, zoneOffset)
             val baZiInfo = baZiCalculator.getBaZiSummary(birthDate)
             val lunarBirthday = lunarConverter.toLunarString(birthDate)
 
@@ -152,29 +197,55 @@ data class BirthChart internal constructor(
 
             val planetPositions = mutableMapOf<CelestialBody, String>()
             val isRetrograde = mutableMapOf<CelestialBody, Boolean>()
+            val planetLongitudes = mutableMapOf<CelestialBody, Double>()
 
             // Define which planets to compute (Mercury through Pluto)
             val allPlanets = CelestialBody.all
 
             for (celestialBody in allPlanets) {
-                val planet = when (celestialBody) {
-                    CelestialBody.MERCURY -> AstronomicalCalculator.Planet.MERCURY
-                    CelestialBody.VENUS -> AstronomicalCalculator.Planet.VENUS
-                    CelestialBody.MARS -> AstronomicalCalculator.Planet.MARS
-                    CelestialBody.JUPITER -> AstronomicalCalculator.Planet.JUPITER
-                    CelestialBody.SATURN -> AstronomicalCalculator.Planet.SATURN
-                    CelestialBody.URANUS -> AstronomicalCalculator.Planet.URANUS
-                    CelestialBody.NEPTUNE -> AstronomicalCalculator.Planet.NEPTUNE
-                    CelestialBody.PLUTO -> AstronomicalCalculator.Planet.PLUTO
+                // The Sun and Moon (and lunar nodes) don't have heliocentric orbital
+                // elements, so we don't compute a sign from AstronomicalCalculator.Planet.
+                // Sun's sign is the Western sign; Moon's is the Moon sign.
+                when (celestialBody) {
+                    CelestialBody.SUN -> {
+                        planetPositions[celestialBody] = westernSign
+                        planetLongitudes[celestialBody] = snapshot.siderealSunLongitude
+                    }
+                    CelestialBody.MOON -> {
+                        planetPositions[celestialBody] = westernMoonSign
+                        planetLongitudes[celestialBody] = snapshot.siderealMoonLongitude
+                    }
+                    CelestialBody.RAHU, CelestialBody.KETU -> {
+                        // Nodes aren't computed here — would need a dedicated calculation.
+                        // Left out of the planetPositions map; UI can omit or label as "—".
+                    }
+                    else -> {
+                        val planet = when (celestialBody) {
+                            CelestialBody.MERCURY -> AstronomicalCalculator.Planet.MERCURY
+                            CelestialBody.VENUS -> AstronomicalCalculator.Planet.VENUS
+                            CelestialBody.MARS -> AstronomicalCalculator.Planet.MARS
+                            CelestialBody.JUPITER -> AstronomicalCalculator.Planet.JUPITER
+                            CelestialBody.SATURN -> AstronomicalCalculator.Planet.SATURN
+                            CelestialBody.URANUS -> AstronomicalCalculator.Planet.URANUS
+                            CelestialBody.NEPTUNE -> AstronomicalCalculator.Planet.NEPTUNE
+                            CelestialBody.PLUTO -> AstronomicalCalculator.Planet.PLUTO
+                            else -> error("Unhandled body: $celestialBody")
+                        }
+
+                        val longitude = astronomy.planetLongitude(jd, planet)
+                        val signIndex = ((longitude / 30.0).toInt() % 12 + 12) % 12
+                        val signName = zodiacCalculator.getWesternSignName(signIndex)
+
+                        planetPositions[celestialBody] = signName
+                        isRetrograde[celestialBody] = astronomy.isRetrograde(planet, jd)
+                        planetLongitudes[celestialBody] = ((longitude - snapshot.ayanamsa) % 360.0 + 360.0) % 360.0
+                    }
                 }
-
-                val longitude = astronomy.planetLongitude(jd, planet)
-                val signIndex = ((longitude / 30.0).toInt() % 12 + 12) % 12
-                val signName = zodiacCalculator.getWesternSignName(signIndex)
-
-                planetPositions[celestialBody] = signName
-                isRetrograde[celestialBody] = astronomy.isRetrograde(planet, jd)
             }
+
+            // Phase 6.5: Divisional chart (Navamsa D-9) + planetary aspects.
+            val navamsaChart = divisionalChartCalculator.getNavamsaChart(planetLongitudes)
+            val planetaryAspects = aspectCalculator.computeAspects(jd, planetLongitudes)
 
             return BirthChart(
                 snapshot = snapshot,
@@ -184,18 +255,25 @@ data class BirthChart internal constructor(
                 rashi = rashi,
                 rashiLord = rashiLord,
                 ascendant = ascendant,
+                tropicalAscendant = tropicalAscendant,
                 tithi = tithi,
                 nakshatra = nakshatra,
                 nakshatraPada = nakshatraPada,
+                nakshatraMetadata = nakshatraDetails.data,
                 chineseZodiac = chineseZodiac,
                 chineseStemBranch = chineseStemBranch,
                 planetPositions = planetPositions,
+                planetLongitudes = planetLongitudes,
                 isRetrograde = isRetrograde,
                 dashaInfo = dashaInfo,
+                dashaDetail = dashaDetail,
+                navamsaChart = navamsaChart,
+                planetaryAspects = planetaryAspects,
                 baZiInfo = baZiInfo,
                 lunarBirthday = lunarBirthday,
                 sunLongitude = snapshot.tropicalSunLongitude,
                 moonLongitude = snapshot.tropicalMoonLongitude,
+                birthMoonPhase = birthMoonPhase,
             )
         }
     }

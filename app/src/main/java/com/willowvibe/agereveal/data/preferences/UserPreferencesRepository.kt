@@ -51,6 +51,7 @@ class UserPreferencesRepository @Inject constructor(
         private val GRACE_PERIOD_START_KEY = longPreferencesKey("grace_period_start")
         private val ONBOARDING_COMPLETED_KEY = booleanPreferencesKey("onboarding_completed")
         private val THEME_PACK_KEY = intPreferencesKey("theme_pack")
+        private val KOREAN_SAJU_UNLOCKED_KEY = booleanPreferencesKey("korean_saju_unlocked")
 
         // User profile (mirrored to SharedPreferences for widget/worker access)
         private val BIRTH_DATE_KEY = stringPreferencesKey("birth_date")
@@ -163,6 +164,19 @@ class UserPreferencesRepository @Inject constructor(
     val themePack: Flow<Int> = dataStore.data.map { it[THEME_PACK_KEY] ?: 0 }
     suspend fun setThemePack(packId: Int) {
         dataStore.edit { it[THEME_PACK_KEY] = packId }
+    }
+
+    // ── Korean Saju one-time IAP unlock (v2.1) ──────────────────────────────
+    /**
+     * `true` when the user has bought the `korean_saju_unlock` IAP (₹149
+     * one-time). This is independent of the recurring premium subscription —
+     * a user can unlock Korean Saju deep content without subscribing.
+     */
+    val isKoreanSajuUnlocked: Flow<Boolean> = dataStore.data.map {
+        it[KOREAN_SAJU_UNLOCKED_KEY] ?: false
+    }
+    suspend fun setKoreanSajuUnlocked(unlocked: Boolean) {
+        dataStore.edit { it[KOREAN_SAJU_UNLOCKED_KEY] = unlocked }
     }
 
     // ── Onboarding completed (v2.0) ────────────────────────────────────────

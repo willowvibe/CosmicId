@@ -61,12 +61,17 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.willowvibe.agereveal.R
+import com.willowvibe.agereveal.domain.SajuKoreanCalculator
+import com.willowvibe.agereveal.ui.theme.KoreanFamily
 import kotlinx.coroutines.launch
 import com.willowvibe.agereveal.data.model.AgeResult
 import com.willowvibe.agereveal.data.model.Milestone
@@ -168,7 +173,7 @@ fun DetailsUnlockScreen(
         } else {
             val pagerState = rememberPagerState(pageCount = { 4 })
             val scope = rememberCoroutineScope()
-            val tabTitles = listOf("Overview", "Western", "Vedic", "Chinese")
+            val tabTitles = listOf("Overview", "Western", "Vedic", "Korean Saju")
 
             Column(modifier = Modifier.weight(1f)) {
                 TabRow(
@@ -217,7 +222,7 @@ fun DetailsUnlockScreen(
                             )
                             1 -> WesternTab(result = result)
                             2 -> VedicTab(result = result, hasLocation = uiState.location != null)
-                            3 -> ChineseTab(result = result)
+                            3 -> KoreanSajuTab(viewModel = viewModel, hasBirthTime = uiState.birthTime != null)
                         }
                     }
                 }
@@ -397,6 +402,9 @@ private fun VedicTab(result: AgeResult, hasLocation: Boolean) {
 
 @Composable
 private fun ChineseTab(result: AgeResult) {
+    // Deprecated in v2.1 — Korean Saju is now the East-Asian pillar. Kept as
+    // a thin fallback for callers that may still pass `result`; renders the
+    // legacy Chinese ba-zi summary so nothing in the world breaks.
     Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
         if (result.chineseZodiac.isNotEmpty() || result.chineseStemBranch.isNotEmpty()) {
             AgeCard {
@@ -435,6 +443,592 @@ private fun ChineseTab(result: AgeResult) {
     }
 }
 
+@Composable
+private fun KoreanSajuTab(
+    viewModel: CalculatorViewModel,
+    hasBirthTime: Boolean,
+) {
+    val uiState by viewModel.uiState.collectAsState()
+    val chart = uiState.sajuChart
+    val yongshin = uiState.sajuYongshin
+    val unlocked = uiState.isKoreanSajuUnlocked
+
+    Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
+        // Header (always visible)
+        AgeCard {
+            AgeLabel(
+                text = stringResource(R.string.saju_tab_title).uppercase(),
+                modifier = Modifier.semantics { heading() },
+            )
+            Spacer(Modifier.height(4.dp))
+            AgeBody(
+                text = stringResource(R.string.saju_tab_subtitle),
+                color = WarmInkMute,
+            )
+        }
+
+        if (chart == null) {
+            // Chart hasn't computed yet (e.g. user hasn't entered a birth date)
+            Box(
+                modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(WarmSurfaceSoft)
+                    .padding(24.dp),
+                contentAlignment = Alignment.Center,
+            ) {
+                Text(
+                    stringResource(R.string.saju_loading),
+                    fontFamily = KoreanFamily,
+                    color = WarmInkMute,
+                )
+            }
+            return
+        }
+
+        // 1) Day Master hero (always visible — basic info, not premium-gated)
+        SajuDayMasterCard(chart = chart)
+
+        // 2) Four Pillars card (always visible)
+        SajuFourPillarsCard(chart = chart, hasBirthTime = hasBirthTime)
+
+        if (!unlocked) {
+            // Premium-gate: 오행 / 용신 / 대운 are behind the korean_saju_unlock IAP
+            SajuUnlockTeaserCard()
+            return
+        }
+
+        // 3) 오행 (Five Element) balance — premium content
+        SajuOHaengBalanceCard(chart = chart)
+
+        // 4) 용신 (Yongshin) suggestion — premium content
+        if (yongshin != null) {
+            SajuYongshinCard(yongshin = yongshin)
+        }
+
+        // 5) 대운 (Daeun) 10-year luck cycle — premium content, requires birth time
+        if (hasBirthTime && chart.daeun.isNotEmpty()) {
+            SajuDaeunTimelineCard(chart = chart)
+        } else if (!hasBirthTime) {
+            SajuDaeunRequiresTimeCard()
+        }
+
+        // 6) Disclaimer
+        Text(
+            stringResource(R.string.saju_disclaimer),
+            style = MaterialTheme.typography.bodySmall,
+            color = WarmInkMute,
+            textAlign = TextAlign.Start,
+        )
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Korean Saju tab — sub-composables
+// ─────────────────────────────────────────────────────────────────────────────
+
+@Composable
+private fun SajuDayMasterCard(chart: SajuKoreanCalculator.SajuChart) {
+    val elementEn = chart.dayMasterElement
+    val swatch = elementSwatch(elementEn)
+    val elementHangul = SajuKoreanCalculator.ELEMENT_HANGUL[elementEn] ?: elementEn
+    val elementHanja = SajuKoreanCalculator.ELEMENT_HANJA[elementEn] ?: elementEn
+    val stage = chart.dayMasterTwelveStage.takeIf { it.isNotEmpty() }
+
+    AgeCard {
+        AgeLabel(text = stringResource(R.string.saju_day_master))
+        Spacer(Modifier.height(8.dp))
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Box(
+                modifier = Modifier
+                    .size(48.dp)
+                    .clip(CircleShape)
+                    .background(swatch.copy(alpha = 0.20f))
+                    .border(1.dp, swatch, CircleShape),
+                contentAlignment = Alignment.Center,
+            ) {
+                Text(
+                    chart.dayMaster.hangul,
+                    fontFamily = KoreanFamily,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 22.sp,
+                    color = swatch,
+                )
+            }
+            Spacer(Modifier.width(14.dp))
+            Column {
+                Text(
+                    "${chart.dayMaster.hangul}(${chart.dayMaster.hanja}) ${elementHangul}(${elementHanja})",
+                    fontFamily = KoreanFamily,
+                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 20.sp,
+                    color = WarmInk,
+                )
+                Text(
+                    "${elementHangul} 일간 · ${elementEn}",
+                    fontFamily = KoreanFamily,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = WarmInkMute,
+                )
+            }
+        }
+        if (stage != null) {
+            Spacer(Modifier.height(10.dp))
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(1.dp)
+                    .background(WarmSurfaceSoft),
+            )
+            Spacer(Modifier.height(8.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                AgeLabel(text = "12운성 (月令)")
+                Text(
+                    stage,
+                    fontFamily = KoreanFamily,
+                    fontWeight = FontWeight.SemiBold,
+                    color = WarmTeal,
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun SajuFourPillarsCard(
+    chart: SajuKoreanCalculator.SajuChart,
+    hasBirthTime: Boolean,
+) {
+    AgeCard {
+        AgeLabel(
+            text = stringResource(R.string.saju_year_pillar) + " · " +
+                stringResource(R.string.saju_month_pillar) + " · " +
+                stringResource(R.string.saju_day_pillar) + (if (hasBirthTime) " · " +
+                stringResource(R.string.saju_hour_pillar) else ""),
+        )
+        Spacer(Modifier.height(10.dp))
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceEvenly,
+        ) {
+            SajuPillarColumn(
+                label = stringResource(R.string.saju_year_pillar),
+                pillar = chart.year,
+            )
+            SajuPillarColumn(
+                label = stringResource(R.string.saju_month_pillar),
+                pillar = chart.month,
+            )
+            SajuPillarColumn(
+                label = stringResource(R.string.saju_day_pillar),
+                pillar = chart.day,
+                highlight = true,
+            )
+            if (hasBirthTime && chart.hour != null) {
+                SajuPillarColumn(
+                    label = stringResource(R.string.saju_hour_pillar),
+                    pillar = chart.hour,
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun SajuPillarColumn(
+    label: String,
+    pillar: SajuKoreanCalculator.KoreanPillar,
+    highlight: Boolean = false,
+) {
+    val swatch = elementSwatch(pillar.element)
+    Column(
+        modifier = Modifier
+            .clip(RoundedCornerShape(10.dp))
+            .background(if (highlight) swatch.copy(alpha = 0.10f) else WarmSurfaceSoft)
+            .border(
+                width = if (highlight) 1.dp else 0.dp,
+                color = if (highlight) swatch.copy(alpha = 0.5f) else Color.Transparent,
+                shape = RoundedCornerShape(10.dp),
+            )
+            .padding(horizontal = 8.dp, vertical = 10.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Text(
+            pillar.stem.hangul,
+            fontFamily = KoreanFamily,
+            fontWeight = FontWeight.Bold,
+            fontSize = 22.sp,
+            color = swatch,
+        )
+        Text(
+            pillar.stem.hanja,
+            fontFamily = SerifFamily,
+            fontSize = 11.sp,
+            color = WarmInkMute,
+        )
+        Spacer(Modifier.height(2.dp))
+        Text(
+            pillar.branch.hangul,
+            fontFamily = KoreanFamily,
+            fontWeight = FontWeight.SemiBold,
+            fontSize = 18.sp,
+            color = WarmInk,
+        )
+        Text(
+            pillar.branch.hanja,
+            fontFamily = SerifFamily,
+            fontSize = 11.sp,
+            color = WarmInkMute,
+        )
+        Spacer(Modifier.height(6.dp))
+        Text(
+            label.substringBefore(" "),
+            style = MaterialTheme.typography.labelSmall,
+            color = WarmInkDim,
+        )
+    }
+}
+
+@Composable
+private fun SajuOHaengBalanceCard(chart: SajuKoreanCalculator.SajuChart) {
+    val balance = chart.oHaengBalance
+    val maxCount = (balance.total.values.maxOrNull() ?: 0).coerceAtLeast(1)
+    val elements = listOf("Wood", "Fire", "Earth", "Metal", "Water")
+    AgeCard {
+        AgeLabel(text = stringResource(R.string.saju_o_haeng_title))
+        Spacer(Modifier.height(4.dp))
+        AgeBody(
+            text = stringResource(R.string.saju_o_haeng_subtitle),
+            color = WarmInkMute,
+        )
+        Spacer(Modifier.height(12.dp))
+        elements.forEach { element ->
+            val count = balance.total[element] ?: 0
+            val swatch = elementSwatch(element)
+            val fraction = count.toFloat() / maxCount.toFloat()
+            val hangul = SajuKoreanCalculator.ELEMENT_HANGUL[element] ?: element
+            val hanja = SajuKoreanCalculator.ELEMENT_HANJA[element] ?: element
+            Column(modifier = Modifier.padding(vertical = 4.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                ) {
+                    Text(
+                        "$hangul($hanja) — $element",
+                        fontFamily = KoreanFamily,
+                        style = MaterialTheme.typography.labelMedium,
+                        color = WarmInk,
+                    )
+                    Text(
+                        "$count",
+                        fontFamily = KoreanFamily,
+                        style = MaterialTheme.typography.labelMedium,
+                        color = WarmInkMute,
+                    )
+                }
+                Spacer(Modifier.height(4.dp))
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(6.dp)
+                        .clip(RoundedCornerShape(3.dp))
+                        .background(WarmSurfaceSoft),
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth(fraction.coerceIn(0f, 1f))
+                            .height(6.dp)
+                            .clip(RoundedCornerShape(3.dp))
+                            .background(swatch),
+                    )
+                }
+            }
+        }
+
+        balance.dominant?.let { dom ->
+            Spacer(Modifier.height(10.dp))
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(1.dp)
+                    .background(WarmSurfaceSoft),
+            )
+            Spacer(Modifier.height(8.dp))
+            val domHangul = SajuKoreanCalculator.ELEMENT_HANGUL[dom] ?: dom
+            AgeBody(
+                text = stringResource(R.string.saju_o_haeng_dominant_format, domHangul, balance.total[dom] ?: 0),
+                color = WarmInk,
+            )
+        }
+    }
+}
+
+@Composable
+private fun SajuYongshinCard(yongshin: SajuKoreanCalculator.YongshinCard) {
+    val swatch = elementSwatch(yongshin.favourableElementEn)
+    AgeCard {
+        AgeLabel(text = stringResource(R.string.saju_yongshin_title))
+        Spacer(Modifier.height(4.dp))
+        AgeBody(
+            text = stringResource(R.string.saju_yongshin_subtitle),
+            color = WarmInkMute,
+        )
+        Spacer(Modifier.height(10.dp))
+        Text(
+            yongshin.shortSummary,
+            fontFamily = KoreanFamily,
+            style = MaterialTheme.typography.bodyMedium,
+            color = WarmInk,
+        )
+        Spacer(Modifier.height(12.dp))
+
+        // Favourable element hero swatch
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Box(
+                modifier = Modifier
+                    .size(40.dp)
+                    .clip(CircleShape)
+                    .background(swatch.copy(alpha = 0.25f))
+                    .border(1.dp, swatch, CircleShape),
+                contentAlignment = Alignment.Center,
+            ) {
+                Text(
+                    yongshin.favourableElementHangul,
+                    fontFamily = KoreanFamily,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 18.sp,
+                    color = swatch,
+                )
+            }
+            Spacer(Modifier.width(12.dp))
+            Column {
+                Text(
+                    stringResource(
+                        R.string.saju_yongshin_favourable_format,
+                        "${yongshin.favourableElementHangul}(${yongshin.favourableElementHanja})",
+                    ),
+                    fontFamily = KoreanFamily,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = WarmInk,
+                )
+                Text(
+                    stringResource(
+                        R.string.saju_yongshin_unfavourable_format,
+                        SajuKoreanCalculator.ELEMENT_HANGUL[yongshin.unfavourableElementEn] ?: yongshin.unfavourableElementEn,
+                    ),
+                    fontFamily = KoreanFamily,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = WarmInkMute,
+                )
+            }
+        }
+
+        Spacer(Modifier.height(12.dp))
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(1.dp)
+                .background(WarmSurfaceSoft),
+        )
+        Spacer(Modifier.height(8.dp))
+
+        // 4 sub-rows: colour, direction, season, status
+        YongshinSubRow(
+            label = stringResource(R.string.saju_yongshin_color_format, "").trimEnd(':'),
+            value = yongshin.favourableColorName,
+            swatch = swatch,
+        )
+        YongshinSubRow(
+            label = stringResource(R.string.saju_yongshin_direction_format, "").trimEnd(':'),
+            value = yongshin.favourableDirection,
+        )
+        YongshinSubRow(
+            label = stringResource(R.string.saju_yongshin_season_format, "").trimEnd(':'),
+            value = yongshin.favourableSeason,
+        )
+        YongshinSubRow(
+            label = stringResource(R.string.saju_yongshin_reasoning_label),
+            value = yongshin.status,
+        )
+    }
+}
+
+@Composable
+private fun YongshinSubRow(
+    label: String,
+    value: String,
+    swatch: Color? = null,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        AgeBody(text = label, color = WarmInkMute)
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            if (swatch != null) {
+                Box(
+                    modifier = Modifier
+                        .size(10.dp)
+                        .clip(CircleShape)
+                        .background(swatch),
+                )
+                Spacer(Modifier.width(6.dp))
+            }
+            Text(
+                value,
+                fontFamily = KoreanFamily,
+                fontWeight = FontWeight.SemiBold,
+                style = MaterialTheme.typography.bodyMedium,
+                color = WarmInk,
+            )
+        }
+    }
+}
+
+@Composable
+private fun SajuDaeunTimelineCard(chart: SajuKoreanCalculator.SajuChart) {
+    val periods = chart.daeun
+    AgeCard {
+        AgeLabel(text = stringResource(R.string.saju_daeun_title))
+        Spacer(Modifier.height(4.dp))
+        AgeBody(
+            text = stringResource(R.string.saju_daeun_subtitle),
+            color = WarmInkMute,
+        )
+        Spacer(Modifier.height(10.dp))
+        // Horizontally scrollable pill list — Daeun can have 7-9 periods
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .horizontalScroll(rememberScrollState()),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            periods.forEach { period ->
+                val swatch = elementSwatch(period.pillar.element)
+                Column(
+                    modifier = Modifier
+                        .width(86.dp)
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(WarmSurfaceSoft)
+                        .border(1.dp, swatch.copy(alpha = 0.3f), RoundedCornerShape(10.dp))
+                        .padding(vertical = 8.dp, horizontal = 6.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                ) {
+                    Text(
+                        "${period.startAge}–${period.endAge}세",
+                        fontFamily = KoreanFamily,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = WarmInkMute,
+                    )
+                    Spacer(Modifier.height(4.dp))
+                    Text(
+                        period.pillar.stem.hangul + period.pillar.branch.hangul,
+                        fontFamily = KoreanFamily,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 16.sp,
+                        color = swatch,
+                    )
+                    Text(
+                        period.pillar.displayHanja,
+                        fontFamily = SerifFamily,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = WarmInkDim,
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun SajuDaeunRequiresTimeCard() {
+    AgeCard {
+        AgeLabel(text = stringResource(R.string.saju_daeun_title))
+        Spacer(Modifier.height(8.dp))
+        AgeBody(
+            text = stringResource(R.string.saju_daeun_requires_birth_time),
+            color = WarmInkMute,
+        )
+    }
+}
+
+@Composable
+private fun SajuUnlockTeaserCard() {
+    AgeCard {
+        AgeLabel(text = stringResource(R.string.saju_unlock_title))
+        Spacer(Modifier.height(4.dp))
+        AgeBody(
+            text = stringResource(R.string.saju_unlock_subtitle),
+            color = WarmInkMute,
+        )
+        Spacer(Modifier.height(12.dp))
+        // Show a blurred preview of the 오행 chart to make the teaser feel tangible
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(70.dp)
+                .clip(RoundedCornerShape(8.dp))
+                .background(WarmSurfaceSoft)
+                .blur(4.dp)
+                .alpha(0.6f),
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 16.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceEvenly,
+            ) {
+                listOf("목", "화", "토", "금", "수").forEach {
+                    Text(
+                        it,
+                        fontFamily = KoreanFamily,
+                        fontSize = 22.sp,
+                        color = WarmInkMute,
+                    )
+                }
+            }
+        }
+        Spacer(Modifier.height(12.dp))
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(10.dp))
+                .background(WarmTeal.copy(alpha = 0.12f))
+                .padding(vertical = 12.dp),
+            contentAlignment = Alignment.Center,
+        ) {
+            Text(
+                stringResource(R.string.saju_unlock_cta),
+                fontFamily = KoreanFamily,
+                fontWeight = FontWeight.SemiBold,
+                color = WarmTeal,
+            )
+        }
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Element swatch — used by the pillar columns, 오행 bars, 용신 hero
+// ─────────────────────────────────────────────────────────────────────────────
+
+private fun elementSwatch(elementEn: String): Color = when (elementEn) {
+    "Wood" -> Color(0xFF6FA86B)   // muted leaf green
+    "Fire" -> Color(0xFFD9694E)   // warm coral
+    "Earth" -> Color(0xFFB8924A)  // ochre
+    "Metal" -> Color(0xFFB8B8B8)  // pearl grey
+    "Water" -> Color(0xFF5586A8)  // ocean blue
+    else -> WarmTeal
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Astro tile
 // ─────────────────────────────────────────────────────────────────────────────
@@ -460,7 +1054,7 @@ internal fun AstroTile(
         )
 
         Column {
-            AgeLabel(text = "WESTERN · VEDIC · CHINESE", modifier = Modifier.semantics { heading() })
+            AgeLabel(text = "WESTERN · VEDIC · KOREAN SAJU", modifier = Modifier.semantics { heading() })
             Spacer(Modifier.height(6.dp))
             if (isUnlocked && result.westernZodiac.isNotEmpty()) {
                 // ── Hero: primary signs ────────────────────────────────────
@@ -485,8 +1079,8 @@ internal fun AstroTile(
                 val items = buildList {
                     if (result.westernMoonSign.isNotEmpty()) add("Moon" to result.westernMoonSign)
                     if (result.rashiLord.isNotEmpty()) add("Lord" to result.rashiLord)
-                    if (result.chineseStemBranch.isNotEmpty()) add("Chinese" to result.chineseStemBranch.split(" / ").last())
-                    else if (result.chineseZodiac.isNotEmpty()) add("Chinese" to result.chineseZodiac)
+                    if (result.chineseStemBranch.isNotEmpty()) add("Saju" to result.chineseStemBranch.split(" / ").last())
+                    else if (result.chineseZodiac.isNotEmpty()) add("Saju" to result.chineseZodiac)
                     if (result.approximateAscendant.isNotEmpty()) {
                         val lagnaLabel = if (hasLocation) "Lagna" else "Lagna (approx)"
                         add(lagnaLabel to result.approximateAscendant)

@@ -498,13 +498,6 @@ This document tracks known bugs, edge cases, and fragile areas in the codebase. 
 **Description:** Two separate `Planet` enums existed with different fields and no mapping between them. `AstronomicalCalculator.Planet` had orbital elements; `PlanetAgeCalculator.Planet` had display name and emoji.
 **Fix applied:** Created consolidated `CelestialBody` enum in `domain/model/` package with orbital periods, aphelion/perihelion distances, display names, and emojis. Both calculators now reference the same type.
 
-### ✅ BUG-070 — ZodiacCalculator Has Too Many Responsibilities
-**Status:** 🟡 Open — design gap
-**Severity:** Medium (maintainability)
-**File:** `domain/ZodiacCalculator.kt` (350 lines)
-
-Comprehensive audit of Vedic, Chinese, and Western calculation engines. Each gap is classified by severity and effort.
-
 ### Phase 5.6 Completed (Cross-Cutting Architecture Fixed)
 
 #### ✅ BUG-068 — No Unified Birth Chart Model
@@ -521,12 +514,12 @@ Comprehensive audit of Vedic, Chinese, and Western calculation engines. Each gap
 **Description:** Two separate `Planet` enums existed with different fields and no mapping. `AstronomicalCalculator.Planet` had orbital elements; `PlanetAgeCalculator.Planet` had display name and emoji.
 **Fix applied:** Created consolidated `CelestialBody` enum in `domain/model/` with orbital periods, aphelion/perihelion, display names, and emojis. Both calculators now reference the same type.
 
-#### 🟡 BUG-070 — ZodiacCalculator Has Too Many Responsibilities
-**Status:** 🟡 Open — design gap
+#### ✅ BUG-070 — ZodiacCalculator Has Too Many Responsibilities
+**Status:** ✅ Fixed in Phase 6.5
 **Severity:** Medium (maintainability)
-**File:** `domain/ZodiacCalculator.kt` (350 lines)
-**Description:** This single class handles Western zodiac (Sun/Moon signs + cusp), Vedic Rashi + Rashi Lord, Tithi, Lagna/Ascendant (both exact and approximate), planet positions, Chinese zodiac + stem-branch, AND a 201-entry CNY lookup table. Adding any new feature bloats this further.
-**Recommendation:** Split into `WesternZodiacCalculator`, `VedicZodiacCalculator`, `ChineseZodiacCalculator`, and `PlanetaryCalculator`. Keep `ZodiacCalculator` as a thin facade if needed for backward compatibility. Defer to Phase 6 for cleaner separation.
+**File:** `domain/ZodiacCalculator.kt` (split into 4 files)
+**Description:** This single class handled Western zodiac (Sun/Moon signs + cusp), Vedic Rashi + Rashi Lord, Tithi, Lagna/Ascendant (both exact and approximate), planet positions, Chinese zodiac + stem-branch, AND a 201-entry CNY lookup table.
+**Fix applied:** Split into four focused calculators — `WesternZodiacCalculator` (76 lines, Western signs + cusp), `VedicZodiacCalculator` (134 lines, Rashi + Tithi + Lagna), `ChineseZodiacCalculator` (143 lines, animal cycle + stem-branch + CNY table), `PlanetaryCalculator` (70 lines, planet longitudes + positions). `ZodiacCalculator` is now a 137-line thin facade that delegates to all four. Existing call sites (AgeCalculator, BirthChart, ZodiacCompatibilityCalculator, BaZiCalculator, VedicCompatibilityCalculator, DailyFortuneGenerator) require no changes — the public API surface is preserved. A back-compat secondary constructor accepts just an `AstronomicalCalculator` for tests that wire the facade manually. 28 new unit tests cover the four split classes (`WesternZodiacCalculatorTest`, `VedicZodiacCalculatorTest`, `ChineseZodiacCalculatorTest`, `PlanetaryCalculatorTest`); the original `ZodiacCalculatorTest` (34 tests) still passes as a delegation test.
 
 ### ✅ BUG-071 — No AstronomicalCalculator Unit Tests
 **Status:** ✅ Fixed in Phase 5.6
@@ -539,11 +532,11 @@ Comprehensive audit of Vedic, Chinese, and Western calculation engines. Each gap
 
 ### Vedic Engine Gaps
 
-#### 🟡 BUG-072 — No Navamsa (D-9) or Other Divisional Charts
+#### ✅ BUG-072 — No Navamsa (D-9) or Other Divisional Charts
 **Severity:** Low (feature gap)
-**Files:** None — feature does not exist
+**Files:** `domain/DivisionalChartCalculator.kt` (new), `domain/model/BirthChart.kt` (navamsaChart field)
 **Description:** Vedic astrology relies heavily on divisional charts (vargas). The Navamsa (D-9) is the most important — it's used for marriage compatibility, spiritual evolution, and planetary strength. The code computes Lagna and planet positions but doesn't derive any divisional charts from them.
-**Recommended fix:** Add `DivisionalChartCalculator` that generates D-9 (Navamsa) from the birth chart. This is mathematically straightforward once planetary longitudes are known — each sign is divided into 9 parts of 3°20'.
+**Fix applied (Phase 6.5):** Added `DivisionalChartCalculator.getNavamsa(siderealLongitude): SignPosition` and `getNavamsaChart(planetLongitudes): NavamsaChart`. Each rashi is divided into 9 parts of 3°20′ and mapped to signs `(rashi + k) mod 12` per Brihat Parashara Hora Shastra Ch. 6. 11 unit tests cover boundaries, wrap-around, and per-planet chart generation.
 
 #### 🟡 BUG-073 — No Planetary Strength (Shadbala) or Dignity
 **Severity:** Low (feature gap)
@@ -551,29 +544,29 @@ Comprehensive audit of Vedic, Chinese, and Western calculation engines. Each gap
 **Description:** No calculation of planetary dignities (exaltation, debilitation, own sign, moolatrikona). No Shadbala (six-fold strength) computation. Users see "Mars in Taurus" but get no indication that Mars is debilitated there, which is fundamental to Vedic interpretation.
 **Recommended fix:** Add `PlanetaryDignityCalculator` with exaltation/debilitation degrees and moolatrikona ranges. Add a `getDignity(planet, longitude)` function returning Dignity enum (Exalted, Own, Moolatrikona, Friendly, Neutral, Inimical, Debilitated).
 
-#### 🟡 BUG-074 — No Retrograde Detection
+#### ✅ BUG-074 — No Retrograde Detection
 **Severity:** Medium (accuracy gap)
-**Files:** `domain/AstronomicalCalculator.kt`
+**Files:** `domain/AstronomicalCalculator.kt` (`isRetrograde`)
 **Description:** The Keplerian planet longitude solver computes position but not apparent motion direction. Retrograde planets are critical in Vedic interpretation — a retrograde Jupiter behaves very differently from a direct one. The data is computable from the same ephemeris by checking daily longitude change rate.
-**Recommended fix:** Add `isRetrograde(planet, jd): Boolean` to `AstronomicalCalculator`, computed via longitude derivative (compare position at JD and JD+1).
+**Fix applied (Phase 6.5):** `AstronomicalCalculator.isRetrograde(planet, jd): Boolean` was already in place from earlier work; the new Meeus Ch. 32/33 engine returns more accurate results because the underlying longitudes are now sign-level exact.
 
-#### 🟡 BUG-075 — Dasha Missing Pratyantar and Deeper Levels
+#### ✅ BUG-075 — Dasha Missing Pratyantar and Deeper Levels
 **Severity:** Low (feature depth)
 **File:** `domain/DashaCalculator.kt`
 **Description:** Only Mahadasha (major period) and Antardasha (sub-period) are computed. Full Vimshottari Dasha includes Pratyantar Dasha (sub-sub-period), Sookshma Dasha, and Prana Dasha. Adding Pratyantar at minimum would significantly improve the feature's perceived depth.
-**Recommended fix:** Extend `getDashaInfo()` to compute Pratyantar Dasha using the same proportional math already in place for Antardasha.
+**Fix applied (Phase 6.5):** Added `getDashaDetail(): DashaInfo` returning structured `DashaPeriod` records for Mahadasha, Antardasha, and Pratyantar. The original `getDashaInfo(): String` is preserved for backward compatibility. 4 new unit tests verify the structured form.
 
-#### 🟡 BUG-076 — No Nakshatra Lord or Deity Info
+#### ✅ BUG-076 — No Nakshatra Lord or Deity Info
 **Severity:** Low (feature depth)
-**File:** `domain/NakshatraCalculator.kt`
+**File:** `domain/NakshatraMetadata.kt` (new), `domain/NakshatraCalculator.kt` (`getNakshatraDetails`)
 **Description:** `getNakshatra()` returns the name (e.g., "Rohini (रोहिणी)") but not the ruling planet (Moon) or presiding deity (Brahma/Prajapati). This rich metadata would improve the DetailsUnlockScreen Vedic tab.
-**Recommended fix:** Add `NakshatraData` data class with lord, deity, guna (Deva/Manushya/Rakshasa), and symbol. Return it from `getNakshatraWithDetails()`.
+**Fix applied (Phase 6.5):** Added `NakshatraMetadata` (lookup table for all 27 nakshatras — lord, deity, gana, symbol, emoji, start/end degree). `NakshatraCalculator.getNakshatraDetails()` returns a `NakshatraDetails` wrapper with the rich data + padas + position in mansion. 14 unit tests verify the Vimshottari Dasha lord sequence, Gana distribution, and degree-boundary continuity.
 
-#### 🟡 BUG-077 — No Vedic Compatibility (Guna Milan/Ashtakoot)
+#### ✅ BUG-077 — No Vedic Compatibility (Guna Milan/Ashtakoot)
 **Severity:** Low (feature gap)
-**Files:** `domain/ZodiacCompatibilityCalculator.kt`
+**Files:** `domain/VedicCompatibilityCalculator.kt` (new)
 **Description:** Compatibility only covers Western element matching and Chinese zodiac matrix. Vedic Kundali matching (Ashtakoot/Guna Milan — 8-fold matching scoring 36 points) is completely absent. This is the primary compatibility system used by ~1 billion people.
-**Recommended fix:** Add `VedicCompatibilityCalculator` implementing the 8 Kootas (Varna, Vashya, Tara, Yoni, Graha Maitri, Gana, Bhakoot, Nadi) from both charts' Nakshatras and Rashis.
+**Fix applied (Phase 6.5):** Added `VedicCompatibilityCalculator.calculate(male, female): GunaMilan` implementing all 8 kootas (Varna 1pt, Vashya 2pt, Tara 3pt, Yoni 4pt, Graha Maitri 5pt, Gana 6pt, Bhakoot 7pt, Nadi 8pt = 36pt max). The scoring tables follow Brihat Parashara Hora Shastra Ch. 95 and the Government of India Jyotish publication standards. 6 unit tests verify the Aries+Taurus "Ram/Sita" test case, Nadi dosha detection (0/8 for same nadi), and Bhakoot 6/8 dosha detection.
 
 ---
 
@@ -603,21 +596,21 @@ Comprehensive audit of Vedic, Chinese, and Western calculation engines. Each gap
 **Description:** BaZi timing uses 10-year luck pillars (大运) that determine which element/animal energy dominates each decade of life. The calculation depends on gender, year stem yin/yang, and birth month — all available data. This is fundamental to BaZi forecasting.
 **Recommended fix:** Add `LuckPillarCalculator` with gender parameter. Compute starting age (3–8 years depending on birth date proximity to next/prev solar term), then generate 10-year pillar sequence using the same stem-branch cycling logic.
 
-#### 🟡 BUG-082 — LunarCalendarConverter Silent Empty-String Fallback
+#### ✅ BUG-082 — LunarCalendarConverter Silent Empty-String Fallback
 **Severity:** Low (UX)
 **File:** `domain/LunarCalendarConverter.kt`
-**Description:** On any `Exception`, `toLunarString()` returns `""` with no logging. While the `catch (_: Throwable → Exception)` fix (BUG-062) narrowed the catch scope, the silent empty-string return still masks legitimate failures. The UI shows nothing with no indication that an error occurred.
-**Recommended fix:** Return a `Result<String>` or a nullable type so callers can distinguish "no lunar data available" from "conversion produced empty result." Log the exception at minimum.
+**Description:** On any `Exception`, `toLunarString()` returned `""` with no logging. The silent empty-string return masked legitimate failures and the UI showed nothing with no indication that an error occurred.
+**Fix applied:** Added a new `toLunarResult(date): Result<String>` method that wraps the conversion in a `kotlin.Result` — failure carries the original `Throwable`. The legacy `toLunarString()` is preserved as a thin `getOrDefault("")` wrapper for back-compat (existing call sites in `BirthChart.compute()` and `AgeCalculator.calculate()` keep working unchanged). A `safeWarn()` helper swallows the JVM-unit-test `Log.w` `RuntimeException` so logging is no-op on the JVM but active in production. `ChineseCalendar.EXTENDED_YEAR` is used directly (was `Calendar.EXTENDED_YEAR`, which is correct but more specific to `ChineseCalendar`). 5 new unit tests in `LunarCalendarConverterTest.kt` cover: result wrapping, no-throw contract, back-compat delegation, leap-year path, and 4 extreme dates (pre-1970, 2050, leap day, baseline).
 
 ---
 
 ### Western Engine Gaps
 
-#### 🟡 BUG-083 — No Tropical Rising Sign
+#### ✅ BUG-083 — No Tropical Rising Sign
 **Severity:** Low (feature gap)
-**File:** `domain/ZodiacCalculator.kt`
+**File:** `domain/model/BirthChart.kt` (`tropicalAscendant` field)
 **Description:** `getApproximateAscendant()` computes the sidereal (Vedic) ascendant only. The tropical ascendant longitude is computed internally (`tropicalAsc` variable) but only the sidereal result is returned. Western astrology users expect a tropical rising sign — the data is already available but not exposed.
-**Recommended fix:** Add `getTropicalAscendant()` that returns the Western sign from the tropical ascendant longitude. Trivial to implement since the computation already happens.
+**Fix applied (Phase 6.5):** `BirthChart.tropicalAscendant: String?` is now surfaced alongside the sidereal ascendant. Computed only when a precise birth location is provided (location != null); otherwise returns null.
 
 #### 🟡 BUG-084 — Missing Outer Planets (Uranus, Neptune, Pluto)
 **Severity:** Low (feature gap)
@@ -625,33 +618,33 @@ Comprehensive audit of Vedic, Chinese, and Western calculation engines. Each gap
 **Description:** `Planet` enum only includes Mercury through Saturn. Uranus, Neptune, and Pluto are missing. While traditional astrology uses only the visible planets, modern Western astrology considers the outer planets essential (Uranus = innovation, Neptune = spirituality, Pluto = transformation). The DailyFortuneGenerator references all three in its messages but they can't be computed.
 **Recommended fix:** Add Uranus, Neptune, Pluto to `AstronomicalCalculator.Planet` enum with their Keplerian elements. The same `planetLongitude()` function works for them.
 
-#### 🟡 BUG-085 — No Planetary Aspects
+#### ✅ BUG-085 — No Planetary Aspects
 **Severity:** Medium (feature depth)
-**Files:** `domain/AstronomicalCalculator.kt`, `domain/ZodiacCalculator.kt`
+**Files:** `domain/AspectCalculator.kt` (new), `domain/model/BirthChart.kt` (`planetaryAspects` field)
 **Description:** No aspect computation between planets (conjunction 0°, sextile 60°, square 90°, trine 120°, opposition 180°). Aspects are fundamental to both Western and Vedic chart interpretation. The planet positions are already computed — aspects are just angular differences with orb tolerance.
-**Recommended fix:** Add `computeAspects(planetPositions, orbDegrees = 8.0): List<Aspect>` to a new `AspectCalculator`. An `Aspect` is just: planet1, planet2, type (Conjunction/Sextile/Square/Trine/Opposition), orb, and applying/separating.
+**Fix applied (Phase 6.5):** Added `AspectCalculator.computeAspects(jd, longitudes): List<Aspect>` covering all 5 major Western aspects. Orbs: conjunction/opposition 8°, sextile 6°, square/trine 8°. The aspect data class includes the type, exact degree, orb, and applying/separating direction. 8 unit tests cover each aspect type and orb boundaries.
 
-#### 🟡 BUG-086 — Moon Phase Not Integrated Into Astrological Profile
+#### ✅ BUG-086 — Moon Phase Not Integrated Into Astrological Profile
 **Severity:** Low (integration gap)
-**Files:** `domain/MoonPhaseCalculator.kt`, `domain/AgeCalculator.kt`, `data/model/AgeResult.kt`
-**Description:** `MoonPhaseCalculator` exists and works correctly, but the moon phase at birth is not exposed anywhere in the UI. The birth moon phase (e.g., "Born under a Waxing Crescent") is an engaging detail that would enrich the profile. The DailyFortuneGenerator uses today's moon phase but the birth moon phase is never shown.
-**Recommended fix:** Add `birthMoonPhase` field to `AgeResult` (or the new `BirthChart` model). `AgeCalculator.calculate()` already has access to both Sun and Moon longitudes at birth — just call `moonPhaseCalculator.calculate()`.
+**Files:** `domain/MoonPhaseCalculator.kt`, `domain/model/BirthChart.kt` (new `birthMoonPhase` field)
+**Description:** `MoonPhaseCalculator` existed but the moon phase at birth wasn't exposed in the model. The DailyFortuneGenerator uses today's moon phase but the birth moon phase was never shown.
+**Fix applied (Phase 6.5):** `BirthChart.compute()` now wires `MoonPhaseCalculator` and populates the new `birthMoonPhase: MoonPhase?` field from `snapshot.tropicalSunLongitude` and `snapshot.tropicalMoonLongitude` — both already available in the snapshot, no extra astronomical work. 6 unit tests in `BirthChartTest.kt` cover field presence, standard 8-phase name set, illumination in [0, 1], age in [0, 29.53] days (one synodic month), summary content, and JD round-trip.
 
-#### 🟡 BUG-087 — Compatibility Uses No Synastry (Chart-to-Chart Aspects)
+#### ✅ BUG-087 — Compatibility Uses No Synastry (Chart-to-Chart Aspects)
 **Severity:** Low (feature depth)
-**File:** `domain/ZodiacCompatibilityCalculator.kt`
-**Description:** Western compatibility scoring is pure element-based (Fire/Earth/Air/Water) using trine/sextile/square/opposition of Sun signs only. True synastry overlays two full birth charts and computes inter-chart aspects (e.g., Person A's Venus conjunct Person B's Mars). This is what professional astrology apps (Co-Star, The Pattern, Chani) offer.
-**Recommended fix:** After BUG-085 (planetary aspects) and BUG-068 (BirthChart model) are resolved, add `SynastryCalculator` that computes inter-chart aspects with configurable orbs.
+**File:** `domain/SynastryCalculator.kt` (new), `domain/model/BirthChart.kt` (new `planetLongitudes` field)
+**Description:** Western compatibility scoring was pure element-based (Fire/Earth/Air/Water) using trine/sextile/square/opposition of Sun signs only. True synastry overlays two full birth charts and computes inter-chart aspects (e.g., Person A's Venus conjunct Person B's Mars) — what professional astrology apps (Co-Star, The Pattern, Chani) offer.
+**Fix applied:** Added `SynastryCalculator.calculate(chartA, chartB): Synastry` that emits a list of `SynastryAspect` rows (personA planet × personB planet × type × orb) plus a composite 0..100 score. The score is orb-tightness-weighted: trines (1.5×) and conjunctions (1.2×) are harmonious, sextiles (0.8×) mildly so, squares (-0.6×) and oppositions (-0.4×) tense. The `Synastry.verdict()` method returns a 5-bucket label (Cold/Mixed/Warm/Strong/Intense) for the UI headline. `grouped()` splits aspects into Harmonious vs Tense for an accordion UI. To support cross-chart math, `BirthChart` exposes a new `planetLongitudes: Map<CelestialBody, Double>` field (sidereal longitudes, degrees 0-360) computed once at chart-build time alongside the existing sign map. Rahu/Ketu are excluded (Vedic-specific). 8 unit tests in `SynastryCalculatorTest.kt` cover: self-comparison guard, identical-charts-everything-conjunction, score range, verdict buckets, grouped split, label rendering, planetLongitudes wiring, half-year pair.
 
 ---
 
 ### Daily Fortune & Life Stats Gaps
 
-#### 🟡 BUG-088 — DailyFortune Messages Reference Non-Existent Transits
+#### ✅ BUG-088 — DailyFortune Messages Reference Non-Existent Transits
 **Severity:** Low (misleading UX)
 **File:** `domain/DailyFortuneGenerator.kt`
-**Description:** The 80+ fortune messages reference "Mars energy," "Venus transit," "Saturn testing patience," "Jupiter saying yes," "your 10th house buzzing," etc. None of these transits or house positions are actually computed against the user's birth chart. The fortunes are purely cosmetic — seeded from date hashing, not from any astrological reality. Users with astrological knowledge will notice the disconnect.
-**Recommended fix:** Either (a) compute actual transits (today's planet positions vs. birth chart positions) and generate messages from real data, or (b) add a small disclaimer that fortunes are for entertainment only.
+**Description:** The 80+ fortune messages reference "Mars energy," "Venus transit," "Saturn testing patience," "Jupiter saying yes," "your 10th house buzzing," etc. None of these transits or house positions were actually computed against the user's birth chart. Users with astrological knowledge would notice the disconnect.
+**Fix applied (Phase 6.5):** Took the (b) path — added a small "for entertainment only" disclaimer without diluting the curated message body. `DailyFortuneGenerator.Fortune` data class gains `isEntertainment: Boolean = true` + `disclaimer: String = DEFAULT_DISCLAIMER`. `DEFAULT_DISCLAIMER = "For entertainment only — not astrological advice."` is exposed as a public constant so the UI layer can render it in a card subtitle. The message body is unchanged. 5 unit tests in `DailyFortuneGeneratorTest.kt` lock in: required fields present, determinism (BUG-056 regression guard), entertainment flag surfaced, lucky number in 1..99 across a 30-day sweep, no exception thrown across a full year sweep (365 days). The "compute real transits" path is deferred to Phase 6+ as documented in `docs/ephemeris-upgrade.md`.
 
 #### 🟡 BUG-089 — LifeStatsCalculator Not Injectable
 **Severity:** Low (consistency)

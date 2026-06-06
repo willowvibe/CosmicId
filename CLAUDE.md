@@ -6,13 +6,15 @@ Quick-start guide for Claude Code sessions on the Cosmic ID (formerly AgeReveal)
 
 ## What This Is
 
-Cosmic ID is a native Android app (Kotlin + Jetpack Compose) that calculates your exact age in real time and enriches it with astrological insights, shareable cards, milestone tracking, saved birthday reminders, and home screen widgets. Currently **v2.0**.
+Cosmic ID is a native Android app (Kotlin + Jetpack Compose) that calculates your exact age in real time and enriches it with astrological insights across **Western + Vedic + Korean Saju (사주)**, shareable cards, milestone tracking, saved birthday reminders, and home screen widgets. Currently **v2.0**.
 
 **Display name:** Cosmic ID  
 **Package ID:** `com.willowvibe.cosmicid` (namespace remains `com.willowvibe.agereveal` for source compatibility)  
 **Min SDK:** 26 (API 21–25 via core library desugaring)  
 **Compile SDK:** 36  
 **Supported locales:** en, hi, ta, te, kn, ko, vi, zh-Hans (system-level per-app language on Android 13+)
+
+**Strategic positioning (v2.1+):** the only tri-system app in the Play Store. **Korean Saju** is the East-Asian pillar (not Chinese Ba Zi) — targeted at K-drama / K-pop / K-diaspora audiences with 천간·지지 in Hangul, 대운 (Daeun) luck periods, 오행 balance chart, and 용신 (Yongshin) suggestion. `BaZiCalculator.kt` remains for the Day/Hour pillar data path but is rendered through the Korean Saju UI; a separate **`SajuKoreanCalculator.kt`** owns the Korean naming layer + Daeun logic. See `roadmap.md` Mission 7 — Korean Saju Supremacy.
 
 ---
 
@@ -99,7 +101,7 @@ Cosmic ID is a native Android app (Kotlin + Jetpack Compose) that calculates you
 - `CompatibilityScreen.kt` — Zodiac compatibility; two-person comparison; deep-link auto-fill
 - `RemindersScreen.kt` — Saved birthdays list, AddBirthday bottom sheet, FAB
 - `LifeTimelineScreen.kt` — Milestone timeline
-- `DetailsUnlockScreen.kt` — Tabbed astrology details (Overview | Western | Vedic | Chinese); premium-gated deep content
+- `DetailsUnlockScreen.kt` — Tabbed astrology details (Overview | Western | Vedic | Korean Saju); premium-gated deep content
 - `PaywallScreen.kt` — Subscription tiers (monthly/yearly); restore purchases CTA
 - `SettingsScreen.kt` — Theme, accent color, notifications, export CSV, clear all, language → system settings
 - `BadgeScreen.kt` — Unlocked achievement badges
@@ -120,28 +122,38 @@ Cosmic ID is a native Android app (Kotlin + Jetpack Compose) that calculates you
 ### Domain Logic
 - `AgeCalculator.kt` — Core age + milestone logic
 - `AgePercentileCalculator.kt` — Age percentile vs global population
-- `AstronomicalCalculator.kt` — Sun/Moon sidereal positions
-- `BaZiCalculator.kt` — Four Pillars of Destiny (Ba Zi)
+- `AstronomicalCalculator.kt` — Sun/Moon/planet sidereal positions; Meeus Ch. 25 (Sun), Ch. 47 (Moon 60-term), Ch. 32/33 (planets), Ch. 22 (nutation 50-term), Ch. 12 (GMST + obliquity)
+- `AspectCalculator.kt` — Conjunction/Sextile/Square/Trine/Opposition with orbs (Phase 6.5)
+- `WesternZodiacCalculator.kt` — Western (tropical) sign-index + Sun/Moon sign + cusp detection
+- `VedicZodiacCalculator.kt` — Vedic Rashi, Rashi Lord, Tithi, approximate Lagna (Phase 6.5 split)
+- `ChineseZodiacCalculator.kt` — Chinese 12-year animal cycle, stem-branch (天干地支) + Wu Xing element, CNY-aware (Phase 6.5 split)
+- `PlanetaryCalculator.kt` — 7 classical planet longitudes + sign positions (Phase 6.5 split)
+- `ZodiacCalculator.kt` — Thin facade over the 4 split calculators; preserves the original public API for legacy callers (Phase 6.5 refactor)
+- `BaZiCalculator.kt` — Four Pillars of Destiny (Ba Zi) — Day/Hour pillar math; consumed by `SajuKoreanCalculator.kt` for the Korean Saju UI layer
+- `SajuKoreanCalculator.kt` — **Korean Saju (사주) layer** — 천간/지지 in Hangul, 대운 (Daeun 10-year luck periods), 오행 balance, 용신 (Yongshin) rule-based suggestion. Distinct from `BaZiCalculator.kt`; do not collapse.
+- `SynastryCalculator.kt` — Chart-to-chart cross-aspects + composite 0-100 score (BUG-087). Consumes `BirthChart.planetLongitudes`.
 - `BadgeDefinitions.kt` — Achievement badge definitions
 - `CalendarExport.kt` — Calendar event export
 - `CelebrityMatchCalculator.kt` — Load `celebrities.json`, match by month+day, return top N matches
 - `DailyFortuneGenerator.kt` — Deterministic daily fortune/vibe check
-- `DashaCalculator.kt` — Vimshottari Dasha periods
-- `EphemerisSnapshot.kt` — Current planetary snapshot
+- `DashaCalculator.kt` — Vimshottari Dasha (Mahadasha + Antardasha + Pratyantar)
+- `DivisionalChartCalculator.kt` — Navamsa (D-9) divisional chart (Phase 6.5)
+- `EphemerisSnapshot.kt` — Current planetary snapshot (Sun/Moon, ayanamsa, tithi, nutation, obliquity)
 - `GenerationCalculator.kt` — Generational cohort (Gen Z, Millennial, etc.)
 - `LifeStatsCalculator.kt` — Life statistics dashboard
-- `LunarCalendarConverter.kt` — Gregorian to Chinese lunar calendar (uses android.icu)
+- `LunarCalendarConverter.kt` — Gregorian to Chinese lunar calendar (uses android.icu); also reused for Korean lunar/sexagenary calculations
 - `MoonPhaseCalculator.kt` — Moon phase and illumination
-- `NakshatraCalculator.kt` — 27 lunar mansions + Pada
+- `NakshatraCalculator.kt` — 27 lunar mansions + Pada; uses `NakshatraMetadata` for rich lookup
+- `NakshatraMetadata.kt` — 27 nakshatras × lord/deity/gana/symbol/emoji lookup (Phase 6.5)
 - `ParallelUniverseGenerator.kt` — "What if" age in different historical eras
 - `PlanetAgeCalculator.kt` — Age on other planets
 - `ProfileDeepLinkGenerator.kt` — `agereveal://profile/[data]` encode/decode
 - `RelationshipType.kt` — Compatibility relationship types
 - `RetirementCalculator.kt` — Retirement stats
-- `ShareCardGenerator.kt` — Bitmap card renderer (has Android graphics imports)
+- `ShareCardGenerator.kt` — Bitmap card renderer (has Android graphics imports); add `drawSajuKoreanBalanceCard()` for 오행 shareable
 - `TimeRemainingCalculator.kt` — Time-remaining-until-target-age stats
-- `ZodiacCalculator.kt` — Western, Vedic Rashi, Chinese Zodiac + Stem-Branch; `getWesternSignIndex()` for compatibility use
-- `ZodiacCompatibilityCalculator.kt` — Western + Chinese compatibility scoring
+- `VedicCompatibilityCalculator.kt` — Ashtakoot / Guna Milan (8 kootas, 36 points) — Varna, Vashya, Tara, Yoni, Graha Maitri, Gana, Bhakoot, Nadi (Phase 6.5)
+- `ZodiacCompatibilityCalculator.kt` — Western + Korean Saju compatibility scoring (composite: Western 50% + Korean 50% for the unified K-content audience; Vedic is a separate flow via `VedicCompatibilityScorer`)
 
 ### Billing
 - `BillingManager.kt` — Google Play Billing 7+ wrapper; SKU `premium_monthly` (₹49) + `premium_yearly` (₹299); 7-day free trial; purchase acknowledge + DataStore sync
@@ -183,7 +195,7 @@ Onboarding is the start destination on first launch.
 | Type | Location | Runner |
 |------|----------|--------|
 | Unit tests | `app/src/test/java/.../domain/` | JUnit (no Android framework) |
-| UI tests (Compose) | `app/src/androidTest/java/.../ui/` | AndroidJUnit + Hilt (`HiltTestRunner`) |
+| UI tests (Compose) | `app/src/androidTest/java/.../ui/` | AndroidJUnit + Hilt (`HiltTestRunner`) — most tests use `createComposeRule()` + fakes, not Hilt |
 | DB migration tests | `app/src/androidTest/java/.../db/` | AndroidJUnit |
 | Appium E2E | `screenshots/walkthrough.py` | Appium + UiAutomator2 |
 
@@ -239,6 +251,7 @@ The project includes an Appium E2E suite in `screenshots/walkthrough.py`. Update
 | `TASKS.md` | Pre-release checklist, upcoming tasks, AdMob ID swap guide |
 | `roadmap.md` | Phase-by-phase development plan |
 | `BUGS_AND_ISSUES.md` | Tracked bugs and edge cases |
+| `docs/ephemeris-upgrade.md` | Phase 6.5 engine overhaul reference (Meeus chapter map, accuracy budget, license analysis) |
 | `screenshots/walkthrough.py` | Appium E2E automation script |
 | `screenshots/REPORT.md` | Generated UI walkthrough report |
 | `docs/superpowers/plans/` | Superpowers implementation plans |
@@ -262,7 +275,7 @@ The project includes an Appium E2E suite in `screenshots/walkthrough.py`. Update
 - Billing error handling with human-readable messages
 - Restore purchases flow (PaywallScreen + Settings)
 - Progressive disclosure UI (hero counter + rotating highlight + DetailsUnlockScreen tabs)
-- Tabbed DetailsUnlockScreen (Overview | Western | Vedic | Chinese)
+- Tabbed DetailsUnlockScreen (Overview | Western | Vedic | Korean Saju)
 - CalculatorScreen refresh button
 - Firebase Analytics MVP (onboarding, paywall, share, deep-link, purchase events)
 - Daily fortune push notifications
@@ -271,16 +284,30 @@ The project includes an Appium E2E suite in `screenshots/walkthrough.py`. Update
 - Cosmic Year Report notification
 - 7-day free trial grace period tracking
 
+**Phase 6.5 (2026-06-05) — Engine overhaul + bug batch + UI test scaffolding:**
+- **Engine:** `AstronomicalCalculator` promoted to Meeus Ch. 25 (Sun) / Ch. 47 (Moon, 60-term) / Ch. 32/33 (planets) / Ch. 22 (IAU 2000B nutation 50-term). Lahiri ayanamsa uses cubic + quartic polynomial (within 0.01° through 2100). Sub-arcminute Moon accuracy.
+- **Vedic depth:** `NakshatraMetadata` (27 nakshatras × lord/deity/gana/symbol), `DivisionalChartCalculator` (Navamsa D-9), `VedicCompatibilityCalculator` (Ashtakoot / Guna Milan 8-koota / 36-pt), `AspectCalculator` (5 major aspects with orbs), Dasha Pratyantar (sub-sub-period), `BirthChart.planetLongitudes` (powers synastry).
+- **Refactor:** `ZodiacCalculator` god-class (369 lines) split into `WesternZodiacCalculator` / `VedicZodiacCalculator` / `ChineseZodiacCalculator` / `PlanetaryCalculator` with `ZodiacCalculator` kept as a 137-line thin facade.
+- **BUGs closed:** 070 (god-class), 082 (`LunarCalendarConverter` → `Result<String>` with `safeWarn`), 086 (`BirthChart.birthMoonPhase` wired from snapshot), 087 (`SynastryCalculator` for cross-chart aspects), 088 (entertainment disclaimer on `DailyFortune`).
+- **UI testing:** `OnboardingScreenContent(plain callbacks)` testable overload added so `OnboardingScreenUiTest` can run 5 Compose tests without spinning up Hilt. Pattern is reusable for other screens that need Hilt-free tests.
+
+**Planned for v2.1 (Korean Saju Supremacy):**
+- `SajuKoreanCalculator.kt` — 천간/지지 in Hangul, 대운 (Daeun 10-year luck periods), 오행 (Five Element) balance, 용신 (Yongshin) rule-based suggestion
+- Korean Saju Premium Unlock IAP (one-time ₹149, K-fandom targeting)
+- 오행 balance shareable card (radar/bar chart, Gen Z-friendly)
+- DetailsUnlockScreen "Korean Saju" tab replacing "Chinese" tab
+
 **v2.0 audit fixes (2026-05-22):**
 - Western compatibility now uses astronomical ephemeris (not hardcoded date ranges)
 - SharedPreferences consolidated into UserPreferencesRepository with DataStore mirroring
 - ViewModels cleansed of direct Context references
 - Horoscope engines audited (Western/Vedic/Chinese — all mathematically sound)
+- **Korean Saju (사주) layer** planned for v2.1 — distinct from Ba Zi, Hangul 천간·지지, 대운, 오행, 용신 (see `roadmap.md` Mission 7)
 
 **Package ID:** `com.willowvibe.cosmicid` (applicationId changed; namespace `com.willowvibe.agereveal` kept for source compatibility)  
 **Display name:** Cosmic ID  
 **Version:** 2.0.0 (production rollout in progress)  
-**Build status:** Compiles and all 137 unit tests pass
+**Build status:** Compiles; **329 unit tests + 5 instrumented UI tests pass** (0 regressions as of 2026-06-05 Phase 6.5 batch)
 
 ---
 

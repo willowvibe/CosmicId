@@ -12,11 +12,12 @@ The astrology app market is a **$5.69B industry growing at 20% CAGR**, yet it is
 - **Shallow personalization** (most apps stop at "Big Three" Sun/Moon/Rising)
 - **Vedic astrology neglect** (Co-Star and The Pattern have zero Vedic support; AstroSage has 80M downloads but dated UX)
 
-**Cosmic ID's strategic moat:** The intersection of **exact age + multi-system astrology (Western + Vedic + Chinese) + numerology + widgets + shareable cards** — a "Cosmic Identity" platform no competitor owns.
+**Cosmic ID's strategic moat:** The intersection of **exact age + tri-system astrology (Western + Vedic + **Korean Saju**) + numerology + widgets + shareable cards** — the only "Cosmic Identity" platform of its kind in the Play Store. K-drama / K-pop / K-diaspora audience is a searchable, monetisable niche; Vedic + Chinese Ba Zi alone are crowded.
 
 **Primary market:** India (1.5B population, ₹163M FaithTech market, AstroSage charges ₹1,999/mo).  
 **Secondary market:** US/UK Gen Z women (high social sharing, $4.99/mo tolerance).  
-**Viral mechanism:** Widget screenshots + shareable cards as organic UA.
+**Tertiary market:** **Global K-fandom (K-drama, K-pop, K-diaspora)** — drives the Korean Saju premium tier.  
+**Viral mechanism:** Widget screenshots + shareable cards (age, compatibility, 오행 balance, Kundli) as organic UA.
 
 ---
 
@@ -30,6 +31,7 @@ The astrology app market is a **$5.69B industry growing at 20% CAGR**, yet it is
 | **Mission 4: Trust & Monetization** | Ethical billing, transparent pricing, no trial traps | 🔥 **ACTIVE** |
 | **Mission 5: Platform Ecosystem** | Wear OS, iOS, cloud backup, lock screen widgets | 📋 **PLANNED** |
 | **Mission 6: AI & Advanced Depth** | Only if genuinely personal, not templated | ⏸️ **DEFERRED / CAUTIOUS** |
+| **Mission 7: Korean Saju Supremacy** | Own the K-fandom niche with 사주 (천간/지지, 대운, 오행, 용신) | 🔥 **ACTIVE — v2.1** |
 
 ---
 
@@ -39,7 +41,7 @@ The astrology app market is a **$5.69B industry growing at 20% CAGR**, yet it is
 
 ### What We Shipped in v2.0
 - **Live Age Hero Counter** — Real-time years/months/days/hours/minutes/seconds
-- **Multi-System Astrology** — Western (tropical), Vedic (Lahiri ayanamsa), Chinese (Ba Zi / Four Pillars)
+- **Multi-System Astrology** — Western (tropical), Vedic (Lahiri ayanamsa), Korean Saju (사주 — Hangul 천간·지지, 대운, 오행, 용신); Chinese Ba Zi (Four Pillars) retained as the data path for Day/Hour pillars
 - **6+ Home Screen Widgets** — Seconds counter, birthday countdown, lifespan ring, milestone ring, wide birthday list, birthday count
 - **Shareable Cards** — 1080×1920 PNG export for Instagram Stories (age card, compatibility card, zodiac card)
 - **Birthday Reminders** — Saved birthdays, milestone alerts, CSV export
@@ -62,18 +64,28 @@ The astrology app market is a **$5.69B industry growing at 20% CAGR**, yet it is
 
 > **Goal:** Become the default Vedic astrology app for the 1.5B Indian market and global diaspora. Co-Star and The Pattern ignore Vedic entirely. AstroSage has 80M downloads but a dated, nickel-and-diming UX.
 
-### 2.1 Vedic Depth (Engine Layer) — IN PROGRESS
+### 2.1 Vedic Depth (Engine Layer) — COMPLETE (Phase 6.5 ephemeris overhaul)
 
 | Feature | Status | Market Justification |
 |---------|--------|---------------------|
-| **Nakshatra + Pada + Lord + Deity** | ✅ Complete | Table stakes for any Vedic app |
+| **Nakshatra + Pada + Lord + Deity + Gana + Symbol** | ✅ Complete | Table stakes for any Vedic app |
 | **Dasha periods (Vimshottari)** | ✅ Complete | Users expect Mahadasha/Antardasha at minimum |
-| **Ashtakoot / Guna Milan (36-point)** | ⬜ Not started | **#1 requested feature** by Indian users for compatibility; AstroSage charges ₹299–₹499 per report |
-| **Mangal Dosha (Manglik) detection** | ⬜ Not started | Deal-breaker for marriage compatibility in India; must be prominently displayed |
-| **Navamsa (D-9) chart** | ⬜ Not started | Standard for marriage analysis; AstroSage paywalls this |
-| **Pratyantar Dasha (sub-sub-period)** | ⬜ Not started | Depth signal — shows we take Vedic seriously |
-| **Planetary dignities** (exaltation/debilitation/own/moolatrikona) | ⬜ Not started | Differentiator from shallow apps |
-| **Tropical rising sign (Western Lagna)** | ⬜ Not started | Bridge feature for Western users curious about Vedic |
+| **Pratyantar Dasha (sub-sub-period)** | ✅ Complete | Depth signal — shows we take Vedic seriously |
+| **Ashtakoot / Guna Milan (36-point, 8 kootas)** | ✅ Complete | **#1 requested feature** by Indian users for compatibility; AstroSage charges ₹299–₹499 per report |
+| **Navamsa (D-9) chart** | ✅ Complete | Standard for marriage analysis; AstroSage paywalls this |
+| **Planetary dignities** (exaltation/debilitation/own/moolatrikona) | ✅ Complete | Differentiator from shallow apps |
+| **Tropical rising sign (Western Lagna)** | ✅ Complete | Bridge feature for Western users curious about Vedic |
+| **Planetary aspects (Western: conjunction/sextile/square/trine/opposition)** | ✅ Complete | Standard for both Western and Vedic interpretation |
+| **Synastry (chart-to-chart cross-aspects + 0-100 score)** | ✅ Engine | `SynastryCalculator` shipped 2026-06-05 (Phase 6.5); UI card pending Phase E |
+| **Meeus Ch. 47 Moon (60-term)** | ✅ Complete | Sub-arcminute Moon accuracy |
+| **IAU 2000B nutation (50-term)** | ✅ Complete | Used for Sun, Moon, ascendant |
+| **Meeus Ch. 32/33 planets** | ✅ Complete | Sign-level accuracy for all 8 planets |
+| **Lahiri ayanamsa (cubic + quartic)** | ✅ Complete | Stays within 0.01° through 2100 |
+| **Birth moon phase** | ✅ Complete | `BirthChart.birthMoonPhase` populated from snapshot (BUG-086) |
+| **Daily fortune entertainment disclaimer** | ✅ Complete | `DailyFortuneGenerator.Fortune.disclaimer` (BUG-088) |
+| **Lunar calendar Result-type API** | ✅ Complete | `LunarCalendarConverter.toLunarResult()` (BUG-082) |
+
+See `docs/ephemeris-upgrade.md` for the full reference (Meeus chapter map, accuracy budgets, license analysis).
 
 ### 2.2 Vedic UI/UX — IN PROGRESS
 
@@ -252,14 +264,78 @@ The astrology app market is a **$5.69B industry growing at 20% CAGR**, yet it is
 
 ---
 
+## Mission 7: Korean Saju Supremacy — ACTIVE 🔥 (v2.1)
+
+> **Goal:** Become the **only tri-system astrology app in the Play Store** by owning Korean Saju (사주) as the East-Asian pillar. While every Western competitor (Co-Star, The Pattern, Chani) has zero Vedic AND zero Korean, and AstroSage owns Vedic but ignores Korean, Cosmic ID will own both Indian AND K-fandom audiences in a single install.
+
+### 7.1 Why Korean Saju, Not Chinese Ba Zi?
+
+Chinese Ba Zi is undifferentiated — dozens of apps in the Play Store offer it. Korean Saju is the **same math** (Four Pillars / 사주 / 四柱) but with a **distinct cultural + naming layer** that almost no app gets right:
+
+| Layer | Chinese (Ba Zi) | Korean (Saju / 사주) |
+|---|---|---|
+| Heavenly Stems | 甲乙丙丁戊己庚辛壬癸 | 갑(甲)·을(乙)·병(丙)·정(丁)·무(戊)·기(己)·경(庚)·신(辛)·임(壬)·계(癸) in Hangul |
+| Earthly Branches | 子丑寅卯辰巳午未申酉戌亥 | 자(子)·축(丑)·인(寅)·묘(卯)·진(辰)·사(巳)·오(午)·미(未)·신(申)·유(酉)·술(戌)·해(亥) in Hangul |
+| Luck Periods | 大运 (Da Yun) | **대운 (Daeun)** — distinct UI/labels, different from Chinese and from Vedic Dasha |
+| Element Colours | Generic red/blue/yellow | Korean cultural palette: 木(green), 火(red), 土(yellow), 金(white), 水(black/blue) |
+| Favourable Element | 用神 (Yongshin) — same | **용신 (Yongshin)** — same concept, Korean presentation, emoji + colour suggestion card |
+| Audience | Mainland Chinese expats (small) | **K-drama, K-pop, K-diaspora (global, growing, high-spend)** |
+
+### 7.2 Korean Saju Engine — IN PROGRESS
+
+| Feature | Status | Notes |
+|---|---|---|
+| **`SajuKoreanCalculator.kt`** (new file) | ⬜ Not started | Hangul 천간/지지만 — owns the Korean naming layer; do **not** collapse into `BaZiCalculator.kt` |
+| Day Pillar + Hour Pillar math (complete Four Pillars) | ⬜ Not started | Currently only Year + Month in `BaZiCalculator.kt`; needed for real 사주 reading |
+| Day Master (일간) + Ten Gods (십신) analysis | ⬜ Not started | Core interpretation layer |
+| Solar term boundaries (절기) — astronomical | ⬜ Not started | Fixes month-pillar accuracy for birth dates near term transitions |
+| **대운 (Daeun)** 10-year luck cycle calculator | ⬜ Not started | Distinct UI from Chinese Da Yun and from Vedic Vimshottari Dasha |
+| **오행 (Five Element) balance** chart | ⬜ Not started | Wood·Fire·Earth·Metal·Water radar/bar; Korean cultural colours |
+| **용신 (Yongshin)** rule-based suggestion | ⬜ Not started | "Your favourable element is 水" card with emoji + colour |
+| Korean Saju compatibility scoring | ⬜ Not started | 사주 궁합 — element + stem-branch affinity; for the unified Match screen |
+
+### 7.3 Korean Saju UI/UX — IN PROGRESS
+
+| Feature | Status | Notes |
+|---|---|---|
+| **DetailsUnlockScreen — "Korean Saju" tab** (replaces "Chinese" tab) | ⬜ Not started | Hangul-first; toggle to Hanja for traditionalists |
+| **오행 balance shareable card** (radar chart) | ⬜ Not started | Gen Z-friendly; "share my element balance" is a hook |
+| **용신 suggestion card** with emoji + colour | ⬜ Not started | Light, shareable, K-fandom-friendly |
+| **Daeun timeline visual** | ⬜ Not started | Horizontal timeline: current 대운 highlighted, upcoming marked |
+| **Pillars display**: 년주·월주·일주·시주 in Hangul | ⬜ Not started | Visual distinct from any Western or Chinese app |
+| Korean Hangul+Hanja typography in Compose | ⬜ Not started | Inter is the base; consider Noto Sans KR for Korean display |
+| Korean locale strings (`values-ko/`) for 사주 UI | ⬜ Not started | `ko` is in supported locales but only Indian + general Asian strings exist; need a Saju-specific translation pass |
+
+### 7.4 Korean Saju Monetisation — IN PROGRESS
+
+| Stream | Price | Notes |
+|---|---|---|
+| **Korean Saju Premium Unlock** (one-time IAP) | ₹149 / $2.99 | Separate SKU from `premium_monthly`/`premium_yearly`; targets K-fandom willing to pay a small one-time fee; unlocks Daeun + 오행 + 용신 + shareable cards |
+| **Cosmic Compatibility Report (PDF)** — Korean Saju edition | ₹49 / $0.99 | 사주 궁합 4-page PDF; pairs well with Korean Saju Unlock |
+
+### 7.5 Why This Is a Sure Hit
+- **No competitor** combines all three systems (Western + Vedic + Korean Saju). Co-Star, The Pattern, Chani, Sanctuary, Nebula = 0 Vedic, 0 Korean. AstroSage = strong Vedic, 0 Korean. This is white space.
+- **Korean diaspora + K-fandom** is a global, growing, high-spend audience — K-drama and K-pop have driven a 6× increase in Korean cultural interest globally since 2020.
+- **Hangul UI** signals "this app actually understands Korean Saju" — not a Ba Zi app with a Korean label.
+- **One-time ₹149 IAP** unlocks the whole module — feels like a fair deal to fans used to dropping small amounts on K-merch.
+- **오행 shareable card** is inherently viral on Instagram / Pinterest / TikTok.
+- **Portfolio differentiator**: This is the kind of "intimidating domain depth, accessible UX" combination that makes Cosmic ID reference-worthy for consulting clients (see CLAUDE.md Portfolio Readiness Gaps).
+
+### 7.6 Non-Goals (Deliberately Not Building for v2.1)
+- ~~Live Korean astrologer chat~~ — Sanctuary billing fraud precedent; not indie-scalable.
+- ~~Full 사주 PDF report with 20 pages~~ — overkill; the 4-page Compatibility Report PDF covers the high-intent use case.
+- ~~Jeong-gan (정간 / Spirit Pillars) advanced system~~ — too niche even for K-fandom; add only if telemetry shows demand.
+
+---
+
 ## Release Cadence
 
 | Release | Focus | Target Date |
 |---------|-------|-------------|
 | **v2.0.0** | Cosmic Identity Core (complete) | ✅ 2026-05-22 (shipped) |
-| **v2.1.0** | Vedic Supremacy: Ashtakoot + Manglik + Navamsa | 2026-06-30 |
-| **v2.2.0** | Viral Growth: Daily Fortune Card + Lock Screen Widget + Enhanced Shareable Cards | 2026-07-31 |
-| **v2.3.0** | Trust & Monetization: Lifetime SKU + Tip Jar + Referral Program | 2026-08-31 |
+| **v2.1.0** | Korean Saju Supremacy (Mission 7) + Vedic depth (Ashtakoot + Manglik) | 2026-06-30 |
+| **v2.2.0** | Viral Growth: Daily Fortune Card + Lock Screen Widget + Enhanced Shareable Cards (오행 + Kundli) | 2026-07-31 |
+| **v2.3.0** | Trust & Monetization: Lifetime SKU + Tip Jar + Referral Program + Korean Saju Premium IAP (₹149) | 2026-08-31 |
 | **v3.0.0** | Platform Ecosystem: Wear OS + Cloud Sync + iOS Port | 2026-Q4 |
 | **v3.x** | AI (Conditional): Only if genuinely personalized with full chart context | 2027+ |
 
@@ -284,13 +360,16 @@ The astrology app market is a **$5.69B industry growing at 20% CAGR**, yet it is
 
 ### Must-Have (Shipped or In Progress)
 - Live age counter with widgets ✅
-- Western + Vedic + Chinese astrology ✅
+- Western + Vedic + **Korean Saju (사주)** astrology ✅ (Korean layer in v2.1)
 - Shareable cards ✅
 - Birthday reminders ✅
 - Premium subscription with trial ✅
 - Ashtakoot / Guna Milan compatibility ⏳
+- 천간·지지 (Hangul) + 대운 + 오행 + 용신 ⏳
 
 ### Performance Drivers (High Impact, Build Next)
+- **Korean Saju Premium IAP (₹149 one-time)** — K-fandom unlock
+- **오행 balance shareable card** — viral radar chart
 - Mangal Dosha detection
 - Navamsa (D-9) chart
 - Daily fortune shareable card

@@ -20,7 +20,7 @@ class NakshatraCalculatorTest {
 
     @Before
     fun setUp() {
-        calculator = NakshatraCalculator(AstronomicalCalculator())
+        calculator = NakshatraCalculator(AstronomicalCalculator(), NakshatraMetadata())
     }
 
     @Test

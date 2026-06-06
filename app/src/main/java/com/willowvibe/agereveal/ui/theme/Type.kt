@@ -12,6 +12,18 @@ import com.willowvibe.agereveal.R
  * Inter (sans-serif) for body / UI text.
  * Serif (Georgia fallback) for display numerals and headings — mirrors the Fraunces
  * intent in the design prototype.
+ *
+ * `KoreanFamily` is used for Hangul body text on the Korean Saju tab. It
+ * uses the system sans-serif typeface, which on Android 8+ resolves to
+ * Noto Sans CJK (covering Hangul + Kanji). This keeps the APK small (no
+ * bundled font) and the rendering consistent with system Hangul across
+ * the OS.
+ *
+ * If a future design pass wants pixel-exact Noto Sans KR typography, swap
+ * this for AndroidX Downloadable Fonts:
+ *   implementation(libs.androidx.compose.ui.text.google.fonts)
+ *   implementation(libs.google.services.fonts)
+ *   and use GoogleFont.Provider with the `com.google.android.gms` cert.
  */
 
 val InterFamily = FontFamily(
@@ -22,6 +34,13 @@ val InterFamily = FontFamily(
 )
 
 val SerifFamily = FontFamily.Serif   // Georgia on Android; swap for Fraunces once bundled
+
+/**
+ * Font family for Hangul + Kanji body text. Resolves to the system
+ * sans-serif (Noto Sans CJK on Android 8+, system-supplied Noto Sans KR
+ * on API 33+). Used by the Korean Saju tab.
+ */
+val KoreanFamily: FontFamily = FontFamily.SansSerif
 
 val AppTypography = Typography(
     // Hero display — age numerals (e.g. "27")
