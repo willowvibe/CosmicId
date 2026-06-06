@@ -201,11 +201,11 @@ _Last updated: 2026-05-24 — Market research applied. Roadmap restructured into
 
 | # | Task | Status | Priority | Notes |
 |---|------|--------|----------|-------|
-| 1 | Day and Hour Pillars (complete Four Pillars) | ⬜ | 🔴 Critical | BUG-078; currently only Year and Month |
-| 2 | Day Master + Ten Gods analysis | ⬜ | 🟡 High | BUG-079; core of Ba Zi interpretation |
-| 3 | Solar term boundaries (astronomical calculation) | ⬜ | 🟡 High | BUG-080; fixes month pillar accuracy |
-| 4 | Luck Pillars (大运 / Da Yun, 10-year cycles) | ⬜ | 🟢 Medium | BUG-081; standard for Chinese astrology depth |
-| 5 | LunarCalendarConverter error handling (Result type) | ⬜ | 🟢 Medium | BUG-082 |
+| 1 | Day and Hour Pillars (complete Four Pillars) | ✅ | ✅ Done | BUG-078 fixed 2026-06-06 — `BaZiCalculator.getDayPillar` / `getHourPillar` string facades |
+| 2 | Day Master + Ten Gods analysis | ✅ | ✅ Done | BUG-079 fixed 2026-06-06 — `BaZiCalculator.TenGods` data class + `SajuTenGodsCard` UI |
+| 3 | Solar term boundaries (astronomical calculation) | ✅ | ✅ Done | BUG-080 verified safe 2026-06-06 — `Lunar` / `EightChar` from cn.6tail:lunar:1.7.7 already computes month-pillar boundaries astronomically via `getJieQi()` |
+| 4 | Luck Pillars (大运 / Da Yun, 10-year cycles) | ✅ | ✅ Done | BUG-081 fixed 2026-06-06 — `BaZiCalculator.getDaYunSummary` facade; structured `computeDaYun` + `SajuDaeunTimelineCard` shipped in Phase 6.5 |
+| 5 | LunarCalendarConverter error handling (Result type) | ✅ | ✅ Done | BUG-082 fixed 2026-06-05 — `toLunarResult(): Result<String>` with `safeWarn()` helper |
 
 ---
 
@@ -362,7 +362,7 @@ _Last updated: 2026-05-24 — Market research applied. Roadmap restructured into
 
 | # | Task | Status | Notes |
 |---|------|--------|-------|
-| 1 | Unit tests for domain calculators | ✅ | 152+ tests passing |
+| 1 | Unit tests for domain calculators | ✅ | 347 tests passing (as of 2026-06-06, +18 from BaZi depth batch) |
 | 2 | UI tests (Compose) for CalculatorScreen | ✅ | Happy path + date validation |
 | 3 | Instrumented Room DAO tests | ✅ | `MigrationTestHelper` |
 | 4 | Billing tests with test SKUs | ⬜ | `BillingClient` test flow |
@@ -482,6 +482,8 @@ _Last updated: 2026-05-24 — Market research applied. Roadmap restructured into
 | 2026-06-05 | **Phase 6.5 (Ephemeris Overhaul)** | Engine promoted to Meeus Ch. 25 (Sun) / Ch. 47 (Moon, 60-term) / Ch. 32/33 (planets) / Ch. 22 (IAU 2000B nutation, 50 terms). Lahiri ayanamsa now uses cubic polynomial. New files: `NakshatraMetadata.kt`, `DivisionalChartCalculator.kt` (Navamsa D-9), `VedicCompatibilityCalculator.kt` (Guna Milan 8-koota / 36-pt), `AspectCalculator.kt` (5 major aspects with orbs). `DashaCalculator` exposes Pratyantar (sub-sub-period). `BirthChart` now carries `tropicalAscendant`, `nakshatraMetadata`, `dashaDetail`, `navamsaChart`, `planetaryAspects`. Test count: 233 → **275 passing** (+42). Closes BUG-072, 074, 075, 076, 077, 083, 085. Full reference: [docs/ephemeris-upgrade.md](docs/ephemeris-upgrade.md). |
 | 2026-06-05 | **Phase 6.5 — Engine accuracy + refactor** | `ZodiacCalculator` god-class (369 lines) split into four focused calculators — `WesternZodiacCalculator`, `VedicZodiacCalculator`, `ChineseZodiacCalculator`, `PlanetaryCalculator` — with `ZodiacCalculator` kept as a 137-line thin facade preserving the original public API. BUG-070 closed. Added 5 JPL-Horizons reference-value tests to `AstronomicalCalculatorTest` (vernal equinox 2000, 2024 solar eclipse, 2020 Great Conjunction, all 8 planets at J2000). Test count: 275 → **305 passing** (+28 new + 2 retrofits). |
 | 2026-06-05 | **Phase 6.5 — Bug batch + UI test scaffolding** | BUG-086: `BirthChart.birthMoonPhase: MoonPhase?` wired from `snapshot.tropicalSunLongitude` / `tropicalMoonLongitude` via injected `MoonPhaseCalculator`. BUG-088: `DailyFortuneGenerator.Fortune` gains `isEntertainment: Boolean = true` + `disclaimer: String = DEFAULT_DISCLAIMER`; constant `"For entertainment only — not astrological advice."` exposed. BUG-082: `LunarCalendarConverter.toLunarResult(): Result<String>` (legacy `toLunarString()` preserved as `getOrDefault("")` wrapper); `safeWarn()` helper swallows `Log.w` `RuntimeException` in JVM unit tests. BUG-087: new `SynastryCalculator` (chart-to-chart cross-aspects + 0-100 score + 5-bucket verdict + Harmonious/Tense split); `BirthChart` gains `planetLongitudes: Map<CelestialBody, Double>` to power it. UI testing: `OnboardingScreenContent(plain callbacks)` testable overload added; 5 new `OnboardingScreenUiTest` Compose tests in `androidTest/`. Test count: 305 → **329 passing** (+24 unit, +5 instrumented). |
+| 2026-06-06 | **BaZi depth batch** (PR #55) | BUG-078: `BaZiCalculator.getDayPillar(date)` + `getHourPillar(date, hour, ...)` back-compat string facades. BUG-079: new `TenGods` data class on `FourPillars` (8 fields: 4 visible-stem + 4 hidden-stem 십신 labels); surfaced in `SajuTenGodsCard` (new Compose card in `DetailsUnlockScreen.KoreanSajuTab`); Chinese→Korean 십신 remap via new `SajuKoreanCalculator.SHI_SHEN_ZH_TO_RES_KEY` map → `saju_ten_god_*` string resources. BUG-080: verified safe — `Lunar` / `EightChar` from `cn.6tail:lunar:1.7.7` already computes month-pillar boundaries astronomically via `getJieQi()`. BUG-081: `BaZiCalculator.getDaYunSummary(date, hour, ...)` back-compat facade; structured `computeDaYun` + `SajuDaeunTimelineCard` shipped in Phase 6.5. Plan: `docs/superpowers/plans/2026-06-06-bazi-depth-batch.md`. Test count: 329 → **347 passing** (+18: 2 day/hour, 2 DaYun, 2 Ten Gods, 12 cascading in `SajuKoreanCalculator`). |
+| 2026-06-06 | **AppDatabaseMigrationTest compile fix** | `AppDatabaseMigrationTest.kt:105` — replaced `roomDb.openHelper.readableDatabase.rawQuery(...)` (no longer available on `SupportSQLiteDatabase`) with `SupportSQLiteQueryBuilder` + `query(SupportSQLiteQuery)`. Unblocks `assembleDebugAndroidTest` (was failing since ≥2026-05-22 with 5 compile errors) — first time `SajuTenGodsCardUiTest` and `OnboardingScreenUiTest` instrumented test APKs can be built. Run gate still requires a device/emulator (`./gradlew connectedAndroidTest`). |
 
 ---
 

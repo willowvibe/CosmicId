@@ -101,11 +101,16 @@ class AppDatabaseMigrationTest {
         ).addMigrations(Migrations.MIGRATION_2_3)
             .build()
 
-        // Verify unlocked_badges table exists and is empty
-        roomDb.openHelper.readableDatabase.rawQuery(
-            "SELECT name FROM sqlite_master WHERE type='table' AND name='unlocked_badges'", null
-        ).use { cursor ->
-            assertTrue(cursor.count > 0)
+        // Verify unlocked_badges table exists and is empty.
+        // Use SupportSQLiteQueryBuilder to avoid the SupportSQLiteDatabase.query
+        // overload-ambiguity trap (raw SQL strings collide with the 2-arg
+        // `query(query: String, bindArgs: Array<out Any?>)` overload).
+        val query = androidx.sqlite.db.SupportSQLiteQueryBuilder.builder("sqlite_master")
+            .columns(arrayOf("name"))
+            .selection("type = ? AND name = ?", arrayOf<Any?>("table", "unlocked_badges"))
+            .create()
+        roomDb.openHelper.readableDatabase.query(query).use { cursor ->
+            assertTrue("unlocked_badges table should exist after MIGRATION_2_3", cursor.count > 0)
         }
 
         roomDb.close()
