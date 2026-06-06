@@ -23,8 +23,13 @@ class BirthChartSubChart @Inject constructor(
     private val aspectCalculator: AspectCalculator,
 ) {
     /**
-     * Container for the three sub-chart outputs. All three are nullable so a
-     * single sub-calculator failure does not lose the others.
+     * Container for the three sub-chart outputs.
+     *
+     * @property nakshatraMetadata Birth Nakshatra lookup; null if the lookup failed.
+     * @property navamsaChart D-9 divisional chart; null if the calculation failed.
+     * @property planetaryAspects List of in-orb aspects; always non-null (empty list if no
+     *           aspects or if the calculation failed — empty is the natural "no aspects"
+     *           representation).
      */
     data class SubCharts(
         val nakshatraMetadata: NakshatraData?,

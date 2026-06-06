@@ -22,6 +22,7 @@ import javax.inject.Singleton
  * the published Lahiri ephemeris).
  */
 @Singleton
+// open for BirthChartSubChart exception-isolation test; do not subclass in production.
 open class NakshatraMetadata @Inject constructor() {
 
     /**
