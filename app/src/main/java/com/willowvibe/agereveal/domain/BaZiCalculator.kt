@@ -173,6 +173,18 @@ class BaZiCalculator @Inject constructor(
     fun getMonthPillar(date: LocalDate): String =
         computeFourPillars(date).month.toDisplay()
 
+    fun getDayPillar(date: LocalDate): String =
+        computeFourPillars(date).day.toDisplay()
+
+    fun getHourPillar(
+        date: LocalDate,
+        hour: Int,
+        minute: Int = 0,
+        zoneOffsetHours: Double? = null,
+    ): String = computeFourPillars(date, hour, minute, zoneOffsetHours)
+        .hour?.toDisplay()
+        ?: error("Hour pillar unavailable for $date $hour:$minute (no birth time)")
+
     // -------------------------------------------------------------------------
     // Internals
     // -------------------------------------------------------------------------

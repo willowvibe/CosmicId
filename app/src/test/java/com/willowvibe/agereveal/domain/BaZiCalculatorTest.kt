@@ -163,4 +163,29 @@ class BaZiCalculatorTest {
             calculator.getBaZiSummary(start.plusDays(i.toLong()))
         }
     }
+
+    // -------------------------------------------------------------------------
+    // String facades for day + hour pillars (API parity with year + month)
+    // -------------------------------------------------------------------------
+
+    @Test
+    fun `day pillar facade for 1993-12-11 returns Bing-Yin`() {
+        // Sruthi reference case: 1993-12-11 → 丙寅 Day Pillar (Bing = 丙, Yin = 寅).
+        // See "sruthi reference case 1993-12-11 0245 IST yields expected pillars"
+        // above for the full Sruthi validation (cross-checked against sajupy +
+        // lunar-java v1.7.7).
+        val pillar = calculator.getDayPillar(LocalDate.of(1993, 12, 11))
+        assertTrue("Expected Bing-Yin (丙寅) in: $pillar",
+            pillar.contains("Bing") && pillar.contains("Yin"))
+    }
+
+    @Test
+    fun `hour pillar facade for 1993-12-11 02-45 returns Ji-Chou`() {
+        // 02:45 falls in the 丑 (01:00–02:59) hour block. With a Bing day stem,
+        // the stem sequence for 丑 hours is 己 (Ji). Matches the Sruthi
+        // reference case (己丑).
+        val pillar = calculator.getHourPillar(LocalDate.of(1993, 12, 11), hour = 2, minute = 45)
+        assertTrue("Expected Ji-Chou (己丑) in: $pillar",
+            pillar.contains("Ji") && pillar.contains("Chou"))
+    }
 }
