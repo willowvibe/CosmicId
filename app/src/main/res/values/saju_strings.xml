@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Korean Saju (사주) UI strings — default-locale (English) fallbacks.
+    See values-ko/saju_strings.xml for the Korean translation.
+
+    All string keys are identical between this file and the Korean
+    translation — only the visible text differs. This is what the
+    app shows when the device locale is NOT Korean.
+-->
+<resources>
+    <!-- Tab / section titles -->
+    <string name="saju_tab_title">Saju (四柱)</string>
+    <string name="saju_tab_subtitle">Korean Four Pillars analysis</string>
+
+    <!-- Pillar labels -->
+    <string name="saju_year_pillar">Year</string>
+    <string name="saju_month_pillar">Month</string>
+    <string name="saju_day_pillar">Day</string>
+    <string name="saju_hour_pillar">Hour</string>
+
+    <!-- Day master -->
+    <string name="saju_day_master">Day Master (日干)</string>
+    <string name="saju_day_master_label">Day Master: %1$s</string>
+
+    <!-- Ten Gods (십신) -->
+    <string name="saju_ten_god_bijeon">Friend (比肩)</string>
+    <string name="saju_ten_god_geopjae">Rob Wealth (劫財)</string>
+    <string name="saju_ten_god_siksin">Eating God (食神)</string>
+    <string name="saju_ten_god_sanggwan">Hurting Officer (傷官)</string>
+    <string name="saju_ten_god_pyeonjae">Indirect Wealth (偏財)</string>
+    <string name="saju_ten_god_jeongjae">Direct Wealth (正財)</string>
+    <string name="saju_ten_god_pyeonggwan">Seven Killings (偏官)</string>
+    <string name="saju_ten_god_jeonggwan">Direct Officer (正官)</string>
+    <string name="saju_ten_god_pyeonin">Indirect Seal (偏印)</string>
+    <string name="saju_ten_god_jeongin">Direct Seal (正印)</string>
+
+    <!-- 12 Life Stages -->
+    <string name="saju_stage_jangsaeng">Birth — new beginnings</string>
+    <string name="saju_stage_mokyok">Bath — emotional swings</string>
+    <string name="saju_stage_gwanddae">Crown — social growth</string>
+    <string name="saju_stage_geonrok">Stability — abundance</string>
+    <string name="saju_stage_jewang">Peak — full strength</string>
+    <string name="saju_stage_soe">Decline — weakening</string>
+    <string name="saju_stage_byeong">Sickness — frail period</string>
+    <string name="saju_stage_sa">Death — crisis point</string>
+    <string name="saju_stage_myo">Tomb — hidden potential</string>
+    <string name="saju_stage_jeol">Extinction — closure</string>
+    <string name="saju_stage_tae">Conception</string>
+    <string name="saju_stage_yang">Nurture</string>
+
+    <!-- 오행 (Five Elements) section -->
+    <string name="saju_o_haeng_title">Five Elements (五行) Analysis</string>
+    <string name="saju_o_haeng_subtitle">Balance of the chart\'s elements</string>
+    <string name="saju_o_haeng_wood">Wood (木) — growth, flexibility</string>
+    <string name="saju_o_haeng_fire">Fire (火) — passion, light</string>
+    <string name="saju_o_haeng_earth">Earth (土) — stability, center</string>
+    <string name="saju_o_haeng_metal">Metal (金) — clarity, resolve</string>
+    <string name="saju_o_haeng_water">Water (水) — wisdom, flow</string>
+    <string name="saju_o_haeng_count_format">%1$s: %2$d</string>
+    <string name="saju_o_haeng_dominant_format">Strongest element: %1$s (%2$d)</string>
+    <string name="saju_o_haeng_weakest_format">Weakest element: %1$s (%2$d)</string>
+
+    <!-- 용신 (Yongshin) suggestion card -->
+    <string name="saju_yongshin_title">Favorable Element (用神)</string>
+    <string name="saju_yongshin_subtitle">The element that helps you most</string>
+    <string name="saju_yongshin_strong">Day Master is strong (身强)</string>
+    <string name="saju_yongshin_weak">Day Master is weak (身弱)</string>
+    <string name="saju_yongshin_favourable_format">Favorable: %1$s</string>
+    <string name="saju_yongshin_unfavourable_format">Unfavorable: %1$s</string>
+    <string name="saju_yongshin_color_format">Lucky color: %1$s</string>
+    <string name="saju_yongshin_direction_format">Lucky direction: %1$s</string>
+    <string name="saju_yongshin_season_format">Peak season: %1$s</string>
+    <string name="saju_yongshin_actions_title">Recommended activities</string>
+    <string name="saju_yongshin_reasoning_label">Strength</string>
+
+    <!-- 대운 (Daeun) 10-year luck cycle -->
+    <string name="saju_daeun_title">Daeun (大運) Cycle</string>
+    <string name="saju_daeun_subtitle">10-year luck periods</string>
+    <string name="saju_daeun_period_format">%1$d–%2$d yrs: %3$s</string>
+    <string name="saju_daeun_current_format">Currently in your %1$d–%2$d yr Daeun</string>
+    <string name="saju_daeun_forward">Forward (順行)</string>
+    <string name="saju_daeun_backward">Backward (逆行)</string>
+    <string name="saju_daeun_direction_label">Daeun direction</string>
+    <string name="saju_daeun_requires_birth_time">Daeun calculation needs your birth time.</string>
+
+    <!-- Hidden stems (지장간) -->
+    <string name="saju_hidden_stems">Hidden Stems (支藏干)</string>
+    <string name="saju_hidden_stem_main">Main</string>
+    <string name="saju_hidden_stem_middle">Middle</string>
+    <string name="saju_hidden_stem_residual">Residual</string>
+
+    <!-- Na Yin (납음) -->
+    <string name="saju_na_yin">Na Yin (納音)</string>
+
+    <!-- Animal names -->
+    <string name="saju_animal_rat">Rat (子)</string>
+    <string name="saju_animal_ox">Ox (丑)</string>
+    <string name="saju_animal_tiger">Tiger (寅)</string>
+    <string name="saju_animal_rabbit">Rabbit (卯)</string>
+    <string name="saju_animal_dragon">Dragon (辰)</string>
+    <string name="saju_animal_snake">Snake (巳)</string>
+    <string name="saju_animal_horse">Horse (午)</string>
+    <string name="saju_animal_goat">Goat (未)</string>
+    <string name="saju_animal_monkey">Monkey (申)</string>
+    <string name="saju_animal_rooster">Rooster (酉)</string>
+    <string name="saju_animal_dog">Dog (戌)</string>
+    <string name="saju_animal_pig">Pig (亥)</string>
+
+    <!-- Paywall / unlock messaging -->
+    <string name="saju_unlock_title">Deep Korean Saju Analysis</string>
+    <string name="saju_unlock_subtitle">Five-element balance, Yongshin, and Daeun in detail</string>
+    <string name="saju_unlock_cta">Unlock Saju Analysis</string>
+    <string name="saju_unlock_already">Saju analysis unlocked</string>
+
+    <!-- Compatibility (사주 궁합) -->
+    <string name="saju_compatibility_title">Saju Compatibility</string>
+    <string name="saju_compatibility_subtitle">Two charts, one verdict</string>
+    <string name="saju_compatibility_score_format">%1$d%% match</string>
+    <string name="saju_compatibility_excellent">Destined pair</string>
+    <string name="saju_compatibility_good">Good match</string>
+    <string name="saju_compatibility_fair">Average</string>
+    <string name="saju_compatibility_challenging">Needs effort</string>
+    <string name="saju_compatibility_format">%1$s &amp; %2$s compatibility</string>
+
+    <!-- Empty / error states -->
+    <string name="saju_birth_time_required">Enter your birth time for a precise reading.</string>
+    <string name="saju_birth_time_optional">Without birth time, only Year / Month / Day pillars are shown.</string>
+    <string name="saju_loading">Analyzing your Saju…</string>
+    <string name="saju_error">Could not compute Saju. Please try again.</string>
+
+    <!-- Footer / disclaimer -->
+    <string name="saju_disclaimer">Saju analysis is a traditional Korean reading, for reference only. Major life decisions are yours to make.</string>
+    <string name="saju_share_subject">My Saju reading</string>
+    <string name="saju_share_body_format">My Saju: %1$s Day Master. %2$s</string>
+</resources>

@@ -15,6 +15,7 @@ import com.willowvibe.agereveal.domain.CelebrityMatchCalculator
 import com.willowvibe.agereveal.domain.ShareCardGenerator
 import com.willowvibe.agereveal.domain.DailyFortuneGenerator
 import com.willowvibe.agereveal.domain.TimeRemainingCalculator
+import com.willowvibe.agereveal.domain.SajuKoreanCalculator
 import com.willowvibe.agereveal.domain.RetirementCalculator
 import com.willowvibe.agereveal.notification.DailyFortuneScheduler
 import com.willowvibe.agereveal.notification.MilestoneNotificationScheduler
@@ -57,6 +58,9 @@ data class CalculatorUiState(
     val celebrityMatches: List<CelebrityMatch> = emptyList(),
     val trialDaysRemaining: Int? = null,
     val graceDaysRemaining: Int? = null,
+    val isKoreanSajuUnlocked: Boolean = false,
+    val sajuChart: SajuKoreanCalculator.SajuChart? = null,
+    val sajuYongshin: SajuKoreanCalculator.YongshinCard? = null,
 )
 
 @HiltViewModel
@@ -73,6 +77,7 @@ class CalculatorViewModel @Inject constructor(
     private val celebrityMatchCalculator: CelebrityMatchCalculator,
     private val billingManager: com.willowvibe.agereveal.billing.BillingManager,
     private val analytics: com.willowvibe.agereveal.analytics.AnalyticsManager,
+    private val sajuKoreanCalculator: SajuKoreanCalculator,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(CalculatorUiState())
@@ -121,7 +126,16 @@ class CalculatorViewModel @Inject constructor(
             val targetAge = userPrefs.targetAge.first()
             val retirementAge = userPrefs.retirementAge.first()
             val isPremium = userPrefs.isPremium.first()
-            _uiState.update { it.copy(timeRemainingEnabled = trEnabled, retirementEnabled = retEnabled, isPremium = isPremium, name = savedName) }
+            val isKoreanSajuUnlocked = userPrefs.isKoreanSajuUnlocked.first()
+            _uiState.update {
+                it.copy(
+                    timeRemainingEnabled = trEnabled,
+                    retirementEnabled = retEnabled,
+                    isPremium = isPremium,
+                    isKoreanSajuUnlocked = isKoreanSajuUnlocked,
+                    name = savedName,
+                )
+            }
             if (savedDate != null) {
                 val tr = if (trEnabled) timeRemainingCalc.calculate(savedDate, targetAge = targetAge) else null
                 val ret = if (retEnabled) retirementCalc.calculate(savedDate, retirementAge = retirementAge) else null
@@ -143,6 +157,17 @@ class CalculatorViewModel @Inject constructor(
                         celebrityMatches = celebrities,
                     )
                 }
+                // Saju chart (Korean presentation layer). Independent of premium —
+                // the calculator runs the math and exposes the structured data;
+                // the UI gates display behind isKoreanSajuUnlocked.
+                runCatching {
+                    val hour = savedTime?.hour
+                    val chart = sajuKoreanCalculator.computeChart(savedDate, hour, gender = null)
+                    val yongshin = sajuKoreanCalculator.buildYongshinCard(chart)
+                    _uiState.update { it.copy(sajuChart = chart, sajuYongshin = yongshin) }
+                }.onFailure { e ->
+                    Log.w("CalculatorViewModel", "SajuKoreanCalculator failed", e)
+                }
                 badgeRepository.checkAndUnlock(savedDate, savedTime)
                 yearlyReengagementScheduler.schedule(savedDate)
                 val fortune = computeDailyFortune(savedDate)
@@ -156,6 +181,11 @@ class CalculatorViewModel @Inject constructor(
         viewModelScope.launch {
             billingManager.graceDaysRemaining.collect { days ->
                 _uiState.update { it.copy(graceDaysRemaining = days) }
+            }
+        }
+        viewModelScope.launch {
+            billingManager.isKoreanSajuUnlocked.collect { unlocked ->
+                _uiState.update { it.copy(isKoreanSajuUnlocked = unlocked) }
             }
         }
 
@@ -187,6 +217,12 @@ class CalculatorViewModel @Inject constructor(
                             retirement = ret,
                             celebrityMatches = celebrities,
                         )
+                    }
+                    runCatching {
+                        val hour = savedTime?.hour
+                        val chart = sajuKoreanCalculator.computeChart(date, hour, gender = null)
+                        val yongshin = sajuKoreanCalculator.buildYongshinCard(chart)
+                        _uiState.update { it.copy(sajuChart = chart, sajuYongshin = yongshin) }
                     }
                     badgeRepository.checkAndUnlock(date, savedTime)
                     yearlyReengagementScheduler.schedule(date)
@@ -253,6 +289,12 @@ class CalculatorViewModel @Inject constructor(
                     celebrityMatches = celebrities,
                 )
             }
+            runCatching {
+                val hour = _uiState.value.birthTime?.hour
+                val chart = sajuKoreanCalculator.computeChart(date, hour, gender = null)
+                val yongshin = sajuKoreanCalculator.buildYongshinCard(chart)
+                _uiState.update { it.copy(sajuChart = chart, sajuYongshin = yongshin) }
+            }
             badgeRepository.checkAndUnlock(date, _uiState.value.birthTime)
             val fortune = computeDailyFortune(date)
             _uiState.update { it.copy(dailyFortune = fortune) }
@@ -267,6 +309,14 @@ class CalculatorViewModel @Inject constructor(
                 birthTime = time,
                 result = computeResult(date, time, includeUnlocked = true, location = state.location),
             )
+        }
+        viewModelScope.launch {
+            val date = _uiState.value.birthDate ?: return@launch
+            runCatching {
+                val chart = sajuKoreanCalculator.computeChart(date, time?.hour, gender = null)
+                val yongshin = sajuKoreanCalculator.buildYongshinCard(chart)
+                _uiState.update { it.copy(sajuChart = chart, sajuYongshin = yongshin) }
+            }
         }
     }
 

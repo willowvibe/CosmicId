@@ -82,6 +82,37 @@ fun OnboardingScreen(
     viewModel: CalculatorViewModel = hiltViewModel(),
     onComplete: () -> Unit,
 ) {
+    OnboardingScreenContent(
+        onNameChanged = viewModel::onNameChanged,
+        onDateSelected = viewModel::onBirthDateSelected,
+        onTimeSelected = viewModel::onBirthTimeSelected,
+        onAccentColorSelected = viewModel::setAccentColor,
+        onLogStep1 = viewModel::logOnboardingStep1,
+        onLogStep2 = viewModel::logOnboardingStep2,
+        onLogStep3 = viewModel::logOnboardingStep3,
+        onComplete = onComplete,
+    )
+}
+
+/**
+ * Test-friendly variant of [OnboardingScreen] that takes plain callbacks
+ * instead of a [CalculatorViewModel]. The production [OnboardingScreen]
+ * delegates here, so the public API is unchanged. UI tests can call this
+ * overload with lambdas to exercise the multi-step flow without spinning up
+ * Hilt + a real ViewModel.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun OnboardingScreenContent(
+    onNameChanged: (String) -> Unit,
+    onDateSelected: (LocalDate) -> Unit,
+    onTimeSelected: (LocalTime?) -> Unit,
+    onAccentColorSelected: (Int) -> Unit,
+    onLogStep1: () -> Unit = {},
+    onLogStep2: () -> Unit = {},
+    onLogStep3: () -> Unit = {},
+    onComplete: () -> Unit,
+) {
     var step by remember { mutableIntStateOf(0) }
     val context = LocalContext.current
 
@@ -123,24 +154,24 @@ fun OnboardingScreen(
         ) { currentStep ->
             when (currentStep) {
                 0 -> StepNameAndBirthDate(
-                    onNameChanged = viewModel::onNameChanged,
-                    onDateSelected = viewModel::onBirthDateSelected,
+                    onNameChanged = onNameChanged,
+                    onDateSelected = onDateSelected,
                     onNext = {
-                        viewModel.logOnboardingStep1()
+                        onLogStep1()
                         step = 1
                     },
                 )
                 1 -> StepTimeAndLocation(
-                    onTimeSelected = viewModel::onBirthTimeSelected,
+                    onTimeSelected = onTimeSelected,
                     onNext = {
-                        viewModel.logOnboardingStep2()
+                        onLogStep2()
                         step = 2
                     },
                 )
                 2 -> StepCosmicVibe(
-                    onAccentColorSelected = viewModel::setAccentColor,
+                    onAccentColorSelected = onAccentColorSelected,
                     onEnter = {
-                        viewModel.logOnboardingStep3()
+                        onLogStep3()
                         onComplete()
                     },
                 )

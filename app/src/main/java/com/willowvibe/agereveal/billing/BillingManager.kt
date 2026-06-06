@@ -30,11 +30,13 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
- * Google Play Billing wrapper for v2.0 subscription tiers.
+ * Google Play Billing wrapper for v2.0 subscription tiers + v2.1 one-time
+ * Korean Saju unlock.
  *
  * Product IDs (must match Google Play Console):
- *   - "premium_monthly"  (₹49/month)
- *   - "premium_yearly"   (₹299/year)
+ *   - "premium_monthly"  (₹49/month, subscription)
+ *   - "premium_yearly"   (₹299/year, subscription)
+ *   - "korean_saju_unlock" (₹149 one-time, in-app product)
  *
  * Call [startConnection] in [MainActivity.onCreate] and [endConnection] in [onDestroy].
  */
@@ -65,9 +67,16 @@ class BillingManager @Inject constructor(
     private val _graceDaysRemaining = MutableStateFlow<Int?>(null)
     val graceDaysRemaining: StateFlow<Int?> = _graceDaysRemaining.asStateFlow()
 
+    /** True when the user has bought the korean_saju_unlock IAP. */
+    private val _isKoreanSajuUnlocked = MutableStateFlow(false)
+    val isKoreanSajuUnlocked: StateFlow<Boolean> = _isKoreanSajuUnlocked.asStateFlow()
+
     private var billingClient: BillingClient? = null
 
-    private val productIds = listOf("premium_monthly", "premium_yearly")
+    private val subscriptionProductIds = listOf("premium_monthly", "premium_yearly")
+    private val inAppProductIds = listOf("korean_saju_unlock")
+
+    private val productIds get() = subscriptionProductIds + inAppProductIds
 
     /** Must be called before any billing operation (e.g. in MainActivity.onCreate). */
     fun startConnection() {
@@ -84,6 +93,7 @@ class BillingManager @Inject constructor(
                     scope.launch {
                         queryProducts()
                         queryExistingPurchases()
+                        queryExistingInAppPurchases()
                     }
                 } else {
                     _error.value = BillingUtils.billingErrorMessage(result.responseCode)
@@ -108,12 +118,29 @@ class BillingManager @Inject constructor(
         scope.cancel()
     }
 
-    /** Launch the Google Play purchase flow for the given [productDetails]. */
+    /** Launch the Google Play purchase flow for a subscription [productDetails]. */
     fun launchBillingFlow(activity: Activity, productDetails: ProductDetails) {
         val offerToken = productDetails.subscriptionOfferDetails?.firstOrNull()?.offerToken ?: return
         val productDetailsParams = BillingFlowParams.ProductDetailsParams.newBuilder()
             .setProductDetails(productDetails)
             .setOfferToken(offerToken)
+            .build()
+        val flowParams = BillingFlowParams.newBuilder()
+            .setProductDetailsParamsList(listOf(productDetailsParams))
+            .build()
+        billingClient?.launchBillingFlow(activity, flowParams)
+    }
+
+    /**
+     * Launch the one-time IAP flow for the korean_saju_unlock SKU. Looks up
+     * the matching [ProductDetails] from the cached [products] list, then
+     * hands off to Play Billing. In-app products don't have offer tokens
+     * — they go straight to the cart.
+     */
+    fun launchKoreanSajuUnlockFlow(activity: Activity) {
+        val saju = _products.value.firstOrNull { it.productId == "korean_saju_unlock" } ?: return
+        val productDetailsParams = BillingFlowParams.ProductDetailsParams.newBuilder()
+            .setProductDetails(saju)
             .build()
         val flowParams = BillingFlowParams.newBuilder()
             .setProductDetailsParamsList(listOf(productDetailsParams))
@@ -129,6 +156,7 @@ class BillingManager @Inject constructor(
         }
         scope.launch {
             queryExistingPurchases()
+            queryExistingInAppPurchases()
         }
     }
 
@@ -148,9 +176,10 @@ class BillingManager @Inject constructor(
     // ---------------------------------------------------------------------------
 
     private suspend fun queryProducts() {
-        val params = QueryProductDetailsParams.newBuilder()
+        // Query subscription products
+        val subParams = QueryProductDetailsParams.newBuilder()
             .setProductList(
-                productIds.map { id ->
+                subscriptionProductIds.map { id ->
                     QueryProductDetailsParams.Product.newBuilder()
                         .setProductId(id)
                         .setProductType(BillingClient.ProductType.SUBS)
@@ -158,16 +187,50 @@ class BillingManager @Inject constructor(
                 }
             )
             .build()
-        val result = billingClient?.queryProductDetails(params) ?: return
+        val subResult = billingClient?.queryProductDetails(subParams) ?: return
+        val subList = if (subResult.billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
+            subResult.productDetailsList ?: emptyList()
+        } else emptyList()
+
+        // Query in-app (one-time) products
+        val inAppParams = QueryProductDetailsParams.newBuilder()
+            .setProductList(
+                inAppProductIds.map { id ->
+                    QueryProductDetailsParams.Product.newBuilder()
+                        .setProductId(id)
+                        .setProductType(BillingClient.ProductType.INAPP)
+                        .build()
+                }
+            )
+            .build()
+        val inAppResult = billingClient?.queryProductDetails(inAppParams)
+        val inAppList = if (inAppResult?.billingResult?.responseCode == BillingClient.BillingResponseCode.OK) {
+            inAppResult.productDetailsList ?: emptyList()
+        } else emptyList()
+
+        _products.value = subList + inAppList
+        _error.value = null
+        // Extract trial duration from the first subscription that has a free pricing phase
+        val trialDays = subList.firstNotNullOfOrNull { extractTrialDays(it) } ?: 0
+        userPrefs.setTrialDurationDays(trialDays)
+    }
+
+    private suspend fun queryExistingInAppPurchases() {
+        val result = billingClient?.queryPurchasesAsync(
+            QueryPurchasesParams.newBuilder()
+                .setProductType(BillingClient.ProductType.INAPP)
+                .build()
+        ) ?: return
         if (result.billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
-            val list = result.productDetailsList ?: emptyList()
-            _products.value = list
-            _error.value = null
-            // Extract trial duration from the first product that has a free pricing phase
-            val trialDays = list.firstNotNullOfOrNull { extractTrialDays(it) } ?: 0
-            userPrefs.setTrialDurationDays(trialDays)
-        } else {
-            _error.value = BillingUtils.billingErrorMessage(result.billingResult.responseCode)
+            val purchases = result.purchasesList ?: emptyList()
+            val ownedSaju = purchases.any {
+                it.purchaseState == Purchase.PurchaseState.PURCHASED &&
+                    inAppProductIds.contains(it.products.firstOrNull())
+            }
+            if (ownedSaju) {
+                _isKoreanSajuUnlocked.value = true
+                scope.launch { userPrefs.setKoreanSajuUnlocked(true) }
+            }
         }
     }
 
@@ -189,6 +252,15 @@ class BillingManager @Inject constructor(
     }
 
     private fun handlePurchases(purchases: List<Purchase>) {
+        // Partition into subscriptions vs in-app products
+        val (subs, inApps) = purchases.partition {
+            it.products.any { id -> subscriptionProductIds.contains(id) }
+        }
+        handleSubscriptionPurchases(subs)
+        handleInAppPurchases(inApps)
+    }
+
+    private fun handleSubscriptionPurchases(purchases: List<Purchase>) {
         var hasActive = false
         var latestPurchaseTime = 0L
         purchases.forEach { purchase ->
@@ -255,6 +327,39 @@ class BillingManager @Inject constructor(
                     _graceDaysRemaining.value = null
                 }
                 _trialDaysRemaining.value = null
+            }
+        }
+    }
+
+    private fun handleInAppPurchases(purchases: List<Purchase>) {
+        // The Korean Saju unlock is a one-time entitlement — once owned,
+        // it stays owned forever. (Play Console handles refund-revocation
+        // for us; we just observe the current state.)
+        val ownsSaju = purchases.any { p ->
+            p.purchaseState == Purchase.PurchaseState.PURCHASED &&
+                inAppProductIds.contains(p.products.firstOrNull())
+        }
+        if (ownsSaju) {
+            _isKoreanSajuUnlocked.value = true
+            scope.launch { userPrefs.setKoreanSajuUnlocked(true) }
+            analytics.logPurchaseComplete("korean_saju_unlock")
+        } else {
+            // Could be refund-revoked
+            _isKoreanSajuUnlocked.value = false
+            scope.launch { userPrefs.setKoreanSajuUnlocked(false) }
+        }
+        // Acknowledge any unacknowledged one-time purchases (required within
+        // 3 days by Google Play; otherwise the purchase is refunded).
+        purchases.forEach { purchase ->
+            if (purchase.purchaseState == Purchase.PurchaseState.PURCHASED && !purchase.isAcknowledged) {
+                val params = AcknowledgePurchaseParams.newBuilder()
+                    .setPurchaseToken(purchase.purchaseToken)
+                    .build()
+                billingClient?.acknowledgePurchase(params) { ackResult ->
+                    if (ackResult.responseCode != BillingClient.BillingResponseCode.OK) {
+                        _error.value = BillingUtils.billingErrorMessage(ackResult.responseCode)
+                    }
+                }
             }
         }
     }
