@@ -246,7 +246,7 @@ class SajuKoreanCalculator @Inject constructor(
     data class KoreanPillar(
         val stem: StemLabels,
         val branch: BranchLabels,
-        val tenGod: String?,         // 십신 of the visible stem (e.g. "편인")
+        val tenGod: String?,         // 십신 of the visible stem (e.g. "正官" from lunar-java — Chinese, not Korean)
         val branchTenGods: List<String>, // 십신 of hidden stems (1–3 entries)
         val twelveStage: String?,    // 12운성 of Day Master in this branch
         val element: String,         // primary element of this pillar (stem's element)
@@ -505,7 +505,9 @@ class SajuKoreanCalculator @Inject constructor(
         require(branchIdx >= 0) { "unknown branch from lunar-java: $zhi" }
         val stem = STEMS[stemIdx]
         val branch = BRANCHES[branchIdx]
-        // 십신 names in lunar-java are already Korean (비견, 식신, …).
+        // 십신 values are lunar-java's *Chinese* labels (正官, 偏印, 伤官, …).
+        // The UI remaps to Korean via [SHI_SHEN_ZH_TO_RES_KEY] when rendering
+        // in the Korean locale. See bazi-depth-batch-2026-06-06 memory.
         val branchTenGods = hideGan.zip(shiShenZhi).map { it.second }
         return KoreanPillar(
             stem = stem,
