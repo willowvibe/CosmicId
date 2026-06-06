@@ -1,6 +1,7 @@
 package com.willowvibe.agereveal.domain
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -223,5 +224,59 @@ class BaZiCalculatorTest {
         // the format is sane and contains 8 periods (default).
         val periodCount = summary.split("Age ").size - 1
         assertEquals(8, periodCount)
+    }
+
+    // -------------------------------------------------------------------------
+    // Ten Gods (十神 / 십신) on FourPillars (BUG-079)
+    // -------------------------------------------------------------------------
+
+    @Test
+    fun `computeFourPillars populates tenGods for Sruthi reference case`() {
+        // 1993-12-11 02:45 IST (zone +5.5) → known 4-pillar chart
+        // (Year 癸酉 / Month 甲子 / Day 丙寅 / Hour 己丑, Day Master 丙 Bing/Yang Fire).
+        // We lock the TenGods *structure* — every visible stem populated,
+        // hidden-stem arrays parallel to the 4 pillars — without hard-coding
+        // the Korean labels (which depend on lunar-java's exact 십신 output).
+        val result = calculator.computeFourPillars(
+            LocalDate.of(1993, 12, 11),
+            hour = 2,
+            minute = 45,
+            zoneOffsetHours = 5.5,
+        )
+        assertNotNull(result.tenGods)
+        assertNotNull(result.tenGods.yearStem)
+        assertNotNull(result.tenGods.monthStem)
+        assertNotNull(result.tenGods.dayStem)
+        assertNotNull(result.tenGods.hourStem)
+        // Hidden-stem arrays are parallel to the 4 pillars.
+        assertEquals(result.tenGods.yearBranch.size, result.tenGods.monthBranch.size)
+        assertTrue("At least one of the 4 hidden-stem arrays should be non-empty",
+            result.tenGods.yearBranch.isNotEmpty() ||
+            result.tenGods.monthBranch.isNotEmpty() ||
+            result.tenGods.dayBranch.isNotEmpty() ||
+            result.tenGods.hourBranch.isNotEmpty())
+    }
+
+    @Test
+    fun `tenGods yearStem locks lunar-java output for 1993 Sruthi Bing day master`() {
+        // Sruthi chart: Day Master = 丙 (Bing, Yang Fire).
+        // Year stem 癸 (Gui, Yin Water) — lunar-java v1.7.7 returns "正官"
+        //   (Direct Officer) for this 癸/丙 pairing. By the classical rule
+        //   (Water 克 Fire, opposite Yin+Yang polarity → Indirect), this is
+        //   what the SajuKoreanCalculator maps to "편관" (Indirect Officer)
+        //   for the Korean UI layer (see SajuKoreanCalculator.kt). We lock
+        //   the *raw* lunar-java label here, not the Korean remap, because
+        //   this data class exposes the library's authoritative output.
+        //
+        // The plan spec claimed "비견" (Companion) — that was based on a
+        // misread of the Day Master (it's 丙, not 癸). The correct library
+        // output is "正官" and that's what we assert.
+        val result = calculator.computeFourPillars(
+            LocalDate.of(1993, 12, 11),
+            hour = 2,
+            minute = 45,
+            zoneOffsetHours = 5.5,
+        )
+        assertEquals("正官", result.tenGods.yearStem)
     }
 }

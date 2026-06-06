@@ -56,7 +56,7 @@ class BaZiCalculator @Inject constructor(
             "${STEMS[stemIndex].substringAfter(" ")}-${BRANCHES[branchIndex].substringAfter(" ")} (${stemElement}-${branchAnimal})"
     }
 
-    /** All four pillars at a birth moment, plus Day Master. */
+    /** All four pillars at a birth moment, plus Day Master and Ten Gods. */
     data class FourPillars(
         val year: Pillar,
         val month: Pillar,
@@ -64,6 +64,7 @@ class BaZiCalculator @Inject constructor(
         val hour: Pillar?,
         val dayMasterHanzi: String,
         val dayMasterElement: String,
+        val tenGods: TenGods,
     ) {
         fun toDisplay(): String = buildString {
             append("Year: ").append(year.toDisplay())
@@ -71,6 +72,32 @@ class BaZiCalculator @Inject constructor(
             append(" · Day: ").append(day.toDisplay())
             if (hour != null) append(" · Hour: ").append(hour.toDisplay())
         }
+    }
+
+    /**
+     * Ten Gods (十神 / 십신) for every visible + hidden stem across the 4 pillars,
+     * relative to the Day Master.
+     *
+     * **Label vocabulary:** lunar-java v1.7.7 returns the *Chinese* 십신
+     * labels (e.g. "正官", "偏印", "日主", "伤官") — not Korean Hangul
+     * (e.g. "정관", "편인", "비견"). For Korean Hangul remapping, the
+     * SajuKoreanCalculator owns that presentation layer.
+     *
+     * One visible-stem label per pillar + one hidden-stem label per hidden
+     * stem within each branch. Use [hasHour] to know whether `hourStem` /
+     * `hourBranch` are populated.
+     */
+    data class TenGods(
+        val yearStem: String?,
+        val monthStem: String?,
+        val dayStem: String?,
+        val hourStem: String?,
+        val yearBranch: List<String>,
+        val monthBranch: List<String>,
+        val dayBranch: List<String>,
+        val hourBranch: List<String>,
+    ) {
+        val hasHour: Boolean get() = hourStem != null
     }
 
     /** One major-luck (대운) period. */
@@ -119,6 +146,16 @@ class BaZiCalculator @Inject constructor(
             dayMasterHanzi = ec.dayGan,
             dayMasterElement = ec.dayWuXing.split("").firstOrNull { it.isNotEmpty() }
                 ?.let { mapWuXingHanziToEn(it) } ?: "Unknown",
+            tenGods = TenGods(
+                yearStem = ec.yearShiShenGan.takeIf { it.isNotEmpty() },
+                monthStem = ec.monthShiShenGan.takeIf { it.isNotEmpty() },
+                dayStem = ec.dayShiShenGan.takeIf { it.isNotEmpty() },
+                hourStem = if (hour != null) ec.timeShiShenGan.takeIf { it.isNotEmpty() } else null,
+                yearBranch = ec.yearShiShenZhi,
+                monthBranch = ec.monthShiShenZhi,
+                dayBranch = ec.dayShiShenZhi,
+                hourBranch = if (hour != null) ec.timeShiShenZhi else emptyList(),
+            ),
         )
     }
 
