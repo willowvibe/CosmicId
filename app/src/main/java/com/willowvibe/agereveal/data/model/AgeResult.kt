@@ -1,5 +1,9 @@
 package com.willowvibe.agereveal.data.model
 
+import com.willowvibe.agereveal.domain.DashaInfo
+import com.willowvibe.agereveal.domain.NakshatraData
+import com.willowvibe.agereveal.domain.NavamsaChart
+import com.willowvibe.agereveal.domain.Aspect
 import java.time.LocalDate
 import java.time.LocalTime
 
@@ -52,8 +56,8 @@ data class AgeResult(
     // Planetary dignities (Vedic avastha)
     val planetDignities: List<com.willowvibe.agereveal.domain.PlanetaryDignityCalculator.PlanetaryDignity> = emptyList(),
 
-    // Vimshottari Dasha (unlockable)
-    val dashaInfo: String = "",
+    // Vimshottari Dasha (unlockable) — Phase 6.5: now structured; summary() preserved as back-compat
+    val dashaDetail: DashaInfo? = null,
 
     // Ba Zi (Four Pillars) — Year + Month (unlockable)
     val baZiInfo: String = "",
@@ -71,9 +75,24 @@ data class AgeResult(
     // Parallel universe birth contexts (unlockable)
     val parallelUniverses: List<com.willowvibe.agereveal.domain.ParallelUniverseGenerator.UniverseContext> = emptyList(),
 
+    // Phase 6.5 — Vedic UI surfacing (BUG-068 vehicle). All populated when includeUnlocked = true.
+    val nakshatraMetadata: NakshatraData? = null,    // from NakshatraMetadata.forLongitude(siderealMoonLon)
+    val navamsaChart: NavamsaChart? = null, // from DivisionalChartCalculator.getNavamsaChart(planetLongitudes)
+    val planetaryAspects: List<Aspect> = emptyList(),// from AspectCalculator.computeAspects(jd, planetLongitudes)
+    val tropicalAscendant: String? = null,           // from ZodiacCalculator.getTropicalAscendantSign(...)
+
     // Precision indicator
     val isExact: Boolean = birthTime != null,  // True if time of birth is provided
-)
+) {
+    /**
+     * Back-compat: derived from [dashaDetail] when present, else empty string.
+     * The original `dashaInfo: String = ""` constructor parameter has been
+     * promoted to a computed property so existing string-based consumers
+     * (share card, any `result.dashaInfo` reader) keep working unchanged.
+     */
+    val dashaInfo: String
+        get() = dashaDetail?.summary() ?: ""
+}
 
 /**
  * A single life-day milestone, e.g. the 10,000th day alive.
